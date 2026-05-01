@@ -66,6 +66,9 @@ config.prod.yaml
 # OS files
 .DS_Store
 
+# Worktrees
+.worktrees/
+
 # Runtime
 .run/
 
