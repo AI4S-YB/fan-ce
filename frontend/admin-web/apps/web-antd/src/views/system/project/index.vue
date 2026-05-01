@@ -12,13 +12,13 @@ import { TableAction } from '#/components/Table';
 import { IconEnum } from '#/enums/appEnum';
 import { useMessage } from '#/hooks/web/useMessage';
 import { $t as t } from '#/locales';
-import { useAppUserStore } from '#/store/modules/project';
+import { useProgramStore } from '#/store/modules/program';
 
 import { formOptions, gridOptions } from './data';
 import UserModel from './Modal.vue';
 import MetaJsonModal from './MetaJsonModal.vue';
 
-const useAppUser = useAppUserStore();
+const programStore = useProgramStore();
 const { createMessage, createConfirm } = useMessage();
 const [registerModal, { openModal }] = useModal();
 const [registerMetaJsonModal, { openModal: openMetaJsonModal }] = useModal();
@@ -48,7 +48,7 @@ const handleDelete = async (rows: any = null, isBatch: Boolean = false) => {
           try {
             await delProjectApi({ ids });
             createMessage.success(t('common.delSuccessText'));
-            await useAppUser.updateProjectOptions();
+            await programStore.updateProgramOptions();
             gridApi.reload();
           } catch {}
         },
@@ -57,7 +57,7 @@ const handleDelete = async (rows: any = null, isBatch: Boolean = false) => {
   } else {
     await delProjectApi({ id: rows.id });
     createMessage.success(t('common.delSuccessText'));
-    await useAppUser.updateProjectOptions();
+    await programStore.updateProgramOptions();
     gridApi.reload();
   }
 };

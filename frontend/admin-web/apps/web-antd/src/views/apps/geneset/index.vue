@@ -11,14 +11,14 @@ import { TableAction } from '#/components/Table';
 import { IconEnum } from '#/enums/appEnum';
 import { useMessage } from '#/hooks/web/useMessage';
 import { $t as t } from '#/locales';
-import { useProjectStoreWithOut } from '#/store/modules/project';
+import { useProgramStoreWithOut } from '#/store/modules/program';
 
 import { useSearchFormSchema } from './data';
 
 defineOptions({ name: 'GeneSetList' });
 
 const { createMessage } = useMessage();
-const proStore = useProjectStoreWithOut();
+const programStore = useProgramStoreWithOut();
 
 // 当前选择的基因组文件路径
 const selectedFilePath = ref<string>('');
@@ -50,7 +50,7 @@ const loadExpandMethod = async (params: any) => {
   if (!selectedFilePath.value || !params || !params.row) return;
   
   const { row } = params;
-  const projectId = proStore.projectInfo?.id;
+  const projectId = programStore.programInfo?.id;
   if (!projectId) {
     createMessage.error(t('geneset.list.missingInfo'));
     return;
@@ -148,8 +148,8 @@ const gridOptions = ref({
           return { dataList: [], total: 0 };
         }
         
-        const projectId = proStore.projectInfo?.id;
-        const teamId = proStore.projectInfo?.id;
+        const projectId = programStore.programInfo?.id;
+        const teamId = programStore.programInfo?.id;
         
         if (!projectId || !teamId) {
           createMessage.error(t('geneset.list.missingInfo'));

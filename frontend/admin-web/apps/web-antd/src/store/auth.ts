@@ -14,14 +14,14 @@ import { getUserAuthApi, loginApi, logoutApi } from '#/api';
 import { getDictMapApi } from '#/api/system/';
 import { $t } from '#/locales';
 import { useDictStoreWithOut } from '#/store/modules/dict';
-import { useProjectStoreWithOut } from '#/store/modules/project';
+import { useProgramStoreWithOut } from '#/store/modules/program';
 
 export const useAuthStore = defineStore('auth', () => {
   const accessStore = useAccessStore();
   const userStore = useUserStore();
   const router = useRouter();
   const dictStore = useDictStoreWithOut();
-  const proStore = useProjectStoreWithOut();
+  const programStore = useProgramStoreWithOut();
   const loginLoading = ref(false);
   // const options1: any = inject('projectOptions');
   /**
@@ -38,7 +38,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loginLoading.value = true;
       const { access_token, project } = await loginApi(params);
-      proStore.setProjectInfo(project || {});
+      programStore.setProgramInfo(project || {});
       // 如果成功获取到 accessToken
       if (access_token) {
         accessStore.setAccessToken(access_token);
@@ -104,10 +104,10 @@ export const useAuthStore = defineStore('auth', () => {
     userStore.setUserInfo(userInfo);
     // 初始化数据团队、项目
     accessStore.setAccessCodes(userInfo?.permissions || []);
-    if (!proStore.getProjectInfo.id) {
-      proStore.setProjectInfo(userInfo?.project_list?.[0] || {});
+    if (!programStore.getProgramInfo.id) {
+      programStore.setProgramInfo(userInfo?.project_list?.[0] || {});
     }
-    proStore.fetchProjectOptions();
+    programStore.fetchProgramOptions();
     return userInfo;
   }
   async function fetchDictMap() {

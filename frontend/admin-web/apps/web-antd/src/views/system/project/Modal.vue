@@ -9,14 +9,14 @@ import {
 import { BasicModal, useModalInner } from '#/components/Modal';
 import { useMessage } from '#/hooks/web/useMessage';
 import { $t as t } from '#/locales';
-import { useProjectStoreWithOut } from '#/store/modules/project';
+import { useProgramStoreWithOut } from '#/store/modules/program';
 
 import { Form, formApi } from './data';
 
 defineOptions({ name: 'ProjectModal' });
 
 const emit = defineEmits(['success', 'register']);
-const proStore = useProjectStoreWithOut();
+const programStore = useProgramStoreWithOut();
 const { createMessage } = useMessage();
 const isUpdate = ref(true);
 
@@ -49,7 +49,7 @@ async function handleSubmit() {
         : addProjectApi(values));
       closeModal();
       emit('success');
-      await proStore.updateProjectOptions();
+      await programStore.updateProgramOptions();
       createMessage.success(t('common.saveSuccessText'));
     }
   } finally {

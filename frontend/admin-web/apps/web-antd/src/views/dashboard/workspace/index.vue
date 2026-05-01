@@ -9,19 +9,19 @@ import { $t } from '@vben/locales';
 
 import { getDatasetListApi } from '#/api/apps/dataset';
 import { getProjectListApi } from '#/api/system/project';
-import { useProjectStoreWithOut } from '#/store/modules/project';
+import { useProgramStoreWithOut } from '#/store/modules/program';
 
 import ChatPanel from './ChatPanel.vue';
 import SessionSidebar from './SessionSidebar.vue';
 
 const userStore = useUserStore();
-const projectStore = useProjectStoreWithOut();
+const programStore = useProgramStoreWithOut();
 
 const projectCount = ref(0);
 const datasetCount = ref(0);
 
 const workspaceDescription = computed(() => {
-  const projectName = projectStore.getProjectInfo?.name?.trim?.();
+  const projectName = programStore.getProgramInfo?.name?.trim?.();
 
   if (projectName) {
     return $t('workspace.currentProject', { name: projectName });

@@ -18,7 +18,7 @@ import { Button, Dropdown, Menu } from 'ant-design-vue';
 
 import { $t } from '#/locales';
 import { useAuthStore } from '#/store';
-import { useProjectStoreWithOut } from '#/store/modules/project';
+import { useProgramStoreWithOut } from '#/store/modules/program';
 import LoginForm from '#/views/_core/authentication/login.vue';
 
 const notifications = ref<NotificationItem[]>([
@@ -34,7 +34,7 @@ const { refresh } = useRefresh();
 const userStore = useUserStore();
 const authStore = useAuthStore();
 const accessStore = useAccessStore();
-const proStore = useProjectStoreWithOut();
+const programStore = useProgramStoreWithOut();
 const { destroyWatermark, updateWatermark } = useWatermark();
 const showDot = computed(() =>
   notifications.value.some((item) => !item.isRead),
