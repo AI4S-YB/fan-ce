@@ -87,10 +87,17 @@ export const useWorkspaceStore = defineStore('workspace-chat', {
 
     ensureSession(): WorkspaceSession {
       if (this.currentSession) return this.currentSession;
+      if (this.sessions.length > 0) {
+        this.currentSessionId = this.sessions[0]!.id;
+        return this.sessions[0]!;
+      }
       return this.createSession();
     },
 
     switchSession(id: string) {
+      if (!this.sessions.some((s) => s.id === id)) {
+        console.warn(`[workspace] switchSession: session "${id}" not found`);
+      }
       this.currentSessionId = id;
     },
 
@@ -163,8 +170,7 @@ export const useWorkspaceStore = defineStore('workspace-chat', {
 
   // ---- localStorage persistence ----
   persist: {
-    key: 'workspace-chat',
-    storage: localStorage,
+    pick: ['sessions', 'currentSessionId'],
   },
 });
 
