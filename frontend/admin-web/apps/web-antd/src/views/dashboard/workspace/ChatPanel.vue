@@ -24,6 +24,7 @@ const chatInput = ref('');
 const modelRows = ref<PlatformModelApiSetting[]>([]);
 const listRef = ref<BubbleListRef>();
 let abortController: AbortController | null = null;
+let currentReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
 
 const primaryModel = computed(() => {
   return (
@@ -175,12 +176,28 @@ async function handleSendMessage() {
     }
 
     const reader = response.body.getReader();
+    currentReader = reader;
     const decoder = new TextDecoder();
     let buffer = '';
 
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
+      if (done) {
+        buffer += decoder.decode();
+        const finalLine = buffer.trim();
+        if (finalLine && finalLine.startsWith('data: ')) {
+          const dataStr = finalLine.slice(6);
+          if (dataStr !== '[DONE]') {
+            try {
+              const parsed = JSON.parse(dataStr);
+              if (parsed.type === 'output_msg' && parsed.content) {
+                appendAssistantContent(assistantId, parsed.content);
+              }
+            } catch { /* skip */ }
+          }
+        }
+        break;
+      }
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
@@ -212,7 +229,9 @@ async function handleSendMessage() {
             appendAssistantContent(assistantId, delta);
           }
         } catch {
-          // skip unparseable
+          if (import.meta.env.DEV) {
+            console.debug('[ChatPanel] Failed to parse SSE line:', trimmed);
+          }
         }
       }
     }
@@ -235,6 +254,7 @@ async function handleSendMessage() {
   } finally {
     store.setStreaming(false);
     abortController = null;
+    currentReader = null;
     store.closeCurrentGroup();
   }
 }
@@ -299,6 +319,9 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  if (currentReader) {
+    currentReader.cancel().catch(() => {});
+  }
   if (abortController) {
     abortController.abort();
   }
