@@ -24,5 +24,11 @@
     "streamFailed": "Stream failed: {message}",
     "unknown": "Unknown error"
   },
-  "action": { "platformSetting": "Platform Settings" }
+  "action": { "platformSetting": "Platform Settings" },
+  "session": {
+    "newSessionBtn": "+ New Chat",
+    "deleteConfirm": "Delete this conversation?",
+    "emptyList": "No conversations yet",
+    "defaultTitle": "New Chat"
+  }
 }

@@ -24,5 +24,11 @@
     "streamFailed": "流式请求失败: {message}",
     "unknown": "未知错误"
   },
-  "action": { "platformSetting": "打开平台设置" }
+  "action": { "platformSetting": "打开平台设置" },
+  "session": {
+    "newSessionBtn": "+ 新对话",
+    "deleteConfirm": "确定要删除这个对话吗？",
+    "emptyList": "暂无对话记录",
+    "defaultTitle": "新对话"
+  }
 }
