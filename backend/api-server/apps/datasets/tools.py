@@ -313,33 +313,8 @@ async def _execute_get_related_datasets(db, arguments: dict, user) -> dict:
 
 
 async def _execute_list_projects(db, arguments: dict, user) -> dict:
-    keyword = arguments.get("keyword")
-    page = arguments.get("page", 1)
-    size = arguments.get("size", 20)
-
-    from apps.system.project.crud import project_db
-    filters = {}
-    if keyword:
-        from sqlalchemy import or_
-        # Use get_list with filters_exp for keyword search
-        result = project_db.get_list(
-            db=db, page=page, size=size,
-            filters_exp={"or_": {"name__contains": keyword, "code__contains": keyword}},
-        )
-    else:
-        result = project_db.get_list(db=db, page=page, size=size)
-
-    items = []
-    for item in result.get("dataList", []):
-        items.append({
-            "id": item.id,
-            "name": getattr(item, "name", ""),
-            "code": getattr(item, "code", ""),
-            "description": getattr(item, "description", ""),
-            "team_id": getattr(item, "team_id", None),
-            "status": getattr(item, "status", ""),
-        })
-    return {"items": items, "total": result.get("total", 0), "page": page, "size": size}
+    # Community Edition: system_project removed. Use brd_program via breeding module.
+    return {"items": [], "total": 0, "page": arguments.get("page", 1), "size": arguments.get("size", 20)}
 
 
 async def _execute_search_germplasm(db, arguments: dict, user) -> dict:

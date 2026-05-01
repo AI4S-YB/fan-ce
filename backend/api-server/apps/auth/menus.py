@@ -13,7 +13,6 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
 from apps.common.depends import get_db, get_active_user,get_rbd_user
-from apps.system.project.crud import project_db
 from apps.system.rbac.crud import menu_db
 from libs.dataes import get_menu_tree
 from libs.responses.response import response_2000

@@ -55,7 +55,6 @@ from apps.datasets.schemas import (
     DatasetVersionWithdrawRequest,
 )
 from apps.datasets.services import dataset_domain_service
-from apps.system.project.models import Project
 from apps.system.user.models import Role, User
 from db.database import Base
 
@@ -65,7 +64,6 @@ DATASET_TEST_TABLES = [
     DatabasesFile.__table__,
     DatabasesMeta.__table__,
     ProjectDatabasesLink.__table__,
-    Project.__table__,
     User.__table__,
     Role.__table__,
     DatasetKindRegistry.__table__,

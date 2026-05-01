@@ -30,7 +30,6 @@ from apps.datasets.schemas import (
     DatasetVersionReleaseRequest,
 )
 from apps.datasets.services import dataset_domain_service
-from apps.system.project.models import Project
 from apps.system.user.models import Role, User
 from db.database import Base
 
@@ -40,7 +39,6 @@ DATASET_TEST_TABLES = [
     DatabasesFile.__table__,
     DatabasesMeta.__table__,
     ProjectDatabasesLink.__table__,
-    Project.__table__,
     User.__table__,
     Role.__table__,
     DatasetKindRegistry.__table__,
@@ -518,39 +516,41 @@ def test_global_version_publish_record_list_is_filtered_by_access_scope(db_sessi
 
 
 
-def test_project_filter_still_respects_row_access_while_admin_sees_all(db_session):
-    project = Project(name="shared-project", code="shared-project", user_id=1300, type="1", sort=1, status=1, is_public=0, is_active=1, is_delete=0, create_time=1, remark="")
-    db_session.add(project)
-    db_session.commit()
-    db_session.refresh(project)
-
-    owned_dataset = create_dataset(db_session, name="owned-filtered", owner_id=1301, team_id=0)
-    hidden_dataset = create_dataset(db_session, name="hidden-filtered", owner_id=1302, team_id=0)
-    db_session.add_all(
-        [
-            ProjectDatabasesLink(database_id=owned_dataset.id, project_id=project.id),
-            ProjectDatabasesLink(database_id=hidden_dataset.id, project_id=project.id),
-        ]
-    )
-    db_session.commit()
-
-    request_data = SimpleNamespace(
-        page=1,
-        size=20,
-        team_id=0,
-        project_id=project.id,
-        dataset_id=None,
-        name=None,
-        dataset_type=None,
-        lifecycle_state=None,
-        visibility=None,
-    )
-
-    owner_result = dataset_domain_service.list_datasets(db=db_session, request_data=request_data, user=make_user(1301))
-    admin_result = dataset_domain_service.list_datasets(db=db_session, request_data=request_data, user=make_user(1309, user_type=1))
-
-    assert [item["id"] for item in owner_result["dataList"]] == [owned_dataset.id]
-    assert {item["id"] for item in admin_result["dataList"]} == {owned_dataset.id, hidden_dataset.id}
+# Community Edition: system_project removed. test_project_filter uses Project which is deleted.
+# Rewrite with brd_program when breeding program linkage is available.
+# def test_project_filter_still_respects_row_access_while_admin_sees_all(db_session):
+#     project = Project(name="shared-project", code="shared-project", user_id=1300, type="1", sort=1, status=1, is_public=0, is_active=1, is_delete=0, create_time=1, remark="")
+#     db_session.add(project)
+#     db_session.commit()
+#     db_session.refresh(project)
+#
+#     owned_dataset = create_dataset(db_session, name="owned-filtered", owner_id=1301, team_id=0)
+#     hidden_dataset = create_dataset(db_session, name="hidden-filtered", owner_id=1302, team_id=0)
+#     db_session.add_all(
+#         [
+#             ProjectDatabasesLink(database_id=owned_dataset.id, project_id=project.id),
+#             ProjectDatabasesLink(database_id=hidden_dataset.id, project_id=project.id),
+#         ]
+#     )
+#     db_session.commit()
+#
+#     request_data = SimpleNamespace(
+#         page=1,
+#         size=20,
+#         team_id=0,
+#         project_id=project.id,
+#         dataset_id=None,
+#         name=None,
+#         dataset_type=None,
+#         lifecycle_state=None,
+#         visibility=None,
+#     )
+#
+#     owner_result = dataset_domain_service.list_datasets(db=db_session, request_data=request_data, user=make_user(1301))
+#     admin_result = dataset_domain_service.list_datasets(db=db_session, request_data=request_data, user=make_user(1309, user_type=1))
+#
+#     assert [item["id"] for item in owner_result["dataList"]] == [owned_dataset.id]
+#     assert {item["id"] for item in admin_result["dataList"]} == {owned_dataset.id, hidden_dataset.id}
 
 
 def test_retry_ingest_task_respects_dataset_scope_and_global_operator_scope(db_session):

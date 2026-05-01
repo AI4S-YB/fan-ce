@@ -12,10 +12,8 @@ from .api.dict import dict_router
 from .api.roles import role_router
 from .api.menu import menu_router
 from .api.permission import permission_router
-from .api.project import project_router
 
 system_routers = APIRouter()
-system_routers.include_router(project_router, tags=['system:project:项目管理'], prefix='/project')
 system_routers.include_router(user_router, tags=['system:user:用户管理'], prefix='/user')
 system_routers.include_router(menu_router, tags=['system:menu:菜单管理'], prefix='/menu')
 system_routers.include_router(permission_router, tags=['system:permission:权限管理'], prefix='/permission')

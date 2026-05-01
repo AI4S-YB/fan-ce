@@ -21,7 +21,6 @@ from apps.breeding.models import (
     BreedingVariantSampleMap,
 )
 from apps.datasets.adapters import dataset_adapter_registry
-from apps.system.project.crud import project_db
 from basis.core.expression_utils import process_rnaseq_file
 from basis.core.samtools_utils import process_sequence
 from basis.core.variant_utils import process_variant_file
@@ -771,14 +770,8 @@ class DatasetDomainService:
         ]
 
     def _collect_projects(self, db, database_id):
-        links = dataset_legacy_bridge.list_project_links_by_dataset(db=db, dataset_id=database_id)
-        project_ids = [item.project_id for item in links]
-        projects = []
-        for project_id in project_ids:
-            project_obj = project_db.get_one(db=db, id=project_id)
-            if project_obj:
-                projects.append({"id": project_obj.id, "name": project_obj.name, "code": project_obj.code})
-        return projects
+        # Community Edition: system_project removed. Use brd_program via breeding module.
+        return []
 
     def _guess_name_from_path(self, file_path):
         return Path(file_path).name
