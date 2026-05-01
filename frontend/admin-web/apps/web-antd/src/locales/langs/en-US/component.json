@@ -1,0 +1,197 @@
+{
+  "app": {
+    "searchNotData": "No search results yet",
+    "toNavigate": "to navigate",
+    "toSearch": "to search"
+  },
+  "captcha": {
+    "fail": "verification failed",
+    "point": "Please click",
+    "slide": "Swipe right to complete verification",
+    "success": "Verification succeeded",
+    "verification": "Please complete security verification"
+  },
+  "countdown": {
+    "normalText": "Get SMS code",
+    "sendText": "Reacquire in {0}s"
+  },
+  "cropper": {
+    "btn_reset": "Reset",
+    "btn_rotate_left": "Counterclockwise rotation",
+    "btn_rotate_right": "Clockwise rotation",
+    "btn_scale_x": "Flip horizontal",
+    "btn_scale_y": "Flip vertical",
+    "btn_zoom_in": "Zoom in",
+    "btn_zoom_out": "Zoom out",
+    "imageTooBig": "Image too big",
+    "modalTitle": "Avatar upload",
+    "okText": "Confirm and upload",
+    "preview": "Preview",
+    "selectImage": "Select Image",
+    "uploadSuccess": "Uploaded success!"
+  },
+  "drawer": {
+    "cancelText": "Close",
+    "loadingText": "Loading...",
+    "okText": "Confirm"
+  },
+  "excel": {
+    "exportModalTitle": "Export data",
+    "fileName": "File name",
+    "fileType": "File type"
+  },
+  "form": {
+    "apiSelectNotFound": "Wait for data loading to complete...",
+    "maxTip": "The number of characters should be less than {0}",
+    "putAway": "Put away",
+    "unfold": "Unfold"
+  },
+  "icon": {
+    "copy": "Copy icon successfully!",
+    "placeholder": "Click the select icon",
+    "search": "Search icon"
+  },
+  "menu": {
+    "search": "Menu search"
+  },
+  "modal": {
+    "cancelText": "Close",
+    "close": "Close",
+    "maximize": "Maximize",
+    "okText": "Confirm",
+    "restore": "Restore"
+  },
+  "table": {
+    "index": "Index",
+    "settingColumn": "Column settings",
+    "settingColumnShow": "Column display",
+    "settingDens": "Density",
+    "settingDensDefault": "Default",
+    "settingDensMiddle": "Middle",
+    "settingDensSmall": "Compact",
+    "settingFixedLeft": "Fixed Left",
+    "settingFixedRight": "Fixed Right",
+    "settingFullScreen": "Full Screen",
+    "settingIndexColumnShow": "Index Column",
+    "settingSelectColumnShow": "Selection Column",
+    "total": "total of {total}"
+  },
+  "time": {
+    "after": " after",
+    "before": " ago",
+    "days": " days",
+    "hours": " hours",
+    "just": "just now",
+    "minutes": " minutes",
+    "seconds": " seconds"
+  },
+  "tree": {
+    "checkStrictly": "Hierarchical association",
+    "checkUnStrictly": "Hierarchical independence",
+    "expandAll": "Expand All",
+    "selectAll": "Select All",
+    "unExpandAll": "Collapse all",
+    "unSelectAll": "Cancel Select"
+  },
+  "upload": {
+    "accept": "Support {0} format",
+    "acceptUpload": "Only upload files in {0} format",
+    "choose": "Select the file",
+    "del": "Delete",
+    "download": "download",
+    "fileName": "File name",
+    "fileSize": "File size",
+    "fileStatue": "File status",
+    "imgUpload": "ImageUpload",
+    "legend": "Legend",
+    "maxNumber": "Only upload up to {0} files",
+    "maxSize": "A single file does not exceed {0}MB ",
+    "maxSizeMultiple": "Only upload files up to {0}MB!",
+    "operating": "Operating",
+    "pending": "Pendig",
+    "preview": "Preview",
+    "reUploadFailed": "Re-upload failed files",
+    "save": "Save",
+    "saveError": "There is no file successfully uploaded and cannot be saved!",
+    "saveWarn": "Please wait for the file to upload and save!",
+    "startUpload": "Start upload",
+    "upload": "Upload",
+    "uploadError": "Upload failed",
+    "uploadSuccess": "Upload successfully",
+    "uploadWait": "Please wait for the file upload to finish",
+    "uploaded": "Uploaded",
+    "uploading": "Uploading"
+  },
+  "action": {
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "info": "Info"
+  },
+  "graph": {
+    "batchFailed": "Failed to fetch batch relationship data",
+    "buildingGraph": "Building knowledge graph...",
+    "connectionCount": "Degree",
+    "connections": "Connections",
+    "connectionLabel": "Connections",
+    "degree": "Degree",
+    "external": "External",
+    "externalRelation": "External Relations",
+        "externalRelationTooltip": "Include relations with other nodes beyond the selection",
+    "findGermplasm": "Found germplasm: {id}",
+    "fitContent": "Fit Content",
+    "germplasmNotFound": "No germplasm found matching \"{keyword}\"",
+    "internal": "Internal",
+    "internalRelation": "Internal Relations",
+        "internalRelationTooltip": "Include relations among selected nodes",
+    "knowledgeGraph": "Knowledge Graph",
+    "loadFailed": "Failed to load graph data",
+    "loadFailedData": "Failed to load data: no data returned",
+    "loadSuccess": "Knowledge graph loaded: {nodes} nodes, {edges} connections",
+    "loadSuccessWithRelation": "Knowledge graph loaded: {nodes} nodes, {edges} connections ({types})",
+    "maxNodes": "Max Nodes",
+    "minConnections": "Min Connections",
+    "neighborCount": "Neighbor Count",
+    "nodeDetail": "Node Detail",
+    "nodeId": "Node ID",
+    "nodes": "Nodes",
+    "noLoader": "No data loader provided",
+    "queryParamsEmpty": "Graph query parameters cannot be empty",
+    "reload": "Reload",
+    "relation": "Relation",
+    "resetView": "Reset View",
+    "searchPlaceholder": "Search node ID or name...",
+    "selectOneRelation": "At least one relationship type must be selected"
+  },
+  "aiChat": {
+    "assistant": "AI Assistant",
+    "building": "Building...",
+    "done": "Done",
+    "placeholder": "Please enter your question...",
+    "sendFailed": "Failed to send message, please retry",
+    "thinking": "Deep Thinking Process",
+    "thinkProcess": "Thinking Process"
+  },
+  "select": {
+    "deselectAll": "Deselect All",
+    "selectAll": "Select All"
+  },
+  "dict": {
+    "unknownStatus": "Unknown status: {value}"
+  },
+  "dataTable": {
+    "clickToEdit": "Click to edit",
+    "partialRowIncomplete": "Partial-optional field group [{fields}] has incomplete rows",
+    "requiredFieldEmpty": "Required field \"{field}\" has empty values",
+    "validationFailed": "Data validation failed ({count} errors)"
+  },
+  "uploadExtra": {
+    "deleteConfirmFile": "Are you sure you want to delete this file?",
+    "deleteConfirmImage": "Are you sure you want to delete this image?",
+    "moveBackward": "Move Backward",
+    "moveFailed": "Move failed: {index}",
+    "moveForward": "Move Forward",
+    "pleaseUploadImage": "Please upload an image",
+    "uploadFailedName": "{name} upload failed."
+  }
+}

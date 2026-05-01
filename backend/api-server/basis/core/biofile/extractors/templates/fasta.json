@@ -1,0 +1,90 @@
+{
+  "type": {
+    "value": "FASTA",
+    "desc": "文件类型，比如 FASTA / FASTQ / GENBANK 等"
+  },
+  "firstSequenceId": {
+    "value": null,
+    "desc": "第一条序列的 identifier，即 header > 后主要 ID"
+  },
+  "sequenceIds": {
+    "value": [],
+    "desc": "文件中所有序列的 ID 列表"
+  },
+  "numSeqs": {
+    "value": null,
+    "desc": "序列总数"
+  },
+  "totalBases": {
+    "value": null,
+    "desc": "所有序列中的碱基（或氨基酸）总数"
+  },
+  "sequenceType": {
+    "value": null,
+    "desc": "序列类型：DNA / RNA / protein"
+  },
+  "gc": {
+    "value": null,
+    "desc": "GC 含量（百分比或小数格式）"
+  },
+  "isCompressed": {
+    "value": null,
+    "desc": "文件是否为压缩格式，如 .gz 或 .bz2"
+  },
+  "avgSequenceLength": {
+    "value": null,
+    "desc": "平均序列长度"
+  },
+  "minSequenceLength": {
+    "value": null,
+    "desc": "最短序列长度"
+  },
+  "maxSequenceLength": {
+    "value": null,
+    "desc": "最长序列长度"
+  },
+  "sequenceLengthDistribution": {
+    "value": {},
+    "desc": "序列长度分布统计（如 histogram bucket 计数）"
+  },
+  "sidecars": {
+    "value": [],
+    "desc": "外部关联文件列表，如 QUAL 文件、annotation 表、metadata TSV 等"
+  },
+  "baseComposition": {
+    "value": {},
+    "desc": "各碱基 A/C/G/T/U/N/gap 的计数或比例"
+  },
+  "nCount": {
+    "value": null,
+    "desc": "模糊碱基总数（如 N 或 X）"
+  },
+  "percentAmbiguous": {
+    "value": null,
+    "desc": "模糊碱基所占比例"
+  },
+  "duplicateSeqCount": {
+    "value": null,
+    "desc": "完全重复序列的数量"
+  },
+  "uniqueSeqCount": {
+    "value": null,
+    "desc": "唯一序列数量"
+  },
+  "duplicateFraction": {
+    "value": null,
+    "desc": "重复序列占总序列的比例"
+  },
+  "isValidFormat": {
+    "value": null,
+    "desc": "是否符合 FASTA 格式标准 (header‑sequence 对应、字符合法等)"
+  },
+  "firstHeaderLine": {
+    "value": null,
+    "desc": "第一条 header 的完整文本（包括 identifier 与注释内容）"
+  },
+  "parsedMeta": {
+    "value": null,
+    "desc": "从 header 注释中解析出的 metadata，如 accession、sample、species、date 等"
+  }
+}

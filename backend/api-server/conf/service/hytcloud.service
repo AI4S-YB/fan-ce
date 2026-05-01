@@ -1,0 +1,14 @@
+[Unit]
+Description=hytcloud
+After=network.target postgresql.service
+[Service]
+Type=forking
+User=root
+Group=root
+ExecStart=/etc/init.d/hytcloud start
+ExecReload=/etc/init.d/hytcloud restart
+ExecStop=/etc/init.d/hytcloud  stop
+ExecStop=/etc/init.d/hytcloud  status
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target

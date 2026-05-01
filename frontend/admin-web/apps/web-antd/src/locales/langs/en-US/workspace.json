@@ -1,0 +1,28 @@
+{
+  "greeting": { "morning": "Good morning, {name}, let's start your day!" },
+  "currentTeam": "Current Team: {name}",
+  "currentProject": "Current Project: {name}",
+  "currentTeamProject": "Team: {team}, Project: {project}",
+  "fallbackDesc": "Welcome to FAN-CE Admin Console.",
+  "stats": { "project": "Projects", "dataset": "Datasets" },
+  "chat": {
+    "welcome": "Hello! I'm the FAN-CE workspace AI assistant. I can help you analyze data, answer bioinformatics questions, query databases, and more. Feel free to ask me anything.",
+    "placeholder": "Ask a question, AI will respond in real-time...",
+    "emptyHint": "No messages yet",
+    "streamingHint": "AI is responding...",
+    "defaultHint": "Streaming conversation based on the configured model",
+    "send": "Send",
+    "sending": "Responding",
+    "stop": "Stop",
+    "clear": "Clear Chat",
+    "cancelled": "Cancelled"
+  },
+  "error": {
+    "noModel": "No model configured. Please set up a model API in \"Platform -> Settings\" first.",
+    "requestFailed": "Request failed ({code}): {message}",
+    "noStreamBody": "Cannot read streaming response",
+    "streamFailed": "Stream failed: {message}",
+    "unknown": "Unknown error"
+  },
+  "action": { "platformSetting": "Platform Settings" }
+}

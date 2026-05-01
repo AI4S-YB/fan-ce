@@ -1,0 +1,54 @@
+{
+  "type": {
+    "value": "FASTQ",
+    "desc": "文件类型，比如 FASTA / FASTQ / GENBANK 等"
+  },
+  "filePath": {
+    "value": null,
+    "desc": "文件路径"
+  },
+  "platform": {
+    "value": null,
+    "desc": "测序平台，如 Illumina, PacBio, Oxford Nanopore, Ion Torrent, MGI, BGI"
+  },
+  "sequencingType": {
+    "value": null,
+    "desc": "测序类型，如 TruSeq, Nextera 等"
+  },
+  "totalReads": {
+    "value": null,
+    "desc": "总读取数量"
+  },
+  "readLengths": {
+    "value": {},
+    "desc": "读取长度统计信息，包含平均值、最小值、最大值、中位数等"
+  },
+  "gcContent": {
+    "value": {},
+    "desc": "GC含量分析，包含GC百分比、总碱基数、GC计数、AT计数、N计数、其他计数"
+  },
+  "qualityAnalysis": {
+    "value": {},
+    "desc": "质量分析，包含Q20百分比、Q30百分比、平均质量、总碱基质量等"
+  },
+  "fileInfo": {
+    "value": {},
+    "desc": "文件信息，包含文件大小（MB）等"
+  },
+  "adapterAnalysis": {
+    "value": {},
+    "desc": "接头分析结果，包含检测到的接头、污染率等"
+  },
+  "isCompressed": {
+    "value": null,
+    "desc": "文件是否为压缩格式，如 .gz 或 .bz2"
+  },
+  "error": {
+    "value": null,
+    "desc": "处理过程中的错误信息"
+  },
+  "sidecars": {
+    "value": [],
+    "desc": "相关的辅助文件列表"
+  }
+}

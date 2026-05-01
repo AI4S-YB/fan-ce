@@ -1,0 +1,110 @@
+{
+  "type": {
+    "value": "GFF3",
+    "desc": "文件类型标识"
+  },
+  "gffVersion": {
+    "value": null,
+    "desc": "GFF格式版本"
+  },
+  "genomeBuild": {
+    "value": null,
+    "desc": "基因组构建信息"
+  },
+  "genomeVersion": {
+    "value": null,
+    "desc": "基因组版本"
+  },
+  "genomeDate": {
+    "value": null,
+    "desc": "基因组日期"
+  },
+  "genebuildLastUpdated": {
+    "value": null,
+    "desc": "基因构建最后更新时间"
+  },
+  "sequenceRegions": {
+    "value": [],
+    "desc": "序列区域信息列表"
+  },
+  "sequenceRegionsCount": {
+    "value": null,
+    "desc": "序列区域数量"
+  },
+  "speciesCode": {
+    "value": null,
+    "desc": "物种代码（从文件名解析）"
+  },
+  "accession": {
+    "value": null,
+    "desc": "登录号（从文件名解析）"
+  },
+  "assemblyType": {
+    "value": null,
+    "desc": "装配类型（REFERENCE/DRAFT等）"
+  },
+  "assemblyName": {
+    "value": null,
+    "desc": "装配名称"
+  },
+  "geneModelId": {
+    "value": null,
+    "desc": "基因模型ID"
+  },
+  "version": {
+    "value": null,
+    "desc": "版本号"
+  },
+  "numFeatures": {
+    "value": null,
+    "desc": "特征总数"
+  },
+  "featureTypes": {
+    "value": {},
+    "desc": "特征类型统计"
+  },
+  "geneCount": {
+    "value": null,
+    "desc": "基因数量"
+  },
+  "mRNACount": {
+    "value": null,
+    "desc": "mRNA数量"
+  },
+  "exonCount": {
+    "value": null,
+    "desc": "外显子数量"
+  },
+  "CDSCount": {
+    "value": null,
+    "desc": "编码序列数量"
+  },
+  "chromosomes": {
+    "value": [],
+    "desc": "染色体/序列名称列表"
+  },
+  "sources": {
+    "value": [],
+    "desc": "数据来源列表"
+  },
+  "isCompressed": {
+    "value": null,
+    "desc": "是否为压缩格式"
+  },
+  "compressedSizeMB": {
+    "value": null,
+    "desc": "压缩文件大小（MB）"
+  },
+  "estimatedSizeMB": {
+    "value": null,
+    "desc": "估算解压后大小（MB）"
+  },
+  "otherHeaders": {
+    "value": [],
+    "desc": "其他头部信息"
+  },
+  "sidecars": {
+    "value": [],
+    "desc": "关联的辅助文件列表"
+  }
+}

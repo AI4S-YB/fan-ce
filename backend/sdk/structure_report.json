@@ -1,0 +1,57 @@
+{
+  "timestamp": "/Users/llq/apps/abd_api/abd_sdk",
+  "structure": {
+    "root_files": [
+      "build_complete.sh",
+      "LICENSE",
+      "requirements.txt",
+      "Makefile",
+      "pyproject.toml",
+      "README.md",
+      "setup.py",
+      "optimize_structure.py",
+      "optimize_simple.sh"
+    ],
+    "root_dirs": [
+      "dist",
+      "abd_sdk",
+      "build",
+      "abd_sdk.egg-info"
+    ],
+    "package_files": [
+      "config.py",
+      "http_client.py",
+      "client.py",
+      "__init__.py",
+      "logger.py",
+      "cli.py",
+      "exceptions.py"
+    ],
+    "package_dirs": [
+      "tests",
+      "__pycache__",
+      "examples",
+      "api"
+    ],
+    "api_files": [
+      "basis.py",
+      "user.py",
+      "system.py",
+      "database.py",
+      "__init__.py",
+      "experiment.py",
+      "sample.py",
+      "gene.py",
+      "base.py"
+    ],
+    "examples_files": [
+      "basic_usage.py",
+      "__init__.py"
+    ],
+    "tests_files": [
+      "test_basic.py",
+      "__init__.py"
+    ]
+  },
+  "recommendations": []
+}

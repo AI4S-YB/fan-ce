@@ -1,0 +1,182 @@
+{
+  "type": {
+    "value": "FASTA",
+    "desc": "FASTA基因组文件类型"
+  },
+  "accession": {
+    "value": null,
+    "desc": "样本登录号"
+  },
+  "sampleName": {
+    "value": null,
+    "desc": "样本名称"
+  },
+  "taxonomy": {
+    "value": null,
+    "desc": "物种学名"
+  },
+  "tissue": {
+    "value": null,
+    "desc": "取样组织类型"
+  },
+  "strategy": {
+    "value": null,
+    "desc": "测序策略"
+  },
+  "source": {
+    "value": null,
+    "desc": "文库来源类型"
+  },
+  "platform": {
+    "value": null,
+    "desc": "测序平台"
+  },
+  "filetype": {
+    "value": null,
+    "desc": "文件格式类型"
+  },
+  "fileName": {
+    "value": null,
+    "desc": "文件名称"
+  },
+  "filePath": {
+    "value": null,
+    "desc": "文件路径"
+  },
+  "gff": {
+    "value": null,
+    "desc": "是否有GFF文件"
+  },
+  "gffPath": {
+    "value": null,
+    "desc": "GFF文件路径"
+  },
+  "gtf": {
+    "value": null,
+    "desc": "是否有GTF文件"
+  },
+  "gcContent": {
+    "value": null,
+    "desc": "GC含量"
+  },
+  "totalBases": {
+    "value": null,
+    "desc": "总碱基数"
+  },
+  "scaffoldN50": {
+    "value": null,
+    "desc": "Scaffold N50值"
+  },
+  "busco": {
+    "value": null,
+    "desc": "BUSCO完整性评分"
+  },
+  "lai": {
+    "value": null,
+    "desc": "LAI指数"
+  },
+  "assemblyMethod": {
+    "value": null,
+    "desc": "组装方法"
+  },
+  "assemblerSoftware": {
+    "value": null,
+    "desc": "组装软件"
+  },
+  "assemblerVersion": {
+    "value": null,
+    "desc": "软件版本"
+  },
+  "assemblyDate": {
+    "value": null,
+    "desc": "组装日期"
+  },
+  "assemblyLevel": {
+    "value": null,
+    "desc": "组装水平（contig/scaffold/chromosome）"
+  },
+  "genomeVersion": {
+    "value": null,
+    "desc": "基因组版本"
+  },
+  "genomeReleaseDate": {
+    "value": null,
+    "desc": "发布日期"
+  },
+  "sequencingTechnologies": {
+    "value": null,
+    "desc": "测序技术组合"
+  },
+  "rawDataCoverage": {
+    "value": null,
+    "desc": "原始数据覆盖度"
+  },
+  "longReadCoverage": {
+    "value": null,
+    "desc": "长读长覆盖度"
+  },
+  "shortReadCoverage": {
+    "value": null,
+    "desc": "短读长覆盖度"
+  },
+  "hiCData": {
+    "value": null,
+    "desc": "Hi-C数据使用情况"
+  },
+  "contigCount": {
+    "value": null,
+    "desc": "Contig数量"
+  },
+  "scaffoldCount": {
+    "value": null,
+    "desc": "Scaffold数量"
+  },
+  "chromosomeCount": {
+    "value": null,
+    "desc": "染色体数量"
+  },
+  "contigN50": {
+    "value": null,
+    "desc": "Contig N50值"
+  },
+  "gapCount": {
+    "value": null,
+    "desc": "Gap数量"
+  },
+  "repeatContent": {
+    "value": null,
+    "desc": "重复序列含量"
+  },
+  "geneCount": {
+    "value": null,
+    "desc": "基因数量"
+  },
+  "proteinCodingGenes": {
+    "value": null,
+    "desc": "蛋白编码基因数"
+  },
+  "noncodingRnaGenes": {
+    "value": null,
+    "desc": "非编码RNA基因数"
+  },
+  "annotationMethod": {
+    "value": null,
+    "desc": "注释方法"
+  },
+  "annotationSoftware": {
+    "value": null,
+    "desc": "注释软件"
+  },
+  "annotationDatabase": {
+    "value": null,
+    "desc": "注释数据库"
+  },
+  "error": {
+    "value": null,
+    "desc": "处理过程中的错误信息"
+  },
+  "sidecars": {
+    "value": [],
+    "desc": "相关的辅助文件列表"
+  }
+}

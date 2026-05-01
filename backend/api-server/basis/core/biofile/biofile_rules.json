@@ -1,0 +1,261 @@
+{
+  "_comment": "Bioinformatics File Type Detection Rules. Version 0.4 (2025-07-30). Added FAI, extension bonus use-case, and sidecar mappings.",
+  "version": "0.4",
+  "containers": [
+    { "name": "gzip", "signature": { "offset": 0, "hex": "1F8B" }, "notes": "GZIP" },
+    { "name": "bgzf", "extends": "gzip", "bgzf_extra": { "si1": 66, "si2": 67, "slen": 2 }, "notes": "BGZF has 'BC' subfield in GZIP FEXTRA.", "next": "bgzf_first_block" },
+    { "name": "bzip2", "signature": { "offset": 0, "ascii": "BZh" } },
+    { "name": "xz", "signature": { "offset": 0, "hex": "FD377A585A00" } },
+    { "name": "zstd", "signature": { "offset": 0, "hex": "28B52FFD" } },
+    { "name": "zip", "signature": { "offset": 0, "hex": "504B0304" }, "next": "zip_list" },
+    { "name": "tar", "ustar_magic": true, "next": "tar_list" },
+    { "name": "hdf5", "signature_any_of": [ { "offset": 0, "hex": "894844460D0A1A0A" }, { "offsets": [0,512,1024,2048,4096], "hex": "894844460D0A1A0A" } ] }
+  ],
+  "formats": [
+    {
+      "name": "FASTA",
+      "category": "sequence",
+      "kind": "text",
+      "pattern_any": ["^>"],
+      "extensions": [".fa", ".fasta", ".fna", ".faa", ".fas", ".fa.gz", ".fasta.gz", ".fna.gz", ".faa.gz"],
+      "maybe_container": "gzip",
+      "aliases": ["FASTA-NUC", "FASTA-PRO"],
+      "infer_biomolecule": true,
+      "represents": "单条或多条生物序列（核酸 DNA/RNA 或蛋白质）；每条以 '>' 头行起始，其后为序列。"
+    },
+    {
+      "name": "FASTQ",
+      "category": "sequence",
+      "kind": "text",
+      "line_groups_of": 4,
+      "pattern_group": ["^@", "^[A-Za-z*.=~ACGTNUKMSWRYBDHV]+$", "^\\+", "^[!-~]+"],
+      "extensions": [".fastq", ".fq", ".fastq.gz", ".fq.gz"],
+      "maybe_container": "gzip",
+      "infer_biomolecule": true,
+      "represents": "测序读段（reads）与逐碱基质量值的四行记录：@头、序列、+头、质量串（与序列等长）。"
+    },
+
+    {
+      "name": "SAM",
+      "category": "alignment",
+      "kind": "text",
+      "header_any": ["^@HD", "^@SQ", "^@PG"],
+      "min_fields": 11,
+      "extensions": [".sam", ".sam.gz"],
+      "maybe_container": "gzip",
+      "represents": "读段对参考基因组的文本对齐结果，含可选头（@HD/@SQ/@PG）与制表分隔的比对行。"
+    },
+    {
+      "name": "BAM",
+      "category": "alignment",
+      "kind": "binary",
+      "requires_container": "bgzf",
+      "magic": { "offset": 0, "ascii": "BAM\\x01" },
+      "extensions": [".bam"],
+      "represents": "SAM 的 BGZF 压缩二进制形式，存放读段对齐与索引友好块。"
+    },
+    {
+      "name": "CRAM",
+      "category": "alignment",
+      "kind": "binary",
+      "magic_any_of": [ { "offset": 0, "ascii": "CRAM" } ],
+      "extensions": [".cram"],
+      "represents": "基于参考的压缩对齐格式（CRAM）。"
+    },
+
+    {
+      "name": "VCF",
+      "category": "variants",
+      "kind": "text",
+      "header_startswith": ["^##fileformat=VCFv"],
+      "header_must_have": ["#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO"],
+      "extensions": [".vcf", ".vcf.gz"],
+      "maybe_container": "gzip",
+      "represents": "变异调用记录（SNV/INDEL/SV），可包含样本基因型列（FORMAT 之后）。"
+    },
+    {
+      "name": "GVCF",
+      "category": "variants",
+      "kind": "text",
+      "header_startswith": ["^##fileformat=VCFv"],
+      "header_any": ["##GVCFBlock", "##GATKCommandLine", "##SentieonCommandLine"],
+      "pattern_any": ["##GVCFBlock"],
+      "extensions": [".gvcf", ".gvcf.gz", ".g.vcf", ".g.vcf.gz"],
+      "maybe_container": "gzip",
+      "priority": 100,
+      "represents": "基因组变异调用格式（GVCF），包含所有位点的置信度信息，支持联合基因分型。"
+    },
+    {
+      "name": "BCF",
+      "category": "variants",
+      "kind": "binary",
+      "maybe_container": "bgzf",
+      "extensions": [".bcf"],
+      "represents": "VCF 的二进制表示（BCF），便于压缩与索引。"
+    },
+
+    {
+      "name": "GFF3",
+      "category": "annotation",
+      "kind": "text",
+      "header_any": ["^##gff-version\\s*3"],
+      "exact_fields": 9,
+      "extensions": [".gff3", ".gff", ".gff3.gz", ".gff.gz"],
+      "maybe_container": "gzip",
+      "represents": "基因组特征注释的 9 列格式（GFF3），含 attributes 键值。"
+    },
+    {
+      "name": "GTF",
+      "category": "annotation",
+      "kind": "text",
+      "exact_fields": 9,
+      "attributes_hint_any": ["gene_id", "transcript_id"],
+      "extensions": [".gtf", ".gtf.gz"],
+      "maybe_container": "gzip",
+      "represents": "转录本/基因注释 9 列格式（GTF），attributes 常见 gene_id/transcript_id。"
+    },
+    {
+      "name": "BED",
+      "category": "annotation",
+      "kind": "text",
+      "min_fields": 3,
+      "max_fields": 12,
+      "extensions": [".bed", ".bed.gz", ".bed12", ".bed12.gz"],
+      "maybe_container": "gzip",
+      "represents": "基因组区间（最少3列：染色体、起始、终止；可扩展到 12 列）。"
+    },
+
+    {
+      "name": "bedGraph",
+      "category": "signal",
+      "kind": "text",
+      "header_any": ["^track", "^browser"],
+      "min_fields": 4,
+      "extensions": [".bedGraph", ".bedgraph", ".bg", ".bedGraph.gz", ".bedgraph.gz"],
+      "maybe_container": "gzip",
+      "represents": "基因组信号轨迹（每区间一个数值）。"
+    },
+    {
+      "name": "WIG",
+      "category": "signal",
+      "kind": "text",
+      "header_any": ["^fixedStep", "^variableStep", "^track"],
+      "extensions": [".wig", ".wig.gz"],
+      "maybe_container": "gzip",
+      "represents": "WIG 信号轨迹（fixedStep/variableStep 声明）。"
+    },
+
+    {
+      "name": "FAI",
+      "category": "index",
+      "kind": "text",
+      "extensions": [".fai"],
+      "min_fields": 5,
+      "max_fields": 6,
+      "numeric_columns": [2, 3, 4, 5, 6],
+      "relations_all": [ { "lhs": 5, "op": ">=", "rhs": 4 } ],
+      "represents": "FASTA/FASTQ 的索引（samtools faidx 生成）：FASTA 为 5 列；FASTQ 为 6 列（多一列 QUALOFFSET），用于随机访问序列。"
+    },
+
+    {
+      "name": "MatrixMarket",
+      "category": "matrix",
+      "kind": "text",
+      "header_startswith": ["^%%MatrixMarket"],
+      "extensions": [".mtx", ".mtx.gz"],
+      "maybe_container": "gzip",
+      "represents": "稀疏矩阵文本头（%%MatrixMarket），常用于表达矩阵等。"
+    },
+
+    {
+      "name": "CSV",
+      "category": "tabular",
+      "kind": "text",
+      "extensions": [".csv", ".csv.gz"],
+      "maybe_container": "gzip",
+      "represents": "逗号分隔值文件（CSV），用于存储表格数据。"
+    },
+    {
+      "name": "TSV",
+      "category": "tabular",
+      "kind": "text",
+      "extensions": [".tsv", ".tab", ".txt", ".tsv.gz", ".tab.gz"],
+      "maybe_container": "gzip",
+      "represents": "制表符分隔值文件（TSV/TAB），用于存储表格数据。"
+    },
+    {
+      "name": "Excel",
+      "category": "tabular",
+      "kind": "binary",
+      "magic_any_of": [
+        { "offset": 0, "hex": "D0CF11E0A1B11AE1" },
+        { "offset": 0, "hex": "504B030414000600" },
+        { "offset": 0, "hex": "504B0304" }
+      ],
+      "extensions": [".xls", ".xlsx", ".xlsm", ".xlsb"],
+       "represents": "Microsoft Excel 电子表格文件，包含工作簿和工作表数据。"
+     },
+
+    {
+      "name": "AnnData-h5ad",
+      "category": "omics-hdf5",
+      "kind": "binary",
+      "container": "hdf5",
+      "extensions": [".h5ad"],
+      "represents": "单细胞/转录组等 AnnData HDF5 容器。"
+    },
+    {
+      "name": "loom",
+      "category": "omics-hdf5",
+      "kind": "binary",
+      "container": "hdf5",
+      "extensions": [".loom"],
+      "represents": "loom HDF5 容器（表达矩阵 + 元数据）。"
+    },
+    {
+      "name": "cool",
+      "category": "omics-hdf5",
+      "kind": "binary",
+      "container": "hdf5",
+      "extensions": [".cool", ".mcool"],
+      "represents": "Hi-C/cooler 格式（接触矩阵）HDF5 容器。"
+    },
+    {
+      "name": "hic",
+      "category": "omics-binary",
+      "kind": "binary",
+      "magic_any_of": [ { "offset": 0, "ascii": "HIC" } ],
+      "extensions": [".hic"],
+      "represents": "Juicer/Hi-C 二进制接触矩阵。"
+    },
+
+    { "name": "BAI", "category": "index", "kind": "binary", "extensions": [".bai"], "represents": "BAM 索引文件。" },
+    { "name": "CRAI", "category": "index", "kind": "binary", "extensions": [".crai"], "represents": "CRAM 索引文件。" },
+    { "name": "CSI", "category": "index", "kind": "binary", "extensions": [".csi"], "represents": "CSI 通用索引。" },
+    { "name": "TBI", "category": "index", "kind": "binary", "extensions": [".tbi"], "represents": "Tabix 索引。" },
+    { "name": "GZI", "category": "index", "kind": "binary", "extensions": [".gzi"], "represents": "BGZF 索引（.gz 随机访问）。" }
+  ],
+  "sidecar_indices": [
+    { "main_ext": ".bam", "indices": [".bam.bai", ".bam.csi"] },
+    { "main_ext": ".cram", "indices": [".cram.crai", ".cram.csi"] },
+
+    { "main_ext": ".fa", "indices": [".fai"] },
+    { "main_ext": ".fasta", "indices": [".fai"] },
+    { "main_ext": ".fna", "indices": [".fai"] },
+    { "main_ext": ".fq", "indices": [".fai"] },
+    { "main_ext": ".fastq", "indices": [".fai"] },
+
+    { "main_ext": ".fa.gz", "indices": [".fai", ".gzi"] },
+    { "main_ext": ".fasta.gz", "indices": [".fai", ".gzi"] },
+    { "main_ext": ".fna.gz", "indices": [".fai", ".gzi"] },
+    { "main_ext": ".fq.gz", "indices": [".fai", ".gzi"] },
+    { "main_ext": ".fastq.gz", "indices": [".fai", ".gzi"] },
+
+    { "main_ext": ".vcf.gz", "indices": [".tbi", ".csi"] },
+    { "main_ext": ".gvcf.gz", "indices": [".tbi", ".csi"] },
+    { "main_ext": ".g.vcf.gz", "indices": [".tbi", ".csi"] },
+    { "main_ext": ".gff.gz", "indices": [".tbi", ".csi"] },
+    { "main_ext": ".gff3.gz", "indices": [".tbi", ".csi"] },
+    { "main_ext": ".bed.gz", "indices": [".tbi", ".csi"] }
+  ]
+}

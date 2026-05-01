@@ -1,0 +1,28 @@
+{
+  "greeting": { "morning": "早安, {name}, 开始您一天的工作吧！" },
+  "currentTeam": "当前团队：{name}",
+  "currentProject": "当前项目：{name}",
+  "currentTeamProject": "当前团队：{team}，当前项目：{project}",
+  "fallbackDesc": "欢迎使用 FAN-CE 数据管理后台。",
+  "stats": { "project": "项目", "dataset": "数据集" },
+  "chat": {
+    "welcome": "你好！我是 FAN-CE 工作台的 AI 助手。我可以帮你分析数据、解答生物信息学问题、查询数据库等。请随时向我提问。",
+    "placeholder": "输入你的问题，AI 助手将实时回复...",
+    "emptyHint": "暂时还没有对话消息",
+    "streamingHint": "AI 正在回复中...",
+    "defaultHint": "基于已配置的模型平台进行流式对话",
+    "send": "发送",
+    "sending": "回复中",
+    "stop": "停止生成",
+    "clear": "清空当前对话",
+    "cancelled": "已取消"
+  },
+  "error": {
+    "noModel": "当前没有可用的模型配置。请先在\"平台管理 -> 平台设置\"中配置模型 API 后再使用对话功能。",
+    "requestFailed": "请求失败 ({code}): {message}",
+    "noStreamBody": "无法读取流式响应",
+    "streamFailed": "流式请求失败: {message}",
+    "unknown": "未知错误"
+  },
+  "action": { "platformSetting": "打开平台设置" }
+}

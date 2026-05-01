@@ -1,0 +1,34 @@
+app:
+  host: 0.0.0.0
+  port: 8001
+  debug: true
+  alembic: false
+  db_init: true
+  seed_data: true
+
+database:
+  type: pgsql
+
+apps:
+  databases:
+    fileDir: /data/biodata
+
+pgsql_options:
+  user: postgres
+  password: your_password_here
+  host: 127.0.0.1
+  port: 5432
+  database: fan_ce_dev
+  connect_timeout: 5
+
+bootstrap_options:
+  enabled: true
+  admin_username: admin
+  admin_password: change_me
+  admin_email: admin@local.dev
+  admin_nickname: System Admin
+  admin_role_name: Super Admin
+  admin_role_code: superman
+
+sqlite_options:
+  name: fan_ce_dev.sqlite3

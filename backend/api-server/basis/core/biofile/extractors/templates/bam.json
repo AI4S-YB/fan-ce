@@ -1,0 +1,94 @@
+{
+  "type": {
+    "value": "BAM",
+    "desc": "文件类型标识"
+  },
+  "filePath": {
+    "value": null,
+    "desc": "文件路径"
+  },
+  "fileSize": {
+    "value": null,
+    "desc": "文件大小（字节）"
+  },
+  "isCompressed": {
+    "value": null,
+    "desc": "是否为压缩格式"
+  },
+  "headerCount": {
+    "value": null,
+    "desc": "头部记录数量"
+  },
+  "isSorted": {
+    "value": null,
+    "desc": "是否已排序"
+  },
+  "refGenome": {
+    "value": null,
+    "desc": "参考基因组名称或版本"
+  },
+  "sample": {
+    "value": null,
+    "desc": "样本ID（来自@RG）"
+  },
+  "platform": {
+    "value": null,
+    "desc": "测序平台（如ILLUMINA）"
+  },
+  "numReads": {
+    "value": null,
+    "desc": "总读段数"
+  },
+  "numMapped": {
+    "value": null,
+    "desc": "成功比对的读段数"
+  },
+  "numUnmapped": {
+    "value": null,
+    "desc": "未比对读段数"
+  },
+  "mappingRate": {
+    "value": null,
+    "desc": "比对率"
+  },
+  "avgReadLength": {
+    "value": null,
+    "desc": "平均读段长度"
+  },
+  "avgMappingQuality": {
+    "value": null,
+    "desc": "平均比对质量"
+  },
+  "hasSupplementary": {
+    "value": null,
+    "desc": "是否存在补充比对"
+  },
+  "hasSecondary": {
+    "value": null,
+    "desc": "是否存在次要比对"
+  },
+  "indexFile": {
+    "value": null,
+    "desc": "索引文件信息"
+  },
+  "insertSizeStats": {
+    "value": null,
+    "desc": "插入片段大小统计"
+  },
+  "sampleInfo": {
+    "value": null,
+    "desc": "详细样本信息"
+  },
+  "platformInfo": {
+    "value": null,
+    "desc": "详细平台信息"
+  },
+  "qualityDistribution": {
+    "value": null,
+    "desc": "质量分布统计"
+  },
+  "flagStatistics": {
+    "value": null,
+    "desc": "FLAG位统计"
+  }
+}

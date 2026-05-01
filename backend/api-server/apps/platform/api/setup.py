@@ -1,0 +1,112 @@
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+
+from apps.common.depends import get_active_user
+from db.database import get_db
+from libs.responses.response import response_200
+from ..schemas import PlatformSetupTaxonomyImportStartRequest, PlatformSetupTaxonomyPackageRegisterBuiltinRequest
+from ..setup_jobs import get_taxonomy_import_job, run_taxonomy_import_job, submit_taxonomy_import_job
+from ..setup_state import list_taxonomy_packages, query_taxonomy_setup_state, register_taxonomy_package
+
+setup_router = APIRouter(tags=["app:platform:平台初始化"])
+
+
+def _require_platform_admin(user):
+    if getattr(user, "is_superman", False) or int(getattr(user, "user_type", 0) or 0) == 1:
+        return
+    raise HTTPException(status_code=4030, detail="没有权限")
+
+
+@setup_router.get("/setup/status", summary="平台初始化状态")
+async def get_setup_status(
+    db=Depends(get_db),
+    _user=Depends(get_active_user),
+):
+    _require_platform_admin(_user)
+    state = query_taxonomy_setup_state(db)
+    return response_200(
+        data={
+            "taxonomy_ready": state["ready"],
+            "taxonomy_status": state["status"],
+            "locks": [state["lock"]],
+        }
+    )
+
+
+@setup_router.get("/setup/taxonomy/current", summary="当前 taxonomy 初始化状态")
+async def get_taxonomy_current(
+    db=Depends(get_db),
+    _user=Depends(get_active_user),
+):
+    _require_platform_admin(_user)
+    state = query_taxonomy_setup_state(db)
+    return response_200(
+        data={
+            "ready": state["ready"],
+            "status": state["status"],
+            "current_package": state["package"],
+            "current_snapshot": state["snapshot"],
+            "latest_job": state["job"],
+            "lock": state["lock"],
+        }
+    )
+
+
+@setup_router.get("/setup/taxonomy/packages", summary="taxonomy 安装包列表")
+async def get_taxonomy_packages(
+    db=Depends(get_db),
+    _user=Depends(get_active_user),
+):
+    _require_platform_admin(_user)
+    return response_200(data=list_taxonomy_packages(db))
+
+
+@setup_router.post("/setup/taxonomy/package/register-builtin", summary="注册内置 taxonomy 安装包")
+async def register_taxonomy_builtin_package(
+    request_data: PlatformSetupTaxonomyPackageRegisterBuiltinRequest,
+    db=Depends(get_db),
+    _user=Depends(get_active_user),
+):
+    _require_platform_admin(_user)
+    try:
+        package_data = register_taxonomy_package(
+            db,
+            payload=request_data.model_dump(),
+            created_by=getattr(_user, "id", None),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=4000, detail=str(exc)) from exc
+    return response_200(data=package_data)
+
+
+@setup_router.post("/setup/taxonomy/import/start", summary="启动 taxonomy 导入任务")
+async def start_taxonomy_import(
+    request_data: PlatformSetupTaxonomyImportStartRequest,
+    background_tasks: BackgroundTasks,
+    db=Depends(get_db),
+    _user=Depends(get_active_user),
+):
+    _require_platform_admin(_user)
+    try:
+        job_data = submit_taxonomy_import_job(
+            db,
+            package_id=request_data.package_id,
+            force_reinstall=bool(request_data.force_reinstall),
+            operator_id=getattr(_user, "id", None),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=4000, detail=str(exc)) from exc
+    background_tasks.add_task(run_taxonomy_import_job, job_data["id"])
+    return response_200(data=job_data)
+
+
+@setup_router.get("/setup/taxonomy/import/status", summary="查询 taxonomy 导入任务状态")
+async def get_taxonomy_import_status(
+    job_id: int | None = None,
+    db=Depends(get_db),
+    _user=Depends(get_active_user),
+):
+    _require_platform_admin(_user)
+    data = get_taxonomy_import_job(db, job_id=job_id)
+    if data is None:
+        return response_200(data={})
+    return response_200(data=data)

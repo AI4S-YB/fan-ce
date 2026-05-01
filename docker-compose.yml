@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: fan-ce-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fan_ce_dev
+      POSTGRES_USER: fan_api
+      POSTGRES_PASSWORD: fan_api_dev
+      TZ: Asia/Shanghai
+    ports:
+      - "5433:5432"
+    volumes:
+      - fan_api_poc_pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fan_api -d fan_ce_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  fan_api_poc_pgdata:

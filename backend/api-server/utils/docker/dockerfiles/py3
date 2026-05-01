@@ -1,0 +1,39 @@
+FROM rockylinux/rockylinux:8.5
+USER root
+
+RUN mkdir -p /etc/yum.repos.d/bak && \
+    mv /etc/yum.repos.d/CentOS-* /etc/yum.repos.d/bak && \
+    curl -o /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-7.repo && \
+    yum clean all
+
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    yum install -y zlib zlib-dev openssl-devel sqlite-devel bzip2-devel libffi libffi-devel gcc gcc-c++ wget
+
+RUN cd /tmp \
+    && wget https://www.cpan.org/src/5.0/perl-5.28.0.tar.gz --no-check-certificate \
+    && tar -zxvf perl-5.28.0.tar.gz \
+    && cd perl-5.28.0 \
+    && ./Configure -des -Dprefix=/usr/local/localperl \
+    && make && make test && make install \
+
+RUN cd /tmp  \
+    && wget http://www.openssl.org/source/openssl-1.1.1.tar.gz \
+    && tar -zxvf openssl-1.1.1.tar.gz \
+    && cd openssl-1.1.1 \
+    && ./config --prefix=/usr/local/openssl shared zlib \
+    && make && make install
+
+RUN curl https://www.python.org/ftp/python/3.10.11/Python-3.10.11.tgz --output /tmp/Python-3.10.11.tgz
+
+RUN cd /tmp && \
+    tar xzf Python-3.10.11.tgz && \
+    cd /tmp/Python-3.10.11 && \
+    ./configure --enable-optimizations --with-openssl=/usr/local/openssl && \
+    make install && \
+    ln -sf /usr/local/bin/python3.10 /usr/bin/python3 && \
+    ln -sf /usr/local/bin/pip3.10 /usr/bin/pip3 && \
+    cd /tmp && \
+    rm -rf Python-3.10.11.tgz && \
+    rm -rf /tmp/Python-3.10.11
+
+WORKDIR /

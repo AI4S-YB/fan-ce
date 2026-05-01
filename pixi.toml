@@ -1,0 +1,17 @@
+[workspace]
+authors = ["kentnf, llq, kasper1995 <kentnf@gmail.com>"]
+channels = ["conda-forge", "bioconda"]
+name = "fan-ce"
+platforms = ["osx-arm64", "osx-64", "linux-64", "linux-aarch64"]
+version = "0.1.0"
+
+[tasks]
+backend-dev = "scripts/dev/start-backend-inner.sh"
+bio-tools = "scripts/dev/check-bio-tools-inner.sh"
+
+[dependencies]
+samtools = "*"
+bcftools = "*"
+htslib = "*"
+bedtools = "*"
+pybigwig = "*"

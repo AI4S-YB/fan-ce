@@ -1,0 +1,42 @@
+{
+  "type": {
+    "value": "Excel",
+    "desc": "文件类型，Excel电子表格文件"
+  },
+  "fileName": {
+    "value": null,
+    "desc": "Excel文件名"
+  },
+  "sheetCount": {
+    "value": null,
+    "desc": "工作表数量"
+  },
+  "sheetNames": {
+    "value": [],
+    "desc": "所有工作表名称列表"
+  },
+  "sheetsInfo": {
+    "value": [],
+    "desc": "每个工作表的详细信息，包括列名、行数、列数等"
+  },
+  "totalColumns": {
+    "value": null,
+    "desc": "所有工作表的总列数"
+  },
+  "totalRows": {
+    "value": null,
+    "desc": "所有工作表的总行数"
+  },
+  "isCompressed": {
+    "value": null,
+    "desc": "文件是否为压缩格式"
+  },
+  "fileSize": {
+    "value": null,
+    "desc": "文件大小（字节）"
+  },
+  "sidecars": {
+    "value": [],
+    "desc": "相关的辅助文件列表"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "type": {
+    "value": "GTF",
+    "desc": "文件类型标识"
+  },
+  "version": {
+    "value": null,
+    "desc": "GTF格式版本"
+  },
+  "firstFeature": {
+    "value": null,
+    "desc": "第一个特征记录"
+  },
+  "attributes": {
+    "value": [],
+    "desc": "属性字段列表"
+  },
+  "numFeatures": {
+    "value": null,
+    "desc": "特征总数"
+  },
+  "featureTypes": {
+    "value": {},
+    "desc": "特征类型统计"
+  },
+  "chromosomes": {
+    "value": [],
+    "desc": "染色体列表"
+  },
+  "sources": {
+    "value": [],
+    "desc": "数据来源列表"
+  },
+  "isCompressed": {
+    "value": null,
+    "desc": "是否为压缩格式"
+  },
+  "avgFeatureLength": {
+    "value": null,
+    "desc": "平均特征长度"
+  },
+  "minFeatureLength": {
+    "value": null,
+    "desc": "最短特征长度"
+  },
+  "maxFeatureLength": {
+    "value": null,
+    "desc": "最长特征长度"
+  },
+  "featureTypeDistribution": {
+    "value": {},
+    "desc": "特征类型分布统计"
+  },
+  "chromosomeDistribution": {
+    "value": {},
+    "desc": "染色体分布统计"
+  },
+  "sidecars": {
+    "value": [],
+    "desc": "关联的辅助文件列表"
+  }
+}

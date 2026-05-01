@@ -1,0 +1,17 @@
+{
+  "chat": {
+    "placeholder": "Enter your question...",
+    "alternativePlaceholder": "Ask about gene function, data queries...",
+    "thinking": "Thinking",
+    "resend": "Resend",
+    "toolCalling": "Tool Calling",
+    "totalRecords": "{count} records total",
+    "previewLimit": "Preview Limit",
+    "noData": "No Data",
+    "executing": "Executing...",
+    "provideAlternativeCommand": "Please provide a new command",
+    "placeholderWithFile": "Enter your question, or upload a file...",
+    "callingTool": "Calling {toolName} ...",
+    "previewTruncated": "Showing first {previewCount} of {totalCount} records"
+  }
+}

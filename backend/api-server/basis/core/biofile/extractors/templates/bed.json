@@ -1,0 +1,26 @@
+{
+  "type": {
+    "value": "BED",
+    "desc": "文件类型标识"
+  },
+  "file_info": {
+    "value": {},
+    "desc": "文件基本信息"
+  },
+  "source_info": {
+    "value": {},
+    "desc": "数据源信息"
+  },
+  "content_stats": {
+    "value": {},
+    "desc": "内容统计信息"
+  },
+  "format_info": {
+    "value": {},
+    "desc": "BED格式信息"
+  },
+  "sidecars": {
+    "value": [],
+    "desc": "关联的辅助文件"
+  }
+}

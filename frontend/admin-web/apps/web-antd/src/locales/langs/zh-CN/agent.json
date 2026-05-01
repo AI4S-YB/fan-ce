@@ -1,0 +1,17 @@
+{
+  "chat": {
+    "placeholder": "输入您的问题...",
+    "alternativePlaceholder": "询问基因功能、数据查询...",
+    "thinking": "思考中",
+    "resend": "重新发送",
+    "toolCalling": "工具调用",
+    "totalRecords": "共 {count} 条记录",
+    "previewLimit": "预览限制",
+    "noData": "暂无数据",
+    "executing": "执行中...",
+    "provideAlternativeCommand": "请提供新的指令",
+    "placeholderWithFile": "输入您的问题，或上传文件...",
+    "callingTool": "正在调用 {toolName} ...",
+    "previewTruncated": "仅显示前 {previewCount} 条，共 {totalCount} 条"
+  }
+}

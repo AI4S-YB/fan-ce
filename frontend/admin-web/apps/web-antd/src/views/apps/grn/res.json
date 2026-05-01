@@ -1,0 +1,233 @@
+{
+  "code": 2000,
+  "msg": "Successfully retrieved gene relationships",
+  "data": {
+    "items": [
+      {
+        "node1": {
+          "name": "AT1G01030.1",
+          "attributes": {
+            "target_gene_name": "NGA3",
+            "target_gene_description": "Member of the RAV family  of DNA binding proteins. Contains B3 domain. Component of transcriptional regulatory complex directing stigma development"
+          }
+        },
+        "node2": {
+          "name": "AT1G49480",
+          "attributes": {
+            "tf_name": "RTV1",
+            "tf_family": "REM"
+          }
+        },
+        "edge_attributes": {
+          "peak_fold-change": "7.61572",
+          "c_score": "9",
+          "weight": 1.0,
+          "created_at": "2025-08-10T11:16:32.698878"
+        }
+      },
+      {
+        "node1": {
+          "name": "AT1G01030.1",
+          "attributes": {
+            "target_gene_name": "NGA3",
+            "target_gene_description": "Member of the RAV family  of DNA binding proteins. Contains B3 domain. Component of transcriptional regulatory complex directing stigma development"
+          }
+        },
+        "node2": {
+          "name": "AT1G74480",
+          "attributes": {
+            "tf_name": "RKD2",
+            "tf_family": "RWPRK"
+          }
+        },
+        "edge_attributes": {
+          "peak_fold-change": "9.37117",
+          "c_score": "8",
+          "weight": 1.0,
+          "created_at": "2025-08-10T11:16:32.827573"
+        }
+      },
+      {
+        "node1": {
+          "name": "AT1G01030.1",
+          "attributes": {
+            "target_gene_name": "NGA3",
+            "target_gene_description": "Member of the RAV family  of DNA binding proteins. Contains B3 domain. Component of transcriptional regulatory complex directing stigma development"
+          }
+        },
+        "node2": {
+          "name": "AT2G22430",
+          "attributes": {
+            "tf_name": "HB6",
+            "tf_family": "HOMEOBOX"
+          }
+        },
+        "edge_attributes": {
+          "peak_fold-change": "6.38137",
+          "c_score": "8",
+          "weight": 1.0,
+          "created_at": "2025-08-10T11:16:32.159899"
+        }
+      },
+      {
+        "node1": {
+          "name": "AT1G01030.1",
+          "attributes": {
+            "target_gene_name": "NGA3",
+            "target_gene_description": "Member of the RAV family  of DNA binding proteins. Contains B3 domain. Component of transcriptional regulatory complex directing stigma development"
+          }
+        },
+        "node2": {
+          "name": "AT5G39760",
+          "attributes": {
+            "tf_name": "HB23",
+            "tf_family": "ZFHD"
+          }
+        },
+        "edge_attributes": {
+          "peak_fold-change": "5.63216",
+          "c_score": "8",
+          "weight": 1.0,
+          "created_at": "2025-08-10T11:16:33.040044"
+        }
+      },
+      {
+        "node1": {
+          "name": "AT1G01030.1",
+          "attributes": {
+            "target_gene_name": "NGA3",
+            "target_gene_description": "Member of the RAV family  of DNA binding proteins. Contains B3 domain. Component of transcriptional regulatory complex directing stigma development"
+          }
+        },
+        "node2": {
+          "name": "AT5G65410",
+          "attributes": {
+            "tf_name": "HB25",
+            "tf_family": "ZFHD"
+          }
+        },
+        "edge_attributes": {
+          "peak_fold-change": "7.86817",
+          "c_score": "10",
+          "weight": 1.0,
+          "created_at": "2025-08-10T11:16:33.059348"
+        }
+      },
+      {
+        "node1": {
+          "name": "AT1G01110.2",
+          "attributes": {
+            "target_gene_name": "IQD18",
+            "target_gene_description": "Member of IQ67 (CaM binding) domain containing family."
+          }
+        },
+        "node2": {
+          "name": "AT2G30250",
+          "attributes": {
+            "tf_name": "WRKY25",
+            "tf_family": "WRKY"
+          }
+        },
+        "edge_attributes": {
+          "peak_fold-change": "31.3711",
+          "c_score": "8",
+          "weight": 1.0,
+          "created_at": "2025-08-10T11:16:32.953424"
+        }
+      },
+      {
+        "node1": {
+          "name": "AT1G01120.1",
+          "attributes": {
+            "target_gene_name": "KCS1",
+            "target_gene_description": "Encodes a condensing enzyme KCS1 (3-ketoacyl-CoA synthase 1) which is involved in the critical fatty acid elongation process in wax biosynthesis."
+          }
+        },
+        "node2": {
+          "name": "AT1G69780",
+          "attributes": {
+            "tf_name": "HB13",
+            "tf_family": "HOMEOBOX"
+          }
+        },
+        "edge_attributes": {
+          "peak_fold-change": "11.3577",
+          "c_score": "9",
+          "weight": 1.0,
+          "created_at": "2025-08-10T11:16:31.870835"
+        }
+      },
+      {
+        "node1": {
+          "name": "AT1G01120.1",
+          "attributes": {
+            "target_gene_name": "KCS1",
+            "target_gene_description": "Encodes a condensing enzyme KCS1 (3-ketoacyl-CoA synthase 1) which is involved in the critical fatty acid elongation process in wax biosynthesis."
+          }
+        },
+        "node2": {
+          "name": "AT2G22430",
+          "attributes": {
+            "tf_name": "HB6",
+            "tf_family": "HOMEOBOX"
+          }
+        },
+        "edge_attributes": {
+          "peak_fold-change": "12.6376",
+          "c_score": "9",
+          "weight": 1.0,
+          "created_at": "2025-08-10T11:16:32.094880"
+        }
+      },
+      {
+        "node1": {
+          "name": "AT1G01120.1",
+          "attributes": {
+            "target_gene_name": "KCS1",
+            "target_gene_description": "Encodes a condensing enzyme KCS1 (3-ketoacyl-CoA synthase 1) which is involved in the critical fatty acid elongation process in wax biosynthesis."
+          }
+        },
+        "node2": {
+          "name": "AT3G02940",
+          "attributes": {
+            "tf_name": "MYB107",
+            "tf_family": "MYB"
+          }
+        },
+        "edge_attributes": {
+          "peak_fold-change": "24.6573",
+          "c_score": "10",
+          "weight": 1.0,
+          "created_at": "2025-08-10T11:16:32.204125"
+        }
+      },
+      {
+        "node1": {
+          "name": "AT1G01120.1",
+          "attributes": {
+            "target_gene_name": "KCS1",
+            "target_gene_description": "Encodes a condensing enzyme KCS1 (3-ketoacyl-CoA synthase 1) which is involved in the critical fatty acid elongation process in wax biosynthesis."
+          }
+        },
+        "node2": {
+          "name": "AT5G03790",
+          "attributes": {
+            "tf_name": "HB51",
+            "tf_family": "HOMEOBOX"
+          }
+        },
+        "edge_attributes": {
+          "peak_fold-change": "12.3589",
+          "c_score": "8",
+          "weight": 1.0,
+          "created_at": "2025-08-10T11:16:32.025741"
+        }
+      }
+    ],
+    "total": 39380,
+    "page": 1,
+    "page_size": 10,
+    "total_pages": 3938,
+    "search_keyword": null
+  }
+}

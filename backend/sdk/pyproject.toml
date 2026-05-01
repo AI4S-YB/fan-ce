@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# 注释掉所有可能冲突的配置，让setup.py完全控制构建过程
+# [project]
+# name = "abd-sdk"
+# version = "1.0.0"
+# description = "FAN-CE SDK"
+# readme = "README.md"
+# license = {text = "MIT"}
+# authors = [
+#     {name = "kentnf, llq, kasper1995"}
+# ]
+# maintainers = [
+#     {name = "ABD Team", email = "abd@example.com"}
+# ]
+# keywords = ["bioinformatics", "genomics", "biology", "api", "sdk", "client", "analysis", "research"]
+# classifiers = [
+#     "Development Status :: 4 - Beta",
+#     "Intended Audience :: Developers",
+#     "Intended Audience :: Science/Research",
+#     "License :: OSI Approved :: MIT License",
+#     "Operating System :: OS Independent",
+#     "Programming Language :: Python :: 3",
+#     "Programming Language :: Python :: 3.8",
+#     "Programming Language :: Python :: 3.9",
+#     "Programming Language :: Python :: 3.10",
+#     "Programming Language :: Python :: 3.11",
+#     "Programming Language :: Python :: 3.12",
+#     "Topic :: Scientific/Engineering :: Bio-Informatics",
+#     "Topic :: Software Development :: Libraries :: Python Modules",
+#     "Topic :: Software Development :: Libraries :: Application Frameworks",
+# ]
+# requires-python = ">=3.8"
+# dependencies = [
+#     "requests>=2.31.0",
+#     "urllib3>=2.0.0",
+#     "pydantic>=2.0.0",
+#     "pydantic-settings>=2.0.0",
+# ]
+
+# [project.optional-dependencies]
+# dev = [
+#     "pytest>=6.0.0",
+#     "pytest-cov>=2.0.0",
+#     "black>=21.0.0",
+#     "flake8>=3.8.0",
+#     "mypy>=0.800",
+# ]
+# test = [
+#     "pytest>=6.0.0",
+#     "pytest-cov>=2.0.0",
+#     "pytest-mock>=3.0.0",
+#     "responses>=0.12.0",
+# ]
+
+# [project.urls]
+# Homepage = "https://github.com/abd-team/abd-sdk"
+# Documentation = "https://abd-sdk.readthedocs.io/"
+# Repository = "https://github.com/abd-team/abd-sdk"
+# "Bug Tracker" = "https://github.com/abd-team/abd-sdk/issues"
+
+# [project.scripts]
+# abd-sdk = "abd_sdk.cli:main"
+
+# [tool.setuptools.packages.find]
+# where = [""]
+# include = ["abd_sdk*"]
+# exclude = ["tests*"]
+
+# [tool.setuptools.package-data]
+# abd_sdk = ["*.txt", "*.md", "*.yaml", "*.yml", "*.json"]

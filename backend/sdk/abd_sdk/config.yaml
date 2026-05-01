@@ -1,0 +1,226 @@
+# FAN-CE SDK 配置文件示例
+# 文件名: abd_sdk_config.yaml
+# 描述: FAN-CE SDK配置文件
+# 版本: 3.0.1
+
+# API 配置
+api:
+  # API基础URL
+  base_url: "http://localhost:8889"
+  # API前缀
+  api_prefix: "/api/v1"
+  # 请求超时时间（秒）
+  timeout: 30
+  # 重试次数
+  retry_count: 3
+  # 重试延迟（秒）
+  retry_delay: 1
+
+# 认证配置
+auth:
+  # Token类型
+  token_type: "Bearer"
+  # Token请求头名称
+  token_header: "Authorization"
+  # 默认用户名
+  username: "admin"
+  # 默认密码
+  password: "admin"
+
+# 日志配置
+logging:
+  # 日志总开关 - 控制是否启用任何日志记录
+  enabled: false
+
+  # 日志级别: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: "INFO"
+
+  # 日志文件路径（可选）
+  log_file: null
+
+  # 日志文件最大大小（字节）
+  max_bytes: 10485760 # 10MB
+
+  # 日志文件备份数量
+  backup_count: 5
+
+  # 控制台日志开关 - 控制是否在控制台输出日志
+  console_enabled: true
+
+  # 文件日志开关 - 控制是否写入日志文件
+  file_enabled: true
+
+  # API请求日志开关 - 控制是否记录API请求日志
+  api_logging_enabled: true
+
+  # 错误日志开关 - 控制是否记录错误日志
+  error_logging_enabled: true
+
+# 缓存配置
+cache:
+  # 缓存总开关
+  enabled: true
+
+  # 缓存生存时间（秒）
+  tl: 300 # 5分钟
+
+  # 缓存最大条目数
+  max_size: 1000
+
+# 数据库配置（可选）
+database:
+  # 数据库类型: postgresql, sqlite
+  type: "postgresql"
+
+  # 数据库主机
+  host: "localhost"
+
+  # 数据库端口
+  port: 5432
+
+  # 数据库名称
+  name: "fance_db"
+
+  # 数据库用户名
+  username: "db_user"
+
+  # 数据库密码
+  password: "db_password"
+
+  # 连接池大小
+  pool_size: 10
+
+  # 连接超时（秒）
+  connect_timeout: 10
+
+# 文件存储配置（可选）
+storage:
+  # 存储类型: local, s3, minio
+  type: "local"
+
+  # 本地存储路径
+  local_path: "./data"
+
+  # S3配置
+  s3:
+    bucket: "fance-bucket"
+    region: "us-east-1"
+    access_key: "your_access_key"
+    secret_key: "your_secret_key"
+
+  # MinIO配置
+  minio:
+    endpoint: "localhost:9000"
+    access_key: "minioadmin"
+    secret_key: "minioadmin"
+    bucket: "fance-bucket"
+
+# 安全配置（可选）
+security:
+  # 是否启用SSL验证
+  verify_ssl: true
+
+  # 自定义CA证书路径
+  ca_cert: null
+
+  # 客户端证书路径
+  client_cert: null
+
+  # 客户端私钥路径
+  client_key: null
+
+  # 代理配置
+  proxy:
+    http: null
+    https: null
+
+# 性能配置（可选）
+performance:
+  # 连接池大小
+  connection_pool_size: 20
+
+  # 最大并发请求数
+  max_concurrent_requests: 100
+
+  # 请求队列大小
+  request_queue_size: 1000
+
+  # 心跳间隔（秒）
+  heartbeat_interval: 30
+
+# 监控配置（可选）
+monitoring:
+  # 是否启用性能监控
+  enabled: false
+
+  # 监控数据收集间隔（秒）
+  collection_interval: 60
+
+  # 是否启用健康检查
+  health_check: false
+
+  # 健康检查间隔（秒）
+  health_check_interval: 300
+
+# 开发配置（可选）
+development:
+  # 是否启用调试模式
+  debug: false
+
+  # 是否启用详细日志
+  verbose: false
+
+  # 是否启用性能分析
+  profiling: false
+
+  # 是否启用测试模式
+  test_mode: false
+
+# 环境特定配置
+environments:
+  # 开发环境
+  development:
+    api:
+      base_url: "http://localhost:8002"
+    logging:
+      level: "DEBUG"
+      console_enabled: true
+      file_enabled: false
+
+  # 测试环境
+  testing:
+    api:
+      base_url: "http://test-server:8001"
+    logging:
+      level: "INFO"
+      console_enabled: true
+      file_enabled: true
+      log_file: "./logs/test.log"
+
+  # 生产环境
+  production:
+    api:
+      base_url: "https://api.fan-ce.com"
+    logging:
+      level: "WARNING"
+      console_enabled: false
+      file_enabled: true
+      log_file: "/var/log/fance_sdk.log"
+      api_logging_enabled: false
+      error_logging_enabled: true
+# 使用说明
+# 1. 复制此文件并重命名为 fance_sdk_config.yaml
+# 2. 根据实际环境修改配置值
+# 3. 在代码中使用配置文件：
+#    client = FANCEClient(config_file="fance_sdk_config.yaml")
+#
+# 环境变量优先级高于配置文件，例如：
+# export FANCE_LOG_ENABLED=false
+# export FANCE_LOG_LEVEL=ERROR
+#
+# 日志开关说明：
+# - enabled: 总开关，设为false时完全禁用日志
+# - console_enabled: 控制台日志开关
+# - file_enabled: 文件日志开关
+# - api_logging_enabled: API请求日志开关
+# - error_logging_enabled: 错误日志开关

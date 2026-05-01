@@ -1,0 +1,42 @@
+{
+  "type": {
+    "value": "CSV",
+    "desc": "文件类型，逗号分隔值文件"
+  },
+  "fileName": {
+    "value": null,
+    "desc": "CSV文件名"
+  },
+  "columnCount": {
+    "value": null,
+    "desc": "列数"
+  },
+  "columnNames": {
+    "value": [],
+    "desc": "列名列表"
+  },
+  "rowCount": {
+    "value": null,
+    "desc": "数据行数（不包括表头）"
+  },
+  "hasHeader": {
+    "value": null,
+    "desc": "是否包含表头行"
+  },
+  "encoding": {
+    "value": null,
+    "desc": "文件编码格式"
+  },
+  "isCompressed": {
+    "value": null,
+    "desc": "文件是否为压缩格式"
+  },
+  "fileSize": {
+    "value": null,
+    "desc": "文件大小（字节）"
+  },
+  "sidecars": {
+    "value": [],
+    "desc": "相关的辅助文件列表"
+  }
+}

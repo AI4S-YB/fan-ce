@@ -1,0 +1,62 @@
+{
+  "type": {
+    "value": "SAM",
+    "desc": "文件类型标识"
+  },
+  "HD": {
+    "value": {},
+    "desc": "头部信息"
+  },
+  "SQ": {
+    "value": [],
+    "desc": "参考序列信息"
+  },
+  "RG": {
+    "value": [],
+    "desc": "读段组信息"
+  },
+  "PG": {
+    "value": [],
+    "desc": "程序信息"
+  },
+  "numSQ": {
+    "value": null,
+    "desc": "参考序列数量"
+  },
+  "SO": {
+    "value": null,
+    "desc": "排序顺序"
+  },
+  "numAlignments": {
+    "value": null,
+    "desc": "比对记录总数"
+  },
+  "mappedReads": {
+    "value": null,
+    "desc": "已比对读段数"
+  },
+  "unmappedReads": {
+    "value": null,
+    "desc": "未比对读段数"
+  },
+  "isCompressed": {
+    "value": null,
+    "desc": "是否为压缩格式"
+  },
+  "mappingQualityDistribution": {
+    "value": {},
+    "desc": "比对质量分布统计"
+  },
+  "insertSizeDistribution": {
+    "value": {},
+    "desc": "插入片段大小分布"
+  },
+  "flagStatistics": {
+    "value": {},
+    "desc": "标志位统计"
+  },
+  "sidecars": {
+    "value": [],
+    "desc": "关联的辅助文件列表"
+  }
+}

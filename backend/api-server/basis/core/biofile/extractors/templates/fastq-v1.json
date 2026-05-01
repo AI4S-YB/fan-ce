@@ -1,0 +1,146 @@
+{
+  "type": {
+    "value": "FASTQ",
+    "desc": "生物样本数据文件类型"
+  },
+  "accession": {
+    "value": null,
+    "desc": "样本登录号，如SRA登录号"
+  },
+  "sampleName": {
+    "value": null,
+    "desc": "样本名称" 
+  },
+  "taxonomy": {
+    "value": null,
+    "desc": "物种学名"
+  },
+  "tissue": {
+    "value": null,
+    "desc": "取样组织类型"
+  },
+  "libraryStrategy": {
+    "value": null,
+    "desc": "测序文库策略，如WGS、RNA-Seq等"
+  },
+  "librarySource": {
+    "value": null,
+    "desc": "文库来源类型，如GENOMIC、TRANSCRIPTOMIC等"
+  },
+  "libraryLayout": {
+    "value": null,
+    "desc": "测序读长布局，如single、paired等"
+  },
+  "platform": {
+    "value": null,
+    "desc": "测序平台，如ILLUMINA、PACBIO等"
+  },
+  "instrumentModel": {
+    "value": null,
+    "desc": "测序仪型号"
+  },
+  "designDescription": {
+    "value": null,
+    "desc": "文库设计描述"
+  },
+  "filetype": {
+    "value": null,
+    "desc": "文件格式类型"
+  },
+  "fileName": {
+    "value": null,
+    "desc": "文件名称"
+  },
+  "filePath": {
+    "value": null,
+    "desc": "文件路径"
+  },
+  "sampleCollectionDate": {
+    "value": null,
+    "desc": "样本采集日期"
+  },
+  "sampleCollectionLocation": {
+    "value": null,
+    "desc": "样本采集地点（经纬度）"
+  },
+  "treatmentCondition": {
+    "value": null,
+    "desc": "处理条件（对照组/实验组）"
+  },
+  "developmentalStage": {
+    "value": null,
+    "desc": "发育阶段"
+  },
+  "readLength": {
+    "value": null,
+    "desc": "读长信息"
+  },
+  "sequencingDepth": {
+    "value": null,
+    "desc": "测序深度"
+  },
+  "sequencingDate": {
+    "value": null,
+    "desc": "测序日期"
+  },
+  "sequencingCenter": {
+    "value": null,
+    "desc": "测序中心"
+  },
+  "adapterSequence": {
+    "value": null,
+    "desc": "接头序列"
+  },
+  "totalReads": {
+    "value": null,
+    "desc": "总读取数"
+  },
+  "totalBases": {
+    "value": null,
+    "desc": "总碱基数"
+  },
+  "gcContent": {
+    "value": null,
+    "desc": "GC含量百分比"
+  },
+  "q20Percentage": {
+    "value": null,
+    "desc": "Q20质量百分比"
+  },
+  "q30Percentage": {
+    "value": null,
+    "desc": "Q30质量百分比"
+  },
+  "duplicationRate": {
+    "value": null,
+    "desc": "重复率"
+  },
+  "fileSize": {
+    "value": null,
+    "desc": "文件大小"
+  },
+  "fileChecksum": {
+    "value": null,
+    "desc": "文件校验和"
+  },
+  "compressionFormat": {
+    "value": null,
+    "desc": "压缩格式"
+  },
+  "creationDate": {
+    "value": null,
+    "desc": "创建日期"
+  },
+  "lastModifiedDate": {
+    "value": null,
+    "desc": "最后修改日期"
+  },
+  "error": {
+    "value": null,
+    "desc": "处理过程中的错误信息"
+  },
+  "sidecars": {
+    "value": [],
+    "desc": "相关的辅助文件列表"
+  }
+}

@@ -1,0 +1,80 @@
+# IDE
+.idea/
+.vscode/
+.codex/
+.trae/
+*.swp
+*.swo
+
+# Logs
+*.log*
+logs/
+log/
+
+# Static (except custom swagger-ui)
+static/*
+!static/swagger-ui/
+
+# Virtual Environment
+.venv/
+
+# Node
+node_modules/
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+eggs/
+.eggs/
+*.egg-info/
+.installed.cfg
+*.core
+*.exe
+
+# Others
+alembic/versions
+libs/license/license
+
+
+fanapi
+.claude/
+.superpowers/
+openspec/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Keys and certificates
+*.pem
+*.key
+
+# Environment-specific configs (keep only example)
+config.dev.yaml
+config.dev-sqlite.yaml
+config.prod.yaml
+
+# OS files
+.DS_Store
+
+# Runtime
+.run/
+
+# Build artifacts and backups
+*.zip
+*.bak
+build/
+dist/
+.turbo/
+
+# Documentation (separate repo)
+docs/

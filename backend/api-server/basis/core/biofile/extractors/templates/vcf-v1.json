@@ -1,0 +1,134 @@
+{
+  "type": {
+    "value": "VCF",
+    "desc": "VCF变异检测文件类型"
+  },
+  "sampleName": {
+    "value": null,
+    "desc": "样本名称"
+  },
+  "taxonomy": {
+    "value": null,
+    "desc": "物种学名"
+  },
+  "librarySource": {
+    "value": null,
+    "desc": "建库类型"
+  },
+  "platform": {
+    "value": null,
+    "desc": "测序平台"
+  },
+  "instrumentModel": {
+    "value": null,
+    "desc": "测序仪型号"
+  },
+  "designDescription": {
+    "value": null,
+    "desc": "实验设计描述"
+  },
+  "sampleList": {
+    "value": null,
+    "desc": "包含样本列表"
+  },
+  "genotype": {
+    "value": null,
+    "desc": "样品的基因型或品种信息"
+  },
+  "hardFilter": {
+    "value": null,
+    "desc": "硬过滤"
+  },
+  "missing": {
+    "value": null,
+    "desc": "缺失率"
+  },
+  "maf": {
+    "value": null,
+    "desc": "次要等位基因频率"
+  },
+  "fourDtv": {
+    "value": null,
+    "desc": "4倍兼并位点过滤"
+  },
+  "minDp": {
+    "value": null,
+    "desc": "最小深度"
+  },
+  "biAllelic": {
+    "value": null,
+    "desc": "双等位过滤"
+  },
+  "minQ": {
+    "value": null,
+    "desc": "最低质量过滤"
+  },
+  "filetype": {
+    "value": null,
+    "desc": "文件类型"
+  },
+  "fileName": {
+    "value": null,
+    "desc": "文件名"
+  },
+  "filePath": {
+    "value": null,
+    "desc": "文件路径"
+  },
+  "variantCaller": {
+    "value": null,
+    "desc": "变异检测软件"
+  },
+  "callerVersion": {
+    "value": null,
+    "desc": "软件版本"
+  },
+  "referenceGenome": {
+    "value": null,
+    "desc": "参考基因组"
+  },
+  "callingDate": {
+    "value": null,
+    "desc": "检测日期"
+  },
+  "ploidy": {
+    "value": null,
+    "desc": "倍性"
+  },
+  "totalVariants": {
+    "value": null,
+    "desc": "总变异数"
+  },
+  "snpCount": {
+    "value": null,
+    "desc": "SNP数量"
+  },
+  "indelCount": {
+    "value": null,
+    "desc": "InDel数量"
+  },
+  "structuralVariantCount": {
+    "value": null,
+    "desc": "结构变异数量"
+  },
+  "transitionTransversionRatio": {
+    "value": null,
+    "desc": "转换/颠换比率"
+  },
+  "heterozygosityRate": {
+    "value": null,
+    "desc": "杂合率"
+  },
+  "inbreedingCoefficient": {
+    "value": null,
+    "desc": "近交系数"
+  },
+  "error": {
+    "value": null,
+    "desc": "处理过程中的错误信息"
+  },
+  "sidecars": {
+    "value": [],
+    "desc": "相关的辅助文件列表"
+  }
+}

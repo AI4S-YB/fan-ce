@@ -1,0 +1,35 @@
+input:-internal-autofill-previewed,
+input:-internal-autofill-selected {
+  -webkit-text-fill-color: #2a2d33;
+  transition: background-color 5000s ease-out 0.5s;
+}
+$font-size: 12px;
+$namespace: 'vben';
+
+.vben-tree-actions {
+  position: absolute;
+  right: 10px;
+  display: flex;
+}
+
+.vben-tree-action {
+  visibility: hidden;
+  margin-left: 4px;
+}
+
+.vben-tree-title {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding-right: 10px;
+}
+
+.ant-tree-title {
+  &:hover {
+    .vben-tree-action {
+      visibility: visible;
+      margin-left: 4px;
+    }
+  }
+}

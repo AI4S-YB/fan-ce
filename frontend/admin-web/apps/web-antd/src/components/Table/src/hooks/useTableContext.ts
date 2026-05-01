@@ -1,0 +1,24 @@
+import type { ComputedRef, Ref } from 'vue';
+
+import type { BasicTableProps, TableActionType } from '../types/table';
+
+import { inject, provide } from 'vue';
+
+const key = Symbol('basic-table');
+
+type Instance = TableActionType & {
+  getBindValues: ComputedRef<Recordable>;
+  wrapRef: Ref<Nullable<HTMLElement>>;
+};
+
+type RetInstance = Omit<Instance, 'getBindValues'> & {
+  getBindValues: ComputedRef<BasicTableProps>;
+};
+
+export function createTableContext(instance: Instance) {
+  provide(key, instance);
+}
+
+export function useTableContext(): RetInstance {
+  return inject(key) as RetInstance;
+}

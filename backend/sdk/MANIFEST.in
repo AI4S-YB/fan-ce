@@ -1,0 +1,16 @@
+include README.md
+include LICENSE
+include requirements.txt
+include pyproject.toml
+recursive-include abd_sdk *.py
+recursive-include abd_sdk *.md
+recursive-include abd_sdk *.txt
+recursive-include abd_sdk *.yaml
+recursive-include abd_sdk *.yml
+recursive-include abd_sdk *.json
+global-exclude __pycache__
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
+global-exclude .git*
+global-exclude .DS_Store

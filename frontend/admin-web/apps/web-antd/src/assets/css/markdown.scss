@@ -1,0 +1,203 @@
+/* Markdown rendering styles for chat messages */
+.chat-message__markdown {
+  line-height: 1.6;
+  color: var(--ant-color-text, rgb(0 0 0 / 88%));
+  word-wrap: break-word;
+
+  /* Headings */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  h1 {
+    padding-bottom: 0.3em;
+    font-size: 2em;
+    border-bottom: 1px solid var(--ant-color-border, #d9d9d9);
+  }
+
+  h2 {
+    padding-bottom: 0.3em;
+    font-size: 1.5em;
+    border-bottom: 1px solid var(--ant-color-border-secondary, #e5e5e5);
+  }
+
+  h3 {
+    font-size: 1.25em;
+  }
+
+  h4 {
+    font-size: 1em;
+  }
+
+  h5 {
+    font-size: 0.875em;
+  }
+
+  h6 {
+    font-size: 0.85em;
+    color: var(--ant-color-text-secondary, rgb(0 0 0 / 45%));
+  }
+
+  /* Paragraphs */
+  p {
+    margin-top: 0;
+    margin-bottom: 1em;
+  }
+
+  /* Bold and Italic */
+  strong {
+    font-weight: 600;
+  }
+
+  em {
+    font-style: italic;
+  }
+
+  /* Links */
+  a {
+    color: var(--ant-color-primary, #1677ff);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  /* Lists */
+  ul,
+  ol {
+    padding-left: 2em;
+    margin-top: 0;
+    margin-bottom: 1em;
+  }
+
+  li {
+    margin-bottom: 0.25em;
+
+    > p {
+      margin-top: 0.5em;
+    }
+  }
+
+  ul {
+    list-style-type: disc;
+  }
+
+  ol {
+    list-style-type: decimal;
+  }
+
+  /* Nested lists */
+  li > ul,
+  li > ol {
+    margin-top: 0.25em;
+    margin-bottom: 0;
+  }
+
+  /* Blockquotes */
+  blockquote {
+    padding: 0 1em;
+    margin: 0 0 1em;
+    color: var(--ant-color-text-secondary, rgb(0 0 0 / 45%));
+    border-left: 0.25em solid var(--ant-color-border, #d9d9d9);
+
+    > :first-child {
+      margin-top: 0;
+    }
+
+    > :last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  /* Code blocks */
+  code {
+    padding: 0.2em 0.4em;
+    margin: 0;
+    font-family:
+      ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+      'Liberation Mono', monospace;
+    font-size: 85%;
+    background-color: var(--ant-color-fill-tertiary, rgb(0 0 0 / 4%));
+    border-radius: 6px;
+  }
+
+  pre {
+    padding: 16px;
+    margin-bottom: 1em;
+    overflow: auto;
+    font-size: 85%;
+    line-height: 1.45;
+    background-color: var(--ant-color-fill-quaternary, rgb(0 0 0 / 2%));
+    border-radius: 6px;
+
+    code {
+      padding: 0;
+      margin: 0;
+      font-size: 100%;
+      background-color: transparent;
+      border-radius: 0;
+    }
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    margin-bottom: 1em;
+    border-spacing: 0;
+    border-collapse: collapse;
+
+    th,
+    td {
+      padding: 6px 13px;
+      border: 1px solid var(--ant-color-border, #d9d9d9);
+    }
+
+    th {
+      font-weight: 600;
+      background-color: var(--ant-color-fill-quaternary, rgb(0 0 0 / 2%));
+    }
+
+    tr:nth-child(2n) {
+      background-color: var(--ant-color-fill-quaternary, rgb(0 0 0 / 2%));
+    }
+  }
+
+  /* Horizontal rule */
+  hr {
+    height: 0.25em;
+    padding: 0;
+    margin: 1.5em 0;
+    background-color: var(--ant-color-border-secondary, #e5e5e5);
+    border: 0;
+  }
+
+  /* Images */
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+  }
+
+  /* Task lists */
+  input[type='checkbox'] {
+    margin-right: 0.5em;
+  }
+
+  /* First and last child margins */
+  > :first-child {
+    margin-top: 0 !important;
+  }
+
+  > :last-child {
+    margin-bottom: 0 !important;
+  }
+}
