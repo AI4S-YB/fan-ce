@@ -13,7 +13,6 @@ class News(Base):
     type = Column(String(3), default='1', comment='类型')
     content = Column(String(500), comment='内容')
     author = Column(String(100), default=0, comment='作者')
-    team_id = Column(Integer, comment='TeamID')
     is_public = Column(Boolean, default=0, comment='是否公共')
     create_time = Column(Integer, comment='创建时间')
     user_id = Column(Integer, comment='用户ID')

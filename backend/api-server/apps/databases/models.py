@@ -16,7 +16,6 @@ class Databases(Base):
     is_delete = Column(Boolean, default=0, comment='是否删除')
     create_time = Column(Integer, comment='创建时间')
     remark = Column(String(320), comment='备注')
-    team_id = Column(Integer, comment='TeamID')
     file = relationship("DatabasesFile", back_populates="databases",uselist=False, cascade="all, delete-orphan",lazy="selectin")
     metas = relationship("DatabasesMeta", back_populates="databases", uselist=False, cascade="all, delete-orphan", lazy="selectin")
 

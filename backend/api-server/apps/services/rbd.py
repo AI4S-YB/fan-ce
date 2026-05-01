@@ -39,23 +39,7 @@ class RBDService:
         return data
 
     @staticmethod
-    def get_team_user_permission(db, team_id=None, user=None):
-        # 系统角色对应菜单权限
-        if team_id:
-            team_id = int(team_id)
-        else:
-            team_ids = [team.team_id for team in team_user_db.get_data(db=db, filters={'user_id': user.id})]
-            team_id = team_ids[0] if team_ids else 0
-        team_role_ids = [role.role_id for role in team_user_db.get_data(db=db, filters={'user_id': user.id, 'team_id': team_id})]
-        team_menu_ids = [i.menu_id for i in role_menu_db.get_filter_in(db=db, name='role_id', value=team_role_ids)]
-        team_permission_ids = [i.permission_id for i in menu_permission_db.get_filter_in(db=db, name='menu_id', value=team_menu_ids)]
-        team_permissions = [i.code for i in permission_db.get_filter_in(db=db, name='id', value=team_permission_ids)]
-        # 团队角色对应菜单权限
-        data = {'team_role_ids': team_role_ids, 'sys_menu_ids': team_menu_ids, 'sys_permissions': team_permissions}
-        return data
-
-    @staticmethod
-    def get_user_menu_ids(db, team_id, user):
+    def get_user_menu_ids(db, user):
         # 系统角色
         sys_role_ids = [role.role_id for role in user_role_db.get_data(db=db, filters={'user_id': user.id})]
         menu_ids = [i.menu_id for i in role_menu_db.get_filter_in(db=db, name='role_id', value=sys_role_ids)]

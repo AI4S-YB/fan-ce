@@ -75,7 +75,7 @@ def _is_legacy_omics_menu(menu_obj) -> bool:
 @menu_router.post("/auth/menus/list", summary="路由菜单列表")
 async def auth_menus(request_data: TreeData,db=Depends(get_db), _user=Depends(get_active_user)):
     filter_exp = [{'name': 'type', 'exp': 'contain', 'value': [1, 2]}]
-    menu_ids = rbd_service.get_user_menu_ids(db=db, team_id=None, user=_user)
+    menu_ids = rbd_service.get_user_menu_ids(db=db, user=_user)
     if menu_ids:
         filter_exp.append({'name': 'id', 'exp': 'contain', 'value': menu_ids})
     menu_obj = menu_db.get_list(db=db, page=0, size=0,filters_exp=filter_exp)

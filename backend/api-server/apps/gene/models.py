@@ -16,7 +16,6 @@ class GeneSet(Base):
     name = Column(String(320), comment='基因集名称', nullable=False)
     description = Column(Text, comment="基因集描述")
     user_id = Column(Integer, comment='创建用户ID')
-    team_id = Column(Integer, comment='团队ID')
     project_id = Column(Integer, comment='项目ID')
     create_time = Column(Integer, comment='创建时间')
     is_delete = Column(Boolean, default=0, comment='是否删除')

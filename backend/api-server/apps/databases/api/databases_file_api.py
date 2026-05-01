@@ -49,13 +49,8 @@ async def databases_file_list(request_data: DatabasesFilePageList, db=Depends(ge
     
     # 处理 team_id 和 project_id 过滤逻辑（与原始 databases_list 方法完全一致）
     
-    # 1. 首先处理 team_id 过滤（如果存在）
-    # 注意：我们需要通过 database_ids 来间接过滤，因为文件表没有 team_id 字段
+    # 1. team_id 过滤在社区版已移除
     team_database_ids = None
-    if request_data.team_id:
-        from ..crud import database_db
-        team_databases = database_db.get_data(db=db, filters={'team_id': request_data.team_id})
-        team_database_ids = [db_obj.id for db_obj in team_databases]
     
     # 2. 总是处理 project_id（与原始方法一致，不管 project_id 是否为 None）
     from apps.services.databases import databases_service
@@ -302,13 +297,8 @@ async def databases_file_count(request_data: DatabasesFilePageList, db=Depends(g
     
     # 处理 team_id 和 project_id 过滤逻辑（与 databases_file_list 方法完全一致）
     
-    # 1. 首先处理 team_id 过滤（如果存在）
-    # 注意：我们需要通过 database_ids 来间接过滤，因为文件表没有 team_id 字段
+    # 1. team_id 过滤在社区版已移除
     team_database_ids = None
-    if request_data.team_id:
-        from ..crud import database_db
-        team_databases = database_db.get_data(db=db, filters={'team_id': request_data.team_id})
-        team_database_ids = [db_obj.id for db_obj in team_databases]
     
     # 2. 总是处理 project_id（与原始方法一致，不管 project_id 是否为 None）
     from apps.services.databases import databases_service
