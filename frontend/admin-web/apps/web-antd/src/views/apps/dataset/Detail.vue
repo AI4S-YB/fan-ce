@@ -43,28 +43,32 @@ const linkSubmitting = ref(false);
 
 // Get the version_id for linking (current version or selected)
 const currentLinkVersionId = computed(() =>
-  versionListData.value?.current_version?.id ?? activeVersionId.value ?? 1,
+  versionListData.value?.current_version?.id ?? activeVersionId.value ?? undefined,
 );
 
 // Get the asset_id for linking (query_entry_asset or first asset)
 const currentLinkAssetId = computed(() =>
-  detailData.value?.query_entry_asset?.id ?? detailData.value?.assets?.[0]?.id ?? 1,
+  detailData.value?.query_entry_asset?.id ?? detailData.value?.assets?.[0]?.id ?? undefined,
 );
 
 // ── Program link handlers ──
-function openLinkModal() {
+async function openLinkModal() {
   selectedProgramId.value = null;
   linkInstruction.value = '';
   linkModalVisible.value = true;
   // lazy-fetch program options if not already loaded
   if (!programStore.programOptions || programStore.programOptions.length === 0) {
-    programStore.fetchProgramOptions();
+    await programStore.fetchProgramOptions();
   }
 }
 
 async function handleDirectLink() {
   if (!selectedProgramId.value) {
     message.warning($t('dataset.list.selectProgramPlaceholder'));
+    return;
+  }
+  if (!currentLinkVersionId.value || !currentLinkAssetId.value) {
+    message.warning('No version or asset available for linking');
     return;
   }
   linkSubmitting.value = true;
