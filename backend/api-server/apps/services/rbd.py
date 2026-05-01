@@ -54,12 +54,15 @@ class RBDService:
 
     @staticmethod
     def get_user_default(db, user):
-        program = db.query(BreedingProgram).filter(
-            BreedingProgram.status == "active"
-        ).order_by(BreedingProgram.created_at.desc()).first()
-        project_info = {}
-        if program:
-            project_info = {"id": program.id, "name": program.name, "code": program.code}
+        try:
+            program = db.query(BreedingProgram).filter(
+                BreedingProgram.status == "active"
+            ).order_by(BreedingProgram.created_at.desc()).first()
+            project_info = {}
+            if program:
+                project_info = {"id": program.id, "name": program.name, "code": program.code}
+        except Exception:
+            project_info = {}
         return {'team_info': {}, 'project_info': project_info}
 
     @staticmethod
@@ -73,10 +76,13 @@ class RBDService:
         menu_ids = [i.menu_id for i in role_menu_db.get_filter_in(db=db, name='role_id', value=role_ids)]
         permission_ids = [i.permission_id for i in menu_permission_db.get_filter_in(db=db, name='menu_id', value=menu_ids)]
         permissions = [i.code for i in permission_db.get_filter_in(db=db, name='id', value=permission_ids)]
-        programs = db.query(BreedingProgram).filter(
-            BreedingProgram.status == "active"
-        ).order_by(BreedingProgram.name).all()
-        project_list = [{"id": p.id, "name": p.name, "code": p.code} for p in programs]
+        try:
+            programs = db.query(BreedingProgram).filter(
+                BreedingProgram.status == "active"
+            ).order_by(BreedingProgram.name).all()
+            project_list = [{"id": p.id, "name": p.name, "code": p.code} for p in programs]
+        except Exception:
+            project_list = []
         data = {
             'team_list': team_list, 'permissions': permissions, 'role_ids': role_ids,
             'menu_ids': menu_ids, 'project_list': project_list,

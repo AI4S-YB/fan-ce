@@ -20,7 +20,6 @@ from apps.common.schemas import Token, TokenDoc
 from apps.common.security import create_access_token
 from apps.services.rbd import rbd_service
 from apps.services.auth_key_service import auth_key_service
-from apps.breeding.models import BreedingProgram
 from core.config import settings
 from libs.exceptions.exception import exceptions
 from libs.responses.response import response_200, response_2000
@@ -62,12 +61,7 @@ async def login_get_token(user_data: UserGetToken, request: Request, db: Session
     token = create_access_token(user.id, expires_delta=access_token_expires)
     user_avatar = f"/api/v1/avatar/{user.user_avatar}"
 
-    program = db.query(BreedingProgram).filter(
-        BreedingProgram.status == "active"
-    ).order_by(BreedingProgram.created_at.desc()).first()
-    project_data = {}
-    if program:
-        project_data = {"id": program.id, "name": program.name, "code": program.code}
+    project_data = user_default.get('project_info', {})
 
     return response_200(data={"access_token": token, "token_type": settings.TOKEN_TYPE, "user_id": user.id, 'user_avatar': user_avatar,
                               'user_name': user.user_name, 'team': {},
