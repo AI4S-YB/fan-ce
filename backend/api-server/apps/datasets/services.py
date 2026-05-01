@@ -641,14 +641,11 @@ class DatasetDomainService:
         raise HTTPException(status_code=403, detail=f"workflow task access denied: {task_obj.id}")
 
     def _ensure_assignable_scope(self, db, user, team_id=None, project_id=None):
+        # Community Edition: platform admin can assign any scope
         if not user or self._is_platform_admin(user):
             return
-        team_ids = self._get_user_team_ids(db=db, user=user)
-        project_ids = self._get_user_project_ids(db=db, user=user, team_ids=team_ids)
-        if team_id and team_id not in team_ids:
-            raise HTTPException(status_code=403, detail=f"team scope access denied: {team_id}")
-        if project_id and project_id not in project_ids:
-            raise HTTPException(status_code=403, detail=f"project scope access denied: {project_id}")
+        # Non-admin users can only assign to themselves (no team/project scoping)
+        return
 
     def _update_db_obj(self, db, db_obj, **updates):
         for field, value in updates.items():
