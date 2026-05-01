@@ -113,3 +113,8 @@ def _ensure_breeding_search_indexes():
                 if "already exists" in detail or "pg_class_relname_nsp_index" in detail:
                     continue
                 raise
+
+
+from apps.breeding.tools import register_breeding_tools
+
+register_breeding_tools()
