@@ -6,12 +6,12 @@ import { $t } from '@vben/locales';
 
 import { useVbenForm } from '#/adapter/form';
 import { getSampleListApi } from '#/api/apps/sample';
-import { getProjectOptionsApi } from '#/api/system/project';
+import { getBreedingProgramListApi } from '#/api/breeding/program';
 
 const sampleOptions = ref();
 const getSampleOptions = async () => {
-  const res = await getProjectOptionsApi({});
-  sampleOptions.value = res;
+  const res = await getBreedingProgramListApi({ page: 1, size: 100 });
+  sampleOptions.value = (res?.items || []).map((p) => ({ id: p.id, name: p.name }));
 };
 getSampleOptions();
 // Table 搜索表单
