@@ -6,7 +6,6 @@ export interface NewsRowType {
   type: string;
   content: string;
   author: string;
-  team_id: number;
   is_public: boolean;
   create_time: number;
   user_id: number;
@@ -18,7 +17,6 @@ export interface NewsCreateType {
   type: string;
   content: string;
   author: string;
-  team_id?: number;
   is_public?: boolean;
   create_time?: number;
   user_id?: number;
@@ -32,7 +30,6 @@ export interface NewsUpdateType extends NewsCreateType {
 export interface NewsListParams {
   page?: number;
   size?: number;
-  team_id?: number;
   type?: string;
 }
 

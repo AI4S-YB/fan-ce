@@ -34,7 +34,6 @@ export interface GeneSetCreateParams {
   description?: string;
   file_path: string;
   gene_list: string[];
-  team_id: number;
   project_id: number;
 }
 
@@ -70,7 +69,6 @@ export async function deleteGeneSetApi(data: DataDeleteParams) {
 // 基因集选项查询参数
 export interface GeneSetOptionsParams {
   file_path?: string; // 可选：基因组文件路径，用于过滤特定基因组下的基因集
-  team_id?: number;   // 可选：团队ID（通常由拦截器自动添加）
   project_id?: number; // 可选：项目ID（通常由拦截器自动添加）
 }
 
@@ -87,7 +85,6 @@ export async function getGeneSetOptionsApi(params: GeneSetOptionsParams = {}) {
 // 基因组维度的基因集列表参数
 export interface GeneSetListByGenomeParams {
   file_path: string;
-  team_id: number;
   project_id: number;
   page?: number;
   size?: number;
@@ -97,7 +94,6 @@ export interface GeneSetListByGenomeParams {
 export interface GeneSetDetailParams {
   file_path: string;
   geneset_id: number;
-  team_id: number;
   project_id: number;
   page?: number;
   size?: number;

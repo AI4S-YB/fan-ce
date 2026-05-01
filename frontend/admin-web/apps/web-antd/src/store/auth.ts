@@ -37,8 +37,7 @@ export const useAuthStore = defineStore('auth', () => {
     let userInfo: null | UserInfo = null;
     try {
       loginLoading.value = true;
-      const { access_token, team, project } = await loginApi(params);
-      proStore.setTeamInfo(team || {});
+      const { access_token, project } = await loginApi(params);
       proStore.setProjectInfo(project || {});
       // 如果成功获取到 accessToken
       if (access_token) {
@@ -105,9 +104,6 @@ export const useAuthStore = defineStore('auth', () => {
     userStore.setUserInfo(userInfo);
     // 初始化数据团队、项目
     accessStore.setAccessCodes(userInfo?.permissions || []);
-    if (!proStore.getTeamInfo.team_id) {
-      proStore.setTeamInfo(userInfo?.team_list?.[0] || {});
-    }
     if (!proStore.getProjectInfo.id) {
       proStore.setProjectInfo(userInfo?.project_list?.[0] || {});
     }

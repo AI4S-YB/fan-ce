@@ -46,7 +46,6 @@ export interface AuthKeyInfo {
   auth_key: string;
   status: 'active' | 'disabled';
   user_id: number;
-  team_id: number;
   has_key: boolean;
 }
 
@@ -57,7 +56,6 @@ export interface AuthKeyCreateResponse {
   auth_key: string;
   status: 'active' | 'disabled';
   user_id: number;
-  team_id: number;
 }
 
 /**
@@ -90,7 +88,6 @@ export interface AuthKeyDeleteResponse {
 export interface AuthKeyBatchQueryRequest {
   page?: number;
   size?: number;
-  team_id?: number;
   status?: 'active' | 'disabled';
 }
 
@@ -102,7 +99,6 @@ export interface AuthKeyBatchItem {
   username: string;
   auth_key: string;
   status: 'active' | 'disabled';
-  team_id: number;
 }
 
 /**

@@ -12,12 +12,10 @@ interface UserState {
   projectInfo?: any | object;
   projectOptions?: any[];
   dataSelected: DataSelected;
-  teamInfo?: any | object;
 }
 
 export const useAppUserStore = defineStore('app-user', {
   state: (): UserState => ({
-    teamInfo: {},
     projectInfo: {},
     projectOptions: [],
     dataSelected: {
@@ -30,7 +28,6 @@ export const useAppUserStore = defineStore('app-user', {
     getProjectInfo: (state) => state.projectInfo,
     getProjectOptions: (state) => state.projectOptions,
     getDataSelected: (state) => state.dataSelected,
-    getTeamInfo: (state) => state.teamInfo,
   },
   actions: {
     setProjectInfo(info: any) {
@@ -48,9 +45,6 @@ export const useAppUserStore = defineStore('app-user', {
     setDataVariantSelected(data: DataSelected['variant']) {
       this.dataSelected.variant = data;
     },
-    setTeamInfo(info: object) {
-      this.teamInfo = info;
-    },
 
     async fetchProjectOptions() {
       const data: any = await getProjectOptionsApi({});
@@ -63,14 +57,10 @@ export const useAppUserStore = defineStore('app-user', {
       this.projectInfo = data?.[0];
       return data;
     },
-    async fetchTeamInfo() {
-      const data: any = await getProjectOptionsApi({});
-      return data;
-    },
   },
   persist: {
     // 持久化
-    pick: ['projectInfo', 'teamInfo'],
+    pick: ['projectInfo'],
   },
 });
 // 解决热更新问题

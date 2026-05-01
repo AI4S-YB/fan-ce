@@ -453,7 +453,6 @@ export interface RegisterCandidateRequest {
   dataset_name?: string;
   remark?: string;
   is_public?: boolean;
-  team_id?: number;
   project_id?: number;
   activate_version?: boolean;
 }
