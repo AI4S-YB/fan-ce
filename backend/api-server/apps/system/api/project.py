@@ -33,15 +33,11 @@ async def project_file():
 
 @project_router.post("/list", dependencies=[Depends(check_permission(["sys:project:list"]))], summary="项目列表==sys:project:list")
 async def project_list(request_data: PageList, db=Depends(get_db), _user=Depends(get_active_user)):
-    team_id = request_data.team_id
-    project_ids = project_service.get_project_by_team(db=db, team_id=team_id)
     filters_exp = []
     if request_data.name:
         filters_exp.append({'name': 'name', 'exp': 'like', 'value': request_data.name})
     if request_data.code:
         filters_exp.append({'name': 'code', 'exp': 'like', 'value': request_data.code})
-    if project_ids and not _user.is_superman:
-        filters_exp.append({'name': 'id', 'exp': 'contain', 'value': project_ids})
     project_obj = project_db.get_list(db=db, page=request_data.page, size=request_data.size, filters_exp=filters_exp)
     for i in project_obj['dataList']:
         user = users_db.get_one(db=db, id=i.user_id)
@@ -55,9 +51,6 @@ async def project_list(request_data: PageList, db=Depends(get_db), _user=Depends
 async def project_list(request_data: PageList, db=Depends(get_db), _user=Depends(get_active_user)):
     options = []
     filters_exp = []
-    project_ids = project_service.get_project_by_team(db=db, team_id=request_data.team_id)
-    if project_ids and not _user.is_superman:
-        filters_exp.append({'name': 'id', 'exp': 'contain', 'value': project_ids})
     project_obj = project_db.get_list(db=db, page=0,filters_exp=filters_exp)
     for i in project_obj['dataList']:
         options.append({'label': i.name, 'value': i.id, 'name': i.name, 'id': i.id})
@@ -113,12 +106,7 @@ async def project_add(request_data: UpdateModel, db=Depends(get_db)):
 async def get_project_meta_json(request_data: ProjectMetaJsonRequest, db=Depends(get_db), _user=Depends(get_active_user)):
     """
     获取项目表中的meta_json字段数据
-    根据团队关联返回对应团队的项目meta_json
     """
-    # 获取当前用户有权限的项目ID列表
-    team_id = request_data.team_id
-    project_ids = project_service.get_project_by_team(db=db, team_id=team_id)
-    
     # 构建过滤条件
     filters = {}
     filters_exp = []
@@ -130,16 +118,6 @@ async def get_project_meta_json(request_data: ProjectMetaJsonRequest, db=Depends
     # 项目名称过滤
     if request_data.name:
         filters_exp.append({'name': 'name', 'exp': 'like', 'value': request_data.name})
-    
-    # 团队权限过滤 - 修改后的逻辑
-    if project_ids:
-        filters_exp.append({'name': 'id', 'exp': 'contain', 'value': project_ids})
-    elif not _user.is_superman:
-        # 如果用户没有任何项目权限且不是超级管理员，返回空结果
-        return response_2000(data={'dataList': [], 'total': 0})
-    elif not project_ids and not _user.is_superman:
-        # 如果用户没有任何项目权限，返回空结果
-        return response_2000(data={'dataList': [], 'total': 0})
     
     # 查询项目数据
     project_obj = project_db.get_list(
@@ -182,21 +160,6 @@ async def get_project_meta_json_detail(request_data: DataInfo, db=Depends(get_db
     project_obj = project_db.get(db=db, id=request_data.id)
     if not project_obj:
         return response_2000(data=None, message="项目不存在")
-    
-    # 检查用户权限（通过团队关联）
-    if not _user.is_superman:
-        # 获取项目所属的团队
-        from apps.system.team.crud import team_project_db
-        team_projects = team_project_db.get_data(db=db, filters={'project_id': project_obj.id})
-        
-        if team_projects:
-            team_ids = [tp.team_id for tp in team_projects]
-            user_team_ids = project_service.get_team_by_user(db=db, user_id=_user.id, user=_user)
-            
-            # 检查用户是否有权限访问该项目
-            if not any(team_id in user_team_ids for team_id in team_ids):
-                return response_2000(data=None, message="无权限访问该项目")
-    
     # 获取用户信息
     user = users_db.get_one(db=db, id=project_obj.user_id)
     
@@ -236,10 +199,6 @@ async def get_projects_with_meta_json(request_data: ProjectMetaJsonRequest, db=D
     """
     专门获取有meta_json数据的项目列表
     """
-    # 获取当前用户有权限的项目ID列表
-    team_id = request_data.team_id
-    project_ids = project_service.get_project_by_team(db=db, team_id=team_id)
-    
     # 构建过滤条件
     filters = {}
     filters_exp = []
@@ -247,12 +206,6 @@ async def get_projects_with_meta_json(request_data: ProjectMetaJsonRequest, db=D
     # 项目名称过滤
     if request_data.name:
         filters_exp.append({'name': 'name', 'exp': 'like', 'value': request_data.name})
-    
-    # 团队权限过滤
-    if project_ids and not _user.is_superman:
-        filters_exp.append({'name': 'id', 'exp': 'contain', 'value': project_ids})
-    elif not project_ids and not _user.is_superman:
-        return response_2000(data={'dataList': [], 'total': 0})
     
     # 查询所有项目数据
     project_obj = project_db.get_list(
@@ -288,7 +241,6 @@ async def get_projects_with_meta_json(request_data: ProjectMetaJsonRequest, db=D
         'page': request_data.page,
         'size': request_data.size
     })
-
 
 @project_router.post("/team-to-projects", dependencies=[Depends(check_permission(["sys:project:list"]))], summary="根据团队ID查询项目ID列表")
 async def get_project_ids_by_team_id(request_data: TeamIdRequest, db=Depends(get_db), _user=Depends(get_active_user)):

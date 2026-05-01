@@ -21,43 +21,31 @@ class AuthKeyService:
     """认证密钥服务类"""
     
     @staticmethod
-    def generate_auth_key(team_id: int) -> str:
+    def generate_auth_key(team_id=None) -> str:
         """
         生成认证密钥
-        
+
         Args:
-            team_id: 团队ID
-            
+            team_id: 团队ID (Community Edition 不再使用)
+
         Returns:
-            str: 格式为 fandb_team{team_id}_{random_16_chars} 的认证密钥
+            str: 格式为 fandb_{random_20_chars} 的认证密钥
         """
-        # 生成16位随机字符串（小写字母+数字）
-        random_chars = ''.join(
-            secrets.choice(string.ascii_lowercase + string.digits) 
-            for _ in range(16)
-        )
-        return f"fandb_team{team_id}_{random_chars}"
+        import random
+        random_part = ''.join(random.choices(string.ascii_lowercase + string.digits, k=20))
+        return f"fandb_{random_part}"
     
     @staticmethod
     def extract_team_id_from_auth_key(auth_key: str) -> Optional[int]:
         """
-        从认证密钥中提取team_id
-        
+        [已废弃] Community Edition 不再从认证密钥中提取 team_id
+
         Args:
             auth_key: 认证密钥
-            
+
         Returns:
-            Optional[int]: 提取的team_id，如果格式不正确返回None
+            None: 始终返回 None
         """
-        try:
-            if auth_key and auth_key.startswith('fandb_team'):
-                parts = auth_key.split('_')
-                if len(parts) >= 2:
-                    team_part = parts[1]  # team24
-                    if team_part.startswith('team'):
-                        return int(team_part.replace('team', ''))
-        except (IndexError, ValueError):
-            pass
         return None
     
     @staticmethod
@@ -74,23 +62,19 @@ class AuthKeyService:
         if not auth_key:
             return False
         
-        # 检查基本格式：fandb_team{数字}_{16位字符}
+        # 检查基本格式：fandb_{20位字符}
         parts = auth_key.split('_')
-        if len(parts) != 3:
+        if len(parts) != 2:
             return False
-        
-        prefix, team_part, random_part = parts
-        
+
+        prefix, random_part = parts
+
         # 检查前缀
         if prefix != 'fandb':
             return False
-        
-        # 检查团队部分
-        if not team_part.startswith('team') or not team_part[4:].isdigit():
-            return False
-        
+
         # 检查随机部分长度
-        if len(random_part) != 16:
+        if len(random_part) != 20:
             return False
         
         # 检查随机部分只包含小写字母和数字
@@ -177,19 +161,11 @@ class AuthKeyService:
             result['error'] = 'AUTH_KEY_DISABLED'
             return result
         
-        # 5. 验证密钥中的team_id与用户实际团队的一致性
-        key_team_id = AuthKeyService.extract_team_id_from_auth_key(auth_key)
-        user_team_id = AuthKeyService.get_user_primary_team_id(db, user)
-        
-        if key_team_id != user_team_id:
-            result['error'] = 'AUTH_KEY_TEAM_MISMATCH'
-            return result
-        
         # 验证通过
         result.update({
             'valid': True,
             'user': user,
-            'team_id': user_team_id,
+            'team_id': None,
             'error': None
         })
         
@@ -229,26 +205,20 @@ class AuthKeyService:
             result['error'] = 'AUTH_KEY_ALREADY_EXISTS'
             return result
         
-        # 3. 获取用户的团队ID
-        team_id = AuthKeyService.get_user_primary_team_id(db, user)
-        if not team_id:
-            result['error'] = 'USER_NO_TEAM'
-            return result
+        # 2. 生成新密钥
+        auth_key = AuthKeyService.generate_auth_key()
         
-        # 4. 生成新密钥
-        auth_key = AuthKeyService.generate_auth_key(team_id)
-        
-        # 5. 检查密钥唯一性（理论上不会重复，但为安全起见检查）
+        # 4. 检查密钥唯一性（理论上不会重复，但为安全起见检查）
         existing_user = AuthKeyService.get_user_by_auth_key(db, auth_key)
         if existing_user:
             # 重新生成一次
-            auth_key = AuthKeyService.generate_auth_key(team_id)
+            auth_key = AuthKeyService.generate_auth_key()
             existing_user = AuthKeyService.get_user_by_auth_key(db, auth_key)
             if existing_user:
                 result['error'] = 'AUTH_KEY_COLLISION'
                 return result
         
-        # 6. 更新用户记录
+        # 5. 更新用户记录
         try:
             users_db.update_one(db=db, db_obj=user, obj_in={
                 'auth_key': auth_key,
@@ -291,16 +261,11 @@ class AuthKeyService:
             result['error'] = 'USER_NOT_FOUND'
             return result
         
-        # 2. 获取用户的团队ID
-        team_id = AuthKeyService.get_user_primary_team_id(db, user)
-        if not team_id:
-            result['error'] = 'USER_NO_TEAM'
-            return result
         
-        # 3. 生成新密钥
-        auth_key = AuthKeyService.generate_auth_key(team_id)
+        # 2. 生成新密钥
+        auth_key = AuthKeyService.generate_auth_key()
         
-        # 4. 更新用户记录
+        # 3. 更新用户记录
         try:
             users_db.update_one(db=db, db_obj=user, obj_in={
                 'auth_key': auth_key,

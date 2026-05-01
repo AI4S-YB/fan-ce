@@ -151,10 +151,8 @@ async def get_user_auth_key(
                 "user_id": user_id
             })
         
-        # 获取用户团队ID
+        # 获取用户团队ID (CE: may be None)
         team_id = auth_key_service.get_user_primary_team_id(db, user)
-        if not team_id:
-            return response_2000(code=400, msg="用户未分配团队")
         
         auth_key_info = AuthKeyInfo(
             auth_key=user.auth_key,
@@ -334,23 +332,6 @@ async def batch_query_auth_keys(
     try:
         # 构建查询过滤条件
         filters = {}
-        if request_data.team_id:
-            # 通过团队ID过滤用户
-            from apps.system.team.models import TeamUserLink
-            team_user_links = db.query(TeamUserLink).filter(
-                TeamUserLink.team_id == request_data.team_id
-            ).all()
-            user_ids = [link.user_id for link in team_user_links]
-            if not user_ids:
-                # 该团队没有用户
-                return response_200(data=AuthKeyBatchQueryResponse(
-                    total=0,
-                    page=request_data.page,
-                    size=request_data.size,
-                    items=[]
-                ))
-            filters['id'] = user_ids
-        
         if request_data.status:
             filters['key_status'] = request_data.status
         
