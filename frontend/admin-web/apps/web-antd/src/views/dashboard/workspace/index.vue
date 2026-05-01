@@ -8,7 +8,7 @@ import { useUserStore } from '@vben/stores';
 import { $t } from '@vben/locales';
 
 import { getDatasetListApi } from '#/api/apps/dataset';
-import { getProjectListApi } from '#/api/system/project';
+import { getBreedingProgramListApi } from '#/api/breeding/program';
 import { useProgramStoreWithOut } from '#/store/modules/program';
 
 import ChatPanel from './ChatPanel.vue';
@@ -17,7 +17,7 @@ import SessionSidebar from './SessionSidebar.vue';
 const userStore = useUserStore();
 const programStore = useProgramStoreWithOut();
 
-const projectCount = ref(0);
+const programCount = ref(0);
 const datasetCount = ref(0);
 
 const workspaceDescription = computed(() => {
@@ -31,11 +31,11 @@ const workspaceDescription = computed(() => {
 
 async function loadStats() {
   try {
-    const [projRes, dsRes] = await Promise.all([
-      getProjectListApi({ page: 1, size: 1 }),
+    const [progRes, dsRes] = await Promise.all([
+      getBreedingProgramListApi({ page: 1, size: 1, keyword: undefined, species_name: undefined, status: 'active' }),
       getDatasetListApi({ page: 1, size: 1 }),
     ]);
-    projectCount.value = projRes?.total ?? 0;
+    programCount.value = progRes?.total ?? 0;
     datasetCount.value = dsRes?.total ?? 0;
   } catch (error) {
     console.error('Load stats failed:', error);
@@ -61,7 +61,7 @@ onMounted(() => {
       <template #stats>
         <div class="flex flex-col justify-center text-right">
           <span class="text-foreground/80"> {{ $t('workspace.stats.project') }} </span>
-          <span class="text-2xl">{{ projectCount }}</span>
+          <span class="text-2xl">{{ programCount }}</span>
         </div>
         <div class="mx-12 flex flex-col justify-center text-right md:mx-16">
           <span class="text-foreground/80"> {{ $t('workspace.stats.dataset') }} </span>
