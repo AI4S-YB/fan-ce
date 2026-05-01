@@ -31,7 +31,6 @@ from apps.datasets.schemas import (
 )
 from apps.datasets.services import dataset_domain_service
 from apps.system.project.models import Project
-from apps.system.team.models import Team, TeamProjectLink, TeamRoleLink, TeamUserLink
 from apps.system.user.models import Role, User
 from db.database import Base
 
@@ -44,10 +43,6 @@ DATASET_TEST_TABLES = [
     Project.__table__,
     User.__table__,
     Role.__table__,
-    Team.__table__,
-    TeamProjectLink.__table__,
-    TeamRoleLink.__table__,
-    TeamUserLink.__table__,
     DatasetKindRegistry.__table__,
     AssetTypeRegistry.__table__,
     DatasetStagingFile.__table__,
@@ -213,55 +208,6 @@ def test_owner_can_get_dataset_and_unrelated_user_is_denied(db_session):
         dataset_domain_service.get_dataset(db=db_session, dataset_id=dataset.id, user=make_user(202))
     assert exc_info.value.status_code == 403
 
-
-def test_team_and_project_scope_grant_dataset_access(db_session):
-    team = Team(name="omics-team", code="omics-team", user_id=999, type="1", status=1, is_public=0, is_active=1, is_delete=0, create_time=1, remark="")
-    project = Project(name="omics-project", code="omics-project", user_id=999, type="1", sort=1, status=1, is_public=0, is_active=1, is_delete=0, create_time=1, remark="")
-    db_session.add_all([team, project])
-    db_session.commit()
-    db_session.refresh(team)
-    db_session.refresh(project)
-
-    team_dataset = create_dataset(db_session, name="team-dataset", owner_id=999, team_id=team.id)
-    project_dataset = create_dataset(db_session, name="project-dataset", owner_id=999, team_id=0)
-    db_session.add(TeamUserLink(user_id=301, team_id=team.id, role_id=None))
-    db_session.add(TeamUserLink(user_id=302, team_id=team.id, role_id=None))
-    db_session.add(TeamProjectLink(team_id=team.id, project_id=project.id))
-    db_session.add(ProjectDatabasesLink(database_id=project_dataset.id, project_id=project.id))
-    db_session.commit()
-
-    team_payload = dataset_domain_service.get_dataset(db=db_session, dataset_id=team_dataset.id, user=make_user(301))
-    assert team_payload["id"] == team_dataset.id
-
-    project_payload = dataset_domain_service.get_dataset(db=db_session, dataset_id=project_dataset.id, user=make_user(302))
-    assert project_payload["id"] == project_dataset.id
-
-
-def test_cross_team_and_cross_project_user_is_denied(db_session):
-    team_a = Team(name="team-a", code="team-a", user_id=900, type="1", status=1, is_public=0, is_active=1, is_delete=0, create_time=1, remark="")
-    team_b = Team(name="team-b", code="team-b", user_id=901, type="1", status=1, is_public=0, is_active=1, is_delete=0, create_time=1, remark="")
-    project_a = Project(name="project-a", code="project-a", user_id=900, type="1", sort=1, status=1, is_public=0, is_active=1, is_delete=0, create_time=1, remark="")
-    db_session.add_all([team_a, team_b, project_a])
-    db_session.commit()
-    db_session.refresh(team_a)
-    db_session.refresh(team_b)
-    db_session.refresh(project_a)
-
-    team_scoped_dataset = create_dataset(db_session, name="team-only", owner_id=900, team_id=team_a.id)
-    project_scoped_dataset = create_dataset(db_session, name="project-only", owner_id=900, team_id=0)
-
-    db_session.add(TeamProjectLink(team_id=team_a.id, project_id=project_a.id))
-    db_session.add(TeamUserLink(user_id=701, team_id=team_b.id, role_id=None))
-    db_session.add(ProjectDatabasesLink(database_id=project_scoped_dataset.id, project_id=project_a.id))
-    db_session.commit()
-
-    with pytest.raises(HTTPException) as team_exc:
-        dataset_domain_service.get_dataset(db=db_session, dataset_id=team_scoped_dataset.id, user=make_user(701))
-    assert team_exc.value.status_code == 403
-
-    with pytest.raises(HTTPException) as project_exc:
-        dataset_domain_service.get_dataset(db=db_session, dataset_id=project_scoped_dataset.id, user=make_user(701))
-    assert project_exc.value.status_code == 403
 
 
 def test_list_datasets_filters_inaccessible_rows(db_session):
@@ -570,69 +516,6 @@ def test_global_version_publish_record_list_is_filtered_by_access_scope(db_sessi
     assert {item["dataset_id"] for item in owner_records["items"]} == {dataset_a.id}
     assert {item["dataset_id"] for item in admin_records["items"]} == {dataset_a.id, dataset_b.id}
 
-
-def test_multi_team_and_multi_project_overlap_grants_expected_dataset_visibility(db_session):
-    team_a = Team(name="team-a", code="team-a", user_id=1100, type="1", status=1, is_public=0, is_active=1, is_delete=0, create_time=1, remark="")
-    team_b = Team(name="team-b", code="team-b", user_id=1101, type="1", status=1, is_public=0, is_active=1, is_delete=0, create_time=1, remark="")
-    team_c = Team(name="team-c", code="team-c", user_id=1102, type="1", status=1, is_public=0, is_active=1, is_delete=0, create_time=1, remark="")
-    project_a = Project(name="project-a", code="project-a", user_id=1100, type="1", sort=1, status=1, is_public=0, is_active=1, is_delete=0, create_time=1, remark="")
-    project_b = Project(name="project-b", code="project-b", user_id=1101, type="1", sort=2, status=1, is_public=0, is_active=1, is_delete=0, create_time=1, remark="")
-    project_c = Project(name="project-c", code="project-c", user_id=1102, type="1", sort=3, status=1, is_public=0, is_active=1, is_delete=0, create_time=1, remark="")
-    db_session.add_all([team_a, team_b, team_c, project_a, project_b, project_c])
-    db_session.commit()
-    db_session.refresh(team_a)
-    db_session.refresh(team_b)
-    db_session.refresh(team_c)
-    db_session.refresh(project_a)
-    db_session.refresh(project_b)
-    db_session.refresh(project_c)
-
-    dataset_team = create_dataset(db_session, name="team-visible", owner_id=1200, team_id=team_b.id)
-    dataset_project = create_dataset(db_session, name="project-visible", owner_id=1201, team_id=0)
-    create_dataset(db_session, name="hidden-dataset", owner_id=1202, team_id=team_c.id)
-
-    db_session.add_all(
-        [
-            TeamUserLink(user_id=1103, team_id=team_a.id, role_id=None),
-            TeamUserLink(user_id=1103, team_id=team_b.id, role_id=None),
-            TeamProjectLink(team_id=team_a.id, project_id=project_a.id),
-            TeamProjectLink(team_id=team_b.id, project_id=project_b.id),
-            TeamProjectLink(team_id=team_c.id, project_id=project_c.id),
-            ProjectDatabasesLink(database_id=dataset_project.id, project_id=project_b.id),
-        ]
-    )
-    db_session.commit()
-
-    team_list_request = SimpleNamespace(
-        page=1,
-        size=20,
-        team_id=team_b.id,
-        project_id=None,
-        dataset_id=None,
-        name=None,
-        dataset_type=None,
-        lifecycle_state=None,
-        visibility=None,
-    )
-    team_result = dataset_domain_service.list_datasets(db=db_session, request_data=team_list_request, user=make_user(1103))
-    assert [item["id"] for item in team_result["dataList"]] == [dataset_team.id]
-
-    project_option_request = SimpleNamespace(
-        page=1,
-        size=20,
-        team_id=0,
-        project_id=project_b.id,
-        dataset_id=None,
-        name=None,
-        dataset_type=None,
-        lifecycle_state=None,
-        visibility=None,
-    )
-    project_options = dataset_domain_service.get_options(db=db_session, request_data=project_option_request, user=make_user(1103))
-    assert [item["id"] for item in project_options] == [dataset_project.id]
-
-    assert dataset_domain_service.get_dataset(db=db_session, dataset_id=dataset_team.id, user=make_user(1103))["id"] == dataset_team.id
-    assert dataset_domain_service.get_dataset(db=db_session, dataset_id=dataset_project.id, user=make_user(1103))["id"] == dataset_project.id
 
 
 def test_project_filter_still_respects_row_access_while_admin_sees_all(db_session):

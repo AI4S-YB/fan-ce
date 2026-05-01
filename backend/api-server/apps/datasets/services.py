@@ -2073,8 +2073,8 @@ class DatasetDomainService:
         self._ensure_assignable_scope(
             db=db,
             user=user,
-            team_id=request_data.team_id,
-            project_id=request_data.project_id,
+            team_id=getattr(request_data, "team_id", 0) or 0,
+            project_id=getattr(request_data, "project_id", 0) or 0,
         )
         dataset_type = self._resolve_dataset_type_from_path(file_path, request_data.dataset_type)
         dataset_type, _dataset_kind = self._require_dataset_kind_code(db=db, dataset_type=dataset_type)
@@ -2084,8 +2084,8 @@ class DatasetDomainService:
             "dry_run": bool(request_data.dry_run),
             "dataset_name": dataset_name,
             "dataset_type": dataset_type,
-            "team_id": request_data.team_id,
-            "project_id": request_data.project_id,
+            "team_id": getattr(request_data, "team_id", 0) or 0,
+            "project_id": getattr(request_data, "project_id", 0) or 0,
             "file": {
                 "path": file_path,
                 "type": f".{file_suffix}" if file_suffix and not file_suffix.startswith(".") else file_suffix,
@@ -2110,7 +2110,7 @@ class DatasetDomainService:
                 "is_delete": False,
                 "create_time": create_time,
                 "remark": request_data.remark,
-                "team_id": request_data.team_id,
+                "team_id": getattr(request_data, "team_id", 0) or 0,
             },
         )
         dataset_legacy_bridge.create_primary_file(
@@ -2488,7 +2488,6 @@ class DatasetDomainService:
             "id": database_obj.id,
             "name": database_obj.name,
             "status": database_obj.status,
-            "team_id": database_obj.team_id,
             "user_id": database_obj.user_id,
             "remark": database_obj.remark,
             "is_public": database_obj.is_public,
@@ -2515,7 +2514,6 @@ class DatasetDomainService:
             "assembly": registry_obj.assembly,
             "default_public_version_id": getattr(registry_obj, "default_public_version_id", None),
             "status": database_data["status"],
-            "team_id": database_data["team_id"],
             "user_id": database_data["user_id"],
             "remark": database_data["remark"],
             "is_public": database_data["is_public"],
@@ -3880,7 +3878,7 @@ class DatasetDomainService:
                 dataset_type=request_data.dataset_type,
                 active_only=False,
             )
-        filters = {"team_id": request_data.team_id}
+        filters = {}
         filters_exp = []
         database_ids = []
         if request_data.project_id:
@@ -4529,8 +4527,8 @@ class DatasetDomainService:
                     "remark": request_data.remark,
                     "is_public": request_data.is_public,
                     "dry_run": request_data.dry_run,
-                    "team_id": request_data.team_id,
-                    "project_id": request_data.project_id,
+                    "team_id": getattr(request_data, "team_id", 0) or 0,
+                    "project_id": getattr(request_data, "project_id", 0) or 0,
                 },
             )(),
             user=user,

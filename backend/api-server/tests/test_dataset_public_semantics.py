@@ -56,7 +56,6 @@ from apps.datasets.schemas import (
 )
 from apps.datasets.services import dataset_domain_service
 from apps.system.project.models import Project
-from apps.system.team.models import Team, TeamProjectLink, TeamRoleLink, TeamUserLink
 from apps.system.user.models import Role, User
 from db.database import Base
 
@@ -69,10 +68,6 @@ DATASET_TEST_TABLES = [
     Project.__table__,
     User.__table__,
     Role.__table__,
-    Team.__table__,
-    TeamProjectLink.__table__,
-    TeamRoleLink.__table__,
-    TeamUserLink.__table__,
     DatasetKindRegistry.__table__,
     AssetTypeRegistry.__table__,
     AssetFileTypeRegistry.__table__,
