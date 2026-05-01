@@ -235,14 +235,7 @@ Clark 2025-07-24
 async def buildmeta(req_data: BuildMetaModel, db=Depends(get_db), _user=Depends(get_active_user)):
     # 获取当前用户
     user_id = _user.id
-    # 查询当前项目
-    project_obj = project_db.get(db=db, id=req_data.project_id)
-    # 项目:元数据json
-    project_json = req_data.meta_json.project.model_dump_json(indent=2)
-    # 更新项目元数据
-    project_db.update_one(db=db, db_obj=project_obj, obj_in={'meta_json': project_json})
-    print(f"--------项目更新完成-------{project_obj.id}")
-    
+    # system_project removed — skip project lookup and meta_json update
     # 新增样本
     for sample in req_data.meta_json.samples:
         # 缓存当前实验
@@ -404,23 +397,10 @@ async def get_linked_projects(request_data: GetLinkedProjectsRequest, db=Depends
         # 使用get_data获取关联关系
         project_databases = project_database_db.get_data(db=db, filters={'database_id': database_id})
         
-        # 提取项目ID列表
+        # 提取项目ID列表 (system_project removed, return IDs only)
         project_ids = [pd.project_id for pd in project_databases]
-        
-        # 获取项目详细信息
-        projects = []
-        for project_id in project_ids:
-            project_obj = project_db.get(db=db, id=project_id)
-            if project_obj:
-                projects.append({
-                    'id': project_obj.id,
-                    'name': project_obj.name,
-                    'code': project_obj.code,
-                    'status': project_obj.status,
-                    'is_public': project_obj.is_public,
-                    'create_time': project_obj.create_time
-                })
-        
+        projects = [{"id": pid} for pid in project_ids]
+
         return response_2000(data=LinkedProjectsResponse(
             project_ids=project_ids,
             projects=projects
