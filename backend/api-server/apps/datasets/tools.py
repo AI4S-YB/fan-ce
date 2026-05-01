@@ -39,7 +39,6 @@ def _resolve_datasets(db, arguments: dict, user, default_type: str = None) -> li
         # Try exact dataset_code match first (e.g., "ds-16", "DS-16")
         ds_match = db.query(DatasetRegistry).filter(
             DatasetRegistry.dataset_code == kw,
-            DatasetRegistry.visibility == "public",
         ).first()
         if ds_match:
             return [dataset_domain_service.get_dataset(db=db, dataset_id=ds_match.id, user=user)]
@@ -50,7 +49,6 @@ def _resolve_datasets(db, arguments: dict, user, default_type: str = None) -> li
             num_id = int(id_match.group(1))
             ds = db.query(DatasetRegistry).filter(
                 DatasetRegistry.id == num_id,
-                DatasetRegistry.visibility == "public",
             ).first()
             if ds:
                 return [dataset_domain_service.get_dataset(db=db, dataset_id=ds.id, user=user)]
@@ -61,7 +59,7 @@ def _resolve_datasets(db, arguments: dict, user, default_type: str = None) -> li
             request_data=SimpleNamespace(
                 project_id=0, team_id=0, page=1, size=20,
                 dataset_id=None, name=kw,
-                dataset_type=None, lifecycle_state=None, visibility="public",
+                dataset_type=None, lifecycle_state=None, visibility=None,
             ),
             user=user,
         )
@@ -73,7 +71,7 @@ def _resolve_datasets(db, arguments: dict, user, default_type: str = None) -> li
             request_data=SimpleNamespace(
                 project_id=0, team_id=0, page=1, size=50,
                 dataset_id=None, name=None,
-                dataset_type=default_type, lifecycle_state=None, visibility="public",
+                dataset_type=default_type, lifecycle_state=None, visibility=None,
             ),
             user=user,
         )
@@ -155,7 +153,7 @@ async def _execute_list_datasets(db, arguments: dict, user) -> dict:
         request_data=SimpleNamespace(
             project_id=0, team_id=0, page=page, size=size,
             dataset_id=None, name=keyword, dataset_type=dataset_type,
-            lifecycle_state=None, visibility="public",
+            lifecycle_state=None, visibility=None,
         ),
         user=user,
     )
