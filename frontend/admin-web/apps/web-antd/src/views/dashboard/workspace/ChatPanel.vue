@@ -110,6 +110,11 @@ function buildApiMessages(): ChatMessage[] {
   return apiMessages;
 }
 
+function scrollToBottom() {
+  const el = listRef.value?.nativeElement;
+  if (el) el.scrollTop = el.scrollHeight;
+}
+
 async function handleSendMessage() {
   const content = chatInput.value.trim();
   if (!content || store.streaming) return;
@@ -131,8 +136,7 @@ async function handleSendMessage() {
     timestamp: Date.now(),
   });
   await nextTick();
-  listRef.value?.scrollTo({ block: 'end' });
-
+  scrollToBottom();
   if (!primaryModel.value) {
     store.addMessage({
       id: `assistant-${Date.now()}`,
@@ -142,7 +146,7 @@ async function handleSendMessage() {
       timestamp: Date.now(),
     });
     await nextTick();
-    listRef.value?.scrollTo({ block: 'end' });
+    scrollToBottom();
     return;
   }
 
@@ -155,8 +159,7 @@ async function handleSendMessage() {
     timestamp: Date.now(),
   });
   await nextTick();
-  listRef.value?.scrollTo({ block: 'end' });
-
+  scrollToBottom();
   store.setStreaming(true);
   abortController = new AbortController();
 
@@ -263,7 +266,7 @@ async function handleSendMessage() {
     currentReader = null;
     store.closeCurrentGroup();
     nextTick(() => {
-      listRef.value?.scrollTo({ block: 'end' });
+      scrollToBottom();
     });
   }
 }
@@ -300,8 +303,7 @@ function appendAssistantContent(id: string, delta: string) {
       msg.content += delta;
       session.updatedAt = Date.now();
       nextTick(() => {
-        listRef.value?.scrollTo({ block: 'end' });
-      });
+        scrollToBottom();      });
       return;
     }
   }

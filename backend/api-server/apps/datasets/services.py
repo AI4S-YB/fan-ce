@@ -3076,7 +3076,7 @@ class DatasetDomainService:
                 continue
             data_list.append(payload)
 
-        total = len(data_list)
+        total = len(data_list) if need_post_filter else page_obj["total"]
         if need_post_filter and request_data.page and request_data.size:
             start = (request_data.page - 1) * request_data.size
             end = start + request_data.size
