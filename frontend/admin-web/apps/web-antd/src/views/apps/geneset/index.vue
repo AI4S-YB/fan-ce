@@ -51,9 +51,7 @@ const loadExpandMethod = async (params: any) => {
   
   const { row } = params;
   const projectId = proStore.projectInfo?.id;
-  const teamId = proStore.teamInfo?.team_id;
-  
-  if (!projectId || !teamId) {
+  if (!projectId) {
     createMessage.error(t('geneset.list.missingInfo'));
     return;
   }
@@ -62,7 +60,6 @@ const loadExpandMethod = async (params: any) => {
     const res = await getGeneSetDetailApi({
       file_path: selectedFilePath.value,
       geneset_id: row.geneset_id,
-      team_id: teamId,
       project_id: projectId,
       page: 1,
       size: 100,
@@ -152,7 +149,7 @@ const gridOptions = ref({
         }
         
         const projectId = proStore.projectInfo?.id;
-        const teamId = proStore.teamInfo?.team_id;
+        const teamId = proStore.projectInfo?.id;
         
         if (!projectId || !teamId) {
           createMessage.error(t('geneset.list.missingInfo'));
