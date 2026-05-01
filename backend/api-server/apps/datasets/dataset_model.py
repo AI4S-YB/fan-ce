@@ -14,7 +14,6 @@ class Dataset(Base):
     visibility = Column(String(32), nullable=False, default="private", comment="可见性")
     lifecycle_state = Column(String(64), nullable=False, default="draft", comment="生命周期状态")
     team_id = Column(Integer, index=True, comment="团队 ID")
-    project_id = Column(Integer, index=True, comment="项目 ID")
     meta_json = Column(Text, comment="扩展元数据")
     create_time = Column(DateTime, server_default=func.now(), comment="创建时间")
     update_time = Column(DateTime, server_default=func.now(), onupdate=func.now(), comment="更新时间")
