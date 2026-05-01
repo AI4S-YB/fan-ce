@@ -3060,7 +3060,11 @@ class DatasetDomainService:
                 current_version = self.ensure_current_version(db=db, dataset_payload=payload)
                 payload = self._apply_version_to_dataset_payload(db=db, dataset_payload=payload, version_obj=current_version)
                 payload = self._apply_assets_to_dataset_payload(db=db, dataset_payload=payload, version_obj=current_version)
-                payload["query_adapter"] = dataset_adapter_registry.describe(payload)
+                payload["query_adapter"] = {}
+                try:
+                    payload["query_adapter"] = dataset_adapter_registry.describe(payload)
+                except Exception:
+                    pass
             except Exception:
                 # Keep list APIs resilient when a single dataset references stale files.
                 continue
@@ -3088,7 +3092,11 @@ class DatasetDomainService:
         current_version = self.ensure_current_version(db=db, dataset_payload=payload)
         payload = self._apply_version_to_dataset_payload(db=db, dataset_payload=payload, version_obj=current_version)
         payload = self._apply_assets_to_dataset_payload(db=db, dataset_payload=payload, version_obj=current_version)
-        payload["query_adapter"] = dataset_adapter_registry.describe(payload)
+        payload["query_adapter"] = {}
+        try:
+            payload["query_adapter"] = dataset_adapter_registry.describe(payload)
+        except Exception:
+            pass
         payload["current_version"] = self._build_dataset_version_payload(current_version, db=db)
         public_version = self._get_public_version_obj(db=db, dataset_id=dataset_id, dataset_payload=payload)
         payload["default_public_version"] = self._build_dataset_version_payload(public_version, db=db) if public_version else None
