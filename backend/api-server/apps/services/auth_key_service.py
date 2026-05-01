@@ -14,7 +14,6 @@ from sqlalchemy import and_
 
 from apps.system.user.models import User
 from apps.system.user.crud import users_db
-from apps.system.team.models import TeamUserLink
 
 
 class AuthKeyService:
@@ -100,20 +99,18 @@ class AuthKeyService:
     @staticmethod
     def get_user_primary_team_id(db: Session, user: User) -> Optional[int]:
         """
-        获取用户的主要团队ID（第一个团队）
-        
+        获取用户的主要团队ID
+
+        Community Edition: 不再支持团队概念，始终返回 None
+
         Args:
             db: 数据库会话
             user: 用户对象
-            
+
         Returns:
-            Optional[int]: 团队ID，如果用户没有团队返回None
+            None
         """
-        team_link = db.query(TeamUserLink).filter(
-            TeamUserLink.user_id == user.id
-        ).first()
-        
-        return team_link.team_id if team_link else None
+        return None
     
     @staticmethod
     def validate_auth_key(db: Session, auth_key: str) -> Dict[str, Any]:

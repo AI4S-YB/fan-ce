@@ -16,7 +16,6 @@ from pydantic import BaseModel, ConfigDict
 
 class TeamProject(BaseModel):
     project_id: Optional[int] = 0
-    team_id: Optional[int] = 0
 
 
 class PageList(TeamProject):

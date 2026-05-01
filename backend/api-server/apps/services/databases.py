@@ -1,6 +1,5 @@
 
 from apps.databases.crud import project_database_db
-from apps.system.team.crud import team_db,team_project_db
 
 class DatabasesService:
     @staticmethod
@@ -14,10 +13,10 @@ class DatabasesService:
         return []
 
     @staticmethod
-    def get_database_file_path(db,team_id):
-        team_obj = team_db.get_one(db=db,id=team_id)
-        if team_obj:
-            return team_obj.database_path
+    def get_database_file_path(db):
+        """
+        Community Edition: 不再使用 team 概念，返回空字符串
+        """
         return ''
 
     @staticmethod

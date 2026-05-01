@@ -6,7 +6,6 @@ from apps.system.rbac import *
 from apps.system.base.models import *
 from apps.system.user.models import *
 from apps.system.project.models import *
-from apps.system.team.models import *
 from apps.databases.models import *
 from apps.datasets.models import *
 from apps.datasets.dataset_model import Dataset

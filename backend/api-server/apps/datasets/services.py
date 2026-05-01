@@ -22,7 +22,6 @@ from apps.breeding.models import (
 )
 from apps.datasets.adapters import dataset_adapter_registry
 from apps.system.project.crud import project_db
-from apps.system.team.crud import team_db, team_project_db, team_user_db
 from basis.core.expression_utils import process_rnaseq_file
 from basis.core.samtools_utils import process_sequence
 from basis.core.variant_utils import process_variant_file

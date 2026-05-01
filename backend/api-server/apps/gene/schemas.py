@@ -63,7 +63,6 @@ class GeneSetCreate(BaseModel):
     description: Optional[str] = Field(None, description="基因集描述")
     file_path: str = Field(..., description="基因组文件路径")
     gene_list: List[str] = Field(..., min_items=1, description="基因ID列表")
-    team_id: int = Field(..., description="团队ID")
     project_id: int = Field(..., description="项目ID")
     model_config = ConfigDict(extra="allow")
 
@@ -71,7 +70,6 @@ class GeneSetCreate(BaseModel):
 class GeneSetListByGenome(BaseModel):
     """按基因组文件路径查询基因集列表的Schema"""
     file_path: str = Field(..., description="基因组文件路径")
-    team_id: int = Field(..., description="团队ID")
     project_id: int = Field(..., description="项目ID")
     page: Optional[int] = Field(1, ge=1, description="页码")
     size: Optional[int] = Field(10, ge=1, le=100, description="每页大小")
@@ -81,9 +79,8 @@ class GeneSetDetail(BaseModel):
     """基因集详情查询的Schema"""
     file_path: str = Field(..., description="基因组文件路径")
     geneset_id: int = Field(..., description="基因集ID")
-    team_id: int = Field(..., description="团队ID")
     project_id: int = Field(..., description="项目ID")
-    page: Optional[int] = Field(1, ge=1, description="页码") 
+    page: Optional[int] = Field(1, ge=1, description="页码")
     size: Optional[int] = Field(10, ge=1, le=100, description="每页大小")
 
 
@@ -103,5 +100,4 @@ class GeneSetUpdate(GeneSetCrate):
 # 基因集选项查询参数
 class GeneSetOptionsQuery(BaseModel):
     file_path: Optional[str] = Field(None, description="基因组文件路径，用于过滤特定基因组下的基因集")
-    team_id: Optional[int] = Field(None, description="团队ID，用于权限控制")  
     project_id: Optional[int] = Field(None, description="项目ID，用于权限控制")

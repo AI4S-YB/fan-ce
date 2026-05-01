@@ -1,5 +1,4 @@
 from apps.system.rbac.crud import role_menu_db, menu_permission_db, permission_db, user_role_db
-from apps.system.team.crud import team_user_db
 
 
 class RBDService:

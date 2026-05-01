@@ -21,7 +21,6 @@ class News(BaseModel):
 class PageList(News):
     page: Optional[int] = 1
     size: Optional[int] = 10
-    team_id: Optional[int] = 0
     type: Optional[str] = None
     is_public: Optional[bool] = None
 

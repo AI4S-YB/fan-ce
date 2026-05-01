@@ -100,10 +100,8 @@ async def databases_list(request_data: FileScan, db=Depends(get_db), _user=Depen
 
 @databases_file_router.post("/file/search",dependencies=[Depends(check_permission(["app:database:file:search"]))], summary="数据文件列表==app:databasesFile:list")
 async def databases_list(request_data: FileScan, db=Depends(get_db), _user=Depends(get_active_user)):
-    if _user.is_superman:
-        root_path = settings.DATABASE_PATH
-    else:
-        root_path = databases_service.get_database_file_path(db=db, team_id=request_data.team_id)
+    # Community Edition: no team-based path differentiation
+    root_path = settings.DATABASE_PATH
     path = os.path.join(root_path,request_data.path) if request_data.path else root_path
     files = file_action.get_dir_one(path)
     return response_2000(data=files)

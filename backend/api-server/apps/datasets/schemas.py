@@ -5,7 +5,6 @@ from pydantic import BaseModel, ConfigDict
 
 class DatasetContext(BaseModel):
     project_id: Optional[int] = 0
-    team_id: Optional[int] = 0
 
 
 class DatasetListRequest(DatasetContext):
