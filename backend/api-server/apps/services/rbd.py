@@ -1,4 +1,5 @@
 from apps.system.rbac.crud import role_menu_db, menu_permission_db, permission_db, user_role_db
+from apps.breeding.models import BreedingProgram
 
 
 class RBDService:
@@ -53,8 +54,13 @@ class RBDService:
 
     @staticmethod
     def get_user_default(db, user):
-        # Community Edition: no team/project context
-        return {'team_info': {}, 'project_info': {}}
+        program = db.query(BreedingProgram).filter(
+            BreedingProgram.status == "active"
+        ).order_by(BreedingProgram.created_at.desc()).first()
+        project_info = {}
+        if program:
+            project_info = {"id": program.id, "name": program.name, "code": program.code}
+        return {'team_info': {}, 'project_info': project_info}
 
     @staticmethod
     def get_user_role_info(db, user, team_id=None):
@@ -67,9 +73,13 @@ class RBDService:
         menu_ids = [i.menu_id for i in role_menu_db.get_filter_in(db=db, name='role_id', value=role_ids)]
         permission_ids = [i.permission_id for i in menu_permission_db.get_filter_in(db=db, name='menu_id', value=menu_ids)]
         permissions = [i.code for i in permission_db.get_filter_in(db=db, name='id', value=permission_ids)]
+        programs = db.query(BreedingProgram).filter(
+            BreedingProgram.status == "active"
+        ).order_by(BreedingProgram.name).all()
+        project_list = [{"id": p.id, "name": p.name, "code": p.code} for p in programs]
         data = {
             'team_list': team_list, 'permissions': permissions, 'role_ids': role_ids,
-            'menu_ids': menu_ids, 'project_list': [],
+            'menu_ids': menu_ids, 'project_list': project_list,
             'userinfo': {'id': user.id, 'user_name': user.user_name, 'nickName': 'nickName'},
             'is_superman': bool(getattr(user, 'is_superman', False)),
             'user_type': getattr(user, 'user_type', 0),

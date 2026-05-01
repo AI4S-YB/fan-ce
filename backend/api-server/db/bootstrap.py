@@ -455,17 +455,6 @@ def init_dev_seed_data(db):
         ),
         _ensure_menu(
             db,
-            name="SystemProject",
-            title="系统项目",
-            path="/system/project",
-            component="/system/project/index",
-            pid=system.id,
-            icon="lucide:folder-kanban",
-            sort=4,
-            menu_type=2,
-        ),
-        _ensure_menu(
-            db,
             name="SystemMenu",
             title="菜单管理",
             path="/system/menu",

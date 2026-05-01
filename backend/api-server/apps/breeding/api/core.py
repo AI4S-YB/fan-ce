@@ -59,6 +59,7 @@ from ..schemas import (
     ExpressionSampleMapRequest,
     VariantSampleSyncRequest,
 )
+from ..models import BreedingProgram
 from ..services import breeding_domain_service
 
 breeding_router = APIRouter(tags=["app:breeding"])
@@ -299,6 +300,22 @@ async def breeding_program_create(request_data: BreedingProgramCreateRequest, db
 @breeding_router.post("/program/update", summary="更新育种 Program")
 async def breeding_program_update(request_data: BreedingProgramUpdateRequest, db=Depends(get_db), _user=Depends(get_active_user)):
     return response_2000(data=breeding_domain_service.update_program(db=db, program_id=request_data.id, request_data=request_data, user=_user))
+
+
+@breeding_router.post("/program/options", summary="获取育种项目选项列表")
+async def breeding_program_options(
+    db=Depends(get_db),
+    _user=Depends(get_active_user),
+):
+    """Return lightweight program list for dropdowns (id, name, code)."""
+    programs = db.query(BreedingProgram).filter(
+        BreedingProgram.status == "active"
+    ).order_by(BreedingProgram.name).all()
+    options = [
+        {"label": p.name, "value": p.id, "code": p.code}
+        for p in programs
+    ]
+    return response_2000(data=options)
 
 
 @breeding_router.post("/material/list", summary="育种 Material 列表")
