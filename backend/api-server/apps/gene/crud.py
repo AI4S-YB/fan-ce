@@ -29,7 +29,7 @@ class CRUDGeneSetLink(CRUDBase[GeneSetLink, CreateModel, CreateModel]):
             GeneSetLink.is_delete == 0
         ).all()
     
-    def get_geneset_genes(self, db: Session, file_path: str, geneset_id: int, team_id: int, project_id: int, page: int = 1, size: int = 10) -> dict:
+    def get_geneset_genes(self, db: Session, file_path: str, geneset_id: int, project_id: int, page: int = 1, size: int = 10) -> dict:
         """获取基因集下的基因列表，支持分页和权限控制"""
         query = db.query(GeneSetLink).join(
             GeneSet, GeneSetLink.geneset_id == GeneSet.id
@@ -37,7 +37,6 @@ class CRUDGeneSetLink(CRUDBase[GeneSetLink, CreateModel, CreateModel]):
             GeneSetLink.file_path == file_path,
             GeneSetLink.geneset_id == geneset_id,
             GeneSetLink.is_delete == 0,
-            GeneSet.team_id == team_id,
             GeneSet.project_id == project_id,
             GeneSet.is_delete == 0
         )
@@ -59,7 +58,7 @@ class CRUDGeneSetLink(CRUDBase[GeneSetLink, CreateModel, CreateModel]):
             "size": size
         }
     
-    def get_geneset_summary_by_file_path(self, db: Session, file_path: str, team_id: int, project_id: int, page: int = 1, size: int = 10) -> dict:
+    def get_geneset_summary_by_file_path(self, db: Session, file_path: str, project_id: int, page: int = 1, size: int = 10) -> dict:
         """获取基因组文件路径下的基因集汇总信息（一级表格数据）- 按基因集名称去重，取最小ID，支持权限控制"""
         # 子查询：获取每个基因集名称的最小ID（去重逻辑），加上权限过滤
         subquery = db.query(
@@ -68,7 +67,6 @@ class CRUDGeneSetLink(CRUDBase[GeneSetLink, CreateModel, CreateModel]):
             func.ifnull(GeneSet.description, '').label('description_normalized')
         ).filter(
             GeneSet.is_delete == 0,
-            GeneSet.team_id == team_id,
             GeneSet.project_id == project_id
         ).group_by(
             GeneSet.name, 
@@ -90,7 +88,6 @@ class CRUDGeneSetLink(CRUDBase[GeneSetLink, CreateModel, CreateModel]):
             GeneSetLink.file_path == file_path,
             GeneSetLink.is_delete == 0,
             GeneSet.is_delete == 0,
-            GeneSet.team_id == team_id,
             GeneSet.project_id == project_id
         ).group_by(
             GeneSet.id, GeneSet.name, GeneSet.description, GeneSet.create_time
@@ -122,7 +119,7 @@ class CRUDGeneSetLink(CRUDBase[GeneSetLink, CreateModel, CreateModel]):
             GeneSetLink.is_delete == 0
         ).first() is not None
 
-    def get_geneset_options_by_file_path(self, db: Session, file_path: str = None, team_id: int = None, project_id: int = None):
+    def get_geneset_options_by_file_path(self, db: Session, file_path: str = None, project_id: int = None):
         """
         获取基因集选项，支持按file_path过滤
         用于在其他业务模块中提供基因集下拉选项
@@ -136,9 +133,7 @@ class CRUDGeneSetLink(CRUDBase[GeneSetLink, CreateModel, CreateModel]):
             GeneSet.is_delete == 0
         )
         
-        # 如果指定了team_id和project_id，添加权限过滤
-        if team_id is not None:
-            query = query.filter(GeneSet.team_id == team_id)
+        # If specified, add project-level filtering
         if project_id is not None:
             query = query.filter(GeneSet.project_id == project_id)
         

@@ -40,7 +40,7 @@ async def databases_file(_user=Depends(get_active_user)):
 
 @databases_router.post("/list",dependencies=[Depends(check_permission(["app:database:list"]))], summary="数据列表==app:database:list")
 async def databases_list(request_data: PageList, db=Depends(get_db), _user=Depends(get_active_user)):
-    filters = {'team_id':request_data.team_id}
+    filters = {}
     filters_exp = []
     database_ids = databases_service.get_databases_by_project(db=db,project_id=request_data.project_id)
 
@@ -462,7 +462,7 @@ async def databases_count(request_data: PageList, db=Depends(get_db), _user=Depe
     }
     
     # 基础过滤条件
-    filters = {'team_id': request_data.team_id}
+    filters = {}
     filters_exp = []
     
     # 获取项目权限范围内的数据库ID

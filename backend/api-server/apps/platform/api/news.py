@@ -28,8 +28,6 @@ news_router = APIRouter(tags=['app:news:信息管理'])
 @news_router.post("/list", dependencies=[Depends(check_permission(["app:news:list"]))], summary="信息管理列表==app:news:list")
 async def list(request_data: PageList, db=Depends(get_db), _user=Depends(get_active_user)):
     filters_exp = []
-    if request_data.team_id:
-        filters_exp.append({'name': 'team_id', 'exp': 'equal', 'value': request_data.team_id})
     if request_data.type:
         filters_exp.append({'name': 'type', 'exp': 'equal', 'value': request_data.type})
 

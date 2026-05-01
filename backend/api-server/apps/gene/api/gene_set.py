@@ -37,18 +37,16 @@ async def get_geneset_options(request_data: GeneSetOptionsQuery, db=Depends(get_
     获取基因集选项列表，支持按file_path过滤
     - 如果传入file_path：只返回该基因组文件下的基因集
     - 如果不传file_path：返回所有基因集（保持向后兼容）
-    - 支持权限控制（team_id/project_id）
+    - 支持权限控制（project_id）
     """
     try:
         # 如果请求中没有权限信息，尝试从全局参数获取（由request拦截器添加）
-        team_id = request_data.team_id
         project_id = request_data.project_id
-        
+
         # 使用新的CRUD方法获取基因集选项
         result = gene_set_link_db.get_geneset_options_by_file_path(
             db=db,
             file_path=request_data.file_path,
-            team_id=team_id,
             project_id=project_id
         )
         
@@ -80,9 +78,8 @@ async def get_geneset_by_genome(request_data: GeneSetListByGenome, db=Depends(ge
     """
     try:
         result = gene_set_link_db.get_geneset_summary_by_file_path(
-            db=db, 
+            db=db,
             file_path=request_data.file_path,
-            team_id=request_data.team_id,
             project_id=request_data.project_id,
             page=request_data.page,
             size=request_data.size
@@ -109,7 +106,6 @@ async def get_geneset_detail(request_data: GeneSetDetail, db=Depends(get_db), _u
             db=db,
             file_path=request_data.file_path,
             geneset_id=request_data.geneset_id,
-            team_id=request_data.team_id,
             project_id=request_data.project_id,
             page=request_data.page,
             size=request_data.size
@@ -171,10 +167,9 @@ async def add_geneset(request_data: GeneSetCreate, db=Depends(get_db), _user=Dep
     try:
         current_time = int(time.time())
         
-        # 1. 检查基因集是否已存在（在同一团队和项目下）
+        # 1. 检查基因集是否已存在（在同一项目下）
         existing_geneset = db.query(GeneSet).filter(
             GeneSet.name == request_data.name,
-            GeneSet.team_id == request_data.team_id,
             GeneSet.project_id == request_data.project_id,
             GeneSet.is_delete == 0
         ).first()
@@ -185,7 +180,6 @@ async def add_geneset(request_data: GeneSetCreate, db=Depends(get_db), _user=Dep
                 name=request_data.name,
                 description=request_data.description,
                 user_id=_user.id if hasattr(_user, 'id') else None,
-                team_id=request_data.team_id,
                 project_id=request_data.project_id,
                 create_time=current_time
             )
