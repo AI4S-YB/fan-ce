@@ -522,78 +522,33 @@ class DatasetDomainService:
             return
         raise HTTPException(status_code=403, detail=detail)
 
-    def _get_user_team_ids(self, db, user):
-        if not user or not getattr(user, "id", None):
-            return set()
-        team_ids = {
-            item.team_id
-            for item in team_user_db.get_data(db=db, filters={"user_id": user.id})
-            if item.team_id
-        }
-        owned_teams = team_db.get_data(db=db, filters={"user_id": user.id})
-        team_ids.update(item.id for item in owned_teams if item.id)
-        return team_ids
-
-    def _get_user_project_ids(self, db, user, team_ids=None):
-        if not user or not getattr(user, "id", None):
-            return set()
-        if team_ids is None:
-            team_ids = self._get_user_team_ids(db=db, user=user)
-        project_ids = {
-            item.id
-            for item in project_db.get_data(db=db, filters={"user_id": user.id})
-            if item.id
-        }
-        for team_id in team_ids:
-            project_ids.update(
-                item.project_id
-                for item in team_project_db.get_data(db=db, filters={"team_id": team_id})
-                if item.project_id
-            )
-        return project_ids
-
-    def _get_dataset_project_ids(self, db, dataset_id):
-        return {
-            item.project_id
-            for item in dataset_legacy_bridge.list_project_links_by_dataset(db=db, dataset_id=dataset_id)
-            if item.project_id
-        }
-
     @staticmethod
-    def can_access_dataset(*, db, dataset_visibility, dataset_team_id, dataset_project_id=None, user_team_ids=None, user_project_ids=None):
+    def can_access_dataset(*, db, dataset_visibility, dataset_team_id=None, dataset_project_id=None, user_team_ids=None, user_project_ids=None):
         """Check if a user can access a dataset based on its visibility.
 
-        Visibility semantics:
-        - public: anyone
-        - project: members of the same team AND project
-        - private: members of the same team only
+        Community Edition: only public visibility grants access.
+        Team/project membership is no longer checked.
         """
         if dataset_visibility == "public":
             return True
-        if dataset_visibility == "private":
-            return dataset_team_id in (user_team_ids or [])
-        if dataset_visibility == "project":
-            in_team = dataset_team_id in (user_team_ids or [])
-            in_project = dataset_project_id in (user_project_ids or [])
-            return in_team and in_project
         return False
 
     def _can_access_dataset(self, db, database_obj, user):
+        # 1. 未认证用户 -> 允许（后续由 API 层做认证检查）
         if not user:
             return True
+        # 2. 平台 admin -> 允许
         if self._is_platform_admin(user):
             return True
+        # 3. 数据 owner -> 允许
         user_id = getattr(user, "id", None)
         if user_id and database_obj.user_id == user_id:
             return True
-        team_ids = self._get_user_team_ids(db=db, user=user)
-        if database_obj.team_id and database_obj.team_id in team_ids:
+        # 4. public 数据 -> 任何认证用户可访问
+        if getattr(database_obj, 'is_public', False):
             return True
-        user_project_ids = self._get_user_project_ids(db=db, user=user, team_ids=team_ids)
-        if not user_project_ids:
-            return False
-        dataset_project_ids = self._get_dataset_project_ids(db=db, dataset_id=database_obj.id)
-        return bool(dataset_project_ids.intersection(user_project_ids))
+        # 5. 否则拒绝
+        return False
 
     def _ensure_dataset_read_access(self, db, dataset_id, user):
         database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=dataset_id)
@@ -3063,7 +3018,7 @@ class DatasetDomainService:
         return version_obj
 
     def list_datasets(self, db, request_data, user=None):
-        filters = {"team_id": request_data.team_id}
+        filters = {}
         filters_exp = []
         database_ids = []
         if request_data.project_id:
