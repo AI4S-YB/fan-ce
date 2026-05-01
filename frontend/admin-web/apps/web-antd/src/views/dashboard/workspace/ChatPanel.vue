@@ -130,6 +130,8 @@ async function handleSendMessage() {
     content: messageText,
     timestamp: Date.now(),
   });
+  await nextTick();
+  listRef.value?.scrollTo({ block: 'end' });
 
   if (!primaryModel.value) {
     store.addMessage({
@@ -139,6 +141,8 @@ async function handleSendMessage() {
       content: $t('workspace.error.noModel'),
       timestamp: Date.now(),
     });
+    await nextTick();
+    listRef.value?.scrollTo({ block: 'end' });
     return;
   }
 
@@ -150,6 +154,8 @@ async function handleSendMessage() {
     content: '',
     timestamp: Date.now(),
   });
+  await nextTick();
+  listRef.value?.scrollTo({ block: 'end' });
 
   store.setStreaming(true);
   abortController = new AbortController();
@@ -256,6 +262,9 @@ async function handleSendMessage() {
     abortController = null;
     currentReader = null;
     store.closeCurrentGroup();
+    nextTick(() => {
+      listRef.value?.scrollTo({ block: 'end' });
+    });
   }
 }
 
@@ -290,6 +299,9 @@ function appendAssistantContent(id: string, delta: string) {
     if (msg) {
       msg.content += delta;
       session.updatedAt = Date.now();
+      nextTick(() => {
+        listRef.value?.scrollTo({ block: 'end' });
+      });
       return;
     }
   }
