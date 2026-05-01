@@ -398,6 +398,7 @@ async def get_linked_projects(request_data: GetLinkedProjectsRequest, db=Depends
         project_databases = project_database_db.get_data(db=db, filters={'database_id': database_id})
         
         # 提取项目ID列表 (system_project removed, return IDs only)
+        # TODO(Task-4): restore rich project detail via brd_program lookup
         project_ids = [pd.project_id for pd in project_databases]
         projects = [{"id": pid} for pid in project_ids]
 

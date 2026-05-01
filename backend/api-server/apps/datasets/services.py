@@ -770,7 +770,7 @@ class DatasetDomainService:
         ]
 
     def _collect_projects(self, db, database_id):
-        # Community Edition: system_project removed. Use brd_program via breeding module.
+        # TODO(Task-4): Community Edition — system_project removed. Restore via brd_program lookup.
         return []
 
     def _guess_name_from_path(self, file_path):
