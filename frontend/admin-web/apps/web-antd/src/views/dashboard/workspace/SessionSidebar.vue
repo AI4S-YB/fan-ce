@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import { nextTick, ref } from 'vue';
+import { onUnmounted, ref } from 'vue';
 
-import { Button, Input, Popconfirm, Tooltip } from 'ant-design-vue';
+import { Button, Input, Popconfirm, Tooltip, message } from 'ant-design-vue';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue';
 
 import { $t } from '@vben/locales';
@@ -11,6 +11,15 @@ import { useWorkspaceStore } from '#/store/modules/workspace';
 const store = useWorkspaceStore();
 const editingId = ref<null | string>(null);
 const editTitle = ref('');
+const now = ref(Date.now());
+
+let timer = setInterval(() => {
+  now.value = Date.now();
+}, 30_000);
+
+onUnmounted(() => {
+  clearInterval(timer);
+});
 
 function handleNew() {
   store.createSession();
@@ -25,13 +34,14 @@ function startRename(id: string, currentTitle: string) {
   editTitle.value = currentTitle;
 }
 
-async function confirmRename(id: string) {
+function confirmRename(id: string) {
   const title = editTitle.value.trim();
   if (title) {
     store.renameSession(id, title);
+    editingId.value = null;
+  } else {
+    message.warning($t('workspace.session.renameEmpty'));
   }
-  editingId.value = null;
-  await nextTick();
 }
 
 function cancelRename() {
@@ -43,19 +53,18 @@ function handleDelete(id: string) {
 }
 
 function formatTime(ts: number): string {
-  const now = Date.now();
-  const diff = now - ts;
-  if (diff < 60_000) return '刚刚';
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} 分钟前`;
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)} 小时前`;
-  return `${Math.floor(diff / 86_400_000)} 天前`;
+  const diff = now.value - ts;
+  if (diff < 60_000) return $t('workspace.session.justNow');
+  if (diff < 3_600_000) return $t('workspace.session.minutesAgo', { n: Math.floor(diff / 60_000) });
+  if (diff < 86_400_000) return $t('workspace.session.hoursAgo', { n: Math.floor(diff / 3_600_000) });
+  return $t('workspace.session.daysAgo', { n: Math.floor(diff / 86_400_000) });
 }
 </script>
 
 <template>
   <div class="session-sidebar">
     <div class="session-sidebar__header">
-      <span class="session-sidebar__title">对话列表</span>
+      <span class="session-sidebar__title">{{ $t('workspace.session.chatList') }}</span>
       <Tooltip :title="$t('workspace.session.newSessionBtn')">
         <Button size="small" type="text" @click="handleNew">
           <PlusOutlined />
@@ -81,7 +90,11 @@ function formatTime(ts: number): string {
             @keydown.escape="cancelRename"
           />
           <template v-else>
-            <div class="session-item__title" @dblclick="startRename(session.id, session.title)">
+            <div
+              class="session-item__title"
+              :title="session.title"
+              @dblclick.stop="startRename(session.id, session.title)"
+            >
               {{ session.title }}
             </div>
             <div class="session-item__meta">
@@ -90,7 +103,6 @@ function formatTime(ts: number): string {
                 :title="$t('workspace.session.deleteConfirm')"
                 placement="right"
                 @confirm="handleDelete(session.id)"
-                @click.stop
               >
                 <Button
                   size="small"

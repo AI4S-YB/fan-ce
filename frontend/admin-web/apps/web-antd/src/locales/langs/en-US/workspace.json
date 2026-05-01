@@ -29,6 +29,12 @@
     "newSessionBtn": "+ New Chat",
     "deleteConfirm": "Delete this conversation?",
     "emptyList": "No conversations yet",
-    "defaultTitle": "New Chat"
+    "defaultTitle": "New Chat",
+    "chatList": "Chat List",
+    "justNow": "Just now",
+    "minutesAgo": "{n} min ago",
+    "hoursAgo": "{n} hours ago",
+    "daysAgo": "{n} days ago",
+    "renameEmpty": "Chat name cannot be empty"
   }
 }
