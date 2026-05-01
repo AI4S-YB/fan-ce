@@ -4,6 +4,7 @@ export * from './auth';
 export * from './modules/dict';
 export * from './modules/platform-setup';
 export * from './modules/project';
+export * from './modules/workspace';
 // eslint-disable-next-line import/no-mutable-exports
 let pinia: Pinia;
 
