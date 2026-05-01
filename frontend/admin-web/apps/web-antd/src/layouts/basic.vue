@@ -57,9 +57,6 @@ const headerColor = computed(() => {
 const avatar = computed(() => {
   return userStore.userInfo?.avatar ?? preferences.app.defaultAvatar;
 });
-const team_list = computed(() => {
-  return userStore.userInfo?.team_list;
-});
 async function handleLogout() {
   await authStore.logout(false);
 }
@@ -71,12 +68,6 @@ function handleNoticeClear() {
 function handleMakeAll() {
   notifications.value.forEach((item) => (item.isRead = true));
 }
-const handleTeamSelect = (item: any) => {
-  // 执行团队选择逻辑
-  proStore.setTeamInfo(item);
-  proStore.updateProjectOptions();
-  refresh();
-};
 watch(
   () => preferences.app.watermark,
   async (enable) => {
@@ -92,44 +83,16 @@ watch(
     immediate: true,
   },
 );
-const placement = computed(() => proStore.getTeamInfo?.team_name);
 </script>
 
 <template>
   <BasicLayout @clear-preferences-and-logout="handleLogout">
     <template #user-dropdown>
-      <Dropdown placement="bottom">
-        <Button
-          :style="{
-            'background-color': 'hsl(var(--header))',
-            border: '0',
-            color: headerColor.value ? '#000' : '#fff',
-          }"
-        >
-          {{ placement }}
-        </Button>
-        <template #overlay>
-          <Menu>
-            <Menu.Item
-              v-for="item in team_list"
-              :key="item.id"
-              :style="{
-                'background-color':
-                  placement === item.team_name
-                    ? 'hsl(var(--primary) / 30%)'
-                    : '',
-              }"
-            >
-              <a @click="handleTeamSelect(item)"> {{ item.team_name }} </a>
-            </Menu.Item>
-          </Menu>
-        </template>
-      </Dropdown>
       <UserDropdown
         :avatar
         :menus
         :text="userStore.userInfo?.userinfo.user_name"
-        :description="placement"
+        :description="''"
         tag-text=""
         @logout="handleLogout"
       />

@@ -96,11 +96,6 @@ export async function getDataFormatFun(data: any) {
   return requestClient.post<DatabaseRowType[]>(`${pre}/file/search`, data);
 }
 
-// 获取团队信息（用于获取database_path）
-export async function getTeamDatabaseInfoApi(data: any) {
-  return requestClient.post('/system/team/info', data);
-}
-
 // 关联项目接口
 export async function linkProjectApi(data: any) {
   return requestClient.post(`${pre}/link-project`, data);

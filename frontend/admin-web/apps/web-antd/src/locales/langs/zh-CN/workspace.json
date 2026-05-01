@@ -1,8 +1,6 @@
 {
   "greeting": { "morning": "早安, {name}, 开始您一天的工作吧！" },
-  "currentTeam": "当前团队：{name}",
   "currentProject": "当前项目：{name}",
-  "currentTeamProject": "当前团队：{team}，当前项目：{project}",
   "fallbackDesc": "欢迎使用 FAN-CE 数据管理后台。",
   "stats": { "project": "项目", "dataset": "数据集" },
   "chat": {

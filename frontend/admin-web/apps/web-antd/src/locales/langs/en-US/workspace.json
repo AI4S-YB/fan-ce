@@ -1,8 +1,6 @@
 {
   "greeting": { "morning": "Good morning, {name}, let's start your day!" },
-  "currentTeam": "Current Team: {name}",
   "currentProject": "Current Project: {name}",
-  "currentTeamProject": "Team: {team}, Project: {project}",
   "fallbackDesc": "Welcome to FAN-CE Admin Console.",
   "stats": { "project": "Projects", "dataset": "Datasets" },
   "chat": {

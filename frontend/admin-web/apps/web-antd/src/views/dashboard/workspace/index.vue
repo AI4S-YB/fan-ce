@@ -21,15 +21,8 @@ const projectCount = ref(0);
 const datasetCount = ref(0);
 
 const workspaceDescription = computed(() => {
-  const teamName = projectStore.getTeamInfo?.team_name?.trim?.();
   const projectName = projectStore.getProjectInfo?.name?.trim?.();
 
-  if (teamName && projectName) {
-    return $t('workspace.currentTeamProject', { team: teamName, project: projectName });
-  }
-  if (teamName) {
-    return $t('workspace.currentTeam', { name: teamName });
-  }
   if (projectName) {
     return $t('workspace.currentProject', { name: projectName });
   }
