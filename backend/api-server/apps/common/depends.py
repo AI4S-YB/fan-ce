@@ -26,7 +26,6 @@ from core import settings
 from db.database import get_db
 from libs.dataes.data_crypto import read_pem_public_key, verify_license, get_serial_number
 from libs.exceptions.exception import ExceptionStatus
-from apps.system.team.crud import team_user_role_db
 from . import User
 from . import users_db
 from apps.services.rbd import rbd_service
@@ -58,7 +57,6 @@ def get_rbd_user(db: Session = Depends(get_db), current_user: User = Depends(get
     user_info = rbd_service.get_user_role_info(db=db, user=current_user, team_id=None)
     current_user.permissions = user_info.get('permissions', [])
     current_user.roles = user_info.get('roles', [])
-    current_user.team_list = user_info.get('team_list', [])
     current_user.menu_ids = user_info.get('menu_ids', [])
     return current_user
 

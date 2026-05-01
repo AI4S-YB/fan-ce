@@ -61,8 +61,8 @@ async def login_get_token(user_data: UserGetToken, request: Request, db: Session
     token = create_access_token(user.id, expires_delta=access_token_expires)
     user_avatar = f"/api/v1/avatar/{user.user_avatar}"
     return response_200(data={"access_token": token, "token_type": settings.TOKEN_TYPE, "user_id": user.id, 'user_avatar': user_avatar,
-                              'user_name': user.user_name, 'team': user_default.get('team_info'),
-                              'project': user_default.get('project_info')}
+                              'user_name': user.user_name, 'team': {},
+                              'project': {}}
                         )
 
 

@@ -1,6 +1,5 @@
-from apps.system.project.crud import project_db
 from apps.system.rbac.crud import role_menu_db, menu_permission_db, permission_db, user_role_db
-from apps.system.team.crud import team_user_db, team_user_role_db, team_project_db
+from apps.system.team.crud import team_user_db
 
 
 class RBDService:
@@ -58,83 +57,40 @@ class RBDService:
 
     @staticmethod
     def get_user_menu_ids(db, team_id, user):
-        # team
-        team_list = []
-        team_ids = []
-        for i in team_user_role_db.get_data(db=db, filters={'user_id': user.id}):
-            team_list.append({'team_id': i.team_id, 'team_name': i.team.name or ''})
-            team_ids.append(i.team_id)
-        if team_id:
-            team_id = int(team_id)
-        else:
-            team_id = team_ids[0] if team_ids else 0
-        team_role_ids = [role.role_id for role in team_user_db.get_data(db=db, filters={'user_id': user.id, 'team_id': team_id})]
         # 系统角色
         sys_role_ids = [role.role_id for role in user_role_db.get_data(db=db, filters={'user_id': user.id})]
-        role_ids = sys_role_ids + team_role_ids
-        menu_ids = [i.menu_id for i in role_menu_db.get_filter_in(db=db, name='role_id', value=role_ids)]
+        menu_ids = [i.menu_id for i in role_menu_db.get_filter_in(db=db, name='role_id', value=sys_role_ids)]
         return menu_ids
 
     @staticmethod
     def get_user_role_all_ids(db, user):
-        if not  user:
-            return []
-        # team
-        team_role_ids = []
-        for i in team_user_role_db.get_data(db=db, filters={'user_id': user.id}):
-            for role in team_user_db.get_data(db=db, filters={'user_id': user.id, 'team_id': i.team_id}):
-                team_role_ids.append(role.role_id)
         # 系统角色
         sys_role_ids = [role.role_id for role in user_role_db.get_data(db=db, filters={'user_id': user.id})]
-        role_ids = sys_role_ids + team_role_ids
-        return role_ids
+        return sys_role_ids
 
     @staticmethod
     def get_user_default(db, user):
-        # team
-        if not user:
-            return []
-        team_list = []
-        team_ids = []
-        project_info = {}
-        for i in team_user_role_db.get_data(db=db, filters={'user_id': user.id}):
-            team_list.append({'team_id': i.team_id, 'team_name': i.team.name or ''})
-            team_ids.append(i.team_id)
-        team_info = team_list[0] if team_list else {}
-        if team_info:
-            projects = menu_service.get_project_by_team_id(db=db, team_id=team_info.get('team_id'))
-            project_info = projects[0] if projects else {}
-        data = {'team_info': team_info, 'project_info': project_info}
-        return data
+        # Community Edition: no team/project context
+        return {'team_info': {}, 'project_info': {}}
 
     @staticmethod
-    def get_user_role_info(db, user, team_id):
-        """获取团队用户信息"""
-        # team
+    def get_user_role_info(db, user, team_id=None):
+        """获取用户角色信息 - 社区版：仅系统角色"""
         team_list = []
-        team_ids = []
-        for i in team_user_role_db.get_data(db=db, filters={'user_id': user.id}):
-            team_list.append({'team_id': i.team_id, 'team_name': i.team.name or ''})
-            team_ids.append(i.team_id)
-        if team_id:
-            team_id = int(team_id)
-        else:
-            team_id = team_ids[0] if team_ids else 0
-        projects = menu_service.get_project_by_team_id(db=db, team_id=team_id)
-        team_role_ids = [role.role_id for role in team_user_db.get_data(db=db, filters={'user_id': user.id, 'team_id': team_id})]
         # 系统角色
         sys_role_ids = [role.role_id for role in user_role_db.get_data(db=db, filters={'user_id': user.id})]
-
-        role_ids = sys_role_ids + team_role_ids
+        role_ids = sys_role_ids
         # 菜单权限
         menu_ids = [i.menu_id for i in role_menu_db.get_filter_in(db=db, name='role_id', value=role_ids)]
         permission_ids = [i.permission_id for i in menu_permission_db.get_filter_in(db=db, name='menu_id', value=menu_ids)]
         permissions = [i.code for i in permission_db.get_filter_in(db=db, name='id', value=permission_ids)]
-        data = {'team_list': team_list, 'permissions': permissions, 'role_ids': role_ids, 'menu_ids': menu_ids, 'project_list': projects,
-                'userinfo': {'id': user.id, 'user_name': user.user_name, 'nickName': 'nickName'},
-                'is_superman': bool(getattr(user, 'is_superman', False)),
-                'user_type': getattr(user, 'user_type', 0),
-                }
+        data = {
+            'team_list': team_list, 'permissions': permissions, 'role_ids': role_ids,
+            'menu_ids': menu_ids, 'project_list': [],
+            'userinfo': {'id': user.id, 'user_name': user.user_name, 'nickName': 'nickName'},
+            'is_superman': bool(getattr(user, 'is_superman', False)),
+            'user_type': getattr(user, 'user_type', 0),
+        }
         return data
 
 
@@ -167,23 +123,10 @@ class MenuService:
 
     @staticmethod
     def get_menu_ids(db, request_data, user_id):
-        # user role
-        role_ids0 = [i.role_id for i in user_role_db.get_data(db=db, filters={'user_id': user_id})]
-        # team
-        role_ids1 = [i.role_id for i in team_user_role_db.get_data(db=db, filters={'team_id': request_data.team_id, 'user_id': user_id})]
-        role_ids = role_ids0 + role_ids1
+        # 系统角色
+        role_ids = [i.role_id for i in user_role_db.get_data(db=db, filters={'user_id': user_id})]
         menu_ids = [i.menu_id for i in role_menu_db.get_filter_in(db=db, name='role_id', value=role_ids)]
         return menu_ids
-
-    @staticmethod
-    def get_project_by_team_id(db, team_id):
-        projects = []
-        project_ids = []
-        for i in team_project_db.get_data(db=db, filters={'team_id': team_id}):
-            project_ids.append(i.project_id)
-        for ii in project_db.get_filter_in(db=db, name='id', value=project_ids):
-            projects.append({'id': ii.id, 'name': ii.name})
-        return projects
 
 
 menu_service = MenuService()
