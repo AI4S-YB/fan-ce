@@ -319,7 +319,7 @@ async def frp_status(
 @setting_router.get("/frp/install-script", summary="下载frps安装脚本")
 async def frp_install_script():
     script_path = os.path.realpath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "static", "install-frps.sh")
+        os.path.join(os.path.dirname(__file__), "..", "..", "..", "static", "install-frps.sh")
     )
     if not os.path.isfile(script_path):
         raise HTTPException(status_code=404, detail="安装脚本不存在")

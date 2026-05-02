@@ -14,6 +14,8 @@ FRPC_VERSION = "0.61.0"
 
 # Download mirrors: domestic CDN first, GitHub fallback
 FRPC_DOWNLOAD_URLS = [
+    "https://ghproxy.com/https://github.com/fatedier/frp/releases/download/v{version}/frp_{version}_{platform}.tar.gz",
+    "https://gh.con.sh/https://github.com/fatedier/frp/releases/download/v{version}/frp_{version}_{platform}.tar.gz",
     "https://github.com/fatedier/frp/releases/download/v{version}/frp_{version}_{platform}.tar.gz",
 ]
 
@@ -46,7 +48,7 @@ def _download_frpc() -> bool:
         try:
             import io
             import tarfile
-            resp = requests.get(url, timeout=30, stream=True)
+            resp = requests.get(url, timeout=15, stream=True)
             resp.raise_for_status()
             with tarfile.open(fileobj=io.BytesIO(resp.content), mode="r:gz") as tar:
                 for member in tar.getmembers():
