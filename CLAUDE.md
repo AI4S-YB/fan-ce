@@ -11,12 +11,29 @@ FAN-CE (FAN Community Edition) is a FastAPI-based web application for bioinforma
 ### Running the Application
 
 ```bash
-# Development mode with auto-reload
-uvicorn main:app --host 0.0.0.0 --port 8022 --reload --workers 5
+# 启动后端 (port 8002)
+bash scripts/dev/start-backend.sh
 
-# Or directly via Python
-python main.py
+# 启动前端 Antd 管理后台 (port 5666)
+bash scripts/dev/start-admin-web.sh
+
+# 停止所有开发服务器
+bash scripts/dev/stop-dev.sh
 ```
+
+**开发环境端口规范：**
+
+| 服务 | 端口 |
+|------|------|
+| 后端 API | 8002 |
+| 前端 Antd | 5666 |
+| 前端 Element | 5667 |
+| 前端 Naive | 5668 |
+| PostgreSQL | 5433 |
+
+后端端口由两处共同决定，已统一为 8002：
+- `backend/api-server/main.py:37` — `uvicorn.run(..., port=8002)`
+- `frontend/admin-web/apps/web-antd/vite.config.mts` — 所有代理目标指向 `http://127.0.0.1:8002`
 
 ### Database Management
 

@@ -34,6 +34,6 @@ logging.getLogger("watchfiles").setLevel(logging.WARNING)
 
 
 if __name__ == '__main__':
-    uvicorn.run(app='main:app',workers=5, reload=True, host='0.0.0.0', port=8001)
-    # uvicorn.run(app='main:app', workers=5, host='0.0.0.0', port=8001)
+    uvicorn.run(app='main:app',workers=5, reload=True, host='0.0.0.0', port=8002)
+    # uvicorn.run(app='main:app', workers=5, host='0.0.0.0', port=8002)
 

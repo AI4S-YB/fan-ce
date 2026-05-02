@@ -8,7 +8,7 @@ export default defineConfig(async () => {
   return {
     application: {
       printInfoMap: {
-        'FAN-CE API Docs': 'http://127.0.0.1:8001/docs',
+        'FAN-CE API Docs': 'http://127.0.0.1:8002/docs',
       },
     },
     vite: {
@@ -30,28 +30,28 @@ export default defineConfig(async () => {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/api\/v1/, ''),
             // mock代理目标地址
-            target: 'http://127.0.0.1:8001/api/v1',
+            target: 'http://127.0.0.1:8002/api/v1',
             ws: true,
           },
           '/docs': {
             changeOrigin: true,
-            target: 'http://127.0.0.1:8001',
+            target: 'http://127.0.0.1:8002',
           },
           '/redoc': {
             changeOrigin: true,
-            target: 'http://127.0.0.1:8001',
+            target: 'http://127.0.0.1:8002',
           },
           '/openapi.json': {
             changeOrigin: true,
-            target: 'http://127.0.0.1:8001',
+            target: 'http://127.0.0.1:8002',
           },
           '/static/swagger-ui': {
             changeOrigin: true,
-            target: 'http://127.0.0.1:8001',
+            target: 'http://127.0.0.1:8002',
           },
           '/static/templates': {
             changeOrigin: true,
-            target: 'http://127.0.0.1:8001',
+            target: 'http://127.0.0.1:8002',
           },
         },
       },
