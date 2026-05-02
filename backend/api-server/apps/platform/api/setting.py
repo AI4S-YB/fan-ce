@@ -1,13 +1,16 @@
 import json
+import os
 import time
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 
 from apps.common.depends import get_active_user
 from db.database import get_db
 from libs.responses.response import response_200
 from ..models import PlatformModelApiSetting, PlatformSiteSetting
 from ..schemas import (
+    FrpConfigUpdateRequest,
     PlatformModelApiCreateRequest,
     PlatformModelApiDeleteRequest,
     PlatformModelApiListRequest,
@@ -16,6 +19,7 @@ from ..schemas import (
     PlatformSiteSettingInfoRequest,
     PlatformSiteSettingUpdateRequest,
 )
+from apps.platform.frp_service import start_frpc, stop_frpc, get_frpc_status
 
 setting_router = APIRouter(tags=["app:platform:平台设置"])
 
@@ -230,3 +234,93 @@ async def model_set_primary(
     db.commit()
     db.refresh(setting_obj)
     return response_200(data=_serialize_model_api(setting_obj))
+
+
+# ---------------------------------------------------------------------------
+# FRP Tunnel Management
+# ---------------------------------------------------------------------------
+
+
+@setting_router.post("/frp/config/update", summary="更新FRP隧道配置")
+async def frp_config_update(
+    request_data: FrpConfigUpdateRequest,
+    db=Depends(get_db),
+    _user=Depends(get_active_user),
+):
+    _require_platform_admin(_user)
+    site = db.query(PlatformSiteSetting).order_by(PlatformSiteSetting.id.asc()).first()
+    if not site:
+        now = int(time.time())
+        site = PlatformSiteSetting(create_time=now, user_id=_user.id)
+        db.add(site)
+    update_data = request_data.model_dump(exclude_unset=True)
+    for field_name, field_value in update_data.items():
+        setattr(site, field_name, field_value)
+    site.update_time = int(time.time())
+    site.user_id = _user.id
+    db.add(site)
+    db.commit()
+    db.refresh(site)
+    return response_200(data=_serialize_site_setting(site))
+
+
+@setting_router.post("/frp/start", summary="启动FRP隧道")
+async def frp_start(
+    db=Depends(get_db),
+    _user=Depends(get_active_user),
+):
+    _require_platform_admin(_user)
+    site = db.query(PlatformSiteSetting).order_by(PlatformSiteSetting.id.asc()).first()
+    if not site:
+        return response_200(code=4000, msg="请先配置FRP隧道参数", data={})
+    result = start_frpc(site)
+    if result.get("frp_status") == "error":
+        site.frp_status = "error"
+        db.add(site)
+        db.commit()
+        return response_200(code=4000, msg=result.get("error", "启动失败"), data=result)
+    site.frp_status = result.get("frp_status", "running")
+    site.update_time = int(time.time())
+    db.add(site)
+    db.commit()
+    return response_200(data=result)
+
+
+@setting_router.post("/frp/stop", summary="停止FRP隧道")
+async def frp_stop(
+    db=Depends(get_db),
+    _user=Depends(get_active_user),
+):
+    _require_platform_admin(_user)
+    result = stop_frpc()
+    site = db.query(PlatformSiteSetting).order_by(PlatformSiteSetting.id.asc()).first()
+    if site:
+        site.frp_status = "stopped"
+        site.update_time = int(time.time())
+        db.add(site)
+        db.commit()
+    return response_200(data=result)
+
+
+@setting_router.post("/frp/status", summary="查询FRP隧道状态")
+async def frp_status(
+    db=Depends(get_db),
+):
+    site = db.query(PlatformSiteSetting).order_by(PlatformSiteSetting.id.asc()).first()
+    if not site:
+        return response_200(data={"frp_status": "stopped", "pid": None, "public_url": None, "api_url": None, "last_error": None, "uptime_seconds": None})
+    result = get_frpc_status(site)
+    site.frp_status = result.get("frp_status", "stopped")
+    db.add(site)
+    db.commit()
+    return response_200(data=result)
+
+
+@setting_router.get("/frp/install-script", summary="下载frps安装脚本")
+async def frp_install_script():
+    script_path = os.path.realpath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "static", "install-frps.sh")
+    )
+    if not os.path.isfile(script_path):
+        raise HTTPException(status_code=404, detail="安装脚本不存在")
+    return FileResponse(script_path, media_type="text/plain", filename="install-frps.sh")
