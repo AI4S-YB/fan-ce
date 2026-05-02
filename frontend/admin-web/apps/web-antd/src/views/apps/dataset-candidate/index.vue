@@ -466,7 +466,7 @@ onMounted(() => {
 
       <Empty
         v-if="!loading && rows.length === 0"
-        :description=”$t('dataset.candidate.noCandidatesHintFull')”
+        :description="$t('dataset.candidate.noCandidatesHintFull')"
       />
     </Card>
 

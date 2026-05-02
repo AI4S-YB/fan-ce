@@ -1022,7 +1022,7 @@ onMounted(() => {
                     </Button>
                   </div>
                 </div>
-                <div v-else class=”overview-empty-hint”>
+                <div v-else class="overview-empty-hint">
                   {{ $t('breeding.detail.selectMaterialHint') }}
                 </div>
               </Card>
@@ -1146,7 +1146,7 @@ onMounted(() => {
                   <div class="overview-list-item">
                     <div class="overview-list-main">
                       <div class="overview-list-title">{{ $t('breeding.detail.suggestionTitle1') }}</div>
-                      <div class=”overview-list-subtitle”>{{ $t('breeding.detail.suggestionDesc1') }}</div>
+                      <div class="overview-list-subtitle">{{ $t('breeding.detail.suggestionDesc1') }}</div>
                     </div>
                   </div>
                   <div class="overview-list-item">

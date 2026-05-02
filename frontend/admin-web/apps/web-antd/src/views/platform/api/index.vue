@@ -318,7 +318,7 @@ onMounted(() => {
           type="info"
           show-icon
           :message="$t('platform.setting.note')"
-          :description=”$t('platform.api.docNoteDesc')”
+          :description="$t('platform.api.docNoteDesc')"
         />
 
         <div class="overview-grid">

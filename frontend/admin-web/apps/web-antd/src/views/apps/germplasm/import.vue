@@ -396,8 +396,8 @@ function fieldSchemaRowKey(record: GermplasmFieldSchemaItem) {
           </Space>
         </template>
         <div class="hero-eyebrow">{{ $t('germplasm.import.heroEyebrow') }}</div>
-        <h2 class=”hero-title”>{{ $t('germplasm.import.title') }}</h2>
-        <p class=”hero-description”>
+        <h2 class="hero-title">{{ $t('germplasm.import.title') }}</h2>
+        <p class="hero-description">
           {{ $t('germplasm.import.descriptionHero') }}
         </p>
       </Card>
@@ -439,7 +439,7 @@ function fieldSchemaRowKey(record: GermplasmFieldSchemaItem) {
                   {{ $t('germplasm.import.downloadHint') }}
                 </span>
               </Space>
-              <TypographyParagraph class=”template-note”>
+              <TypographyParagraph class="template-note">
                 {{ $t('germplasm.import.templateNote1') }}<br />
                 1. {{ $t('germplasm.import.templateNote2') }}<br />
                 2. {{ $t('germplasm.import.templateNote3') }}<br />
@@ -447,7 +447,7 @@ function fieldSchemaRowKey(record: GermplasmFieldSchemaItem) {
                 4. {{ $t('germplasm.import.templateNote5') }}<br />
                 5. {{ $t('germplasm.import.templateNote6') }}
               </TypographyParagraph>
-              <TypographyParagraph class=”template-note”>
+              <TypographyParagraph class="template-note">
                 {{ $t('germplasm.import.testSuggestion') }}
               </TypographyParagraph>
             </div>
