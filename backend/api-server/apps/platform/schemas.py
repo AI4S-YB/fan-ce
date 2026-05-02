@@ -11,7 +11,7 @@
 """
 from typing import Optional, List
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class News(BaseModel):
@@ -116,3 +116,34 @@ class PlatformChatTestRequest(BaseModel):
     model_name: str
     api_base_url: str
     api_key: str
+
+
+# FRP Tunnel schemas
+
+class FrpConfigUpdateRequest(BaseModel):
+    """Update frp config in site setting. All fields optional."""
+    frp_server_addr: Optional[str] = Field(None, description="云服务器IP地址")
+    frp_server_port: Optional[int] = Field(7000, description="frps绑定端口")
+    frp_token: Optional[str] = Field(None, description="认证密钥")
+    frp_public_port: Optional[int] = Field(80, description="对外HTTP端口")
+    frp_config_json: Optional[str] = Field(None, description="高级自定义frpc配置")
+
+
+class FrpStartResponse(BaseModel):
+    frp_status: str
+    public_url: str
+    api_url: str
+    pid: int
+
+
+class FrpStopResponse(BaseModel):
+    frp_status: str
+
+
+class FrpStatusResponse(BaseModel):
+    frp_status: str
+    pid: Optional[int] = None
+    public_url: Optional[str] = None
+    api_url: Optional[str] = None
+    last_error: Optional[str] = None
+    uptime_seconds: Optional[int] = None
