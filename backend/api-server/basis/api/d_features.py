@@ -77,10 +77,7 @@ async def get_file_fields(file_path: str = None, file_type: str = "other"):
     """
     if file_path is None:
         raise HTTPException(status_code=400, detail="file_path is required")
-            
-    Raises:
-        HTTPException: If file not found (404), not readable (403), or empty (400)
-    """
+
     try:
         # Check if file exists and is readable
         if not os.path.exists(file_path):
