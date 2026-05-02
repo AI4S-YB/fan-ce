@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 
+// Use VITE_API_BASE_URL env var, or default to '/api/v1' (proxied in dev)
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+
 type PublicDatasetItem = {
   id: number;
   dataset_code?: string;
@@ -1212,7 +1215,7 @@ async function loadDatasets() {
   loading.value = true;
   errorText.value = '';
   try {
-    const response = await fetch('/api/v1/public/dataset/list', {
+    const response = await fetch(`${API_BASE}/public/dataset/list`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ page: 1, size: 50 }),
@@ -1241,7 +1244,7 @@ async function loadDatasetDetail(datasetId: number) {
   queryResult.value = null;
   copyFeedback.value = '';
   try {
-    const versionsResponse = await fetch('/api/v1/public/dataset/version/list', {
+    const versionsResponse = await fetch(`${API_BASE}/public/dataset/version/list`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1273,12 +1276,12 @@ async function loadDatasetDetail(datasetId: number) {
     }
 
     const [detailResponse, capabilitiesResponse] = await Promise.all([
-      fetch('/api/v1/public/dataset/version/info', {
+      fetch(`${API_BASE}/public/dataset/version/info`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: datasetId, version_id: nextVersionId }),
       }),
-      fetch('/api/v1/public/dataset/version/query/capabilities', {
+      fetch(`${API_BASE}/public/dataset/version/query/capabilities`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: datasetId, version_id: nextVersionId }),
@@ -1417,7 +1420,7 @@ async function runQuery() {
         }
       }
     }
-    const response = await fetch('/api/v1/public/dataset/version/query/execute', {
+    const response = await fetch(`${API_BASE}/public/dataset/version/query/execute`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
