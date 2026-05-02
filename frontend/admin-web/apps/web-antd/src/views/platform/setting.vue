@@ -38,6 +38,7 @@ import {
   updatePlatformModelApiApi,
   updatePlatformSiteSettingApi,
 } from '#/api/platform/setting';
+import FrpTunnelCard from './components/FrpTunnelCard.vue';
 import { useMessage } from '#/hooks/web/useMessage';
 import { $t } from '@vben/locales';
 
@@ -458,6 +459,8 @@ onMounted(() => {
           </div>
         </Form>
       </Card>
+
+      <FrpTunnelCard :site-setting="siteForm" @refresh="loadSiteSetting" />
 
       <Card :title="$t('platform.setting.modelApiConfig')" :bordered="false" :loading="pageLoading">
         <template #extra>
