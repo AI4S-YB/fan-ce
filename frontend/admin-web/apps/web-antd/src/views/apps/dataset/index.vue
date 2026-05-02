@@ -9,11 +9,14 @@ import {
   deleteDatasetApi,
   getDatasetKindOptionsApi,
   getDatasetListApi,
+  getDatasetVersionListApi,
   publishDatasetApi,
   unpublishDatasetApi,
   type DatasetItem,
   type DatasetKindOption,
 } from '#/api/apps/dataset';
+import { createBrdDatasetSubjectLinkApi } from '#/api/breeding/dataset-subject-link';
+import { useProgramStore } from '#/store/modules/program';
 import { useMessage } from '#/hooks/web/useMessage';
 import { $t } from '@vben/locales';
 import {
@@ -24,6 +27,7 @@ import {
 
 const { createConfirm, createMessage } = useMessage();
 const router = useRouter();
+const programStore = useProgramStore();
 
 const loading = ref(false);
 const rows = ref<DatasetItem[]>([]);
@@ -140,6 +144,69 @@ async function handleToggleVisibility(record: DatasetItem) {
   }
 }
 
+// ── Program link modal state ──
+const linkModalVisible = ref(false);
+const selectedProgramId = ref<number | null>(null);
+const linkInstruction = ref('');
+const linkSubmitting = ref(false);
+const linkDatasetId = ref<number | null>(null);
+const linkVersionId = ref<number | null>(null);
+
+async function openLinkModal(record: DatasetItem) {
+  selectedProgramId.value = null;
+  linkInstruction.value = '';
+  linkDatasetId.value = record.id;
+  linkVersionId.value = null;
+  linkModalVisible.value = true;
+
+  // Fetch program options and version info in parallel
+  const promises: Promise<any>[] = [];
+  if (!programStore.programOptions || programStore.programOptions.length === 0) {
+    promises.push(programStore.fetchProgramOptions());
+  }
+  promises.push(
+    getDatasetVersionListApi({ dataset_id: record.id }).then((res) => {
+      const ver = res.current_version || res.items?.[0];
+      if (ver) linkVersionId.value = ver.id;
+    }).catch(() => {}),
+  );
+  await Promise.all(promises);
+}
+
+async function handleDirectLink() {
+  if (!selectedProgramId.value) {
+    createMessage.warning($t('dataset.list.selectProgramPlaceholder'));
+    return;
+  }
+  if (!linkVersionId.value) {
+    createMessage.warning('No version available for linking');
+    return;
+  }
+  linkSubmitting.value = true;
+  try {
+    await createBrdDatasetSubjectLinkApi({
+      dataset_id: linkDatasetId.value!,
+      version_id: linkVersionId.value,
+      program_id: selectedProgramId.value,
+      role: 'manual_link',
+      mapping_method: 'manual',
+      mapping_status: 'matched',
+      is_primary: 1,
+      note: linkInstruction.value || undefined,
+    });
+    createMessage.success($t('dataset.list.linkSuccess'));
+    linkModalVisible.value = false;
+  } catch {
+    createMessage.error($t('dataset.list.linkFailed'));
+  } finally {
+    linkSubmitting.value = false;
+  }
+}
+
+function handleLlmPreview() {
+  createMessage.info($t('dataset.list.llmPreviewDisabled'));
+}
+
 onMounted(async () => {
   await loadDatasets();
   try {
@@ -211,6 +278,7 @@ onMounted(async () => {
           <Space wrap>
             <Button type="link" @click="router.push(`/dataset/${(record as DatasetItem).id}`)">{{ $t('dataset.list.detail') }}</Button>
             <Button type="link" @click="router.push(`/dataset/${(record as DatasetItem).id}/query`)">{{ $t('dataset.list.dataQuery') }}</Button>
+            <Button type="link" @click="openLinkModal(record as DatasetItem)">{{ $t('dataset.list.linkToProgram') }}</Button>
             <Button
               v-if="(record as DatasetItem).visibility !== 'public'"
               type="link"
@@ -232,5 +300,41 @@ onMounted(async () => {
         </template>
       </template>
     </Table>
+
+    <!-- Link to Program Modal -->
+    <Modal
+      v-model:open="linkModalVisible"
+      :title="$t('dataset.list.linkToProgramTitle')"
+      :confirm-loading="linkSubmitting"
+      @ok="handleDirectLink"
+      :ok-text="$t('dataset.list.directLink')"
+      :cancel-text="$t('common.cancelText')"
+    >
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div>
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">{{ $t('dataset.list.selectProgram') }}</label>
+          <Select
+            v-model:value="selectedProgramId"
+            :options="programStore.programOptions"
+            :placeholder="$t('dataset.list.selectProgramPlaceholder')"
+            style="width: 100%;"
+            show-search
+            :filter-option="(input: string, option: any) => (option?.label || '').toLowerCase().includes(input.toLowerCase())"
+          />
+        </div>
+        <div>
+          <label style="display: block; margin-bottom: 4px; font-weight: 500;">{{ $t('dataset.list.linkInstruction') }}</label>
+          <Input.TextArea
+            v-model:value="linkInstruction"
+            :placeholder="$t('dataset.list.linkInstructionPlaceholder')"
+            :rows="3"
+          />
+        </div>
+        <div>
+          <Button block disabled @click="handleLlmPreview">{{ $t('dataset.list.llmPreview') }}</Button>
+          <div style="font-size: 11px; color: #aaa; margin-top: 4px;">{{ $t('dataset.list.llmPreviewDisabled') }}</div>
+        </div>
+      </div>
+    </Modal>
   </Page>
 </template>
