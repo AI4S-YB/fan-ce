@@ -120,3 +120,44 @@ export async function testPlatformModelApi(data: {
 }): Promise<PlatformChatTestResult> {
   return requestClient.post('/platform/chat/test', data);
 }
+
+// ── FRP Tunnel types ──
+
+export interface FrpStatusResult {
+  frp_status: 'stopped' | 'running' | 'error';
+  pid: number | null;
+  public_url: string | null;
+  api_url: string | null;
+  last_error: string | null;
+  uptime_seconds: number | null;
+}
+
+export interface FrpConfigPayload {
+  frp_server_addr?: string;
+  frp_server_port?: number;
+  frp_token?: string;
+  frp_public_port?: number;
+  frp_config_json?: string;
+}
+
+// ── FRP API functions ──
+
+export async function updateFrpConfigApi(data: FrpConfigPayload) {
+  return requestClient.post('/platform/frp/config/update', data);
+}
+
+export async function startFrpTunnelApi() {
+  return requestClient.post<FrpStatusResult>('/platform/frp/start');
+}
+
+export async function stopFrpTunnelApi() {
+  return requestClient.post<FrpStatusResult>('/platform/frp/stop');
+}
+
+export async function getFrpStatusApi() {
+  return requestClient.post<FrpStatusResult>('/platform/frp/status');
+}
+
+export function getFrpInstallScriptUrl() {
+  return '/api/v1/platform/frp/install-script';
+}
