@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
 
 from db.database import get_db
-from apps.databases.crud import database_db, database_file_db
+from apps.datasets.models import AssetFile
 from basis.core.expression_utils import process_rnaseq_file, extract_expression_matrix, load_gene_sample_names
 from basis.schemas.expression import ExpressionProcessRequest, ExpressionQueryRequest, ExpressionResult
 from libs.responses.response import response_2000
@@ -41,32 +41,21 @@ async def process_expression_file(req: ExpressionProcessRequest, db=Depends(get_
         # Process the RNA-Seq file，convert to HDF5 format, the function can check the input file
         output_h5_file = process_rnaseq_file( req.input_file, output_h5_file)
 
-        # Query database file table according to path         
-        rnaseq_file_obj = database_file_db.get_filter(
-            db=db, filters={"path": req.input_file}
-        )
-
-        # rnaseq_h5_file_obj = database_file_db.get_filter(
-        #     db=db, filters={"path": output_h5_file}
-        # )
+        # Query asset file table by path
+        rnaseq_file_obj = db.query(AssetFile).filter(
+            (AssetFile.local_path == req.input_file) | (AssetFile.storage_uri == req.input_file)
+        ).first()
 
         if rnaseq_file_obj is None:
             raise HTTPException(
                 status_code=404,
                 detail=f"Expression file not found: {req.input_file}"
             )
-        
-        # replace the rnaseq_file in the database 
-        rnaseq_file_obj = database_file_db.update_one(
-            db=db, db_obj=rnaseq_file_obj, obj_in={"path": output_h5_file}
-        )
-        
-        if rnaseq_file_obj.path != output_h5_file:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Error updating file: {req.input_file}"
-            )
-        
+
+        # Update file path
+        rnaseq_file_obj.local_path = output_h5_file
+        db.flush()
+
         return response_2000(
             code=2000,
             msg="File processed successfully",

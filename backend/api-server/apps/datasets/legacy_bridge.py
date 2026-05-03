@@ -7,7 +7,6 @@ and ``asset_file`` instead.
 
 from types import SimpleNamespace
 
-from apps.databases.crud import database_db  # keep for delete_legacy_cascade only
 from apps.datasets.models import AssetFile, DatasetRegistry, DatasetAsset, DatasetVersion
 
 
@@ -36,8 +35,7 @@ class DatasetLegacyBridge:
                 status=0,
                 create_time=registry.create_time,
             )
-        # Ultimate fallback — should not happen after data migration
-        return database_db.get(db=db, id=dataset_id)
+        return None
 
     def list_databases(self, db, page=0, size=0, filters=None, filters_exp=None, sort="-id"):
         """Return SimpleNamespace list mimicking old database_db.get_list."""

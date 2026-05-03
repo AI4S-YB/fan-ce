@@ -80,4 +80,4 @@ dist/
 .turbo/
 
 # Documentation (separate repo)
-docs/
+docs/.superpowers/

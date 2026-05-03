@@ -82,8 +82,3 @@ class EnhancementMeta(Base):
         return {column.name: column.comment for column in cls.__table__.columns}
 
 
-class EnhancementDatabasesLink(Base):
-    __tablename__ = "experiment_databases_link"
-    id = Column(Integer, primary_key=True, index=True)
-    database_id = Column(Integer, ForeignKey('databases.id'), comment="文件数据ID")
-    experiment = Column(Integer, ForeignKey('abd_experiment.id'), comment='实验ID')
