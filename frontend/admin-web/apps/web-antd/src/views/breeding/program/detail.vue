@@ -445,6 +445,7 @@ const activeMaterialBioSamplePreviewRows = computed(() =>
       id: item.id,
       sampleCode: item.sample_code,
       sampleType: item.sample_type || '-',
+      organism: item.organism || '-',
       tissueType: item.tissue_type || '-',
       timepoint: item.timepoint || '-',
     })),
@@ -492,6 +493,7 @@ const biosampleColumns = [
   { title: $t('breeding.detail.materials'), dataIndex: 'material_id', key: 'material_id', minWidth: 220 },
   { title: $t('breeding.detail.plots'), dataIndex: 'plot_id', key: 'plot_id', minWidth: 200 },
   { title: $t('breeding.detail.sampleType'), dataIndex: 'sample_type', key: 'sample_type', width: 120 },
+  { title: $t('breeding.detail.organism'), dataIndex: 'organism', key: 'organism', width: 140 },
   { title: $t('breeding.detail.tissue'), dataIndex: 'tissue_type', key: 'tissue_type', width: 120 },
   { title: $t('breeding.detail.timepoint'), dataIndex: 'timepoint', key: 'timepoint', width: 120 },
   { title: $t('breeding.detail.collectionDate'), dataIndex: 'collection_date', key: 'collection_date', width: 140 },
@@ -519,6 +521,12 @@ const assayColumns = [
   { title: $t('breeding.detail.assayType'), dataIndex: 'assay_type', key: 'assay_type', width: 140 },
   { title: $t('breeding.detail.platform'), dataIndex: 'platform', key: 'platform', width: 140 },
   { title: $t('breeding.detail.vendor'), dataIndex: 'vendor', key: 'vendor', width: 140 },
+  { title: $t('breeding.detail.libraryStrategy'), dataIndex: 'library_strategy', key: 'library_strategy', width: 140 },
+  { title: $t('breeding.detail.librarySource'), dataIndex: 'library_source', key: 'library_source', width: 140 },
+  { title: $t('breeding.detail.librarySelection'), dataIndex: 'library_selection', key: 'library_selection', width: 140 },
+  { title: $t('breeding.detail.libraryLayout'), dataIndex: 'library_layout', key: 'library_layout', width: 120 },
+  { title: $t('breeding.detail.instrumentModel'), dataIndex: 'instrument_model', key: 'instrument_model', width: 160 },
+  { title: $t('breeding.detail.readLength'), dataIndex: 'read_length', key: 'read_length', width: 100 },
   { title: $t('breeding.detail.runDate'), dataIndex: 'run_date', key: 'run_date', width: 140 },
   { title: $t('breeding.detail.status'), dataIndex: 'status', key: 'status', width: 100 },
   { title: $t('breeding.detail.chain'), key: 'action', width: 120, fixed: 'right' as const },
@@ -1344,7 +1352,7 @@ onMounted(() => {
                     >
                       <div class="material-sample-code">{{ item.sampleCode }}</div>
                       <div class="material-sample-meta">
-                        {{ item.sampleType }} / {{ item.tissueType }} / {{ item.timepoint }}
+                        {{ item.sampleType }} / {{ item.organism }} / {{ item.tissueType }} / {{ item.timepoint }}
                       </div>
                     </div>
                   </div>
@@ -1457,7 +1465,7 @@ onMounted(() => {
               :data-source="filteredBioSampleRows"
               :loading="biosamplesLoading"
               :pagination="false"
-              :scroll="{ x: 1100 }"
+              :scroll="{ x: 1300 }"
               row-key="id"
             >
               <template #bodyCell="{ column, record }">
@@ -1490,7 +1498,7 @@ onMounted(() => {
                 :data-source="filteredAssayRows"
                 :loading="assaysLoading"
                 :pagination="false"
-                :scroll="{ x: 1000 }"
+                :scroll="{ x: 1800 }"
                 row-key="id"
               >
                 <template #bodyCell="{ column, record }">

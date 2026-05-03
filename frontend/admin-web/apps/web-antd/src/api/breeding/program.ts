@@ -120,6 +120,7 @@ export interface BreedingBioSampleItem {
   material_id: number;
   plot_id?: number | null;
   sample_type?: string | null;
+  organism?: string | null;
   tissue_type?: string | null;
   timepoint?: string | null;
   collection_date?: string | null;
@@ -156,6 +157,12 @@ export interface BreedingAssayItem {
   assay_type: string;
   platform?: string | null;
   vendor?: string | null;
+  library_strategy?: string | null;
+  library_source?: string | null;
+  library_selection?: string | null;
+  library_layout?: string | null;
+  instrument_model?: string | null;
+  read_length?: number | null;
   run_date?: string | null;
   status?: string | null;
 }
