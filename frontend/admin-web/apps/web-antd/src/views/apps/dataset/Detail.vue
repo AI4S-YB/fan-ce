@@ -212,6 +212,49 @@ watch(descriptionMd, (val) => {
   debouncedSaveDescription(val);
 });
 
+// ── extra_json (structured attributes) editor ──
+const extraJson = ref('');
+let extraJsonInit = false;
+
+const debouncedSaveExtraJson = useDebounceFn(async (val: string) => {
+  if (detailData.value) {
+    // Validate JSON before saving
+    try {
+      if (val.trim()) JSON.parse(val);
+    } catch {
+      message.warning($t('dataset.detail.extraJsonInvalid'));
+      return;
+    }
+    await updateDatasetApi({ id: datasetId.value, extra_json: val });
+  }
+}, 2000);
+
+// Initialize from loaded detail data (without triggering save)
+watch(detailData, (data) => {
+  if (data) {
+    extraJsonInit = true;
+    // Format existing JSON for display
+    try {
+      const parsed = data.extra_json ? JSON.parse(data.extra_json) : {};
+      extraJson.value = JSON.stringify(parsed, null, 2);
+    } catch {
+      extraJson.value = data.extra_json || '';
+    }
+  }
+});
+
+// Auto-save on change (skip the init-induced change)
+watch(extraJson, (val) => {
+  if (!extraJsonInit) return;
+  if (val === (() => {
+    try {
+      const parsed = detailData.value?.extra_json ? JSON.parse(detailData.value.extra_json) : {};
+      return JSON.stringify(parsed, null, 2);
+    } catch { return detailData.value?.extra_json || ''; }
+  })()) return;
+  debouncedSaveExtraJson(val);
+});
+
 // ── Inline title / version editing ──
 const editableTitle = ref('');
 const editableVersion = ref('');
@@ -282,6 +325,18 @@ onMounted(() => loadAll());
           v-model:value="descriptionMd"
           :placeholder="$t('dataset.detail.descriptionMdPlaceholder')"
           :auto-size="{ minRows: 6, maxRows: 20 }"
+        />
+      </div>
+
+      <!-- Section: Structured Attributes (extra_json) -->
+      <div style="margin-bottom: 20px;">
+        <h3>{{ $t('dataset.detail.extraJson') }}</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:6px;">{{ $t('dataset.detail.extraJsonHint') }}</p>
+        <Input.TextArea
+          v-model:value="extraJson"
+          :placeholder="$t('dataset.detail.extraJsonPlaceholder')"
+          :auto-size="{ minRows: 4, maxRows: 15 }"
+          :style="{ fontFamily: 'monospace', fontSize: '13px' }"
         />
       </div>
 

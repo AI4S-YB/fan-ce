@@ -495,5 +495,9 @@
     "notOpenToPublic": "该版本当前不对公开前台开放。"
   },
   "dataset.detail.titlePlaceholder": "数据集标题",
-  "dataset.detail.versionLabel": "版本标识"
+  "dataset.detail.versionLabel": "版本标识",
+  "dataset.detail.extraJson": "结构化属性 (JSON)",
+  "dataset.detail.extraJsonHint": "以 JSON 格式定义数据集的属性信息，如物种、组织、处理条件等。LLM 可直接检索这些属性。",
+  "dataset.detail.extraJsonPlaceholder": "{\n  \"tissue\": \"leaf\",\n  \"treatment\": \"drought\",\n  \"timepoint\": \"day7\"\n}",
+  "dataset.detail.extraJsonInvalid": "JSON 格式无效，请检查后重试"
 }

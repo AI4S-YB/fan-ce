@@ -495,5 +495,9 @@
     "notOpenToPublic": "This version is not currently available to public."
   },
   "dataset.detail.titlePlaceholder": "Dataset title",
-  "dataset.detail.versionLabel": "Version"
+  "dataset.detail.versionLabel": "Version",
+  "dataset.detail.extraJson": "Structured Attributes (JSON)",
+  "dataset.detail.extraJsonHint": "Define dataset attributes in JSON format, such as species, tissue, treatment conditions. Searchable by LLM.",
+  "dataset.detail.extraJsonPlaceholder": "{\n  \"tissue\": \"leaf\",\n  \"treatment\": \"drought\",\n  \"timepoint\": \"day7\"\n}",
+  "dataset.detail.extraJsonInvalid": "Invalid JSON format, please check and retry"
 }

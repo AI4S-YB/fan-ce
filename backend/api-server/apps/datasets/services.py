@@ -2504,6 +2504,7 @@ class DatasetDomainService:
             "visibility": registry_obj.visibility,
             "organism": registry_obj.organism,
             "description_md": registry_obj.description_md,
+            "extra_json": registry_obj.extra_json,
             "default_public_version_id": getattr(registry_obj, "default_public_version_id", None),
             "status": database_data["status"],
             "user_id": database_data["user_id"],
