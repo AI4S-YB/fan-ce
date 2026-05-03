@@ -6,7 +6,7 @@ import { $t } from '@vben/locales';
 import type { GrnItem, DynamicColumnConfig } from './types';
 
 import { getGrnListApi } from './api';
-import { getDatabaseOptionsApi } from '#/api/apps/databases';
+import { getDatasetOptionsApi } from '#/api/apps/dataset';
 import { ACTION_COLUMN_FLAG } from '#/components/Table/src/const';
 
 // 固定列配置 - 调控关系表格
@@ -269,7 +269,7 @@ export function formOptions(onFilePathChange?: (filePath: string) => void) {
   // 下拉选项：/database/options, type: 9
   const databaseOptions = ref<any[]>([]);
   const getDatabaseOptions = () => {
-    getDatabaseOptionsApi({ type: '9' }).then((res: any) => {
+    getDatasetOptionsApi({ dataset_type: 'interaction' }).then((res: any) => {
       databaseOptions.value = res;
       return res;
     });
