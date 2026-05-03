@@ -232,6 +232,7 @@ class BreedingBioSampleCreateRequest(BaseModel):
     material_id: int
     plot_id: Optional[int] = None
     sample_type: Optional[str] = None
+    organism: Optional[str] = None
     tissue_type: Optional[str] = None
     timepoint: Optional[str] = None
     treatment_label: Optional[str] = None
@@ -252,6 +253,8 @@ class BreedingAssayListRequest(BreedingPageRequest):
     biosample_id: Optional[int] = None
     assay_type: Optional[str] = None
     platform: Optional[str] = None
+    library_strategy: Optional[str] = None
+    instrument_model: Optional[str] = None
 
 
 class BreedingAssayCreateRequest(BaseModel):
@@ -260,6 +263,12 @@ class BreedingAssayCreateRequest(BaseModel):
     assay_type: str
     platform: Optional[str] = None
     vendor: Optional[str] = None
+    library_strategy: Optional[str] = None
+    library_source: Optional[str] = None
+    library_selection: Optional[str] = None
+    library_layout: Optional[str] = None
+    instrument_model: Optional[str] = None
+    read_length: Optional[int] = None
     run_date: Optional[str] = None
     status: Optional[str] = "active"
     meta_json: Optional[str] = None

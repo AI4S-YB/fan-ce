@@ -33,6 +33,7 @@ class DatasetUpdateRequest(BaseModel):
     validation_summary: Optional[str] = None
     index_summary: Optional[str] = None
     extra_json: Optional[str] = None
+    description_md: Optional[str] = None
 
     model_config = ConfigDict(extra="forbid")
 
