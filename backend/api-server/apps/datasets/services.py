@@ -2441,8 +2441,8 @@ class DatasetDomainService:
 
     def ensure_registry(self, db, database_obj):
         database_id = database_obj.id
-        database_name = database_obj.name
-        database_type = database_obj.type
+        database_name = getattr(database_obj, "name", None) or getattr(database_obj, "title", "")
+        database_type = getattr(database_obj, "type", None) or getattr(database_obj, "dataset_type", "generic")
         database_is_public = getattr(database_obj, "is_public", False)
         database_is_active = getattr(database_obj, "is_active", False)
         registry_obj = dataset_registry_db.get_filter(db=db, filters={"database_id": database_id})
@@ -3128,7 +3128,7 @@ class DatasetDomainService:
             "extra_json",
             "description_md",
         ]:
-            value = getattr(request_data, field)
+            value = getattr(request_data, field, None)
             if value is not None:
                 if field == "dataset_type":
                     value, _dataset_kind = self._require_dataset_kind_code(db=db, dataset_type=value)
@@ -3607,7 +3607,7 @@ class DatasetDomainService:
             "display_order",
             "meta_json",
         ]:
-            value = getattr(request_data, field)
+            value = getattr(request_data, field, None)
             if value is not None:
                 if field == "asset_type":
                     value, _asset_type = self._require_asset_type_code(
@@ -3750,7 +3750,7 @@ class DatasetDomainService:
             "status",
             "meta_json",
         ]:
-            value = getattr(request_data, field)
+            value = getattr(request_data, field, None)
             if value is not None:
                 if field == "file_role":
                     value = self._normalize_file_role(value)
@@ -5443,7 +5443,7 @@ class DatasetDomainService:
         if request_data.base_code is not None:
             update_data["base_code"] = self._normalize_registry_code(request_data.base_code, "base_code")
         for field in ["name", "description", "sort_order", "meta_json"]:
-            value = getattr(request_data, field)
+            value = getattr(request_data, field, None)
             if value is not None:
                 update_data[field] = value
         if request_data.is_active is not None:
@@ -5609,7 +5609,7 @@ class DatasetDomainService:
                     normalized_dataset_types.append(normalized_type)
             update_data["allowed_dataset_types"] = self._encode_json_list(normalized_dataset_types)
         for field in ["name", "description", "sort_order", "meta_json"]:
-            value = getattr(request_data, field)
+            value = getattr(request_data, field, None)
             if value is not None:
                 update_data[field] = value
         if request_data.is_active is not None:
@@ -5802,7 +5802,7 @@ class DatasetDomainService:
         if request_data.file_role is not None:
             update_data["file_role"] = self._normalize_file_role(request_data.file_role)
         for field in ["name", "description", "sort_order", "meta_json"]:
-            value = getattr(request_data, field)
+            value = getattr(request_data, field, None)
             if value is not None:
                 update_data[field] = value
         if request_data.is_active is not None:

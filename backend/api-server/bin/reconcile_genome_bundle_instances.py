@@ -7,7 +7,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-from apps.databases.models import Databases, DatabasesFile
 from apps.datasets.bundle_provisioning import discover_sequence_bundle
 from apps.datasets.init import init_dataset_tables
 from apps.datasets.models import AssetFile, DatasetAsset, DatasetRegistry, DatasetVersion
@@ -36,11 +35,11 @@ def _update_attr(obj: Any, field_name: str, new_value: Any, changes: list[str], 
     changes.append(f"{label}.{field_name}: {new_value}")
 
 
-def _resolve_bundle_dir(primary_file: DatabasesFile, explicit_bundle_dir: str | None) -> Path:
+def _resolve_bundle_dir(primary_file: AssetFile, explicit_bundle_dir: str | None) -> Path:
     if explicit_bundle_dir:
         candidate = Path(explicit_bundle_dir).expanduser().resolve()
         return candidate if candidate.is_dir() else candidate.parent
-    candidate = Path(primary_file.path).expanduser().resolve()
+    candidate = Path(primary_file.local_path).expanduser().resolve()
     return candidate.parent if candidate.is_file() else candidate
 
 
@@ -222,33 +221,33 @@ def _sync_asset_files(db, *, asset_obj, asset_plan, changes: list[str]) -> None:
 
 def reconcile_genome_bundle_dataset(database_id: int, explicit_bundle_dir: str | None = None, dry_run: bool = False) -> dict[str, Any]:
     with MyDBManager() as db:
-        legacy_obj = db.query(Databases).filter(Databases.id == database_id).first()
-        if legacy_obj is None:
-            raise SystemExit(f"dataset not found: {database_id}")
-
-        primary_file = (
-            db.query(DatabasesFile)
-            .filter(DatabasesFile.database_id == database_id)
-            .order_by(DatabasesFile.id.asc())
-            .first()
-        )
-        if primary_file is None or not primary_file.path:
-            raise SystemExit(f"dataset {database_id} has no primary file path")
-
-        current_version = _pick_current_version(db, database_id)
         registry_rows = (
             db.query(DatasetRegistry)
             .filter(DatasetRegistry.database_id == database_id)
             .order_by(DatasetRegistry.id.asc())
             .all()
         )
+        if not registry_rows:
+            raise SystemExit(f"dataset not found: {database_id}")
+
+        primary_file = (
+            db.query(AssetFile)
+            .filter(AssetFile.database_id == database_id)
+            .order_by(AssetFile.id.asc())
+            .first()
+        )
+        if primary_file is None or not primary_file.local_path:
+            raise SystemExit(f"dataset {database_id} has no primary file path")
+
+        dataset_name = registry_rows[0].title
+        current_version = _pick_current_version(db, database_id)
         bundle_dir = _resolve_bundle_dir(primary_file, explicit_bundle_dir)
-        organism = registry_rows[0].organism if registry_rows and registry_rows[0].organism else None
-        assembly = registry_rows[0].assembly if registry_rows and registry_rows[0].assembly else None
+        organism = registry_rows[0].organism if registry_rows[0].organism else None
+        assembly = registry_rows[0].assembly if registry_rows[0].assembly else None
         version = current_version.version if current_version is not None else (registry_rows[0].version if registry_rows else "v1")
         plan = discover_sequence_bundle(
             bundle_dir,
-            dataset_title=legacy_obj.name,
+            dataset_title=dataset_name,
             version=version,
             organism=organism,
             assembly=assembly,
@@ -256,12 +255,6 @@ def reconcile_genome_bundle_dataset(database_id: int, explicit_bundle_dir: str |
 
         changes: list[str] = []
         now = int(time.time())
-
-        _update_attr(legacy_obj, "type", plan.dataset_type, changes, f"databases[{legacy_obj.id}]")
-
-        file_rows = db.query(DatabasesFile).filter(DatabasesFile.database_id == database_id).all()
-        for file_obj in file_rows:
-            _update_attr(file_obj, "data_type", plan.dataset_type, changes, f"databases_file[{file_obj.id}]")
 
         for registry_obj in registry_rows:
             _sync_registry_metadata(registry_obj, plan, changes, now)
@@ -287,7 +280,7 @@ def reconcile_genome_bundle_dataset(database_id: int, explicit_bundle_dir: str |
 
         return {
             "database_id": database_id,
-            "dataset_name": legacy_obj.name,
+            "dataset_name": dataset_name,
             "bundle_dir": str(bundle_dir),
             "dataset_type": plan.dataset_type,
             "changes": changes,

@@ -63,9 +63,8 @@ class TestPublicLineage:
 
     def test_public_lineage_includes_released_edges(self, db_session):
         """Edges where both src and dst are released are included"""
-        from apps.databases.models import Databases
         from apps.datasets.dataset_model import Dataset
-        from apps.datasets.models import DatasetVersion, DatasetLineageEdge
+        from apps.datasets.models import DatasetVersion, DatasetLineageEdge, DatasetRegistry
         from apps.datasets.services import DatasetDomainService
 
         ds1 = Dataset(dataset_code="DS_LIN_BOTH_SRC", dataset_type="genome",
@@ -75,10 +74,10 @@ class TestPublicLineage:
         db_session.add_all([ds1, ds2])
         db_session.commit()
 
-        # Legacy databases records needed by _build_lineage_payload
-        db1 = Databases(id=ds1.id, name="DS_LIN_BOTH_SRC")
-        db2 = Databases(id=ds2.id, name="DS_LIN_BOTH_DST")
-        db_session.add_all([db1, db2])
+        # Registry records needed by _build_lineage_payload
+        reg1 = DatasetRegistry(id=ds1.id, title="DS_LIN_BOTH_SRC", dataset_type="genome", owner_id=1)
+        reg2 = DatasetRegistry(id=ds2.id, title="DS_LIN_BOTH_DST", dataset_type="annotation", owner_id=1)
+        db_session.add_all([reg1, reg2])
         db_session.commit()
 
         v1 = DatasetVersion(

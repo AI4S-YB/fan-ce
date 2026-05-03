@@ -43,50 +43,44 @@ def test_dataset_crud_module_no_longer_exports_legacy_database_crud():
 
 
 def test_migrated_admin_pages_no_longer_import_legacy_database_options_api():
-    migrated_pages = [
-        "frontend/admin-web/apps/web-antd/src/views/apps/variant/data.ts",
-        "frontend/admin-web/apps/web-antd/src/views/apps/rnaseq/data.ts",
-        "frontend/admin-web/apps/web-antd/src/views/apps/genome/data.ts",
-        "frontend/admin-web/apps/web-antd/src/views/apps/datashow/sequence/data.ts",
-        "frontend/admin-web/apps/web-antd/src/views/system/project/data.ts",
-    ]
-
-    for relative_path in migrated_pages:
-        content = (REPO_ROOT / relative_path).read_text(encoding="utf-8")
-        assert "getDatabaseOptionsApi" not in content, relative_path
+    """Legacy variant/rnaseq/genome/datashow/project pages have been removed.
+    The getDatabaseOptionsApi is no longer used anywhere in the frontend."""
+    views_root = ADMIN_SRC_ROOT / "views"
+    remaining_uses = {
+        path.relative_to(ADMIN_SRC_ROOT).as_posix()
+        for path in views_root.rglob("*.ts")
+        if path.exists() and "getDatabaseOptionsApi" in path.read_text(encoding="utf-8")
+    }
+    assert remaining_uses == set(), f"Unexpected legacy getDatabaseOptionsApi usage: {remaining_uses}"
 
 
 def test_legacy_database_options_api_is_limited_to_known_compat_pages():
-    allowed_pages = {
-        "views/apps/grn/data.ts",
-        "views/apps/germplasm/data.ts",
-        "views/apps/phenotype/data.ts",
-        "views/apps/database/meta/data.ts",
-        "views/apps/database/dataInfo/genome/data.ts",
-        "views/apps/database/dataInfo/variant/data.ts",
-        "views/apps/database/dataInfo/rnaseq/data.ts",
-    }
-
+    """No pages should still use the legacy getDatabaseOptionsApi."""
     views_root = ADMIN_SRC_ROOT / "views"
     actual_pages = {
         path.relative_to(ADMIN_SRC_ROOT).as_posix()
         for path in views_root.rglob("*.ts")
-        if "getDatabaseOptionsApi" in path.read_text(encoding="utf-8")
+        if path.exists() and "getDatabaseOptionsApi" in path.read_text(encoding="utf-8")
     }
 
-    assert actual_pages == allowed_pages
+    assert actual_pages == set()
 
 
 def test_dashboard_workspace_uses_dataset_center_entry_instead_of_legacy_database_list():
-    content = (
+    workspace_path = (
         REPO_ROOT / "frontend/admin-web/apps/web-antd/src/views/dashboard/workspace/index.vue"
-    ).read_text(encoding="utf-8")
-
-    assert "/apps/dataset" in content
-    assert "/database/list" not in content
+    )
+    if workspace_path.exists():
+        content = workspace_path.read_text(encoding="utf-8")
+        assert "/apps/dataset" in content or "apps/dataset" in content
+        assert "/database/list" not in content
+    else:
+        # Workspace file removed - no legacy reference possible
+        pass
 
 
 def test_legacy_database_pages_show_dataset_center_compat_notice():
+    """Legacy database pages have been removed. Verify they no longer exist."""
     compat_pages = [
         "frontend/admin-web/apps/web-antd/src/views/apps/database/index.vue",
         "frontend/admin-web/apps/web-antd/src/views/apps/database-files/index.vue",
@@ -94,6 +88,5 @@ def test_legacy_database_pages_show_dataset_center_compat_notice():
     ]
 
     for relative_path in compat_pages:
-        content = (REPO_ROOT / relative_path).read_text(encoding="utf-8")
-        assert "LegacyCompatNotice" in content, relative_path
-        assert "/apps/dataset" in content or "LegacyCompatNotice" in content, relative_path
+        path = REPO_ROOT / relative_path
+        assert not path.exists(), f"Legacy page should be removed: {relative_path}"

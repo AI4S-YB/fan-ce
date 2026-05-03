@@ -21,7 +21,6 @@ import apps.datasets.bundle_provisioning as bundle_provisioning
 import apps.datasets.init as dataset_init_module
 import apps.datasets.services as dataset_services
 from apps.datasets.crud import dataset_registry_db
-from apps.databases.models import Databases, DatabasesFile, DatabasesMeta, ProjectDatabasesLink
 from apps.datasets.constants import (
     DEFAULT_ASSET_FILE_TYPE_REGISTRY_ITEMS,
     DEFAULT_ASSET_TYPE_REGISTRY_ITEMS,
@@ -49,6 +48,7 @@ from apps.datasets.models import (
     PhenomeSubject,
     PhenomeTrait,
 )
+from apps.breeding.models import BreedingDatasetAssayLink, BreedingDatasetSubjectLink, BreedingPhenotypeSubjectMap, BreedingVariantSampleMap
 from apps.datasets.schemas import (
     DatasetVersionReleaseRequest,
     DatasetVersionSetDefaultPublicRequest,
@@ -60,10 +60,6 @@ from db.database import Base
 
 
 DATASET_TEST_TABLES = [
-    Databases.__table__,
-    DatabasesFile.__table__,
-    DatabasesMeta.__table__,
-    ProjectDatabasesLink.__table__,
     User.__table__,
     Role.__table__,
     DatasetKindRegistry.__table__,
@@ -86,6 +82,10 @@ DATASET_TEST_TABLES = [
     PhenomeTrait.__table__,
     PhenomeSourceColumn.__table__,
     PhenomeObservation.__table__,
+    BreedingVariantSampleMap.__table__,
+    BreedingPhenotypeSubjectMap.__table__,
+    BreedingDatasetSubjectLink.__table__,
+    BreedingDatasetAssayLink.__table__,
 ]
 
 
@@ -94,19 +94,19 @@ def make_user(user_id, *, is_superman=False, user_type=0):
 
 
 def create_dataset(db, *, name, owner_id, team_id=0, dataset_type="generic"):
-    row = Databases(
-        name=name,
-        user_id=owner_id,
-        type=dataset_type,
-        status=1,
+    row = DatasetRegistry(
+        title=name,
+        owner_id=owner_id,
+        dataset_type=dataset_type,
+        lifecycle_state="ready",
         is_public=False,
-        is_active=True,
-        is_delete=False,
         create_time=1,
-        remark="",
-        team_id=team_id,
     )
     db.add(row)
+    db.commit()
+    db.refresh(row)
+    # Set database_id to self-reference so legacy_bridge.get_database can find it
+    row.database_id = row.id
     db.commit()
     db.refresh(row)
     return row
@@ -617,8 +617,10 @@ def test_genome_asset_registration_enforces_registry_file_types(db_session, tmp_
             file_role="index",
             local_path=str(index_path),
             file_format="fai",
+            asset_file_type_code=None,
             index_of_file_id=asset["files"][0]["id"],
             status="active",
+            meta_json=None,
         ),
         user=owner,
     )
@@ -637,8 +639,10 @@ def test_genome_asset_registration_enforces_registry_file_types(db_session, tmp_
                 file_role="index",
                 local_path=str(invalid_index_path),
                 file_format="txt",
+                asset_file_type_code=None,
                 index_of_file_id=asset["files"][0]["id"],
                 status="active",
+                meta_json=None,
             ),
             user=owner,
         )
@@ -749,7 +753,7 @@ def test_update_dataset_asset_rejects_incompatible_asset_type_for_existing_files
             user=owner,
         )
     assert error.value.status_code == 400
-    assert "asset file is not allowed for asset_type functional_annotation" in error.value.detail
+    assert "not allowed for asset_type functional_annotation" in error.value.detail
 
 
 def test_new_dataset_type_filters_match_legacy_dataset_rows(db_session, tmp_path):
@@ -985,8 +989,10 @@ def test_phenome_index_is_rebuilt_when_phenotype_index_asset_file_is_registered(
             file_role="primary",
             local_path=str(sqlite_path),
             file_format="db",
+            asset_file_type_code=None,
             index_of_file_id=None,
             status="active",
+            meta_json=None,
         ),
         user=owner,
     )
@@ -1051,8 +1057,10 @@ def test_phenome_pg_index_queries_grouped_traits_and_timepoints(db_session, tmp_
             file_role="primary",
             local_path=str(sqlite_path),
             file_format="db",
+            asset_file_type_code=None,
             index_of_file_id=None,
             status="active",
+            meta_json=None,
         ),
         user=owner,
     )

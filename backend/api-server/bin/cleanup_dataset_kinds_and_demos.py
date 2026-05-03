@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from apps.databases.models import Databases, DatabasesFile, DatabasesMeta, ProjectDatabasesLink
 from apps.datasets.init import init_dataset_tables, seed_dataset_registry_defaults
 from apps.datasets.models import (
     AssetFile,
@@ -79,38 +78,29 @@ def _update_bundle_mode(extra_json: str | None, canonical_type: str) -> str | No
 def migrate_legacy_dataset_types() -> list[str]:
     changes: list[str] = []
     with MyDBManager() as db:
-        dataset_rows = db.query(Databases).order_by(Databases.id.asc()).all()
-        for dataset_obj in dataset_rows:
-            canonical_type = CANONICAL_TYPE_MAP.get(str(dataset_obj.type or "").lower())
+        registry_rows = db.query(DatasetRegistry).order_by(DatasetRegistry.id.asc()).all()
+        for registry_obj in registry_rows:
+            canonical_type = CANONICAL_TYPE_MAP.get(str(registry_obj.dataset_type or "").lower())
             if not canonical_type:
                 continue
 
-            _update_attr(dataset_obj, "type", canonical_type, changes, f"databases[{dataset_obj.id}]")
+            _update_attr(
+                registry_obj,
+                "dataset_type",
+                canonical_type,
+                changes,
+                f"dataset_registry[{registry_obj.id}]",
+            )
+            updated_extra = _update_bundle_mode(registry_obj.extra_json, canonical_type)
+            _update_attr(
+                registry_obj,
+                "extra_json",
+                updated_extra,
+                changes,
+                f"dataset_registry[{registry_obj.id}]",
+            )
 
-            file_rows = db.query(DatabasesFile).filter(DatabasesFile.database_id == dataset_obj.id).all()
-            for file_obj in file_rows:
-                if str(file_obj.data_type or "").lower() in CANONICAL_TYPE_MAP:
-                    _update_attr(file_obj, "data_type", canonical_type, changes, f"databases_file[{file_obj.id}]")
-
-            registry_rows = db.query(DatasetRegistry).filter(DatasetRegistry.database_id == dataset_obj.id).all()
-            for registry_obj in registry_rows:
-                _update_attr(
-                    registry_obj,
-                    "dataset_type",
-                    canonical_type,
-                    changes,
-                    f"dataset_registry[{registry_obj.id}]",
-                )
-                updated_extra = _update_bundle_mode(registry_obj.extra_json, canonical_type)
-                _update_attr(
-                    registry_obj,
-                    "extra_json",
-                    updated_extra,
-                    changes,
-                    f"dataset_registry[{registry_obj.id}]",
-                )
-
-            version_rows = db.query(DatasetVersion).filter(DatasetVersion.database_id == dataset_obj.id).all()
+            version_rows = db.query(DatasetVersion).filter(DatasetVersion.database_id == registry_obj.database_id).all()
             for version_obj in version_rows:
                 _update_attr(
                     version_obj,
@@ -174,19 +164,15 @@ def _delete_dataset(db, dataset_id: int, changes: list[str]) -> None:
     db.query(DatasetWorkflowTask).filter(DatasetWorkflowTask.database_id == dataset_id).delete(synchronize_session=False)
     db.query(DatasetRegistry).filter(DatasetRegistry.database_id == dataset_id).delete(synchronize_session=False)
     db.query(DatasetStagingFile).filter(DatasetStagingFile.linked_dataset_id == dataset_id).delete(synchronize_session=False)
-    db.query(ProjectDatabasesLink).filter(ProjectDatabasesLink.database_id == dataset_id).delete(synchronize_session=False)
-    db.query(DatabasesMeta).filter(DatabasesMeta.database_id == dataset_id).delete(synchronize_session=False)
-    db.query(DatabasesFile).filter(DatabasesFile.database_id == dataset_id).delete(synchronize_session=False)
-    db.query(Databases).filter(Databases.id == dataset_id).delete(synchronize_session=False)
     changes.append(f"deleted dataset[{dataset_id}]")
 
 
 def delete_demo_datasets() -> list[str]:
     changes: list[str] = []
     with MyDBManager() as db:
-        rows = db.query(Databases).filter(Databases.name.in_(sorted(DELETE_DATASET_NAMES))).all()
-        for dataset_obj in rows:
-            _delete_dataset(db=db, dataset_id=dataset_obj.id, changes=changes)
+        rows = db.query(DatasetRegistry).filter(DatasetRegistry.title.in_(sorted(DELETE_DATASET_NAMES))).all()
+        for registry_obj in rows:
+            _delete_dataset(db=db, dataset_id=registry_obj.database_id, changes=changes)
         db.commit()
     return changes
 
@@ -209,9 +195,8 @@ def summarize_current_state() -> list[str]:
         for row in db.query(DatasetKindRegistry).order_by(DatasetKindRegistry.sort_order, DatasetKindRegistry.id).all():
             summary.append(f"  - {row.code} (active={row.is_active})")
         summary.append("datasets:")
-        for row in db.query(Databases).order_by(Databases.id).all():
-            registry = db.query(DatasetRegistry).filter(DatasetRegistry.database_id == row.id).order_by(DatasetRegistry.id).first()
-            summary.append(f"  - [{row.id}] {row.name}: {row.type} / {getattr(registry, 'dataset_type', None)}")
+        for row in db.query(DatasetRegistry).order_by(DatasetRegistry.id).all():
+            summary.append(f"  - [{row.id}] {row.title}: {row.dataset_type}")
     return summary
 
 

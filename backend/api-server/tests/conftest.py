@@ -14,7 +14,6 @@ from apps.breeding.models import (
     BreedingProgram,
     BreedingVariantSampleMap,
 )
-from apps.databases.models import Databases, DatabasesFile, DatabasesMeta
 from apps.datasets.dataset_model import Dataset
 from apps.datasets.models import DatasetAsset, DatasetLineageEdge, DatasetRegistry, DatasetVersion
 from db.database import Base
@@ -25,9 +24,6 @@ ASSEMBLY_VALIDATOR_TABLES = [
     DatasetVersion.__table__,
     DatasetAsset.__table__,
     DatasetLineageEdge.__table__,
-    Databases.__table__,
-    DatabasesFile.__table__,
-    DatabasesMeta.__table__,
     BreedingProgram.__table__,
     BreedingMaterial.__table__,
     BreedingVariantSampleMap.__table__,
