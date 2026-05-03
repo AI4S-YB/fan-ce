@@ -203,7 +203,6 @@ class DatasetRegistry(Base):
     owner_id = Column(Integer, comment="所有者用户 ID")
     is_public = Column(Boolean, default=False, comment="是否公开")
     organism = Column(String(128), comment="物种")
-    assembly = Column(String(128), comment="组装版本")
     file_format = Column(String(128), comment="文件格式")
     query_engine = Column(String(128), comment="查询引擎")
     validation_summary = Column(Text, comment="校验摘要")

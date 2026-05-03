@@ -259,7 +259,6 @@ onMounted(async () => {
         </template>
         <template v-else-if="column.key === 'organism'">
           <div>{{ (record as DatasetItem).organism || '-' }}</div>
-          <div style="font-size: 12px; color: #888;">{{ (record as DatasetItem).assembly || '-' }}</div>
         </template>
         <template v-else-if="column.key === 'version'">
           <Tag color="blue">{{ (record as DatasetItem).version || '-' }}</Tag>

@@ -28,7 +28,6 @@ class DatasetUpdateRequest(BaseModel):
     dataset_type: Optional[str] = None
     version: Optional[str] = None
     organism: Optional[str] = None
-    assembly: Optional[str] = None
     file_format: Optional[str] = None
     query_engine: Optional[str] = None
     validation_summary: Optional[str] = None
@@ -725,7 +724,6 @@ class DatasetRegistrationCandidateCreateRequest(DatasetContext):
     registration_mode: Optional[str] = "recipe_build"
     version_name: Optional[str] = None
     organism: Optional[str] = None
-    assembly: Optional[str] = None
     reference_dataset_id: Optional[int] = None
     reference_version_id: Optional[int] = None
     source_kind: Optional[str] = None
@@ -744,7 +742,6 @@ class DatasetRegistrationCandidateUpdateRequest(DatasetContext):
     registration_mode: Optional[str] = None
     version_name: Optional[str] = None
     organism: Optional[str] = None
-    assembly: Optional[str] = None
     reference_dataset_id: Optional[int] = None
     reference_version_id: Optional[int] = None
     source_kind: Optional[str] = None

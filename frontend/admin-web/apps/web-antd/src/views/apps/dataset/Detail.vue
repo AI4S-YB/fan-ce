@@ -249,7 +249,7 @@ onMounted(() => loadAll());
             <Tag>{{ detailData.dataset_code || '-' }}</Tag>
           </div>
           <div style="color: #888; font-size: 13px;">
-            <span>{{ detailData.organism || '-' }} · {{ detailData.assembly || '-' }}</span>
+            <span>{{ detailData.organism || '-' }}</span>
             <span style="margin-left: 8px;">{{ getPreferredDatasetTypeCode(detailData.dataset_type) }}</span>
             <span style="margin-left: 8px;">{{ detailData.query_profile?.file_format || detailData.file_format || '-' }}</span>
           </div>

@@ -970,7 +970,6 @@ class DatasetDomainService:
             "candidate_name": getattr(candidate_obj, "candidate_name", None),
             "version_name": getattr(candidate_obj, "version_name", None),
             "organism": getattr(candidate_obj, "organism", None),
-            "assembly": getattr(candidate_obj, "assembly", None),
             "reference_dataset_id": getattr(candidate_obj, "reference_dataset_id", None),
             "reference_version_id": getattr(candidate_obj, "reference_version_id", None),
             "status": getattr(candidate_obj, "status", None),
@@ -2505,7 +2504,6 @@ class DatasetDomainService:
             "visibility": registry_obj.visibility,
             "organism": registry_obj.organism,
             "description_md": registry_obj.description_md,
-            "assembly": registry_obj.assembly,
             "default_public_version_id": getattr(registry_obj, "default_public_version_id", None),
             "status": database_data["status"],
             "user_id": database_data["user_id"],
@@ -3120,8 +3118,7 @@ class DatasetDomainService:
             "dataset_type",
             "version",
             "organism",
-            "assembly",
-            "file_format",
+                        "file_format",
             "query_engine",
             "validation_summary",
             "index_summary",
@@ -4695,7 +4692,6 @@ class DatasetDomainService:
                         str(getattr(row, "dataset_type", "") or ""),
                         str(getattr(row, "recipe_code", "") or ""),
                         str(getattr(row, "organism", "") or ""),
-                        str(getattr(row, "assembly", "") or ""),
                     ]
                 ).lower()
                 if keyword not in haystack:
@@ -4868,7 +4864,6 @@ class DatasetDomainService:
                 "candidate_name": request_data.candidate_name.strip(),
                 "version_name": request_data.version_name,
                 "organism": request_data.organism,
-                "assembly": request_data.assembly,
                 "reference_dataset_id": request_data.reference_dataset_id,
                 "reference_version_id": request_data.reference_version_id,
                 "status": "draft",
@@ -4922,8 +4917,7 @@ class DatasetDomainService:
             "registration_mode",
             "version_name",
             "organism",
-            "assembly",
-            "reference_dataset_id",
+                        "reference_dataset_id",
             "reference_version_id",
             "source_kind",
             "scan_root_id",
@@ -5014,8 +5008,6 @@ class DatasetDomainService:
             update_registry["version"] = target_version_name
         if getattr(candidate_obj, "organism", None):
             update_registry["organism"] = candidate_obj.organism
-        if getattr(candidate_obj, "assembly", None):
-            update_registry["assembly"] = candidate_obj.assembly
         if registry_obj:
             dataset_registry_db.update_one(db=db, db_obj=registry_obj, obj_in=update_registry)
 
@@ -5025,13 +5017,10 @@ class DatasetDomainService:
         version_obj = dataset_version_db.get(db=db, id=version_obj.id)
         if version_obj:
             version_update = {"update_time": self._now()}
-            if getattr(candidate_obj, "organism", None) or getattr(candidate_obj, "assembly", None):
-                extra_payload = self._parse_candidate_meta(getattr(version_obj, "extra_json", None))
-                if getattr(candidate_obj, "organism", None):
-                    extra_payload["organism"] = candidate_obj.organism
-                if getattr(candidate_obj, "assembly", None):
-                    extra_payload["assembly"] = candidate_obj.assembly
-                version_update["extra_json"] = self._encode_candidate_meta(extra_payload)
+            extra_payload = self._parse_candidate_meta(getattr(version_obj, "extra_json", None))
+            if getattr(candidate_obj, "organism", None):
+                extra_payload["organism"] = candidate_obj.organism
+            version_update["extra_json"] = self._encode_candidate_meta(extra_payload)
             dataset_version_db.update_one(db=db, db_obj=version_obj, obj_in=version_update)
             version_obj = dataset_version_db.get(db=db, id=version_obj.id)
 
