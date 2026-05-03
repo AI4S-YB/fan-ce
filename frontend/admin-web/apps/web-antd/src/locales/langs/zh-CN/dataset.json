@@ -498,6 +498,8 @@
   "dataset.detail.versionLabel": "版本标识",
   "dataset.detail.extraJson": "结构化属性 (JSON)",
   "dataset.detail.extraJsonHint": "以 JSON 格式定义数据集的属性信息，如物种、组织、处理条件等。LLM 可直接检索这些属性。",
-  "dataset.detail.extraJsonPlaceholder": "{\n  \"tissue\": \"leaf\",\n  \"treatment\": \"drought\",\n  \"timepoint\": \"day7\"\n}",
-  "dataset.detail.extraJsonInvalid": "JSON 格式无效，请检查后重试"
+  "dataset.detail.extraJsonEmpty": "暂无属性，点击下方按钮添加",
+  "dataset.detail.extraJsonKeyPlaceholder": "字段名，如 tissue",
+  "dataset.detail.extraJsonValuePlaceholder": "值，如 leaf",
+  "dataset.detail.extraJsonAddField": "添加属性"
 }

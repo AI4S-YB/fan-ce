@@ -213,46 +213,47 @@ watch(descriptionMd, (val) => {
 });
 
 // ── extra_json (structured attributes) editor ──
-const extraJson = ref('');
+interface KvField { key: string; value: string }
+const extraJsonFields = ref<KvField[]>([]);
 let extraJsonInit = false;
 
-const debouncedSaveExtraJson = useDebounceFn(async (val: string) => {
-  if (detailData.value) {
-    // Validate JSON before saving
-    try {
-      if (val.trim()) JSON.parse(val);
-    } catch {
-      message.warning($t('dataset.detail.extraJsonInvalid'));
-      return;
-    }
-    await updateDatasetApi({ id: datasetId.value, extra_json: val });
+const debouncedSaveExtraJson = useDebounceFn(async () => {
+  if (!detailData.value) return;
+  // Build JSON from fields, skip empty keys
+  const obj: Record<string, string> = {};
+  for (const f of extraJsonFields.value) {
+    if (f.key.trim()) obj[f.key.trim()] = f.value;
   }
+  const json = Object.keys(obj).length > 0 ? JSON.stringify(obj) : '';
+  await updateDatasetApi({ id: datasetId.value, extra_json: json });
 }, 2000);
 
-// Initialize from loaded detail data (without triggering save)
+function addExtraField() {
+  extraJsonFields.value.push({ key: '', value: '' });
+}
+function removeExtraField(index: number) {
+  extraJsonFields.value.splice(index, 1);
+  debouncedSaveExtraJson();
+}
+function onExtraFieldChange() {
+  debouncedSaveExtraJson();
+}
+
+// Initialize from loaded detail data
 watch(detailData, (data) => {
   if (data) {
     extraJsonInit = true;
-    // Format existing JSON for display
     try {
       const parsed = data.extra_json ? JSON.parse(data.extra_json) : {};
-      extraJson.value = JSON.stringify(parsed, null, 2);
+      const fields: KvField[] = [];
+      for (const [key, value] of Object.entries(parsed)) {
+        fields.push({ key, value: String(value) });
+      }
+      extraJsonFields.value = fields;
     } catch {
-      extraJson.value = data.extra_json || '';
+      extraJsonFields.value = [];
     }
   }
-});
-
-// Auto-save on change (skip the init-induced change)
-watch(extraJson, (val) => {
-  if (!extraJsonInit) return;
-  if (val === (() => {
-    try {
-      const parsed = detailData.value?.extra_json ? JSON.parse(detailData.value.extra_json) : {};
-      return JSON.stringify(parsed, null, 2);
-    } catch { return detailData.value?.extra_json || ''; }
-  })()) return;
-  debouncedSaveExtraJson(val);
 });
 
 // ── Inline title / version editing ──
@@ -331,13 +332,36 @@ onMounted(() => loadAll());
       <!-- Section: Structured Attributes (extra_json) -->
       <div style="margin-bottom: 20px;">
         <h3>{{ $t('dataset.detail.extraJson') }}</h3>
-        <p style="font-size:12px;color:#888;margin-bottom:6px;">{{ $t('dataset.detail.extraJsonHint') }}</p>
-        <Input.TextArea
-          v-model:value="extraJson"
-          :placeholder="$t('dataset.detail.extraJsonPlaceholder')"
-          :auto-size="{ minRows: 4, maxRows: 15 }"
-          :style="{ fontFamily: 'monospace', fontSize: '13px' }"
-        />
+        <p style="font-size:12px;color:#888;margin-bottom:8px;">{{ $t('dataset.detail.extraJsonHint') }}</p>
+        <div v-if="extraJsonFields.length === 0" style="color:#bbb;font-size:13px;margin-bottom:8px;">
+          {{ $t('dataset.detail.extraJsonEmpty') }}
+        </div>
+        <div
+          v-for="(field, index) in extraJsonFields"
+          :key="index"
+          style="display:flex;gap:8px;align-items:center;margin-bottom:6px;"
+        >
+          <Input
+            v-model:value="field.key"
+            :placeholder="$t('dataset.detail.extraJsonKeyPlaceholder')"
+            style="width:180px;"
+            size="small"
+            @blur="onExtraFieldChange"
+          />
+          <Input
+            v-model:value="field.value"
+            :placeholder="$t('dataset.detail.extraJsonValuePlaceholder')"
+            style="flex:1;"
+            size="small"
+            @blur="onExtraFieldChange"
+          />
+          <Button size="small" danger type="text" @click="removeExtraField(index)">
+            ✕
+          </Button>
+        </div>
+        <Button size="small" type="dashed" @click="addExtraField" style="margin-top:4px;">
+          + {{ $t('dataset.detail.extraJsonAddField') }}
+        </Button>
       </div>
 
       <!-- Section 3: Version Table -->

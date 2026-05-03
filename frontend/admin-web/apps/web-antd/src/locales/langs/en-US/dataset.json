@@ -498,6 +498,8 @@
   "dataset.detail.versionLabel": "Version",
   "dataset.detail.extraJson": "Structured Attributes (JSON)",
   "dataset.detail.extraJsonHint": "Define dataset attributes in JSON format, such as species, tissue, treatment conditions. Searchable by LLM.",
-  "dataset.detail.extraJsonPlaceholder": "{\n  \"tissue\": \"leaf\",\n  \"treatment\": \"drought\",\n  \"timepoint\": \"day7\"\n}",
-  "dataset.detail.extraJsonInvalid": "Invalid JSON format, please check and retry"
+  "dataset.detail.extraJsonEmpty": "No attributes yet, click the button below to add",
+  "dataset.detail.extraJsonKeyPlaceholder": "Field name, e.g. tissue",
+  "dataset.detail.extraJsonValuePlaceholder": "Value, e.g. leaf",
+  "dataset.detail.extraJsonAddField": "Add attribute"
 }
