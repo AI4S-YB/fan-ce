@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { debounce } from 'lodash-es';
+import { useDebounceFn } from '@vueuse/core';
 import { Button, Tag, Space, Modal, Select, Input, message } from 'ant-design-vue';
 import { Page } from '@vben/common-ui';
 import { deleteDatasetApi, updateDatasetApi } from '#/api/apps/dataset';
@@ -187,23 +187,29 @@ const versionMismatch = computed(() =>
 
 // ── description_md editor ──
 const descriptionMd = ref('');
+let descriptionMdInit = false;
 
-// Initialize from loaded detail data
+// Initialize from loaded detail data (without triggering save)
 watch(detailData, (data) => {
   if (data) {
+    descriptionMdInit = true;
     descriptionMd.value = data.description_md || '';
   }
 });
 
-// Debounced auto-save on change
-watch(
-  descriptionMd,
-  debounce(async (val) => {
-    if (val !== undefined && detailData.value) {
-      await updateDatasetApi({ id: datasetId.value, description_md: val });
-    }
-  }, 2000),
-);
+const debouncedSaveDescription = useDebounceFn(async (val: string) => {
+  if (detailData.value) {
+    await updateDatasetApi({ id: datasetId.value, description_md: val });
+  }
+}, 2000);
+
+// Auto-save on change (skip the init-induced change)
+watch(descriptionMd, (val) => {
+  if (!descriptionMdInit) return;
+  descriptionMdInit = false;
+  if (val === (detailData.value?.description_md || '')) return;
+  debouncedSaveDescription(val);
+});
 
 onMounted(() => loadAll());
 </script>
