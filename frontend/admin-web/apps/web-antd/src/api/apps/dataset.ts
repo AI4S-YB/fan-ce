@@ -223,6 +223,7 @@ export interface DatasetItem {
   query_engine?: string;
   version_count?: number;
   query_adapter?: DatasetQueryAdapter | null;
+  description_md?: string;
   create_time?: number;
   update_time?: number;
 }
@@ -478,6 +479,10 @@ export async function getDatasetInfoApi(data: { id: number }) {
 
 export async function deleteDatasetApi(data: { id: number }) {
   return requestClient.post(`${pre}/delete`, data);
+}
+
+export async function updateDatasetApi(data: { id: number; description_md?: string }) {
+  return requestClient.post<DatasetDetailItem>(`${pre}/update`, data);
 }
 
 export async function getDatasetVersionListApi(data: { dataset_id: number }) {

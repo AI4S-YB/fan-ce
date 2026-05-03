@@ -120,7 +120,9 @@
     "versionPublished": "Version published",
     "versionRevoked": "Version revoked",
     "versionSetDefault": "Set as default version",
-    "backToList": "Back to list"
+    "backToList": "Back to list",
+    "descriptionMd": "Data Description (Markdown)",
+    "descriptionMdPlaceholder": "Describe the dataset in Markdown, e.g.:\n# Overview\n- Species: Rosa chinensis\n- Experimental design: drought treatment, 3 timepoints"
   },
   "query": {
     "title": "Data Query",

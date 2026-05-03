@@ -120,7 +120,9 @@
     "versionPublished": "版本已发布",
     "versionRevoked": "版本已撤销",
     "versionSetDefault": "已设为默认版本",
-    "backToList": "返回列表"
+    "backToList": "返回列表",
+    "descriptionMd": "数据说明文档 (Markdown)",
+    "descriptionMdPlaceholder": "用 Markdown 格式描述数据集内容，例如：\n# 数据集概述\n- 物种：Rosa chinensis\n- 实验设计：干旱处理，3个时间点"
   },
   "query": {
     "title": "数据查询",

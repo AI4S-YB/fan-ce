@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { debounce } from 'lodash-es';
 import { Button, Tag, Space, Modal, Select, Input, message } from 'ant-design-vue';
 import { Page } from '@vben/common-ui';
-import { deleteDatasetApi } from '#/api/apps/dataset';
+import { deleteDatasetApi, updateDatasetApi } from '#/api/apps/dataset';
 import { createBrdDatasetSubjectLinkApi } from '#/api/breeding/dataset-subject-link';
 import { useProgramStore } from '#/store/modules/program';
 import VersionTable from './components/VersionTable.vue';
@@ -184,6 +185,26 @@ const versionMismatch = computed(() =>
   versionListData.value.current_version.id !== versionListData.value.default_public_version.id,
 );
 
+// ── description_md editor ──
+const descriptionMd = ref('');
+
+// Initialize from loaded detail data
+watch(detailData, (data) => {
+  if (data) {
+    descriptionMd.value = data.description_md || '';
+  }
+});
+
+// Debounced auto-save on change
+watch(
+  descriptionMd,
+  debounce(async (val) => {
+    if (val !== undefined && detailData.value) {
+      await updateDatasetApi({ id: datasetId.value, description_md: val });
+    }
+  }, 2000),
+);
+
 onMounted(() => loadAll());
 </script>
 
@@ -219,6 +240,16 @@ onMounted(() => loadAll());
 
       <div v-if="versionMismatch" style="background: #fffbe6; border: 1px solid #ffe58f; padding: 6px 12px; border-radius: 4px; margin-bottom: 12px; font-size: 12px;">
         {{ $t('dataset.list.versionMismatch', { version: versionListData?.default_public_version?.version }) }}
+      </div>
+
+      <!-- Section: Description (Markdown) -->
+      <div style="margin-bottom: 20px;">
+        <h3>{{ $t('dataset.detail.descriptionMd') }}</h3>
+        <Input.TextArea
+          v-model:value="descriptionMd"
+          :placeholder="$t('dataset.detail.descriptionMdPlaceholder')"
+          :auto-size="{ minRows: 6, maxRows: 20 }"
+        />
       </div>
 
       <!-- Section 3: Version Table -->
