@@ -183,6 +183,14 @@ class DatasetRegistrationCandidateFile(Base):
 
 class DatasetRegistry(Base):
     __tablename__ = "dataset_registry"
+    __table_args__ = (
+        Index(
+            "ix_dataset_registry_description_md_trgm",
+            "description_md",
+            postgresql_using="gin",
+            postgresql_ops={"description_md": "gin_trgm_ops"},
+        ),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     database_id = Column(Integer, index=True, comment="legacy database ID")
