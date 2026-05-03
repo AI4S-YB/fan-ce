@@ -2495,6 +2495,8 @@ class BreedingDomainService:
             query = query.filter(BreedingBioSample.plot_id == request_data.plot_id)
         if request_data.sample_type:
             query = query.filter(BreedingBioSample.sample_type == request_data.sample_type)
+        if request_data.organism:
+            query = query.filter(BreedingBioSample.organism == request_data.organism)
         if request_data.status:
             query = query.filter(BreedingBioSample.status == request_data.status)
         if request_data.keyword:
@@ -2536,6 +2538,10 @@ class BreedingDomainService:
             query = query.filter(BreedingAssay.assay_type == request_data.assay_type)
         if request_data.platform:
             query = query.filter(BreedingAssay.platform == request_data.platform)
+        if request_data.library_strategy:
+            query = query.filter(BreedingAssay.library_strategy == request_data.library_strategy)
+        if request_data.instrument_model:
+            query = query.filter(BreedingAssay.instrument_model == request_data.instrument_model)
         if request_data.status:
             query = query.filter(BreedingAssay.status == request_data.status)
         if request_data.keyword:

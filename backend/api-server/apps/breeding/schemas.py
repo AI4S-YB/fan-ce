@@ -225,6 +225,7 @@ class BreedingBioSampleListRequest(BreedingPageRequest):
     material_id: Optional[int] = None
     plot_id: Optional[int] = None
     sample_type: Optional[str] = None
+    organism: Optional[str] = None
 
 
 class BreedingBioSampleCreateRequest(BaseModel):
