@@ -1,13 +1,6 @@
 DATASET_LIFECYCLE_STATES = [
     "draft",
-    "uploaded",
-    "validating",
-    "validated",
-    "indexing",
     "ready",
-    "publishing",
-    "public",
-    "failed",
     "archived",
 ]
 
@@ -18,16 +11,9 @@ DATASET_VERSION_RELEASE_STATES = ["unreleased", "released", "deprecated"]
 DEFAULT_DATASET_VERSION = "v1"
 
 LIFECYCLE_TRANSITIONS = {
-    "draft": {"uploaded", "archived"},
-    "uploaded": {"validating", "failed", "archived"},
-    "validating": {"validated", "failed", "archived"},
-    "validated": {"indexing", "failed", "archived"},
-    "indexing": {"ready", "failed", "archived"},
-    "ready": {"publishing", "archived"},
-    "publishing": {"public", "failed", "archived"},
-    "public": {"ready", "archived"},
-    "failed": {"uploaded", "validating", "indexing", "archived"},
-    "archived": set(),
+    "draft": {"ready", "archived"},
+    "ready": {"draft", "archived"},
+    "archived": {"ready"},
 }
 
 WORKFLOW_TASK_TYPES = ["upload", "validate", "index", "pipeline", "publish", "unpublish", "sync"]

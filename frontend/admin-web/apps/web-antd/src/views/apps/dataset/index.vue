@@ -12,6 +12,7 @@ import {
   getDatasetVersionListApi,
   publishDatasetApi,
   unpublishDatasetApi,
+  transitionDatasetApi,
   type DatasetItem,
   type DatasetKindOption,
 } from '#/api/apps/dataset';
@@ -46,18 +47,12 @@ const filters = reactive({
 
 const lifecycleOptions = [
   { label: $t('dataset.list.lifecycle_draft'), value: 'draft' },
-  { label: $t('dataset.list.lifecycle_uploaded'), value: 'uploaded' },
-  { label: $t('dataset.list.lifecycle_validating'), value: 'validating' },
-  { label: $t('dataset.list.lifecycle_validated'), value: 'validated' },
-  { label: $t('dataset.list.lifecycle_indexing'), value: 'indexing' },
   { label: $t('dataset.list.lifecycle_ready'), value: 'ready' },
-  { label: $t('dataset.list.visibility_public'), value: 'public' },
   { label: $t('dataset.list.lifecycle_archived'), value: 'archived' },
 ];
 
 const visibilityOptions = [
   { label: $t('dataset.list.visibility_private'), value: 'private' },
-  { label: $t('dataset.list.visibility_controlled'), value: 'restricted' },
   { label: $t('dataset.list.visibility_public'), value: 'public' },
 ];
 
@@ -142,6 +137,22 @@ async function handleToggleVisibility(record: DatasetItem) {
   } finally {
     visibilityLoading.value = null;
   }
+}
+
+async function handleArchive(record: DatasetItem) {
+  const isArchived = record.lifecycle_state === 'archived';
+  const target = isArchived ? 'ready' : 'archived';
+  const actionLabel = isArchived ? $t('dataset.list.unarchive') : $t('dataset.list.archive');
+  createConfirm({
+    iconType: 'warning',
+    title: `${actionLabel} Dataset`,
+    content: $t('dataset.list.archiveConfirmParam', { name: record.title || record.name || String(record.id), action: actionLabel }),
+    async onOk() {
+      await transitionDatasetApi({ id: record.id, target_state: target });
+      createMessage.success($t('dataset.list.actionSuccess', { action: actionLabel }));
+      await loadDatasets();
+    },
+  });
 }
 
 // ── Program link modal state ──
@@ -293,6 +304,20 @@ onMounted(async () => {
               @click="handleToggleVisibility(record as DatasetItem)"
             >
               {{ $t('dataset.list.cancelPublic') }}
+            </Button>
+            <Button
+              v-if="(record as DatasetItem).lifecycle_state === 'archived'"
+              type="link"
+              @click="handleArchive(record as DatasetItem)"
+            >
+              {{ $t('dataset.list.unarchive') }}
+            </Button>
+            <Button
+              v-else
+              type="link"
+              @click="handleArchive(record as DatasetItem)"
+            >
+              {{ $t('dataset.list.archive') }}
             </Button>
             <Button danger type="link" @click="handleDelete(record as DatasetItem)">{{ $t('dataset.list.delete') }}</Button>
           </Space>

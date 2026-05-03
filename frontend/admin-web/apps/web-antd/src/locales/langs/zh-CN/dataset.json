@@ -113,7 +113,11 @@
     "relationType": "关系类型",
     "detailJsonOptional": "可选：detail_json",
     "asSource": "作为源",
-    "asTarget": "作为目标"
+    "asTarget": "作为目标",
+    "archive": "归档",
+    "unarchive": "取消归档",
+    "archiveConfirmParam": "确定要{action}数据集 {name} 吗？",
+    "actionSuccess": "{action}成功"
   },
   "detail": {
     "versionActivated": "版本已激活",

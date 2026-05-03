@@ -485,6 +485,10 @@ export async function updateDatasetApi(data: { id: number; title?: string; versi
   return requestClient.post<DatasetDetailItem>(`${pre}/update`, data);
 }
 
+export async function transitionDatasetApi(data: { id: number; target_state: string }) {
+  return requestClient.post(`${pre}/workflow/transition`, data);
+}
+
 export async function getDatasetVersionListApi(data: { dataset_id: number }) {
   return requestClient.post<DatasetVersionListResult>(`${pre}/version/list`, data);
 }

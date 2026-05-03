@@ -39,18 +39,12 @@ import {
 // ── Constants ──
 export const LIFECYCLE_OPTIONS = [
   { label: $t('dataset.list.lifecycle_draft'), value: 'draft' },
-  { label: $t('dataset.list.lifecycle_uploaded'), value: 'uploaded' },
-  { label: $t('dataset.list.lifecycle_validating'), value: 'validating' },
-  { label: $t('dataset.list.lifecycle_validated'), value: 'validated' },
-  { label: $t('dataset.list.lifecycle_indexing'), value: 'indexing' },
   { label: $t('dataset.list.lifecycle_ready'), value: 'ready' },
-  { label: $t('dataset.list.visibility_public'), value: 'public' },
   { label: $t('dataset.list.lifecycle_archived'), value: 'archived' },
 ];
 
 export const VISIBILITY_OPTIONS = [
   { label: $t('dataset.list.visibility_private'), value: 'private' },
-  { label: $t('dataset.list.visibility_controlled'), value: 'restricted' },
   { label: $t('dataset.list.visibility_public'), value: 'public' },
 ];
 
@@ -75,10 +69,7 @@ export const RELATION_TYPE_OPTIONS = [
 export function lifecycleColor(state?: string | null) {
   switch (state) {
     case 'ready': return 'green';
-    case 'public': return 'green';
-    case 'draft': return 'default';
-    case 'validating': return 'processing';
-    case 'indexing': return 'processing';
+    case 'draft': return 'orange';
     case 'archived': return 'default';
     default: return 'default';
   }

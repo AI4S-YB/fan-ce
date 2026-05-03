@@ -113,7 +113,11 @@
     "relationType": "Relation Type",
     "detailJsonOptional": "Optional: detail_json",
     "asSource": "As Source",
-    "asTarget": "As Target"
+    "asTarget": "As Target",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "archiveConfirmParam": "Are you sure you want to {action} dataset {name}?",
+    "actionSuccess": "{action} succeeded"
   },
   "detail": {
     "versionActivated": "Version activated",
