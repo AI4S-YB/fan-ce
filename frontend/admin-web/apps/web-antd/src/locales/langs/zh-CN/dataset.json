@@ -493,5 +493,7 @@
     "publicDefaultVisit": "公开前台默认访问该版本。",
     "releasedNotDefault": "该版本已 released，但不是默认公开版本。",
     "notOpenToPublic": "该版本当前不对公开前台开放。"
-  }
+  },
+  "dataset.detail.titlePlaceholder": "数据集标题",
+  "dataset.detail.versionLabel": "版本标识"
 }

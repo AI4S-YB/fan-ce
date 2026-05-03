@@ -493,5 +493,7 @@
     "publicDefaultVisit": "Public frontend defaults to this version.",
     "releasedNotDefault": "This version is released but not the default public version.",
     "notOpenToPublic": "This version is not currently available to public."
-  }
+  },
+  "dataset.detail.titlePlaceholder": "Dataset title",
+  "dataset.detail.versionLabel": "Version"
 }

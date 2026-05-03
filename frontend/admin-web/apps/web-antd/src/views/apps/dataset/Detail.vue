@@ -194,6 +194,8 @@ watch(detailData, (data) => {
   if (data) {
     descriptionMdInit = true;
     descriptionMd.value = data.description_md || '';
+    editableTitle.value = data.title || data.name || '';
+    editableVersion.value = data.version || '';
   }
 });
 
@@ -206,10 +208,25 @@ const debouncedSaveDescription = useDebounceFn(async (val: string) => {
 // Auto-save on change (skip the init-induced change)
 watch(descriptionMd, (val) => {
   if (!descriptionMdInit) return;
-  descriptionMdInit = false;
   if (val === (detailData.value?.description_md || '')) return;
   debouncedSaveDescription(val);
 });
+
+// ── Inline title / version editing ──
+const editableTitle = ref('');
+const editableVersion = ref('');
+
+const debouncedSaveTitle = useDebounceFn(async (val: string) => {
+  if (detailData.value && val !== (detailData.value.title || detailData.value.name || '')) {
+    await updateDatasetApi({ id: datasetId.value, title: val });
+  }
+}, 1000);
+
+const debouncedSaveVersion = useDebounceFn(async (val: string) => {
+  if (detailData.value && val !== (detailData.value.version || '')) {
+    await updateDatasetApi({ id: datasetId.value, version: val });
+  }
+}, 1000);
 
 onMounted(() => loadAll());
 </script>
@@ -220,8 +237,17 @@ onMounted(() => loadAll());
     <template v-else-if="detailData">
       <!-- Section 1: Header -->
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-        <div>
-          <h2 style="margin: 0;">{{ detailData.dataset_code || '-' }}</h2>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+            <Input
+              v-model:value="editableTitle"
+              :placeholder="$t('dataset.detail.titlePlaceholder')"
+              style="font-size:18px;font-weight:600;width:360px;"
+              bordered
+              @blur="debouncedSaveTitle(editableTitle)"
+            />
+            <Tag>{{ detailData.dataset_code || '-' }}</Tag>
+          </div>
           <div style="color: #888; font-size: 13px;">
             <span>{{ detailData.organism || '-' }} · {{ detailData.assembly || '-' }}</span>
             <span style="margin-left: 8px;">{{ getPreferredDatasetTypeCode(detailData.dataset_type) }}</span>
@@ -238,10 +264,11 @@ onMounted(() => loadAll());
       </div>
 
       <!-- Section 2: Status Bar -->
-      <div style="display: flex; gap: 24px; font-size: 13px; padding: 8px 12px; background: #fafafa; border-radius: 4px; margin-bottom: 16px;">
+      <div style="display: flex; gap: 24px; font-size: 13px; padding: 8px 12px; background: #fafafa; border-radius: 4px; margin-bottom: 16px; align-items: center;">
         <span>{{ $t('dataset.list.queryEntry') }}<strong>{{ detailData.query_entry_asset?.asset_code || $t('dataset.list.notConfigured') }}</strong></span>
         <span>{{ $t('dataset.list.currentVersion') }}：<strong>{{ versionListData?.current_version?.version || '-' }}</strong></span>
         <span>{{ $t('dataset.list.defaultPublicVersion') }}：<strong>{{ versionListData?.default_public_version?.version || '-' }}</strong></span>
+        <span style="display:flex;align-items:center;gap:4px;">{{ $t('dataset.detail.versionLabel') }}：<Input v-model:value="editableVersion" size="small" style="width:120px;" @blur="debouncedSaveVersion(editableVersion)" /></span>
       </div>
 
       <div v-if="versionMismatch" style="background: #fffbe6; border: 1px solid #ffe58f; padding: 6px 12px; border-radius: 4px; margin-bottom: 12px; font-size: 12px;">
