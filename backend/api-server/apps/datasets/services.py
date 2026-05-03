@@ -2504,6 +2504,7 @@ class DatasetDomainService:
             "lifecycle_state": registry_obj.lifecycle_state,
             "visibility": registry_obj.visibility,
             "organism": registry_obj.organism,
+            "description_md": registry_obj.description_md,
             "assembly": registry_obj.assembly,
             "default_public_version_id": getattr(registry_obj, "default_public_version_id", None),
             "status": database_data["status"],
@@ -3027,6 +3028,7 @@ class DatasetDomainService:
                 request_data.dataset_type,
                 request_data.lifecycle_state,
                 request_data.visibility,
+                getattr(request_data, 'keyword', None),
                 bool(user and not self._is_platform_admin(user)),
             ]
         )
@@ -3067,6 +3069,10 @@ class DatasetDomainService:
                 continue
             if request_data.visibility and payload["visibility"] != request_data.visibility:
                 continue
+            if getattr(request_data, 'keyword', None):
+                keyword = request_data.keyword.strip()
+                if not payload.get("description_md") or keyword.lower() not in payload["description_md"].lower():
+                    continue
             data_list.append(payload)
 
         total = len(data_list) if need_post_filter else page_obj["total"]
@@ -3120,6 +3126,7 @@ class DatasetDomainService:
             "validation_summary",
             "index_summary",
             "extra_json",
+            "description_md",
         ]:
             value = getattr(request_data, field)
             if value is not None:

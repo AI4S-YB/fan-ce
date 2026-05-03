@@ -166,6 +166,7 @@ async def _execute_list_datasets(db, arguments: dict, user) -> dict:
             "dataset_type": item.get("dataset_type", ""),
             "lifecycle_state": item.get("lifecycle_state", ""),
             "version": item.get("version", ""),
+            "description_md": item.get("description_md", ""),
         })
     return {"items": items, "total": result.get("total", 0), "page": page, "size": size}
 
@@ -179,6 +180,7 @@ async def _execute_get_dataset_info(db, arguments: dict, user) -> dict:
         "title": dataset.get("title", ""),
         "dataset_type": dataset.get("dataset_type", ""),
         "version": dataset.get("version", ""),
+        "description_md": dataset.get("description_md", ""),
         "query_profile": dataset.get("query_profile", {}),
         "query_adapter": dataset.get("query_adapter", {}),
     }

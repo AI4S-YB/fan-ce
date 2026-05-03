@@ -15,6 +15,7 @@ class DatasetListRequest(DatasetContext):
     dataset_type: Optional[str] = None
     lifecycle_state: Optional[str] = None
     visibility: Optional[str] = None
+    keyword: Optional[str] = None
 
 
 class DatasetInfoRequest(BaseModel):
