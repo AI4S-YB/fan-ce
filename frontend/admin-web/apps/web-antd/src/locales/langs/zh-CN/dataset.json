@@ -122,7 +122,15 @@
     "versionSetDefault": "已设为默认版本",
     "backToList": "返回列表",
     "descriptionMd": "数据说明文档 (Markdown)",
-    "descriptionMdPlaceholder": "用 Markdown 格式描述数据集内容，例如：\n# 数据集概述\n- 物种：Rosa chinensis\n- 实验设计：干旱处理，3个时间点"
+    "descriptionMdPlaceholder": "用 Markdown 格式描述数据集内容，例如：\n# 数据集概述\n- 物种：Rosa chinensis\n- 实验设计：干旱处理，3个时间点",
+    "extraJson": "结构化属性",
+    "extraJsonHint": "定义数据集的键值对属性信息，如物种、组织、处理条件等。LLM 可检索这些属性。",
+    "extraJsonEmpty": "暂无属性，点击下方按钮添加",
+    "extraJsonAddField": "添加属性",
+    "extraJsonKeyPlaceholder": "字段名，如 tissue",
+    "extraJsonValuePlaceholder": "值，如 leaf",
+    "titlePlaceholder": "数据集标题",
+    "versionLabel": "版本标识"
   },
   "query": {
     "title": "数据查询",
@@ -493,13 +501,5 @@
     "publicDefaultVisit": "公开前台默认访问该版本。",
     "releasedNotDefault": "该版本已 released，但不是默认公开版本。",
     "notOpenToPublic": "该版本当前不对公开前台开放。"
-  },
-  "dataset.detail.titlePlaceholder": "数据集标题",
-  "dataset.detail.versionLabel": "版本标识",
-  "dataset.detail.extraJson": "结构化属性 (JSON)",
-  "dataset.detail.extraJsonHint": "以 JSON 格式定义数据集的属性信息，如物种、组织、处理条件等。LLM 可直接检索这些属性。",
-  "dataset.detail.extraJsonEmpty": "暂无属性，点击下方按钮添加",
-  "dataset.detail.extraJsonKeyPlaceholder": "字段名，如 tissue",
-  "dataset.detail.extraJsonValuePlaceholder": "值，如 leaf",
-  "dataset.detail.extraJsonAddField": "添加属性"
+  }
 }

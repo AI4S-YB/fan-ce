@@ -122,7 +122,15 @@
     "versionSetDefault": "Set as default version",
     "backToList": "Back to list",
     "descriptionMd": "Data Description (Markdown)",
-    "descriptionMdPlaceholder": "Describe the dataset in Markdown, e.g.:\n# Overview\n- Species: Rosa chinensis\n- Experimental design: drought treatment, 3 timepoints"
+    "descriptionMdPlaceholder": "Describe the dataset in Markdown, e.g.:\n# Overview\n- Species: Rosa chinensis\n- Experimental design: drought treatment, 3 timepoints",
+    "extraJson": "Structured Attributes",
+    "extraJsonHint": "Define key-value attributes for the dataset, such as species, tissue, treatment conditions. Searchable by LLM.",
+    "extraJsonEmpty": "No attributes yet, click the button below to add",
+    "extraJsonAddField": "Add attribute",
+    "extraJsonKeyPlaceholder": "Field name, e.g. tissue",
+    "extraJsonValuePlaceholder": "Value, e.g. leaf",
+    "titlePlaceholder": "Dataset title",
+    "versionLabel": "Version"
   },
   "query": {
     "title": "Data Query",
@@ -493,13 +501,5 @@
     "publicDefaultVisit": "Public frontend defaults to this version.",
     "releasedNotDefault": "This version is released but not the default public version.",
     "notOpenToPublic": "This version is not currently available to public."
-  },
-  "dataset.detail.titlePlaceholder": "Dataset title",
-  "dataset.detail.versionLabel": "Version",
-  "dataset.detail.extraJson": "Structured Attributes (JSON)",
-  "dataset.detail.extraJsonHint": "Define dataset attributes in JSON format, such as species, tissue, treatment conditions. Searchable by LLM.",
-  "dataset.detail.extraJsonEmpty": "No attributes yet, click the button below to add",
-  "dataset.detail.extraJsonKeyPlaceholder": "Field name, e.g. tissue",
-  "dataset.detail.extraJsonValuePlaceholder": "Value, e.g. leaf",
-  "dataset.detail.extraJsonAddField": "Add attribute"
+  }
 }
