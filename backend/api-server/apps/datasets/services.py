@@ -3069,8 +3069,10 @@ class DatasetDomainService:
             if request_data.visibility and payload["visibility"] != request_data.visibility:
                 continue
             if getattr(request_data, 'keyword', None):
-                keyword = request_data.keyword.strip()
-                if not payload.get("description_md") or keyword.lower() not in payload["description_md"].lower():
+                keyword = request_data.keyword.strip().lower()
+                desc = (payload.get("description_md") or "").lower()
+                extra = (payload.get("extra_json") or "").lower()
+                if keyword not in desc and keyword not in extra:
                     continue
             data_list.append(payload)
 

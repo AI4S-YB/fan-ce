@@ -53,12 +53,12 @@ def _resolve_datasets(db, arguments: dict, user, default_type: str = None) -> li
             if ds:
                 return [dataset_domain_service.get_dataset(db=db, dataset_id=ds.id, user=user)]
 
-        # Fall back to name-based search
+        # Fall back to name / keyword-based search
         result = dataset_domain_service.list_datasets(
             db=db,
             request_data=SimpleNamespace(
                 project_id=0, team_id=0, page=1, size=20,
-                dataset_id=None, name=kw,
+                dataset_id=None, name=kw, keyword=kw,
                 dataset_type=None, lifecycle_state=None, visibility=None,
             ),
             user=user,
@@ -152,7 +152,8 @@ async def _execute_list_datasets(db, arguments: dict, user) -> dict:
         db=db,
         request_data=SimpleNamespace(
             project_id=0, team_id=0, page=page, size=size,
-            dataset_id=None, name=keyword, dataset_type=dataset_type,
+            dataset_id=None, name=keyword, keyword=keyword,
+            dataset_type=dataset_type,
             lifecycle_state=None, visibility=None,
         ),
         user=user,
