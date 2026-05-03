@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Column, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import BigInteger, Boolean, Column, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 
 from db.database import Base
 
@@ -200,6 +200,8 @@ class DatasetRegistry(Base):
     title = Column(String(320), comment="显示标题")
     lifecycle_state = Column(String(64), default="draft", comment="生命周期状态")
     visibility = Column(String(32), default="private", comment="可见性")
+    owner_id = Column(Integer, comment="所有者用户 ID")
+    is_public = Column(Boolean, default=False, comment="是否公开")
     organism = Column(String(128), comment="物种")
     assembly = Column(String(128), comment="组装版本")
     file_format = Column(String(128), comment="文件格式")
