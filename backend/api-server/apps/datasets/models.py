@@ -198,6 +198,7 @@ class DatasetRegistry(Base):
     query_engine = Column(String(128), comment="查询引擎")
     validation_summary = Column(Text, comment="校验摘要")
     index_summary = Column(Text, comment="索引摘要")
+    description_md = Column(Text, comment="Markdown 格式的数据描述文档")
     extra_json = Column(Text, comment="扩展元数据")
     default_public_version_id = Column(Integer, index=True, comment="默认公开版本 ID")
     create_time = Column(Integer, comment="创建时间")
