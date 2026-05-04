@@ -2,17 +2,16 @@
 </script>
 <template>
   <div id="public-portal">
-    <header style="border-bottom:1px solid #e5e5e5;padding:12px 24px;display:flex;align-items:center;gap:24px;">
-      <router-link to="/" style="font-size:18px;font-weight:700;text-decoration:none;color:#303133;">
-        Rose Database
-      </router-link>
-      <nav style="display:flex;gap:16px;font-size:14px;">
-        <router-link to="/expression">Expression</router-link>
-        <router-link to="/genotype">Genotype</router-link>
-        <router-link to="/germplasm">Germplasm</router-link>
-        <router-link to="/phenotype">Phenotype</router-link>
-      </nav>
-    </header>
+    <el-menu mode="horizontal" :router="true" style="padding:0 24px;">
+      <el-menu-item index="/">
+        <span style="font-size:18px;font-weight:700;">Rose Database</span>
+      </el-menu-item>
+      <div style="flex:1;" />
+      <el-menu-item index="/expression">Expression</el-menu-item>
+      <el-menu-item index="/genotype">Genotype</el-menu-item>
+      <el-menu-item index="/germplasm">Germplasm</el-menu-item>
+      <el-menu-item index="/phenotype">Phenotype</el-menu-item>
+    </el-menu>
     <main style="max-width:1200px;margin:0 auto;padding:24px;min-height:80vh;">
       <router-view />
     </main>
