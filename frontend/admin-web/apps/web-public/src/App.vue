@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { ref } from 'vue';
+import AiFloatingButton from './components/AiChatDrawer/AiFloatingButton.vue';
+import AiChatDrawer from './components/AiChatDrawer/index.vue';
+
+const chatVisible = ref(false);
 </script>
 <template>
   <div id="public-portal">
@@ -18,6 +23,8 @@
     <footer style="border-top:1px solid #e5e5e5;padding:16px;text-align:center;color:#999;font-size:12px;">
       China Agricultural University — Rose Database &copy; 2024-2026
     </footer>
+    <AiFloatingButton @click="chatVisible = true" />
+    <AiChatDrawer v-model:visible="chatVisible" />
   </div>
 </template>
 
