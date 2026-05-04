@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, ref, type Ref } from 'vue';
+import { computed, inject, ref, watch, type Ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDatasetQuery } from '@/composables/useDatasets';
 import type { PublicDatasetDetail } from '@/types/dataset';
@@ -9,7 +9,7 @@ const router = useRouter();
 const { queryLoading, queryResult, execute } = useDatasetQuery();
 
 // Search filters
-const searchMode = ref('keyword'); // keyword | gene_id | range
+const searchMode = ref('keyword');
 const keyword = ref('');
 const geneId = ref('');
 const chrom = ref('');
@@ -25,6 +25,14 @@ const rows = computed(() => {
 });
 
 const total = computed(() => queryResult.value?.total ?? 0);
+
+// Auto-load gene list when genome detail is ready
+watch(() => detail?.value?.id, (id) => {
+  if (id) {
+    page.value = 1;
+    doQuery();
+  }
+}, { immediate: true });
 
 async function onSearch() {
   page.value = 1;
@@ -52,17 +60,7 @@ async function doQuery() {
     if (end.value) params.end = Number(end.value);
   }
 
-  await execute(datasetId, 'gene_search', params);
-}
-
-function goToGene(row: Record<string, unknown>) {
-  const gid = row.gene_id || row.id;
-  if (gid && detail?.value?.id) {
-    router.push({
-      path: `/genome/${detail.value.id}/geneinfo`,
-      query: { gene_id: String(gid) },
-    });
-  }
+  await execute(datasetId, 'gene_search', params as Record<string, unknown>);
 }
 </script>
 
@@ -127,13 +125,7 @@ function goToGene(row: Record<string, unknown>) {
 
       <template v-if="rows.length > 0">
         <el-table :data="rows" size="small" border stripe>
-          <el-table-column prop="gene_id" label="Gene ID" width="160">
-            <template #default="{ row }">
-              <el-button link type="primary" size="small" @click="goToGene(row)">
-                {{ row.gene_id || row.id || '-' }}
-              </el-button>
-            </template>
-          </el-table-column>
+          <el-table-column prop="gene_id" label="Gene ID" width="160" />
           <el-table-column prop="chrom" label="Chr" width="100" />
           <el-table-column prop="start" label="Start" width="100" />
           <el-table-column prop="end" label="End" width="100" />
