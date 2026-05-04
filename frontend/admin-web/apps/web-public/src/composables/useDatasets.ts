@@ -67,7 +67,7 @@ export function useDatasetQuery() {
 
   async function loadCapabilities(datasetId: number, assetCode?: string, versionId?: number) {
     const data: any = await post(`${PRE}/query/capabilities`, {
-      dataset_id: datasetId,
+      id: datasetId,
       asset_code: assetCode,
       version_id: versionId,
     });
@@ -85,7 +85,7 @@ export function useDatasetQuery() {
     queryLoading.value = true;
     try {
       const data: any = await post(`${PRE}/query/execute`, {
-        dataset_id: datasetId,
+        id: datasetId,
         asset_code: assetCode,
         version_id: versionId,
         operation,
