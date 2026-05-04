@@ -21,7 +21,9 @@ const pageSize = ref(20);
 const rows = computed(() => {
   const result = queryResult.value;
   if (!result) return [];
-  return (result.rows || result.items || []) as Record<string, unknown>[];
+  // API returns { adapter, operation, data: { items: [...] } }
+  const inner = (result as any).data;
+  return (inner?.items || inner?.rows || result.rows || result.items || []) as Record<string, unknown>[];
 });
 
 const total = computed(() => queryResult.value?.total ?? 0);
@@ -45,8 +47,10 @@ async function onPageChange(p: number) {
 }
 
 async function doQuery() {
-  const datasetId = detail?.value?.id;
-  if (!datasetId) return;
+  const d = detail?.value;
+  if (!d?.id) return;
+
+  const assetCode = d.query_entry_asset?.asset_code;
 
   const params: Record<string, unknown> = { page: page.value, size: pageSize.value };
 
@@ -60,7 +64,7 @@ async function doQuery() {
     if (end.value) params.end = Number(end.value);
   }
 
-  await execute(datasetId, 'gene_search', params as Record<string, unknown>);
+  await execute(d.id, 'search_genes', params as Record<string, unknown>, assetCode);
 }
 </script>
 
@@ -128,7 +132,7 @@ async function doQuery() {
           <el-table-column prop="gene_id" label="Gene ID" width="160" />
           <el-table-column prop="chrom" label="Chr" width="100" />
           <el-table-column prop="start" label="Start" width="100" />
-          <el-table-column prop="end" label="End" width="100" />
+          <el-table-column prop="stop" label="End" width="100" />
           <el-table-column prop="strand" label="Strand" width="80" />
           <el-table-column prop="description" label="Description" min-width="200">
             <template #default="{ row }">

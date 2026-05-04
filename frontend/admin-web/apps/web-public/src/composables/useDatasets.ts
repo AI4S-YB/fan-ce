@@ -65,9 +65,10 @@ export function useDatasetQuery() {
   const queryResult = ref<QueryResult | null>(null);
   const capabilities = ref<QueryCapabilities | null>(null);
 
-  async function loadCapabilities(datasetId: number, versionId?: number) {
+  async function loadCapabilities(datasetId: number, assetCode?: string, versionId?: number) {
     const data: any = await post(`${PRE}/query/capabilities`, {
       dataset_id: datasetId,
+      asset_code: assetCode,
       version_id: versionId,
     });
     capabilities.value = data;
@@ -78,29 +79,19 @@ export function useDatasetQuery() {
     datasetId: number,
     operation: string,
     params: Record<string, unknown>,
+    assetCode?: string,
     versionId?: number,
   ) {
     queryLoading.value = true;
     try {
       const data: any = await post(`${PRE}/query/execute`, {
         dataset_id: datasetId,
+        asset_code: assetCode,
         version_id: versionId,
         operation,
         params,
       });
       queryResult.value = data;
-      // Also check version-specific endpoint
-      try {
-        const data2: any = await post(`${PRE}/version/query/execute`, {
-          dataset_id: datasetId,
-          version_id: versionId,
-          operation,
-          params,
-        });
-        queryResult.value = data2;
-      } catch {
-        /* fallback to dataset-level query */
-      }
     } finally {
       queryLoading.value = false;
     }

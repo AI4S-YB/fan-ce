@@ -22,7 +22,7 @@ loadDatasets({ dataset_type: 'transcriptome' });
 // When dataset changes, load capabilities
 watch(selectedDatasetId, async (id) => {
   if (!id) return;
-  caps.value = await loadCapabilities(id, selectedVersionId.value);
+  caps.value = await loadCapabilities(id, undefined, selectedVersionId.value);
   selectedGenes.value = [];
   selectedSamples.value = [];
 });
@@ -37,6 +37,7 @@ async function runQuery() {
       samples: selectedSamples.value,
       type: selectedType.value,
     },
+    undefined,
     selectedVersionId.value,
   );
 }
