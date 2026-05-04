@@ -1,0 +1,26 @@
+{
+  "name": "@fan-ce/web-public",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5677",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 5678"
+  },
+  "dependencies": {
+    "vue": "catalog:",
+    "vue-router": "catalog:",
+    "pinia": "catalog:",
+    "element-plus": "catalog:",
+    "echarts": "catalog:",
+    "axios": "catalog:",
+    "@vueuse/core": "catalog:"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vue-tsc": "catalog:"
+  }
+}
