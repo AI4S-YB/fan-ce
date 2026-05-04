@@ -17,13 +17,13 @@ const routes = [
     children: [
       { path: '', redirect: (to: any) => ({ path: 'home', query: to.query }) },
       { path: 'home', component: () => import('@/views/genome/Home.vue') },
-      { path: 'search', component: () => import('@/views/genome/Search.vue') },
-      { path: 'batch', component: () => import('@/views/genome/BatchQuery.vue') },
-      { path: 'blast', component: () => import('@/views/genome/Blast.vue') },
-      { path: 'download', component: () => import('@/views/genome/Download.vue') },
-      { path: 'geneinfo', component: () => import('@/views/genome/GeneInfo.vue') },
+      { path: 'search', component: () => import('@/views/genome/GeneSearch.vue') },
+      { path: 'tf', component: () => import('@/views/genome/TranscriptionFactors.vue') },
+      { path: 'tools/:tool', component: () => import('@/views/genome/Tools.vue') },
     ],
   },
+  // Standalone tools (no genome selected)
+  { path: '/tools/:tool', component: () => import('@/views/genome/Tools.vue') },
   { path: '/expression', component: () => import('@/views/expression/index.vue') },
   { path: '/genotype', component: () => import('@/views/genotype/index.vue') },
   { path: '/germplasm', component: () => import('@/views/germplasm/index.vue') },
