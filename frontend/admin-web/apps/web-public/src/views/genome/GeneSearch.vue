@@ -51,7 +51,7 @@ async function doQuery() {
 
   const params: Record<string, unknown> = { page: page.value, size: pageSize.value };
   if (searchMode.value === 'keyword' && keyword.value) params.keyword = keyword.value;
-  else if (searchMode.value === 'gene_id' && geneId.value) params.gene_id = geneId.value;
+  else if (searchMode.value === 'gene_id' && geneId.value) params.keyword = geneId.value;
   else if (searchMode.value === 'range') {
     if (chrom.value) params.chrom = chrom.value;
     if (start.value) params.start = Number(start.value);
