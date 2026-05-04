@@ -65,6 +65,16 @@ async function doQuery() {
     console.error('doQuery error:', e);
   }
 }
+
+async function onSearch() {
+  page.value = 1;
+  await doQuery();
+}
+
+async function onPageChange(p: number) {
+  page.value = p;
+  await doQuery();
+}
 </script>
 
 <template>
