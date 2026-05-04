@@ -12,12 +12,7 @@ const errorMsg = ref('');
 const debugInfo = ref('');
 
 // Search filters
-const searchMode = ref('keyword');
 const keyword = ref('');
-const geneId = ref('');
-const chrom = ref('');
-const start = ref('');
-const end = ref('');
 const page = ref(1);
 const pageSize = ref(20);
 
@@ -50,13 +45,7 @@ async function doQuery() {
   debugInfo.value = 'querying dataset=' + d.id + ' asset=' + assetCode;
 
   const params: Record<string, unknown> = { page: page.value, size: pageSize.value };
-  if (searchMode.value === 'keyword' && keyword.value) params.keyword = keyword.value;
-  else if (searchMode.value === 'gene_id' && geneId.value) params.keyword = geneId.value;
-  else if (searchMode.value === 'range') {
-    if (chrom.value) params.chrom = chrom.value;
-    if (start.value) params.start = Number(start.value);
-    if (end.value) params.end = Number(end.value);
-  }
+  if (keyword.value) params.keyword = keyword.value;
 
   errorMsg.value = '';
   try {
@@ -89,56 +78,15 @@ function goToGene(geneId: string) {
     <div v-if="debugInfo" style="background:#f0f7ff;padding:4px 12px;border-radius:4px;font-size:11px;color:#888;margin-bottom:8px;">{{ debugInfo }}</div>
     <div v-if="errorMsg" style="background:#fef0f0;padding:8px 12px;border-radius:4px;font-size:12px;color:#f56c6c;margin-bottom:8px;">{{ errorMsg }}</div>
     <!-- Search Controls -->
-    <div style="margin-bottom: 16px;">
-      <el-radio-group v-model="searchMode" size="small" style="margin-bottom: 12px;">
-        <el-radio-button value="keyword">Keyword</el-radio-button>
-        <el-radio-button value="gene_id">Gene ID</el-radio-button>
-        <el-radio-button value="range">Chromosome Range</el-radio-button>
-      </el-radio-group>
-    </div>
-
-    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
-      <template v-if="searchMode === 'keyword'">
-        <el-input
-          v-model="keyword"
-          placeholder="Search by gene name or description..."
-          clearable
-          style="width: 320px;"
-          @keyup.enter="onSearch"
-        />
-      </template>
-      <template v-else-if="searchMode === 'gene_id'">
-        <el-input
-          v-model="geneId"
-          placeholder="Enter gene ID..."
-          clearable
-          style="width: 240px;"
-          @keyup.enter="onSearch"
-        />
-      </template>
-      <template v-else>
-        <el-input
-          v-model="chrom"
-          placeholder="Chromosome (e.g. Chr1)"
-          style="width: 150px;"
-        />
-        <el-input
-          v-model="start"
-          placeholder="Start"
-          type="number"
-          style="width: 120px;"
-        />
-        <span style="line-height: 32px;">-</span>
-        <el-input
-          v-model="end"
-          placeholder="End"
-          type="number"
-          style="width: 120px;"
-        />
-      </template>
-      <el-button type="primary" :loading="queryLoading" @click="onSearch">
-        Search
-      </el-button>
+    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+      <el-input
+        v-model="keyword"
+        placeholder="Search by gene ID, name, or description..."
+        clearable
+        style="width: 400px;"
+        @keyup.enter="onSearch"
+      />
+      <el-button type="primary" :loading="queryLoading" @click="onSearch">Search</el-button>
     </div>
 
     <!-- Results Table -->
