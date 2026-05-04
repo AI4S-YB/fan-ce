@@ -9,6 +9,7 @@ client.interceptors.response.use(
   (res) => {
     const body = res.data;
     if (body && typeof body === 'object' && 'code' in body && body.code === 2000) {
+      // Return the unwrapped data directly (not wrapped in AxiosResponse)
       return body.data ?? body;
     }
     return body;
@@ -20,8 +21,13 @@ client.interceptors.response.use(
 );
 
 export function useRequest() {
-  return {
-    get: client.get.bind(client),
-    post: client.post.bind(client) as typeof client.post,
-  };
+  async function get<T = any>(url: string, params?: any): Promise<T> {
+    const res: any = await client.get(url, { params });
+    return res as T;
+  }
+  async function post<T = any>(url: string, data?: any): Promise<T> {
+    const res: any = await client.post(url, data);
+    return res as T;
+  }
+  return { get, post };
 }
