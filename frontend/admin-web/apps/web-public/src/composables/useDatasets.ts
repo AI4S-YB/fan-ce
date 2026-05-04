@@ -39,23 +39,23 @@ export function useDatasetDetail() {
 
   async function load(id: number) {
     loading.value = true;
+    detail.value = null;
+    lineage.value = [];
     try {
       const data: any = await post(`${PRE}/info`, { id });
       detail.value = data;
-      // Also load lineage if dataset_code available
       if (data?.dataset_code) {
         try {
           const lin: any = await post(`${PRE}/${data.dataset_code}/lineage`);
           lineage.value = lin?.items || lin || [];
-        } catch {
-          /* lineage optional */
-        }
+        } catch { /* lineage optional */ }
       }
+    } catch (e: any) {
+      console.error('Failed to load dataset detail:', id, e?.message || e);
     } finally {
       loading.value = false;
     }
   }
-
   return { loading, detail, lineage, load };
 }
 
