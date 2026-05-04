@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, inject, ref, watch, type Ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useDatasetQuery } from '@/composables/useDatasets';
 import type { PublicDatasetDetail } from '@/types/dataset';
 
 const detail = inject<Ref<PublicDatasetDetail | null>>('genomeDetail');
+const router = useRouter();
 const { queryLoading, queryResult, execute } = useDatasetQuery();
 
 const errorMsg = ref('');
@@ -75,6 +77,10 @@ async function onPageChange(p: number) {
   page.value = p;
   await doQuery();
 }
+
+function goToGene(geneId: string) {
+  router.push({ path: router.currentRoute.value.path.replace(/\/search$/, '/geneinfo'), query: { gene_id: geneId } });
+}
 </script>
 
 <template>
@@ -141,7 +147,13 @@ async function onPageChange(p: number) {
 
       <template v-if="rows.length > 0">
         <el-table :data="rows" size="small" border stripe>
-          <el-table-column prop="gene_id" label="Gene ID" width="160" />
+          <el-table-column prop="gene_id" label="Gene ID" width="160">
+            <template #default="{ row }">
+              <el-button link type="primary" size="small" @click="goToGene(row.gene_id)">
+                {{ row.gene_id }}
+              </el-button>
+            </template>
+          </el-table-column>
           <el-table-column prop="chrom" label="Chr" width="100" />
           <el-table-column prop="start" label="Start" width="100" />
           <el-table-column prop="stop" label="End" width="100" />

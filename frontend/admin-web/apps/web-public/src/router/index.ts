@@ -20,6 +20,7 @@ const routes = [
       { path: 'search', component: () => import('@/views/genome/GeneSearch.vue') },
       { path: 'tf', component: () => import('@/views/genome/TranscriptionFactors.vue') },
       { path: 'tools/:tool', component: () => import('@/views/genome/Tools.vue') },
+      { path: 'geneinfo', component: () => import('@/views/genome/GeneInfo.vue') },
     ],
   },
   // Standalone tools (no genome selected)
