@@ -59,74 +59,88 @@ function backToSearch() {
   const path = router.currentRoute.value.path.replace('/geneinfo', '/search');
   router.push({ path, query: {} });
 }
-
-function fmtEvalue(v: any): string {
-  if (v === undefined || v === null) return '-';
-  return String(v);
-}
 </script>
 
 <template>
-  <div v-loading="queryLoading">
-    <el-button text @click="backToSearch">← Back to Search</el-button>
-    <div v-if="errorMsg" style="color:#f56c6c;margin:8px 0;">{{ errorMsg }}</div>
+  <div v-loading="queryLoading" class="gene-info">
+    <div class="gene-nav">
+      <el-button text @click="backToSearch">← Back to Search</el-button>
+    </div>
+    <div v-if="errorMsg" class="gene-error">{{ errorMsg }}</div>
 
     <template v-if="gene">
-      <h3 style="margin-bottom:4px;">{{ gene.gene_id }}</h3>
-      <div style="color:#888;font-size:13px;margin-bottom:16px;">
-        <el-tag size="small">{{ gene.chrom }}</el-tag>
-        <span style="margin-left:8px;">{{ gene.strand === '+' ? 'Forward' : 'Reverse' }} strand</span>
-        <span style="margin-left:8px;" v-if="canonicalTranscript">Canonical: {{ canonicalTranscript }}</span>
+      <!-- Header -->
+      <div class="gene-header">
+        <h2 class="gene-title">{{ gene.gene_id }}</h2>
+        <div class="gene-subtitle">
+          <span class="gene-locus">{{ gene.chrom }}:{{ (gene.start as number)?.toLocaleString() }}-{{ (gene.stop as number)?.toLocaleString() }}</span>
+          <span class="gene-strand">{{ gene.strand === '+' ? '(+) Forward' : '(-) Reverse' }}</span>
+          <span v-if="canonicalTranscript" class="gene-transcript">Canonical: <code>{{ canonicalTranscript }}</code></span>
+        </div>
+        <p class="gene-desc">{{ gene.description || 'No description available' }}</p>
+        <div v-if="gene.family" class="gene-family">
+          <el-tag type="success" size="small">{{ gene.family }}</el-tag>
+        </div>
       </div>
 
-      <el-descriptions border :column="2" size="small" style="margin-bottom:16px;">
-        <el-descriptions-item label="Gene ID">{{ gene.gene_id }}</el-descriptions-item>
-        <el-descriptions-item label="Chromosome">{{ gene.chrom }}</el-descriptions-item>
-        <el-descriptions-item label="Start">{{ (gene.start as number)?.toLocaleString() }}</el-descriptions-item>
-        <el-descriptions-item label="End">{{ (gene.stop as number)?.toLocaleString() }}</el-descriptions-item>
-        <el-descriptions-item label="Strand">{{ gene.strand }}</el-descriptions-item>
-        <el-descriptions-item label="Transcripts">{{ transcriptCount }}</el-descriptions-item>
-        <el-descriptions-item label="Description" :span="2">{{ gene.description || '-' }}</el-descriptions-item>
-        <el-descriptions-item v-if="gene.family" label="Family" :span="2">{{ gene.family }}</el-descriptions-item>
-      </el-descriptions>
-
-      <h4 v-if="Object.keys(annotationCounts).length">Annotation Summary</h4>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
-        <el-tag v-for="(count, db) in annotationCounts" :key="db" type="info">{{ db }}: {{ count }}</el-tag>
+      <!-- Quick stats -->
+      <div class="gene-stats">
+        <div class="stat-item"><span class="stat-val">{{ transcriptCount }}</span><span class="stat-label">Transcripts</span></div>
+        <div class="stat-item"><span class="stat-val">{{ annotationCounts.go || 0 }}</span><span class="stat-label">GO</span></div>
+        <div class="stat-item"><span class="stat-val">{{ annotationCounts.kegg || 0 }}</span><span class="stat-label">KEGG</span></div>
+        <div class="stat-item"><span class="stat-val">{{ annotationCounts.interpro || 0 }}</span><span class="stat-label">InterPro</span></div>
+        <div class="stat-item"><span class="stat-val">{{ blastHits.length }}</span><span class="stat-label">BLAST</span></div>
       </div>
 
-      <div v-if="blastHits.length > 0" style="margin-bottom:20px;">
-        <h4>BLAST Hits ({{ blastHits.length }})</h4>
-        <el-table :data="blastHits" size="small" border stripe max-height="400">
-          <el-table-column prop="_db" label="DB" width="80" />
-          <el-table-column prop="Hit_id" label="Hit ID" width="180" show-overflow-tooltip />
-          <el-table-column prop="Hit_def" label="Definition" min-width="250" show-overflow-tooltip />
-          <el-table-column label="E-value" width="100">
-            <template #default="{ row }">{{ fmtEvalue(row.Hit_hsps?.Hsp?.Hsp_evalue) }}</template>
+      <!-- Location -->
+      <div class="gene-section">
+        <h3>Genomic Location</h3>
+        <table class="gene-table">
+          <tr><th>Chromosome</th><td>{{ gene.chrom }}</td><th>Start</th><td>{{ (gene.start as number)?.toLocaleString() }}</td></tr>
+          <tr><th>End</th><td>{{ (gene.stop as number)?.toLocaleString() }}</td><th>Strand</th><td>{{ gene.strand }}</td></tr>
+          <tr><th>Transcripts</th><td>{{ transcriptCount }}</td><th>Canonical</th><td><code v-if="canonicalTranscript">{{ canonicalTranscript }}</code><span v-else>-</span></td></tr>
+        </table>
+      </div>
+
+      <!-- BLAST -->
+      <div v-if="blastHits.length > 0" class="gene-section">
+        <h3>BLAST Homology ({{ blastHits.length }} hits)</h3>
+        <el-table :data="blastHits" size="small" border stripe max-height="500">
+          <el-table-column prop="_db" label="DB" width="70" />
+          <el-table-column prop="Hit_id" label="Subject ID" width="180" show-overflow-tooltip />
+          <el-table-column prop="Hit_def" label="Description" min-width="280" show-overflow-tooltip />
+          <el-table-column label="E-value" width="100" sortable sort-by="Hit_hsps.Hsp.Hsp_evalue">
+            <template #default="{ row }">{{ row.Hit_hsps?.Hsp?.Hsp_evalue || '-' }}</template>
           </el-table-column>
-          <el-table-column label="Identity" width="80">
+          <el-table-column label="Identity" width="70">
             <template #default="{ row }">{{ row.Hit_hsps?.Hsp?.Hsp_identity || '-' }}</template>
           </el-table-column>
-          <el-table-column label="Align Len" width="80">
-            <template #default="{ row }">{{ row.Hit_hsps?.Hsp?.['Hsp_align-len'] || '-' }}</template>
+          <el-table-column label="Score" width="70">
+            <template #default="{ row }">{{ row.Hit_hsps?.Hsp?.Hsp_bit_score || '-' }}</template>
           </el-table-column>
         </el-table>
       </div>
 
-      <div v-if="annotations.go?.length" style="margin-bottom:16px;">
-        <h4>GO Terms</h4>
+      <!-- GO -->
+      <div v-if="annotations.go?.length" class="gene-section">
+        <h3>GO Terms ({{ annotations.go.length }})</h3>
         <el-table :data="annotations.go" size="small" border stripe>
-          <el-table-column prop="term_id" label="GO ID" width="140" />
-          <el-table-column prop="term_name" label="Term" />
-          <el-table-column prop="term_type" label="Type" width="120" />
+          <el-table-column prop="term_id" label="Accession" width="140">
+            <template #default="{ row }">
+              <a :href="'https://amigo.geneontology.org/amigo/term/' + row.term_id" target="_blank" style="color:#409eff;">{{ row.term_id }}</a>
+            </template>
+          </el-table-column>
+          <el-table-column prop="term_name" label="Term" min-width="300" />
+          <el-table-column prop="term_type" label="Type" width="100" />
         </el-table>
       </div>
 
-      <div v-if="annotations.kegg?.length" style="margin-bottom:16px;">
-        <h4>KEGG Pathways</h4>
+      <!-- KEGG -->
+      <div v-if="annotations.kegg?.length" class="gene-section">
+        <h3>KEGG Pathways ({{ annotations.kegg.length }})</h3>
         <el-table :data="annotations.kegg" size="small" border stripe>
-          <el-table-column prop="term_id" label="KEGG ID" width="140" />
-          <el-table-column prop="term_name" label="Pathway" />
+          <el-table-column prop="term_id" label="Pathway ID" width="140" />
+          <el-table-column prop="term_name" label="Pathway" min-width="300" />
         </el-table>
       </div>
     </template>
@@ -134,3 +148,26 @@ function fmtEvalue(v: any): string {
     <el-empty v-else-if="!queryLoading && !errorMsg" description="Gene not found" />
   </div>
 </template>
+
+<style scoped>
+.gene-info { font-size: 14px; }
+.gene-nav { margin-bottom: 12px; }
+.gene-error { color: #f56c6c; margin: 8px 0; padding: 8px 12px; background: #fef0f0; border-radius: 4px; }
+.gene-header { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #e5e5e5; }
+.gene-title { margin: 0 0 6px; font-size: 20px; font-weight: 700; color: #303133; }
+.gene-subtitle { font-size: 13px; color: #888; margin-bottom: 8px; display: flex; gap: 16px; }
+.gene-locus { font-family: monospace; }
+.gene-strand { color: #409eff; }
+.gene-transcript code { background: #f0f0f0; padding: 1px 6px; border-radius: 3px; font-size: 12px; }
+.gene-desc { margin: 8px 0 4px; color: #555; line-height: 1.6; }
+.gene-family { margin-top: 4px; }
+.gene-stats { display: flex; gap: 16px; margin-bottom: 20px; }
+.stat-item { flex: 1; background: #f5f7fa; border-radius: 6px; padding: 12px; text-align: center; }
+.stat-val { display: block; font-size: 22px; font-weight: 700; color: #409eff; }
+.stat-label { display: block; font-size: 11px; color: #999; margin-top: 2px; }
+.gene-section { margin-bottom: 24px; }
+.gene-section h3 { font-size: 15px; margin: 0 0 8px; color: #303133; }
+.gene-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.gene-table th { background: #f5f7fa; padding: 8px 12px; text-align: right; width: 100px; color: #888; font-weight: 500; border: 1px solid #e5e5e5; }
+.gene-table td { padding: 8px 12px; border: 1px solid #e5e5e5; font-family: monospace; }
+</style>
