@@ -26,7 +26,10 @@ const rows = computed(() => {
   return (inner?.items || inner?.rows || result.rows || result.items || []) as Record<string, unknown>[];
 });
 
-const total = computed(() => queryResult.value?.total ?? 0);
+const total = computed(() => {
+  const r = queryResult.value as any;
+  return r?.data?.total ?? r?.total ?? 0;
+});
 
 // Auto-load gene list when genome detail is ready
 watch(() => detail?.value?.id, (id) => {
