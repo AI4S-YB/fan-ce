@@ -15,7 +15,7 @@ const routes = [
     path: '/genome/:id',
     component: () => import('@/views/genome/Overview.vue'),
     children: [
-      { path: '', redirect: (to: any) => ({ path: 'home', query: to.query }) },
+      { path: '', redirect: (to: any) => `/genome/${to.params.id}/home` },
       { path: 'home', component: () => import('@/views/genome/Home.vue') },
       { path: 'search', component: () => import('@/views/genome/GeneSearch.vue') },
       { path: 'tf', component: () => import('@/views/genome/TranscriptionFactors.vue') },

@@ -11,7 +11,10 @@ const chatVisible = ref(false);
 const { items: genomes, load: loadGenomes } = useDatasetList();
 onMounted(() => loadGenomes({ dataset_type: 'genome' }));
 
-function goGenome(id: number) { router.push(`/genome/${id}`); }
+function goGenome(id: number) {
+  console.log('goGenome called with id:', id);
+  router.push(`/genome/${id}`);
+}
 </script>
 <template>
   <div id="public-portal">
