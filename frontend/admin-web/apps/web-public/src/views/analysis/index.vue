@@ -7,7 +7,7 @@ const { get, post } = useRequest();
 interface ToolSchema {
   tool_id: string; display_name: string; description: string; category: string;
   version: string; timeout_seconds: number;
-  input_schema: { name: string; label: string; accepted_asset_types: string[]; accepted_formats: string[]; required: boolean }[];
+  input_schema: { name: string; label: string; accepted_asset_types: string[]; accepted_formats: string[]; accepted_file_roles: string[]; required: boolean }[];
   parameter_schema: { name: string; label: string; type: string; default?: any; choices?: string[]; min?: number; max?: number }[];
   output_schema: { name: string; label: string; format: string }[];
 }
@@ -54,31 +54,12 @@ async function selectTool(tool: ToolSchema) {
     selectedFiles.value[inp.name] = null;
     fileOptions.value[inp.name] = [];
     try {
-      // Query public dataset/files matching the accepted types
-      const opts: any[] = [];
-      for (const atype of inp.accepted_asset_types) {
-        // Use dataset list to find datasets with matching assets, then find files
-        // For simplicity, query asset_file directly via a public endpoint
-        const result: any = await post('/public/dataset/list', { dataset_type: 'genome', page: 1, size: 50 });
-        const datasets = result?.items || [];
-        for (const ds of datasets) {
-          if (ds.assets) {
-            for (const asset of ds.assets) {
-              if (inp.accepted_asset_types.includes(asset.asset_type)) {
-                if (asset.files) {
-                  for (const f of asset.files) {
-                    const fmt = (f.file_format || f.file_name?.split('.').pop() || '').toLowerCase();
-                    if (inp.accepted_formats.includes(fmt)) {
-                      opts.push({ id: f.id, label: `${ds.title || ds.dataset_code} / ${f.file_name}`, format: fmt });
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-      fileOptions.value[inp.name] = opts;
+      const result: any = await post('/analysis/files/search', {
+        asset_types: inp.accepted_asset_types,
+        file_formats: inp.accepted_formats,
+        file_roles: inp.accepted_file_roles || [],
+      });
+      fileOptions.value[inp.name] = result?.items || [];
     } catch (e) {
       console.warn(`Failed to load options for ${inp.name}:`, e);
     }

@@ -9,9 +9,10 @@ class FileParam:
     """Declares an input file requirement."""
     name: str
     label: str
-    accepted_asset_types: list    # e.g. ["variant_vcf", "functional_annotation"]
-    accepted_formats: list        # e.g. ["vcf", "vcf.gz", "bcf"]
+    accepted_asset_types: list     # e.g. ["variant_vcf", "functional_annotation"]
+    accepted_formats: list         # e.g. ["vcf", "vcf.gz", "bcf"]
     accepted_dataset_types: list = field(default_factory=list)
+    accepted_file_roles: list = field(default_factory=list)  # e.g. ["functional_annotation_table"]
     required: bool = True
     description: str = ""
 
@@ -61,7 +62,8 @@ class FileOutput:
 
 def _serialize_inputs(inputs: list) -> list:
     return [{"name": i.name, "label": i.label, "accepted_asset_types": i.accepted_asset_types,
-             "accepted_formats": i.accepted_formats, "required": i.required} for i in inputs]
+             "accepted_formats": i.accepted_formats, "accepted_file_roles": i.accepted_file_roles,
+             "required": i.required} for i in inputs]
 
 
 def _serialize_params(params: list) -> list:

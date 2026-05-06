@@ -1,16 +1,30 @@
 """GO Enrichment analysis — embedded reference implementation."""
 import os
 import subprocess
+import urllib.request
 from basis.analysis.base import (
     BaseAnalysisTool, FileParam, ChoiceParam, FloatParam, IntParam, FileOutput,
 )
+
+GO_OBO_URL = "http://purl.obolibrary.org/obo/go/go-basic.obo"
+GO_OBO_CACHE = os.path.join(os.path.dirname(__file__), "go-basic.obo")
+
+
+def _ensure_obo() -> str:
+    """Return path to go-basic.obo, downloading if necessary."""
+    if not os.path.exists(GO_OBO_CACHE):
+        print(f"Downloading GO OBO from {GO_OBO_URL}...")
+        urllib.request.urlretrieve(GO_OBO_URL, GO_OBO_CACHE)
+        print(f"Cached to {GO_OBO_CACHE}")
+    return GO_OBO_CACHE
 
 
 class GoEnrichTool(BaseAnalysisTool):
     tool_id = "go_enrich"
     tool_version = "1.0.0"
     display_name = "GO Enrichment Analysis"
-    description = "Gene Ontology enrichment analysis using Fisher's exact test with multiple correction"
+    description = "Gene Ontology enrichment analysis using Fisher's exact test. "
+    "The GO OBO ontology is bundled — only gene list and GO annotation file are needed."
     category = "annotation"
 
     inputs = [
@@ -19,21 +33,16 @@ class GoEnrichTool(BaseAnalysisTool):
             label="Gene List File",
             accepted_asset_types=["functional_annotation"],
             accepted_formats=["txt", "tsv"],
-            description="One gene ID per line, or two-column TSV (gene_id + optional universe)",
+            accepted_file_roles=["functional_annotation_table"],
+            description="One gene ID per line. Genes not found in the annotation are skipped.",
         ),
         FileParam(
             name="go_annotation",
-            label="GO Annotation File",
+            label="GO Annotation (GAF/TSV)",
             accepted_asset_types=["functional_annotation"],
-            accepted_formats=["gaf", "tsv", "txt"],
-            description="Gene-to-GO-terms mapping (GAF format or simple two-column TSV)",
-        ),
-        FileParam(
-            name="go_obo",
-            label="GO Ontology (OBO)",
-            accepted_asset_types=["functional_annotation"],
-            accepted_formats=["obo"],
-            description="Gene Ontology OBO file (e.g. go-basic.obo)",
+            accepted_formats=["gaf", "txt"],
+            accepted_file_roles=["functional_annotation_table"],
+            description="Gene-to-GO-term mapping file (go_gene.gaf or similar).",
         ),
     ]
 
@@ -41,13 +50,11 @@ class GoEnrichTool(BaseAnalysisTool):
         ChoiceParam(
             name="ontology", label="Ontology",
             choices=["BP", "MF", "CC"], default="BP",
-            description="GO sub-ontology to test",
         ),
         ChoiceParam(
             name="method", label="Correction Method",
             choices=["fdr_bh", "bonferroni", "sidak", "holm"],
             default="fdr_bh",
-            description="Multiple test correction",
         ),
         FloatParam(
             name="alpha", label="Significance Level",
@@ -68,23 +75,22 @@ class GoEnrichTool(BaseAnalysisTool):
     dependencies = {"conda": ["goatools"]}
 
     def build_command(self, file_paths: dict, params: dict, work_dir: str) -> list:
-        script = self._generate_script(file_paths, params, work_dir)
+        obo_path = _ensure_obo()
+        script = self._generate_script(file_paths, params, work_dir, obo_path)
         script_path = os.path.join(work_dir, "run_enrich.py")
         with open(script_path, "w") as f:
             f.write(script)
         return ["python", script_path]
 
     def validate_outputs(self, work_dir: str) -> list:
-        table = os.path.join(work_dir, "enrichment_table.tsv")
-        plot = os.path.join(work_dir, "enrichment_plot.png")
         found = []
-        if os.path.exists(table):
-            found.append(table)
-        if os.path.exists(plot):
-            found.append(plot)
+        for name in ["enrichment_table.tsv", "enrichment_plot.png"]:
+            p = os.path.join(work_dir, name)
+            if os.path.exists(p):
+                found.append(p)
         return found
 
-    def _generate_script(self, file_paths, params, work_dir):
+    def _generate_script(self, file_paths, params, work_dir, obo_path):
         return f'''
 import sys, os
 os.chdir("{work_dir}")
@@ -94,24 +100,24 @@ try:
     from goatools.obo_parser import GODag
     from goatools.go_enrichment import GOEnrichmentStudy
     from goatools.associations import read_gaf
-    from statsmodels.stats.multitest import multipletests
 except ImportError as e:
     print(f"Missing dependency: {{e}}")
     print("Install: pip install goatools statsmodels")
     sys.exit(1)
 
-obodag = GODag("{file_paths['go_obo']}", optional_attrs=['relationship'])
+print(f"Loading GO DAG from {obo_path}...")
+obodag = GODag("{obo_path}", optional_attrs=['relationship'])
 
-# Load associations
+print(f"Loading annotations from {file_paths['go_annotation']}...")
 geneid2gos = read_gaf("{file_paths['go_annotation']}")
 
-# Load study genes
+print(f"Loading study genes from {file_paths['gene_list']}...")
 with open("{file_paths['gene_list']}") as f:
     study_genes = [line.strip().split()[0] for line in f if line.strip()]
 
 pop_genes = list(geneid2gos.keys())
 study_genes = [g for g in study_genes if g in geneid2gos]
-print(f"Study genes: {{len(study_genes)}}, Population: {{len(pop_genes)}}")
+print(f"Study genes (found): {{len(study_genes)}}, Population: {{len(pop_genes)}}")
 
 goea = GOEnrichmentStudy(
     pop_genes, geneid2gos, obodag,
@@ -122,17 +128,15 @@ goea = GOEnrichmentStudy(
 results = goea.run_study(study_genes)
 
 method_key = 'p_{params['method']}'
-min_genes = {params['min_genes']}
 
-# Filter & write table
 rows = []
 for r in results:
-    if r.study_count < min_genes:
+    if r.study_count < {params['min_genes']}:
         continue
     p_corr = getattr(r, method_key, r.p_uncorrected)
     rows.append((r.GO, r.name, r.enrichment, r.p_uncorrected, p_corr, r.study_count, r.pop_count))
 
-rows.sort(key=lambda x: x[4])  # sort by corrected p-value
+rows.sort(key=lambda x: x[4])
 
 with open("{work_dir}/enrichment_table.tsv", "w") as out:
     out.write("GO_ID\\tTerm\\tEnrichment\\tP_value\\tP_corrected\\tStudyCount\\tPopCount\\n")
@@ -140,7 +144,6 @@ with open("{work_dir}/enrichment_table.tsv", "w") as out:
         out.write(f"{{r[0]}}\\t{{r[1]}}\\t{{r[2]:.2f}}\\t{{r[3]:.4e}}\\t{{r[4]:.4e}}\\t{{r[5]}}\\t{{r[6]}}\\n")
 print(f"Wrote {{len(rows)}} enriched terms")
 
-# Dot plot
 if rows:
     import matplotlib
     matplotlib.use('Agg')
@@ -148,13 +151,14 @@ if rows:
     import math
 
     top = rows[:20]
-    fig, ax = plt.subplots(figsize=(10, 0.4 * len(top) + 2))
-    y = range(len(top))
+    h = max(3, 0.35 * len(top) + 1.5)
+    fig, ax = plt.subplots(figsize=(10, h))
+    y_pos = range(len(top))
     enrich_vals = [r[2] for r in top]
     sizes = [max(20, r[5] * 10) for r in top]
     colors = [-math.log10(max(r[4], 1e-100)) for r in top]
-    sc = ax.scatter(enrich_vals, y, s=sizes, c=colors, cmap='Reds', alpha=0.8)
-    ax.set_yticks(list(y))
+    sc = ax.scatter(enrich_vals, y_pos, s=sizes, c=colors, cmap='Reds', alpha=0.8)
+    ax.set_yticks(list(y_pos))
     ax.set_yticklabels([r[1][:45] for r in top], fontsize=9)
     ax.set_xlabel('Fold Enrichment')
     ax.set_title("GO Enrichment ({params['ontology']})")

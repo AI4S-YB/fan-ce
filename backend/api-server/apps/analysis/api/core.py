@@ -10,13 +10,19 @@ from libs.responses.response import response_2000
 from apps.analysis.models import BrdAnalysisJob
 from apps.analysis.worker import get_tools, register_tool, _get_tool
 
-analysis_router = APIRouter(tags=["app:analysis:分析任务"])
-
 
 class SubmitJobRequest(BaseModel):
     tool_id: str
-    input_bindings: dict   # {param_name: asset_file_id}
+    input_bindings: dict
     param_overrides: dict = {}
+
+
+class FileSearchRequest(BaseModel):
+    asset_types: list = []
+    file_formats: list = []
+    file_roles: list = []
+
+analysis_router = APIRouter(tags=["app:analysis:分析任务"])
 
 
 class JobResponse(BaseModel):
@@ -122,6 +128,27 @@ def cancel_job(job_id: int, db: Session = Depends(get_db)):
         job.status = "cancelled"
         db.commit()
     return response_2000(data={"id": job.id, "status": job.status})
+
+
+@analysis_router.post("/files/search", summary="搜索可用于分析的 asset_files")
+def search_files(req: FileSearchRequest, db: Session = Depends(get_db)):
+    from apps.datasets.models import AssetFile, DatasetAsset, DatasetRegistry
+    query = db.query(AssetFile, DatasetAsset.asset_type, DatasetRegistry.dataset_code, DatasetRegistry.title)\
+        .join(DatasetAsset, AssetFile.dataset_asset_id == DatasetAsset.id)\
+        .join(DatasetRegistry, DatasetAsset.database_id == DatasetRegistry.database_id)
+    if req.asset_types:
+        query = query.filter(DatasetAsset.asset_type.in_(req.asset_types))
+    if req.file_formats:
+        query = query.filter(AssetFile.file_format.in_(req.file_formats))
+    if req.file_roles:
+        query = query.filter(AssetFile.file_role.in_(req.file_roles))
+    rows = query.all()
+    items = [{"id": af.id, "file_name": af.file_name, "file_format": af.file_format,
+              "file_role": af.file_role, "file_size": af.file_size,
+              "asset_type": at, "dataset_code": dc, "dataset_title": dt,
+              "label": f"{dt or dc} / {af.file_name}"}
+             for af, at, dc, dt in rows]
+    return response_2000(data={"items": items, "total": len(items)})
 
 
 @analysis_router.get("/jobs/{job_id}/output/{file_name}", summary="下载输出文件")
