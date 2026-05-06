@@ -377,7 +377,7 @@ DATASET_TOOLS = [
             },
         },
         execute=_execute_list_datasets,
-        require_admin=True,
+        require_admin=False,
     ),
     ToolDefinition(
         name="get_dataset_info",
@@ -390,7 +390,7 @@ DATASET_TOOLS = [
             "required": ["dataset_id"],
         },
         execute=_execute_get_dataset_info,
-        require_admin=True,
+        require_admin=False,
     ),
 
     # --- Genome / Genes ---
@@ -413,7 +413,7 @@ DATASET_TOOLS = [
             },
         },
         execute=_execute_search_genes,
-        require_admin=True,
+        require_admin=False,
     ),
     ToolDefinition(
         name="fetch_sequence",
@@ -430,7 +430,7 @@ DATASET_TOOLS = [
             },
         },
         execute=_execute_fetch_sequence,
-        require_admin=True,
+        require_admin=False,
     ),
 
     # --- Functional Annotation ---
@@ -450,7 +450,7 @@ DATASET_TOOLS = [
             },
         },
         execute=_execute_get_gene_function,
-        require_admin=True,
+        require_admin=False,
     ),
     ToolDefinition(
         name="search_annotation_terms",
@@ -470,7 +470,7 @@ DATASET_TOOLS = [
             },
         },
         execute=_execute_search_annotation_terms,
-        require_admin=True,
+        require_admin=False,
     ),
     ToolDefinition(
         name="list_genes_by_term",
@@ -492,7 +492,7 @@ DATASET_TOOLS = [
             "required": ["term_source", "term_id"],
         },
         execute=_execute_list_genes_by_term,
-        require_admin=True,
+        require_admin=False,
     ),
 
     # --- Transcriptome / Expression ---
@@ -507,7 +507,7 @@ DATASET_TOOLS = [
             },
         },
         execute=_execute_list_expression_samples,
-        require_admin=True,
+        require_admin=False,
     ),
     ToolDefinition(
         name="query_expression",
@@ -533,7 +533,7 @@ DATASET_TOOLS = [
             },
         },
         execute=_execute_query_expression,
-        require_admin=True,
+        require_admin=False,
     ),
 
     # --- Phenome ---
@@ -548,7 +548,7 @@ DATASET_TOOLS = [
             },
         },
         execute=_execute_list_phenotype_traits,
-        require_admin=True,
+        require_admin=False,
     ),
     ToolDefinition(
         name="query_phenotype",
@@ -569,7 +569,7 @@ DATASET_TOOLS = [
             },
         },
         execute=_execute_query_phenotype,
-        require_admin=True,
+        require_admin=False,
     ),
 
     # --- Variome / Variant ---
@@ -584,7 +584,7 @@ DATASET_TOOLS = [
             },
         },
         execute=_execute_list_variant_samples,
-        require_admin=True,
+        require_admin=False,
     ),
     ToolDefinition(
         name="query_variants",
@@ -602,7 +602,7 @@ DATASET_TOOLS = [
             "required": ["regions"],
         },
         execute=_execute_query_variants,
-        require_admin=True,
+        require_admin=False,
     ),
 
     # --- Lineage ---
@@ -617,7 +617,7 @@ DATASET_TOOLS = [
             "required": ["dataset_id"],
         },
         execute=_execute_get_related_datasets,
-        require_admin=True,
+        require_admin=False,
     ),
 
     # --- Projects ---
