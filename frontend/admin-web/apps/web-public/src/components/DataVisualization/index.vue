@@ -102,10 +102,18 @@ function buildHeatmap() {
   }, true);
 }
 
-watch([mode, rows], ([m]) => {
-  if (m === 'bar') nextTick(() => buildBarChart());
-  else if (m === 'line') nextTick(() => buildLineChart());
-  else if (m === 'heatmap') nextTick(() => buildHeatmap());
+watch(mode, (m) => {
+  // Dispose chart when switching to table, recreate on chart modes
+  if (m === 'table') {
+    if (chartInst) { chartInst.dispose(); chartInst = null; }
+  } else {
+    nextTick(() => {
+      if (chartInst) { chartInst.dispose(); chartInst = null; }
+      if (m === 'bar') buildBarChart();
+      else if (m === 'line') buildLineChart();
+      else if (m === 'heatmap') buildHeatmap();
+    });
+  }
 });
 
 watch(() => props.result, () => {
