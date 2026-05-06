@@ -28,11 +28,25 @@ function getAssetCode(): string | undefined {
 
 async function runQuery() {
   if (!selectedDatasetId.value) return;
-  await execute(selectedDatasetId.value, 'matrix_slice', {
+  const result: any = await execute(selectedDatasetId.value, 'matrix_slice', {
     genes: selectedGenes.value,
     samples: selectedSamples.value,
     data_type: selectedType.value,
   }, getAssetCode(), selectedVersionId.value);
+
+  // Transform matrix response into rows for DataVisualization
+  const data = result?.data || result;
+  const genes: string[] = data?.genes || [];
+  const samples: string[] = data?.samples || [];
+  const matrix: number[][] = data?.matrix || [];
+  if (genes.length && samples.length) {
+    const rows = genes.map((gene, i) => {
+      const row: Record<string, unknown> = { gene };
+      samples.forEach((s, j) => { row[s] = matrix[i]?.[j] ?? null; });
+      return row;
+    });
+    queryResult.value = { rows, total: rows.length, data_type: data?.data_type };
+  }
 }
 
 async function loadExampleData(datasetId: number) {
