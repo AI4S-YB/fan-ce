@@ -13,7 +13,7 @@ const selectedId = ref<number | null>(null);
 const caps = ref<QueryCapabilities | null>(null);
 const selectedTraits = ref<string[]>([]);
 const selectedPlots = ref<string[]>([]);
-const selectedBlocks = ref<number[]>([]);
+const selectedBlocks = ref<string[]>([]);
 const exampleLoading = ref(false);
 
 const traitOptions = ref<{ label: string; value: string }[]>([]);
@@ -27,7 +27,8 @@ function getAssetCode(): string | undefined {
 
 const filteredPlotOptions = computed(() => {
   if (!selectedBlocks.value.length) return plotOptions.value;
-  return plotOptions.value.filter(p => selectedBlocks.value.includes(p._block));
+  const blockNums = selectedBlocks.value.map(Number);
+  return plotOptions.value.filter(p => blockNums.includes(p._block));
 });
 
 async function runQuery() {
@@ -105,7 +106,7 @@ watch(selectedId, async (id) => {
           </div>
           <div>
             <div style="font-size:13px;font-weight:500;color:#606266;margin-bottom:6px;">Block</div>
-            <MultiSelectDropdown v-model="selectedBlocks" :options="[{label:'Block 1',value:1},{label:'Block 2',value:2}]" placeholder="All blocks" />
+            <MultiSelectDropdown v-model="selectedBlocks" :options="[{label:'Block 1',value:'1'},{label:'Block 2',value:'2'}]" placeholder="All blocks" />
           </div>
         </div>
 
