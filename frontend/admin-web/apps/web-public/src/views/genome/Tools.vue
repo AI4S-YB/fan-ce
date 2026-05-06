@@ -24,7 +24,11 @@ const dsCode = computed(() => detail?.value?.dataset_code || '');
 
 // Genome-scoped downloads
 watch([tool, dsCode], ([t, code]) => {
-  if (t === 'download' && code && hasGenome.value) loadDownloads(code);
+  console.log('Tools watcher:', t, code, 'hasGenome:', hasGenome.value, 'detail:', !!detail?.value);
+  if (t === 'download' && code && hasGenome.value) {
+    console.log('Loading downloads for', code);
+    loadDownloads(code);
+  }
 });
 
 // ── Site-wide downloads (standalone /tools/download) ──
