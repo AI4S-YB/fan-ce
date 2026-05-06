@@ -30,6 +30,7 @@ const routes = [
   { path: '/expression', component: () => import('@/views/expression/index.vue') },
   { path: '/genotype', component: () => import('@/views/genotype/index.vue') },
   { path: '/germplasm', component: () => import('@/views/germplasm/index.vue') },
+  { path: '/chat', component: () => import('@/views/chat/index.vue') },
   { path: '/phenotype', component: () => import('@/views/phenotype/index.vue') },
 ];
 

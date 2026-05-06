@@ -3,11 +3,8 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDatasetList } from '@/composables/useDatasets';
 import { useRequest } from '@/composables/useRequest';
-import AiFloatingButton from './components/AiChatDrawer/AiFloatingButton.vue';
-import AiChatDrawer from './components/AiChatDrawer/index.vue';
 
 const router = useRouter();
-const chatVisible = ref(false);
 const { get, post } = useRequest();
 
 interface SiteInfo {
@@ -17,6 +14,7 @@ interface SiteInfo {
   filing_no: string;
   contact_email: string;
   footer_copyright: string;
+  public_ai_chat_enabled?: boolean;
 }
 
 const siteInfo = ref<SiteInfo>({
@@ -26,13 +24,14 @@ const siteInfo = ref<SiteInfo>({
   filing_no: '',
   contact_email: '',
   footer_copyright: '',
+  public_ai_chat_enabled: false,
 });
 
 async function loadSiteInfo() {
   try {
     const data = await get<SiteInfo>('/public/site-info');
     if (data && data.site_name) {
-      siteInfo.value = data;
+      siteInfo.value = { ...siteInfo.value, ...data };
       if (data.site_title) {
         document.title = data.site_title;
       }
@@ -86,6 +85,7 @@ function goGenome(id: number) {
         <router-link to="/genotype">Genotype</router-link>
         <router-link to="/phenotype">Phenotype</router-link>
         <router-link to="/expression">Expression</router-link>
+        <router-link v-if="siteInfo.public_ai_chat_enabled" to="/chat">AI Chat</router-link>
       </nav>
 
       <div style="flex:1;" />
@@ -125,9 +125,6 @@ function goGenome(id: number) {
       <span v-if="siteInfo.filing_no" class="footer-divider">|</span>
       <a v-if="siteInfo.filing_no" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">{{ siteInfo.filing_no }}</a>
     </footer>
-
-    <AiFloatingButton @click="chatVisible = true" />
-    <AiChatDrawer v-model:visible="chatVisible" />
   </div>
 </template>
 

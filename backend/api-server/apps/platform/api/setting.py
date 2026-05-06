@@ -122,6 +122,7 @@ def public_site_info(db=Depends(get_db)):
         "filing_no": obj.filing_no,
         "contact_email": obj.contact_email,
         "footer_copyright": obj.footer_copyright,
+        "public_ai_chat_enabled": bool(obj.public_ai_chat_enabled),
     })
 
 

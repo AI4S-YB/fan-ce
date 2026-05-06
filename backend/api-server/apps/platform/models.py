@@ -46,6 +46,7 @@ class PlatformSiteSetting(Base):
     frp_public_port = Column(Integer, default=80, comment="对外HTTP端口")
     frp_status = Column(String(32), default="stopped", comment="stopped/running/error")
     frp_config_json = Column(Text, default=None, comment="高级自定义frpc配置")
+    public_ai_chat_enabled = Column(Boolean, default=False, comment="是否启用公共AI对话")
     create_time = Column(Integer, default=lambda: int(time.time()), comment="创建时间")
     update_time = Column(Integer, default=lambda: int(time.time()), comment="更新时间")
     user_id = Column(Integer, default=0, comment="操作用户ID")
