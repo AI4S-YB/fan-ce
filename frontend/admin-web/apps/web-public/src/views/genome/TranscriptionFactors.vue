@@ -17,32 +17,82 @@ const geneTotal = ref(0);
 const genePage = ref(1);
 const pkExpanded = ref<string[]>([]);
 
+// ── iTAK definitive family lists ──
+
+const TF_FAMILIES = new Set([
+  'ABI3VP1', 'Alfin-like',
+  'AP2', 'AP2/ERF-AP2', 'AP2/ERF-ERF', 'AP2/ERF-RAV',
+  'B3', 'B3-ARF', 'BBR-BPC', 'BES1', 'bHLH', 'BSD', 'bZIP',
+  'C2C2-CO-like', 'C2C2-Dof', 'C2C2-GATA', 'C2C2-LSD', 'C2C2-YABBY',
+  'C2H2', 'C3H', 'CAMTA', 'CPP', 'CSD',
+  'DBB', 'DBP', 'DDT',
+  'E2F-DP', 'EIL',
+  'FAR1',
+  'GARP-ARR-B', 'GARP-G2-like', 'GeBP', 'GRAS', 'GRF',
+  'HB-BELL', 'HB-HD-ZIP', 'HB-KNOX', 'HB-other', 'HB-PHD', 'HB-WOX',
+  'HSF', 'HRT-like',
+  'LFY', 'LIM', 'LOB',
+  'MADS-MIKC', 'MADS-M-type', 'MYB', 'MYB-related',
+  'NAC', 'NF-X1', 'NF-YA', 'NF-YB', 'NF-YC', 'Nin-like', 'NZZ/SPL',
+  'OFP', 'Orphans',
+  'PLATZ',
+  'S1Fa-like', 'SAP', 'SBP', 'SRS', 'STAT',
+  'TCP', 'Tify', 'Trihelix', 'TUB',
+  'ULT',
+  'VOZ',
+  'Whirly', 'WRKY',
+  'zf-HD',
+]);
+
+const TR_FAMILIES = new Set([
+  'ARID', 'AUX/IAA',
+  'IWS1',
+  'Jumonji',
+  'LUG',
+  'MBF1', 'MED6', 'MED7', 'mTERF',
+  'Others',
+  'PHD', 'Pseudo ARR-B',
+  'RB', 'Rcd1-like',
+  'SET', 'SNF2', 'SOH1', 'SWI/SNF-BAF60b', 'SWI/SNF-SWI3',
+  'TAZ', 'TRAF',
+]);
+
+// PK families recognized by RLK/group prefixes
+const PK_GROUP_PREFIXES = [
+  'RLK-Pelle', 'AGC', 'CAMK', 'CK1', 'CMGC', 'STE', 'TKL',
+  'Group', 'PEK', 'SCY1', 'RGC', 'Alpha', 'PPC', 'PDK', 'Rio', 'WNK', 'Bud32',
+];
+
 // Categorize families
 const tfFamilies = computed(() => {
-  const pkPrefixes = ['AGC_','CAMK_','CMGC_','CK1_','STE_','TKL_','PEK_','SCY1_','RGC_','Alpha_','PPC_','PDK_','Rio_','Group_'];
-  const tfKeywords = ['AP2','bHLH','bZIP','C2H2','C3H','Dof','GATA','GRAS','HSF','LOB','MADS','MYB','NAC','NF-Y','NF-','SBP','TCP','WRKY','ZF-','Trihelix','E2F','EIL','GRF','GeBP','HB-','HD-','LBD','LFY','LSD','M-type','MIKC','Nin-like','NZZ','RAV','S1Fa','SAP','SRS','STAT','VOZ','Whirly','WOX','YABBY','ZF-HD'];
-  return allFamilies.value.filter(f => !f.split('_').some(p => pkPrefixes.includes(p+'_')) && tfKeywords.some(k => f.includes(k)));
+  return allFamilies.value.filter(f => TF_FAMILIES.has(f));
 });
 
 const trFamilies = computed(() => {
-  const pkPrefixes = ['AGC_','CAMK_','CMGC_','CK1_','STE_','TKL_','PEK_','SCY1_','RGC_','Alpha_','PPC_','PDK_','Rio_','Group_'];
-  return allFamilies.value.filter(f => !tfFamilies.value.includes(f) && !f.split('_').some(p => pkPrefixes.includes(p+'_')));
+  return allFamilies.value.filter(f => TR_FAMILIES.has(f));
 });
 
 const pkFamilies = computed(() => {
-  const pkPrefixes = ['AGC_','CAMK_','CMGC_','CK1_','STE_','TKL_','PEK_','SCY1_','RGC_','Alpha_','PPC_','PDK_','Rio_','Group_'];
-  return allFamilies.value.filter(f => f.split('_').some(p => pkPrefixes.includes(p+'_')));
+  const pk = new Set<string>();
+  for (const f of allFamilies.value) {
+    if (TF_FAMILIES.has(f) || TR_FAMILIES.has(f)) continue;
+    if (PK_GROUP_PREFIXES.some(p => f.startsWith(p))) {
+      pk.add(f);
+    }
+  }
+  return [...pk];
 });
 
-// PK tree: group by prefix before underscore
+// PK tree: group by prefix before first underscore
 const pkGroups = computed(() => {
   const groups: Record<string, string[]> = {};
   for (const f of pkFamilies.value) {
-    const group = f.split('_')[0];
+    const idx = f.indexOf('_');
+    const group = idx > 0 ? f.substring(0, idx) : f;
     if (!groups[group]) groups[group] = [];
     groups[group].push(f);
   }
-  return Object.entries(groups).sort(([a],[b]) => a.localeCompare(b));
+  return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
 });
 
 // Load families from API
@@ -117,7 +167,7 @@ const tabStyle = (t: string) => ({
           style="cursor:pointer;font-size:12px;"
           @click="selectFamily(fam)"
         >
-          {{ fam }}
+          {{ fam }} ({{ fam === selectedFamily && geneTotal ? geneTotal : '' }})
         </el-tag>
       </div>
     </template>
@@ -126,7 +176,7 @@ const tabStyle = (t: string) => ({
     <template v-if="activeTab === 'PK'">
       <div style="margin-bottom:20px;">
         <el-collapse v-model="pkExpanded">
-          <el-collapse-item v-for="[group, members] in pkGroups" :key="group" :title="`${group} (${members.length})`" :name="group">
+          <el-collapse-item v-for="[group, members] in pkGroups" :key="group" :title="`${group}  (${members.length})`" :name="group">
             <div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 0;">
               <el-tag
                 v-for="fam in members"
