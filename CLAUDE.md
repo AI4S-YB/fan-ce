@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## CRITICAL: Docs Are Private
+
+- **NEVER commit anything under `docs/`** — it is gitignored for a reason. All docs, specs, plans, and design files are private and must NOT be pushed.
+- **NEVER use `git add -A` or `git add .`** — always stage specific files by name. Before committing, run `git status` to verify no docs files are staged.
+- If you create spec/plan files during brainstorming, write them to `docs/` (they'll be gitignored locally). Do NOT commit them.
+
 ## Project Overview
 
 FAN-CE (FAN Community Edition) is a FastAPI-based web application for bioinformatics data management and analysis. It follows a modular architecture with separate apps for different functional areas.

@@ -79,5 +79,5 @@ build/
 dist/
 .turbo/
 
-# Documentation (separate repo)
-docs/.superpowers/
+# Documentation (NEVER commit — separate repo)
+docs/
