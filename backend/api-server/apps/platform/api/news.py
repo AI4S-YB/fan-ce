@@ -80,3 +80,30 @@ async def delete(request_data: DataDelete, db=Depends(get_db), _user=Depends(get
     else:
         news_db.remove(db=db, id=request_data.id)
     return response_200(data={})
+
+
+# ── Public endpoint (no auth) ──
+
+public_news_router = APIRouter(tags=['public:news'])
+
+
+@public_news_router.get("/news", summary="公开信息列表")
+def public_news_list(type: str = None, db=Depends(get_db)):
+    filters = {"is_public": True}
+    if type:
+        filters["type"] = type
+    rows = news_db.get_data(db=db, filters=filters)
+    # Filter out deleted and non-public in Python
+    rows = [r for r in rows if r.is_public and not r.is_delete]
+    rows = sorted(rows, key=lambda r: r.create_time or 0, reverse=True)
+    return response_2000(data=[
+        {
+            "id": r.id,
+            "title": r.title,
+            "type": r.type,
+            "content": r.content,
+            "author": r.author,
+            "create_time": r.create_time,
+        }
+        for r in rows
+    ])

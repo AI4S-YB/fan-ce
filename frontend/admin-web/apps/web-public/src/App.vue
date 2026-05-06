@@ -58,6 +58,17 @@ function goGenome(id: number) {
           </el-dropdown-menu>
         </template>
       </el-dropdown>
+
+      <el-dropdown class="nav-dropdown">
+        <span class="nav-link">Community ▾</span>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item @click="router.push('/community/news')">News</el-dropdown-item>
+            <el-dropdown-item @click="router.push('/community/conferences')">Conferences</el-dropdown-item>
+            <el-dropdown-item divided disabled>Links <small>(soon)</small></el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
     </header>
 
     <main class="main-content">

@@ -25,6 +25,7 @@ const routes = [
   },
   // Standalone tools (no genome selected)
   { path: '/tools/:tool', component: () => import('@/views/genome/Tools.vue') },
+  { path: '/community/:type', component: () => import('@/views/community/List.vue') },
   { path: '/expression', component: () => import('@/views/expression/index.vue') },
   { path: '/genotype', component: () => import('@/views/genotype/index.vue') },
   { path: '/germplasm', component: () => import('@/views/germplasm/index.vue') },
