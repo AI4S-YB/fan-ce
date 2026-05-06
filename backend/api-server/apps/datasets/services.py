@@ -1309,6 +1309,7 @@ class DatasetDomainService:
             "index_of_file_id": file_obj.index_of_file_id,
             "status": file_obj.status,
             "meta_json": file_obj.meta_json,
+            "is_downloadable": getattr(file_obj, "is_downloadable", False),
             "create_time": file_obj.create_time,
             "update_time": file_obj.update_time,
         }
@@ -3749,6 +3750,7 @@ class DatasetDomainService:
             "index_of_file_id",
             "status",
             "meta_json",
+            "is_downloadable",
         ]:
             value = getattr(request_data, field, None)
             if value is not None:

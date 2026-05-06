@@ -316,6 +316,7 @@ class AssetFile(Base):
     index_of_file_id = Column(Integer, index=True, comment="索引对应主文件 ID")
     status = Column(String(64), default="active", comment="文件状态")
     meta_json = Column(Text, comment="扩展元数据")
+    is_downloadable = Column(Boolean, default=False, comment="是否允许公开下载")
     create_time = Column(Integer, comment="创建时间")
     update_time = Column(Integer, comment="更新时间")
 

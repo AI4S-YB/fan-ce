@@ -296,6 +296,7 @@ class AssetFileUpdateRequest(BaseModel):
     index_of_file_id: Optional[int] = None
     status: Optional[str] = None
     meta_json: Optional[str] = None
+    is_downloadable: Optional[bool] = None
 
     model_config = ConfigDict(extra="forbid")
 

@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
+from fastapi.responses import FileResponse
+import os
 
 from db.database import get_db
 from libs.responses.response import response_2000
 
 from ..dataset_model import Dataset
+from ..models import AssetFile, DatasetAsset, DatasetRegistry, DatasetVersion
 from ..schemas import (
     PublicDatasetInfoRequest,
     PublicDatasetListRequest,
@@ -109,3 +112,71 @@ def public_dataset_lineage(
     return response_2000(data=jsonable_encoder(
         {"dataset_id": ds.id, "dataset_code": ds.dataset_code, "lineage_edges": edges}
     ))
+
+
+@public_dataset_router.get("/{dataset_code}/downloads", summary="公开数据集可下载文件列表")
+def public_dataset_downloads(
+    dataset_code: str,
+    db=Depends(get_db),
+):
+    """List downloadable files for a public dataset."""
+    ds = db.query(DatasetRegistry).filter_by(dataset_code=dataset_code).first()
+    if not ds or ds.visibility != "public":
+        raise HTTPException(status_code=404, detail="Dataset not found or not public")
+
+    version = db.query(DatasetVersion).filter_by(
+        database_id=ds.database_id, is_current=1,
+    ).first()
+    if not version:
+        return response_2000(data=jsonable_encoder({"dataset_code": dataset_code, "files": []}))
+
+    # Get assets for this version
+    assets = db.query(DatasetAsset).filter_by(
+        dataset_version_id=version.id,
+    ).all()
+    asset_ids = [a.id for a in assets]
+
+    files = db.query(AssetFile).filter(
+        AssetFile.dataset_asset_id.in_(asset_ids),
+        AssetFile.is_downloadable == True,
+    ).all()
+
+    return response_2000(data=jsonable_encoder({
+        "dataset_code": dataset_code,
+        "files": [
+            {
+                "id": f.id,
+                "file_name": f.file_name,
+                "file_format": f.file_format,
+                "file_size": f.file_size,
+                "file_role": f.file_role,
+            }
+            for f in files
+        ],
+    }))
+
+
+@public_dataset_router.get("/{dataset_code}/download/{file_id}", summary="下载公开数据集文件")
+def public_dataset_download(
+    dataset_code: str,
+    file_id: int,
+    db=Depends(get_db),
+):
+    """Download a file from a public dataset."""
+    ds = db.query(DatasetRegistry).filter_by(dataset_code=dataset_code).first()
+    if not ds or ds.visibility != "public":
+        raise HTTPException(status_code=404, detail="Dataset not found or not public")
+
+    file_obj = db.query(AssetFile).filter_by(id=file_id, is_downloadable=True).first()
+    if not file_obj:
+        raise HTTPException(status_code=404, detail="File not found or not downloadable")
+
+    file_path = file_obj.local_path or file_obj.storage_uri
+    if not file_path or not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found on disk")
+
+    return FileResponse(
+        path=file_path,
+        filename=file_obj.file_name or os.path.basename(file_path),
+        media_type=file_obj.mime_type or "application/octet-stream",
+    )
