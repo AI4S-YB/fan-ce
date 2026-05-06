@@ -44,7 +44,8 @@ async function loadDetail(accessionId: string, taxonomyTaxId: number) {
       accession_id: accessionId,
       taxonomy_tax_id: taxonomyTaxId,
     });
-    if (data) {
+    // data is null or lacks accession_id when not public
+    if (data && data.accession_id) {
       selectedItem.value = data;
     } else {
       selectedItem.value = { _notPublic: true, _accessionId: accessionId };
