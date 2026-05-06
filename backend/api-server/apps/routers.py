@@ -11,6 +11,7 @@ from fastapi import APIRouter
 from apps.auth.routers import auth_routers
 from apps.breeding.routers import app_breeding_router
 from apps.datasets.routers import app_dataset_router
+from apps.analysis.routers import app_analysis_router
 from apps.sample.routers import app_sample_router
 from apps.system.routers import system_routers
 from apps.experiment.routers import app_experiment_router
@@ -21,6 +22,7 @@ app_routers = APIRouter()
 app_routers.include_router(auth_routers)
 app_routers.include_router(app_breeding_router)
 app_routers.include_router(app_dataset_router)
+app_routers.include_router(app_analysis_router)
 app_routers.include_router(app_sample_router)
 app_routers.include_router(app_experiment_router)
 app_routers.include_router(app_platform_router)

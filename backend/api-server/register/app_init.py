@@ -18,6 +18,15 @@ def register_init(app):
     init_platform_tables()
     init_system_tables()
     seed_dataset_registry_defaults()
+
+    # Start analysis worker (registers tools + launches worker threads)
+    try:
+        from apps.analysis.routers import on_startup
+        on_startup()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"Analysis startup failed: {e}")
+
     if app_options.get('app.db_init'):
         init_db()
     if app_options.get('app.seed_data'):
