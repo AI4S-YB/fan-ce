@@ -57,10 +57,25 @@ const TR_FAMILIES = new Set([
   'TAZ', 'TRAF',
 ]);
 
-const PK_GROUP_PREFIXES = [
-  'RLK-Pelle', 'AGC', 'CAMK', 'CK1', 'CMGC', 'STE', 'TKL',
-  'Group', 'PEK', 'SCY1', 'RGC', 'Alpha', 'PPC', 'PDK', 'Rio', 'WNK', 'Bud32',
-];
+// PK family → canonical group (iTAK Shiu classification, 9 groups)
+const PK_GROUP_ORDER = ['AGC', 'CAMK', 'CK1', 'CMGC', 'RLK-Pelle', 'STE', 'TKL', 'Plant-specific', 'Others'];
+
+function pkGroup(fam: string): string {
+  if (fam.startsWith('RLK-Pelle')) return 'RLK-Pelle';
+  if (fam.startsWith('AGC')) return 'AGC';
+  if (fam.startsWith('CAMK')) return 'CAMK';
+  if (fam.startsWith('CK1')) return 'CK1';
+  if (fam.startsWith('CMGC')) return 'CMGC';
+  if (fam.startsWith('STE')) return 'STE';
+  if (fam.startsWith('TKL')) return 'TKL';
+  if (fam.startsWith('Group-Pl')) return 'Plant-specific';
+  return 'Others';
+}
+
+// Checks whether a family name belongs to PK (after TF/TR are excluded)
+function isPkFamily(fam: string): boolean {
+  return PK_GROUP_ORDER.some(g => pkGroup(fam) === g);
+}
 
 // PK family descriptions (full names from iTAK / Shiu classification)
 const PK_DESCRIPTIONS: Record<string, string> = {
@@ -139,27 +154,21 @@ const tfFamilies = computed(() => allFamilies.value.filter(f => TF_FAMILIES.has(
 const trFamilies = computed(() => allFamilies.value.filter(f => TR_FAMILIES.has(f)));
 
 const pkFamilies = computed(() => {
-  const pk = new Set<string>();
-  for (const f of allFamilies.value) {
-    if (TF_FAMILIES.has(f) || TR_FAMILIES.has(f)) continue;
-    if (PK_GROUP_PREFIXES.some(p => f.startsWith(p))) pk.add(f);
-  }
-  return [...pk];
+  return allFamilies.value.filter(f => !TF_FAMILIES.has(f) && !TR_FAMILIES.has(f) && isPkFamily(f));
 });
 
-// PK tree: group by prefix before first underscore
+// PK tree: group by canonical group, ordered by PK_GROUP_ORDER
 const pkGroups = computed(() => {
   const groups: Record<string, string[]> = {};
   for (const f of pkFamilies.value) {
-    const idx = f.indexOf('_');
-    const group = idx > 0 ? f.substring(0, idx) : f;
-    if (!groups[group]) groups[group] = [];
-    groups[group].push(f);
+    const g = pkGroup(f);
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(f);
   }
-  // Sort: groups by name, members by name
-  return Object.entries(groups)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([group, members]) => [group, members.sort()]);
+  // Sort members within each group
+  for (const g of Object.keys(groups)) groups[g].sort();
+  // Order groups by canonical order
+  return PK_GROUP_ORDER.filter(g => groups[g]).map(g => [g, groups[g]]);
 });
 
 // Expand / Collapse all PK groups
@@ -257,7 +266,7 @@ const tabStyle = (t: string) => ({
         <el-collapse v-model="pkExpanded">
           <el-collapse-item v-for="[group, members] in pkGroups" :key="group" :name="group">
             <template #title>
-              <span style="font-weight:600;">Group {{ group }}</span>
+              <span style="font-weight:600;">{{ group }}</span>
               <span style="color:#909399;margin-left:8px;">({{ members.length }})</span>
             </template>
             <div style="font-size:13px;line-height:2;">
