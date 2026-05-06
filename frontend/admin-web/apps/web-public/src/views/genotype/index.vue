@@ -11,6 +11,7 @@ const selectedId = ref<number | null>(null);
 const chrom = ref('');
 const start = ref('');
 const end = ref('');
+const isDraft = ref(false);
 
 // Real example region fetched from backend via region_example
 const exampleRegion = ref<{ chrom: string; start: number; end: number } | null>(null);
@@ -27,6 +28,7 @@ async function onDatasetSelect(datasetId: number) {
 
   // Load detail to get asset_code
   await loadDetail(datasetId);
+  isDraft.value = detail.value?.lifecycle_state === 'draft';
   const assetCode = getAssetCode();
 
   // Load query capabilities
@@ -104,6 +106,17 @@ async function tryExample() {
         />
       </el-select>
     </div>
+    <el-alert
+      v-if="isDraft"
+      title="Dataset is in draft state"
+      type="warning"
+      :closable="false"
+      show-icon
+      style="margin-bottom:16px;"
+    >
+      This dataset may be incomplete or missing required index files.
+      Query results may not be available until the dataset is fully registered.
+    </el-alert>
     <div
       v-if="selectedId"
       style="
