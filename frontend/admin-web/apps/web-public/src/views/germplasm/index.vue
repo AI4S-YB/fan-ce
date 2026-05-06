@@ -33,13 +33,17 @@ async function search(pno?: number) {
 }
 
 async function viewDetail(item: any) {
+  await loadDetail(item.accession_id, item.taxonomy_tax_id);
+}
+
+async function loadDetail(accessionId: string, taxonomyTaxId: number) {
   selectedItem.value = null;
   showDialog.value = true;
   detailLoading.value = true;
   try {
     const data: any = await post(`${PRE}/info`, {
-      accession_id: item.accession_id,
-      taxonomy_tax_id: item.taxonomy_tax_id,
+      accession_id: accessionId,
+      taxonomy_tax_id: taxonomyTaxId,
     });
     selectedItem.value = data;
   } catch (e) {
@@ -47,6 +51,10 @@ async function viewDetail(item: any) {
   } finally {
     detailLoading.value = false;
   }
+}
+
+function navToGermplasm(accessionId: string) {
+  loadDetail(accessionId, selectedItem.value?.taxonomy?.tax_id);
 }
 
 function formatKw(val: any): string {
@@ -137,28 +145,44 @@ search();
             <!-- Parents -->
             <h4 style="margin:0 0 8px;">Parents</h4>
             <div style="display:flex;gap:8px;align-items:center;">
-              <div style="flex:1;padding:12px;background:#f0f5ff;border-radius:6px;text-align:center;">
+              <div v-if="selectedItem.father_accession"
+                style="flex:1;padding:12px;background:#f0f5ff;border-radius:6px;text-align:center;cursor:pointer;"
+                @click="navToGermplasm(selectedItem.father_accession)">
                 <div style="font-size:11px;color:#888;">Father</div>
-                <div style="font-weight:600;">{{ selectedItem.father_accession || 'Unknown' }}</div>
+                <div style="font-weight:600;color:#409eff;">{{ selectedItem.father_accession }}</div>
                 <div v-if="selectedItem.father_name_snapshot" style="font-size:11px;color:#666;">
                   {{ selectedItem.father_name_snapshot }}
                 </div>
               </div>
+              <div v-else style="flex:1;padding:12px;background:#fafafa;border-radius:6px;text-align:center;">
+                <div style="font-size:11px;color:#888;">Father</div>
+                <div style="color:#ccc;">Unknown</div>
+              </div>
               <span style="font-size:18px;color:#bbb;">×</span>
-              <div style="flex:1;padding:12px;background:#fff0f0;border-radius:6px;text-align:center;">
+              <div v-if="selectedItem.mother_accession"
+                style="flex:1;padding:12px;background:#fff0f0;border-radius:6px;text-align:center;cursor:pointer;"
+                @click="navToGermplasm(selectedItem.mother_accession)">
                 <div style="font-size:11px;color:#888;">Mother</div>
-                <div style="font-weight:600;">{{ selectedItem.mother_accession || 'Unknown' }}</div>
+                <div style="font-weight:600;color:#409eff;">{{ selectedItem.mother_accession }}</div>
                 <div v-if="selectedItem.mother_name_snapshot" style="font-size:11px;color:#666;">
                   {{ selectedItem.mother_name_snapshot }}
                 </div>
+              </div>
+              <div v-else style="flex:1;padding:12px;background:#fafafa;border-radius:6px;text-align:center;">
+                <div style="font-size:11px;color:#888;">Mother</div>
+                <div style="color:#ccc;">Unknown</div>
               </div>
             </div>
 
             <!-- Recorded lineage -->
             <template v-if="selectedItem?.lineage_summary?.parents?.length">
               <h4 style="margin:16px 0 8px;">Recorded Lineage</h4>
-              <el-table :data="selectedItem.lineage_summary.parents" border size="small">
-                <el-table-column prop="parent_accession" label="Parent" width="140" />
+              <el-table :data="selectedItem.lineage_summary.parents" border size="small" @row-click="(r: any) => navToGermplasm(r.parent_accession)">
+                <el-table-column prop="parent_accession" label="Parent">
+                  <template #default="{ row }">
+                    <span style="color:#409eff;cursor:pointer;">{{ row.parent_accession }}</span>
+                  </template>
+                </el-table-column>
                 <el-table-column prop="parent_role" label="Role" width="90">
                   <template #default="{ row }">
                     <el-tag size="small" :type="row.parent_role === 'father' ? '' : 'danger'">
@@ -175,8 +199,13 @@ search();
                 Progeny
                 <span style="font-weight:400;color:#888;">({{ selectedItem.lineage_summary.child_count }})</span>
               </h4>
-              <el-table :data="selectedItem.lineage_summary.children" border size="small" max-height="260">
-                <el-table-column prop="child_accession" label="Child" width="140" />
+              <el-table :data="selectedItem.lineage_summary.children" border size="small" max-height="260"
+                @row-click="(r: any) => navToGermplasm(r.child_accession)">
+                <el-table-column prop="child_accession" label="Child">
+                  <template #default="{ row }">
+                    <span style="color:#409eff;cursor:pointer;">{{ row.child_accession }}</span>
+                  </template>
+                </el-table-column>
                 <el-table-column prop="parent_role" label="As" width="90">
                   <template #default="{ row }">
                     <el-tag size="small" :type="row.parent_role === 'father' ? '' : 'danger'">
