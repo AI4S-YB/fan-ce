@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, nextTick, watch, onMounted } from 'vue';
+import { ref, nextTick } from 'vue';
+import { renderMarkdown } from '@/composables/useMarkdown';
 
 interface Message { role: 'user' | 'assistant' | 'tool'; content: string; tool?: string; }
 interface Session { id: string; title: string; messages: Message[]; createdAt: number; }
@@ -205,7 +206,8 @@ async function send() {
             <span style="display:inline-block;background:#409eff;color:#fff;padding:8px 14px;border-radius:12px 12px 0 12px;max-width:75%;font-size:13px;text-align:left;">{{ msg.content }}</span>
           </div>
           <div v-else style="text-align:left;">
-            <span style="display:inline-block;background:#f0f2f5;color:#303133;padding:8px 14px;border-radius:12px 12px 12px 0;max-width:85%;font-size:13px;white-space:pre-wrap;word-break:break-word;">{{ msg.content }}</span>
+            <span class="chat-bubble" style="display:inline-block;background:#f0f2f5;color:#303133;padding:8px 14px;border-radius:12px 12px 12px 0;max-width:85%;font-size:13px;white-space:pre-wrap;word-break:break-word;line-height:1.6;"
+              v-html="renderMarkdown(msg.content)"></span>
           </div>
         </div>
         <div v-if="sending" style="text-align:left;color:#999;font-size:12px;padding:4px 0;">Thinking...</div>
@@ -220,3 +222,24 @@ async function send() {
     </div>
   </div>
 </template>
+
+<style>
+/* Markdown content inside chat bubbles */
+.chat-bubble h1 { font-size: 18px; margin: 8px 0 4px; }
+.chat-bubble h2 { font-size: 16px; margin: 8px 0 4px; }
+.chat-bubble h3 { font-size: 14px; margin: 6px 0 3px; }
+.chat-bubble h4 { font-size: 13px; margin: 4px 0 2px; }
+.chat-bubble p { margin: 4px 0; }
+.chat-bubble ul, .chat-bubble ol { margin: 4px 0; padding-left: 18px; }
+.chat-bubble li { margin: 2px 0; }
+.chat-bubble code { background: #e8e8e8; padding: 1px 4px; border-radius: 3px; font-size: 12px; }
+.chat-bubble pre { background: #1e1e1e; color: #d4d4d4; padding: 8px 12px; border-radius: 6px; overflow-x: auto; font-size: 12px; margin: 6px 0; }
+.chat-bubble pre code { background: none; padding: 0; color: inherit; }
+.chat-bubble blockquote { border-left: 3px solid #409eff; padding-left: 8px; margin: 6px 0; color: #666; }
+.chat-bubble table { border-collapse: collapse; margin: 6px 0; width: 100%; font-size: 12px; }
+.chat-bubble th, .chat-bubble td { border: 1px solid #ddd; padding: 4px 8px; text-align: left; }
+.chat-bubble th { background: #f5f7fa; font-weight: 600; }
+.chat-bubble a { color: #409eff; }
+.chat-bubble hr { border: none; border-top: 1px solid #e5e5e5; margin: 8px 0; }
+.chat-bubble strong { font-weight: 600; }
+</style>
