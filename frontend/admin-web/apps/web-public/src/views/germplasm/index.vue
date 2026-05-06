@@ -37,7 +37,6 @@ async function viewDetail(item: any) {
 }
 
 async function loadDetail(accessionId: string, taxonomyTaxId: number) {
-  selectedItem.value = null;
   showDialog.value = true;
   detailLoading.value = true;
   try {
@@ -45,9 +44,14 @@ async function loadDetail(accessionId: string, taxonomyTaxId: number) {
       accession_id: accessionId,
       taxonomy_tax_id: taxonomyTaxId,
     });
-    selectedItem.value = data;
+    if (data) {
+      selectedItem.value = data;
+    } else {
+      selectedItem.value = { _notPublic: true, _accessionId: accessionId };
+    }
   } catch (e) {
     console.error('Failed to load detail:', e);
+    selectedItem.value = { _notPublic: true, _accessionId: accessionId };
   } finally {
     detailLoading.value = false;
   }
@@ -115,9 +119,18 @@ search();
     </div>
 
     <!-- Centered dialog instead of drawer -->
-    <el-dialog v-model="showDialog" :title="selectedItem?.display_name || 'Germplasm Detail'"
+    <el-dialog v-model="showDialog" :title="selectedItem?._notPublic ? 'Not Available' : (selectedItem?.display_name || 'Germplasm Detail')"
       width="90%" top="3vh" :close-on-click-modal="false" destroy-on-close>
-      <template v-if="selectedItem">
+      <div v-if="selectedItem?._notPublic" style="text-align:center;padding:60px 20px;">
+        <el-icon :size="48" style="color:#e6a23c;"><svg viewBox="0 0 1024 1024" width="1em" height="1em" fill="currentColor"><path d="M512 64a448 448 0 110 896 448 448 0 010-896zm0 832a384 384 0 100-768 384 384 0 000 768zm-42.667-597.333h85.334v256h-85.334V298.667zM512 682.667a42.667 42.667 0 110 85.333 42.667 42.667 0 010-85.333z"/></svg></el-icon>
+        <p style="font-size:16px;color:#e6a23c;margin:16px 0 8px;">
+          Germplasm <strong>{{ selectedItem._accessionId }}</strong> is not publicly available
+        </p>
+        <p style="font-size:13px;color:#909399;">
+          This germplasm is being curated and will be published once ready.
+        </p>
+      </div>
+      <template v-else-if="selectedItem">
         <el-row :gutter="16">
           <!-- Left: basic info + attributes -->
           <el-col :span="12">
