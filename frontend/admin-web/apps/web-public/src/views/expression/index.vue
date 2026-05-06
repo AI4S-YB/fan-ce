@@ -35,18 +35,41 @@ async function runQuery() {
   }, getAssetCode(), selectedVersionId.value);
 
   // Transform matrix response into rows for DataVisualization
-  const data = result?.data || result;
   const genes: string[] = data?.genes || [];
   const samples: string[] = data?.samples || [];
-  const matrix: number[][] = data?.matrix || [];
+  const rawMatrix: number[][] = data?.matrix || [];
   if (genes.length && samples.length) {
-    const rows = genes.map((gene, i) => {
-      const row: Record<string, unknown> = { gene };
-      samples.forEach((s, j) => { row[s] = matrix[i]?.[j] ?? null; });
-      return row;
-    });
+    const rows = buildRows(rawMatrix, genes, samples, 'raw');
+    // Store raw data for re-normalization
+    (queryResult as any)._raw = { genes, samples, matrix: rawMatrix };
     queryResult.value = { rows, total: rows.length } as any;
   }
+}
+
+function buildRows(matrix: number[][], genes: string[], samples: string[], norm: string): Record<string, unknown>[] {
+  let m = matrix.map(row => [...row]);
+  if (norm === 'log2') {
+    m = m.map(row => row.map(v => v > 0 ? Math.log2(v + 1) : 0));
+  } else if (norm === 'zscore') {
+    // Z-score per gene (row)
+    m = m.map(row => {
+      const mean = row.reduce((a, b) => a + b, 0) / row.length;
+      const std = Math.sqrt(row.reduce((a, b) => a + (b - mean) ** 2, 0) / row.length) || 1;
+      return row.map(v => (v - mean) / std);
+    });
+  }
+  return genes.map((gene, i) => {
+    const row: Record<string, unknown> = { gene };
+    samples.forEach((s, j) => { row[s] = m[i]?.[j] ?? null; });
+    return row;
+  });
+}
+
+function handleNormalize(method: string) {
+  const raw = (queryResult as any)._raw;
+  if (!raw) return;
+  const rows = buildRows(raw.matrix, raw.genes, raw.samples, method);
+  queryResult.value = { rows, total: rows.length } as any;
 }
 
 async function loadExampleData(datasetId: number) {
@@ -113,6 +136,6 @@ watch(selectedDatasetId, async (id) => {
       <el-button type="primary" :loading="queryLoading" @click="runQuery">Query</el-button>
       <el-button :loading="exampleLoading" @click="tryExample">Try Example</el-button>
     </div>
-    <DataVisualization :result="queryResult" :loading="queryLoading" :precision="selectedType === 'fpkm' ? 2 : undefined" />
+    <DataVisualization :result="queryResult" :loading="queryLoading" :precision="selectedType === 'fpkm' ? 2 : undefined" show-export @normalize="handleNormalize" />
   </div>
 </template>
