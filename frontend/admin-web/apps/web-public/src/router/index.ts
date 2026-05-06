@@ -11,6 +11,7 @@ const routes = [
     name: 'dataset-detail',
     component: () => import('@/views/dataset/Detail.vue'),
   },
+  { path: '/genomes', component: () => import('@/views/genome/GenomeList.vue') },
   {
     path: '/genome/:id',
     component: () => import('@/views/genome/Overview.vue'),
