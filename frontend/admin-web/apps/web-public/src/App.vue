@@ -85,6 +85,7 @@ function goGenome(id: number) {
         <router-link to="/genotype">Genotype</router-link>
         <router-link to="/phenotype">Phenotype</router-link>
         <router-link to="/expression">Expression</router-link>
+        <router-link to="/analysis">Tools</router-link>
         <router-link v-if="siteInfo.public_ai_chat_enabled" to="/chat">AI Chat</router-link>
       </nav>
 
