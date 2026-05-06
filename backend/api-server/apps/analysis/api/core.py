@@ -5,6 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from apps.common.depends import get_active_user
+
 from db.database import get_db
 from libs.responses.response import response_2000
 from apps.analysis.models import BrdAnalysisJob
@@ -149,6 +151,44 @@ def search_files(req: FileSearchRequest, db: Session = Depends(get_db)):
               "label": f"{dt or dc} / {af.file_name}"}
              for af, at, dc, dt in rows]
     return response_2000(data={"items": items, "total": len(items)})
+
+
+# ── Admin endpoints ──
+
+@analysis_router.get("/admin/tools", summary="管理端：列出分析工具（含状态）")
+def admin_list_tools(_user=Depends(get_active_user)):
+    tools = get_tools()
+    return response_2000(data=[
+        {
+            "tool_id": t.tool_id, "display_name": t.display_name,
+            "description": t.description, "category": t.category,
+            "version": t.tool_version, "timeout_seconds": t.timeout_seconds,
+            "input_schema": t.get_input_schema(),
+            "parameter_schema": t.get_parameter_schema(),
+            "output_schema": t.get_output_schema(),
+            "dependencies": t.dependencies,
+            "plugin_class": f"{t.__class__.__module__}:{t.__class__.__qualname__}",
+        }
+        for t in tools
+    ])
+
+
+@analysis_router.get("/admin/tools/{tool_id}", summary="管理端：查看工具详情")
+def admin_get_tool(tool_id: str, _user=Depends(get_active_user)):
+    from apps.analysis.worker import _get_tool
+    t = _get_tool(tool_id)
+    if not t:
+        raise HTTPException(status_code=404, detail="Tool not found")
+    return response_2000(data={
+        "tool_id": t.tool_id, "display_name": t.display_name,
+        "description": t.description, "category": t.category,
+        "version": t.tool_version, "timeout_seconds": t.timeout_seconds,
+        "input_schema": t.get_input_schema(),
+        "parameter_schema": t.get_parameter_schema(),
+        "output_schema": t.get_output_schema(),
+        "dependencies": t.dependencies,
+        "plugin_class": f"{t.__class__.__module__}:{t.__class__.__qualname__}",
+    })
 
 
 @analysis_router.get("/jobs/{job_id}/output/{file_name}", summary="下载输出文件")
