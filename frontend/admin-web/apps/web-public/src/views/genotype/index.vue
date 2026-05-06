@@ -88,7 +88,8 @@ async function loadExamples(datasetId: number, assetCode?: string) {
     const refId = inner?.ref_id || inner?.chrom;
     const pos = inner?.variant_position || inner?.pos;
     if (refId && pos != null) {
-      exampleRegion.value = `${refId}:${Math.max(1, pos - 5000)}-${pos + 5000}`;
+      const pad = 500000;
+      exampleRegion.value = `${refId}:${Math.max(1, pos - pad)}-${pos + pad}`;
     }
   } catch (e) {
     console.warn('Failed to load region example:', e);
@@ -139,7 +140,7 @@ async function resolveGeneToRegion(geneId: string): Promise<string | null> {
     return null;
   }
   const gene = genes[0];
-  const pad = 5000;
+  const pad = 5000;  // ±5kb around gene
   return `${gene.chrom}:${Math.max(1, gene.start - pad)}-${gene.stop + pad}`;
 }
 
