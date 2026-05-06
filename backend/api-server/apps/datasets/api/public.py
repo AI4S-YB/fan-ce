@@ -101,16 +101,16 @@ def public_dataset_lineage(
     db=Depends(get_db),
 ):
     """Public lineage: list lineage edges where both src and dst versions are released."""
-    ds = db.query(Dataset).filter_by(dataset_code=dataset_code).first()
+    ds = db.query(DatasetRegistry).filter_by(dataset_code=dataset_code).first()
     if not ds:
         raise HTTPException(status_code=404, detail="Dataset not found")
     if ds.visibility != "public":
         raise HTTPException(status_code=404, detail="Dataset not found")
 
     svc = dataset_domain_service
-    edges = svc._list_public_lineage(db=db, dataset_id=ds.id)
+    edges = svc._list_public_lineage(db=db, dataset_id=ds.database_id)
     return response_2000(data=jsonable_encoder(
-        {"dataset_id": ds.id, "dataset_code": ds.dataset_code, "lineage_edges": edges}
+        {"dataset_id": ds.database_id, "dataset_code": ds.dataset_code, "lineage_edges": edges}
     ))
 
 

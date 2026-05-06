@@ -1343,19 +1343,23 @@ class DatasetDomainService:
         dst_asset = dataset_asset_db.get_one(db=db, id=lineage_obj.dst_asset_id) if lineage_obj.dst_asset_id else None
         src_database = dataset_legacy_bridge.get_database(db=db, dataset_id=src_version.database_id) if src_version else None
         dst_database = dataset_legacy_bridge.get_database(db=db, dataset_id=dst_version.database_id) if dst_version else None
+        src_registry = dataset_registry_db.get_filter(db=db, filters={"database_id": src_version.database_id}) if src_version else None
+        dst_registry = dataset_registry_db.get_filter(db=db, filters={"database_id": dst_version.database_id}) if dst_version else None
         return {
             "id": lineage_obj.id,
             "dataset_id": lineage_obj.database_id,
             "src_dataset_id": src_version.database_id if src_version else None,
+            "src_dataset_code": src_registry.dataset_code if src_registry else None,
             "src_dataset_title": src_database.name if src_database else None,
-            "src_dataset_type": src_version.dataset_type if src_version else None,
+            "src_dataset_type": (src_registry.dataset_type if src_registry else None) or (src_version.dataset_type if src_version else None),
             "src_version_id": lineage_obj.src_dataset_version_id,
             "src_version": src_version.version if src_version else None,
             "src_asset_id": lineage_obj.src_asset_id,
             "src_asset_code": src_asset.asset_code if src_asset else None,
             "dst_dataset_id": dst_version.database_id if dst_version else None,
+            "dst_dataset_code": dst_registry.dataset_code if dst_registry else None,
             "dst_dataset_title": dst_database.name if dst_database else None,
-            "dst_dataset_type": dst_version.dataset_type if dst_version else None,
+            "dst_dataset_type": (dst_registry.dataset_type if dst_registry else None) or (dst_version.dataset_type if dst_version else None),
             "dst_version_id": lineage_obj.dst_dataset_version_id,
             "dst_version": dst_version.version if dst_version else None,
             "dst_asset_id": lineage_obj.dst_asset_id,
