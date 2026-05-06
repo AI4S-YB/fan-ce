@@ -62,7 +62,7 @@ async function loadExampleData() {
 
 async function tryExample() {
   if (!selectedId.value) return;
-  await loadExampleData(selectedId.value);
+  await loadExampleData();
 }
 
 watch(selectedId, async (id) => {
