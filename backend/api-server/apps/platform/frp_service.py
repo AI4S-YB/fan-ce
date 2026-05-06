@@ -71,7 +71,7 @@ server_addr = {settings.frp_server_addr}
 server_port = {settings.frp_server_port}
 token = {settings.frp_token}
 
-[portal-web]
+[public-web]
 type = tcp
 local_ip = 127.0.0.1
 local_port = 80

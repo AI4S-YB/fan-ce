@@ -7,21 +7,30 @@ STOPPED=false
 # Backend (port 8002)
 PID=$(lsof -ti:8002 2>/dev/null || true)
 if [ -n "$PID" ]; then
-  kill -9 $PID 2>/dev/null && echo "已停止后端 (port 8002, PID $PID)" || true
+  kill -9 $PID 2>/dev/null && echo "Stopped backend (port 8002, PID $PID)" || true
   STOPPED=true
 else
-  echo "后端未运行 (port 8002)"
+  echo "Backend not running (port 8002)"
 fi
 
-# Frontend (port 5666)
+# Admin frontend (port 5666)
 PID=$(lsof -ti:5666 2>/dev/null || true)
 if [ -n "$PID" ]; then
-  kill -9 $PID 2>/dev/null && echo "已停止前端 (port 5666, PID $PID)" || true
+  kill -9 $PID 2>/dev/null && echo "Stopped admin-web (port 5666, PID $PID)" || true
   STOPPED=true
 else
-  echo "前端未运行 (port 5666)"
+  echo "Admin-web not running (port 5666)"
+fi
+
+# Public web (port 5677)
+PID=$(lsof -ti:5677 2>/dev/null || true)
+if [ -n "$PID" ]; then
+  kill -9 $PID 2>/dev/null && echo "Stopped public-web (port 5677, PID $PID)" || true
+  STOPPED=true
+else
+  echo "Public-web not running (port 5677)"
 fi
 
 if [ "$STOPPED" = false ]; then
-  echo "没有运行中的开发服务器"
+  echo "No running dev servers"
 fi

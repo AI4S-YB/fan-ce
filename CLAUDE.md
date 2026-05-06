@@ -14,8 +14,11 @@ FAN-CE (FAN Community Edition) is a FastAPI-based web application for bioinforma
 # 启动后端 (port 8002)
 bash scripts/dev/start-backend.sh
 
-# 启动前端 Antd 管理后台 (port 5666)
+# 启动管理端 Antd 前端 (port 5666)
 bash scripts/dev/start-admin-web.sh
+
+# 启动公开门户 (port 5677)
+cd frontend/admin-web && pnpm -F web-public dev
 
 # 停止所有开发服务器
 bash scripts/dev/stop-dev.sh
@@ -26,7 +29,8 @@ bash scripts/dev/stop-dev.sh
 | 服务 | 端口 |
 |------|------|
 | 后端 API | 8002 |
-| 前端 Antd | 5666 |
+| Admin 管理后台 (web-antd) | 5666 |
+| Public 公开门户 (web-public) | 5677 |
 | 前端 Element | 5667 |
 | 前端 Naive | 5668 |
 | PostgreSQL | 5433 |
