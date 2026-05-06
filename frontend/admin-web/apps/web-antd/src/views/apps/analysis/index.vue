@@ -50,7 +50,7 @@ curl http://localhost:8002/api/v1/analysis/tools</pre>
         <a-table :columns="roleCols" :data-source="fileRoles" size="small" bordered :pagination="false" />
 
         <p style="margin-top: 16px; color: #888;">
-          Full documentation: <code>docs/plugin-development-guide.md</code>
+          Full documentation: <code>plugin/README.md</code>
         </p>
       </div>
 
