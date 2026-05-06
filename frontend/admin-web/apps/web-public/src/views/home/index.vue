@@ -67,6 +67,21 @@ onMounted(() => {
 
 <template>
   <div>
+    <!-- News Section -->
+    <div v-if="newsItems.length > 0" style="margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid #e5e5e5;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 style="margin:0;font-size:16px;">News & Updates</h3>
+        <router-link to="/community/news" style="font-size:13px;color:#409eff;">View all →</router-link>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px;">
+        <div v-for="item in newsItems.slice(0, 3)" :key="item.id" style="padding:12px 16px;background:#f9fafb;border-radius:6px;">
+          <h4 style="margin:0 0 4px;font-size:14px;">{{ item.title }}</h4>
+          <p style="margin:0 0 4px;color:#666;font-size:12px;line-height:1.5;">{{ (item.content || '').substring(0, 120) }}{{ item.content?.length > 120 ? '...' : '' }}</p>
+          <span style="color:#999;font-size:11px;">{{ item.create_time ? new Date(item.create_time * 1000).toLocaleDateString() : '' }}</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Search & Filter -->
     <div style="display:flex;gap:12px;margin-bottom:24px;">
       <el-input
@@ -133,21 +148,6 @@ onMounted(() => {
         style="text-align:center;margin-top:16px;color:#999;"
       >
         {{ total }} datasets
-      </div>
-    </div>
-
-    <!-- News Section -->
-    <div v-if="newsItems.length > 0" style="margin-top:40px;padding-top:24px;border-top:1px solid #e5e5e5;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <h3 style="margin:0;font-size:16px;">News & Updates</h3>
-        <router-link to="/community/news" style="font-size:13px;color:#409eff;">View all →</router-link>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px;">
-        <div v-for="item in newsItems.slice(0, 3)" :key="item.id" style="padding:12px 16px;background:#f9fafb;border-radius:6px;">
-          <h4 style="margin:0 0 4px;font-size:14px;">{{ item.title }}</h4>
-          <p style="margin:0 0 4px;color:#666;font-size:12px;line-height:1.5;">{{ (item.content || '').substring(0, 120) }}{{ item.content?.length > 120 ? '...' : '' }}</p>
-          <span style="color:#999;font-size:11px;">{{ item.create_time ? new Date(item.create_time * 1000).toLocaleDateString() : '' }}</span>
-        </div>
       </div>
     </div>
   </div>
