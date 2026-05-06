@@ -54,9 +54,6 @@ provide<Ref<boolean>>('genomeLoading', loading);
         <div :style="tabStyle('tf')" @click="navigate('tf')">Transcription Factors</div>
 
         <el-dropdown trigger="click" style="display:flex;">
-        </el-dropdown>
-
-        <el-dropdown trigger="click" style="display:flex;">
           <div :style="tabStyle('tools')">Tools ▾</div>
           <template #dropdown>
             <el-dropdown-menu>
