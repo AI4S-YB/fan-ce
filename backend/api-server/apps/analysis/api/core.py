@@ -122,3 +122,19 @@ def cancel_job(job_id: int, db: Session = Depends(get_db)):
         job.status = "cancelled"
         db.commit()
     return response_2000(data={"id": job.id, "status": job.status})
+
+
+@analysis_router.get("/jobs/{job_id}/output/{file_name}", summary="下载输出文件")
+def download_output(job_id: int, file_name: str, db: Session = Depends(get_db)):
+    import os
+    from fastapi.responses import FileResponse
+    job = db.query(BrdAnalysisJob).filter_by(id=job_id).first()
+    if not job or not job.output_files:
+        raise HTTPException(status_code=404, detail="File not found")
+    outputs = json.loads(job.output_files) if isinstance(job.output_files, str) else job.output_files
+    for f in outputs:
+        if f.get("name") == file_name:
+            path = f.get("path", "")
+            if os.path.exists(path):
+                return FileResponse(path, filename=os.path.basename(path))
+    raise HTTPException(status_code=404, detail="File not found")
