@@ -9,7 +9,6 @@ const router = useRouter();
 const { queryLoading, queryResult, execute } = useDatasetQuery();
 
 const errorMsg = ref('');
-const debugInfo = ref('');
 
 // Search filters
 const keyword = ref('');
@@ -30,8 +29,6 @@ const total = computed(() => {
 
 // Auto-load gene list when genome detail is ready
 watch(() => detail?.value?.id, (id) => {
-  debugInfo.value = 'detail.id = ' + String(id) + ', detail = ' + (detail ? 'present' : 'undefined');
-  console.log('GeneSearch watcher: id=', id, 'detail=', detail);
   if (id) {
     page.value = 1;
     doQuery();
@@ -42,7 +39,6 @@ async function doQuery() {
   const d = detail?.value;
   if (!d?.id) return;
   const assetCode = d.query_entry_asset?.asset_code;
-  debugInfo.value = 'querying dataset=' + d.id + ' asset=' + assetCode;
 
   const params: Record<string, unknown> = { page: page.value, size: pageSize.value };
   if (keyword.value) params.keyword = keyword.value;
@@ -50,10 +46,8 @@ async function doQuery() {
   errorMsg.value = '';
   try {
     await execute(d.id, 'search_genes', params as Record<string, unknown>, assetCode);
-    debugInfo.value = 'query done, rows=' + rows.value.length + ' total=' + total.value;
   } catch (e: any) {
     errorMsg.value = 'Query failed: ' + (e?.message || String(e));
-    console.error('doQuery error:', e);
   }
 }
 
@@ -74,8 +68,6 @@ function goToGene(geneId: string) {
 
 <template>
   <div>
-    <!-- Debug info -->
-    <div v-if="debugInfo" style="background:#f0f7ff;padding:4px 12px;border-radius:4px;font-size:11px;color:#888;margin-bottom:8px;">{{ debugInfo }}</div>
     <div v-if="errorMsg" style="background:#fef0f0;padding:8px 12px;border-radius:4px;font-size:12px;color:#f56c6c;margin-bottom:8px;">{{ errorMsg }}</div>
     <!-- Search Controls -->
     <div style="display: flex; gap: 8px; margin-bottom: 16px;">

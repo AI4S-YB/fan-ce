@@ -49,7 +49,6 @@ onMounted(() => {
 });
 
 function goGenome(id: number) {
-  console.log('goGenome called with id:', id);
   router.push(`/genome/${id}`);
 }
 </script>

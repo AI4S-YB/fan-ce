@@ -91,9 +91,6 @@ export function useDatasetQuery() {
         operation,
         params,
       });
-      console.log('execute raw response:', JSON.parse(JSON.stringify(data)));
-      console.log('execute data keys:', Object.keys(data || {}));
-      console.log('execute inner data:', data?.data);
       queryResult.value = data;
     } finally {
       queryLoading.value = false;
