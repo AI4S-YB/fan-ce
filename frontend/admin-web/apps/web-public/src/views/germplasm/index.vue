@@ -85,11 +85,6 @@ search();
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column label="Source" width="200">
-        <template #default="{ row }">
-          <span style="font-size:12px;color:#888;">{{ row.source_filename || '-' }}</span>
-        </template>
-      </el-table-column>
       <el-table-column label="" width="80" fixed="right">
         <template #default="{ row }">
           <el-button text size="small" @click="viewDetail(row)">Detail</el-button>
@@ -108,37 +103,85 @@ search();
     </div>
 
     <!-- Detail Drawer -->
-    <el-drawer v-model="showDrawer" title="Germplasm Detail" size="600px">
+    <el-drawer v-model="showDrawer" title="Germplasm Detail" size="640px">
       <template v-if="selectedItem">
-        <el-descriptions :column="1" border size="small">
-          <el-descriptions-item label="Accession ID">{{ selectedItem.accession_id }}</el-descriptions-item>
-          <el-descriptions-item label="Display Name">{{ selectedItem.display_name }}</el-descriptions-item>
+        <!-- Basic Info -->
+        <h4 style="margin-top:0;">Basic Information</h4>
+        <el-descriptions :column="2" border size="small">
+          <el-descriptions-item label="Accession">{{ selectedItem.accession_id }}</el-descriptions-item>
+          <el-descriptions-item label="Name">{{ selectedItem.display_name }}</el-descriptions-item>
           <el-descriptions-item label="English Name">{{ selectedItem.english_name || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="Scientific Name">
+          <el-descriptions-item label="Species">
             <span style="font-style:italic;">{{ selectedItem?.taxonomy?.scientific_name || '-' }}</span>
           </el-descriptions-item>
-          <el-descriptions-item label="Father">{{ selectedItem.father_accession || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="Mother">{{ selectedItem.mother_accession || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="Batch">{{ selectedItem.batch_code || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="Source File">{{ selectedItem.source_filename || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="Taxonomy Rank">{{ selectedItem?.taxonomy?.rank || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="Import Batch">{{ selectedItem?.audit?.batch_code || '-' }}</el-descriptions-item>
         </el-descriptions>
 
+        <!-- Parents -->
+        <h4 style="margin-top:20px;">Parents</h4>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+          <el-card shadow="hover" size="small" style="flex:1;min-width:200px;">
+            <template #header><span style="font-size:13px;font-weight:600;">Father</span></template>
+            <div v-if="selectedItem.father_accession">
+              <div><strong>{{ selectedItem.father_accession }}</strong></div>
+              <div v-if="selectedItem.father_name_snapshot" style="color:#888;font-size:12px;">
+                {{ selectedItem.father_name_snapshot }}
+              </div>
+            </div>
+            <span v-else style="color:#ccc;">Unknown</span>
+          </el-card>
+          <span style="font-size:20px;color:#ccc;">×</span>
+          <el-card shadow="hover" size="small" style="flex:1;min-width:200px;">
+            <template #header><span style="font-size:13px;font-weight:600;">Mother</span></template>
+            <div v-if="selectedItem.mother_accession">
+              <div><strong>{{ selectedItem.mother_accession }}</strong></div>
+              <div v-if="selectedItem.mother_name_snapshot" style="color:#888;font-size:12px;">
+                {{ selectedItem.mother_name_snapshot }}
+              </div>
+            </div>
+            <span v-else style="color:#ccc;">Unknown</span>
+          </el-card>
+        </div>
+
+        <!-- Lineage Graph -->
+        <div v-if="selectedItem?.lineage_summary?.parents?.length">
+          <h4 style="margin-top:20px;">Recorded Lineage</h4>
+          <el-table :data="selectedItem.lineage_summary.parents" border size="small">
+            <el-table-column prop="parent_accession" label="Parent Accession" width="180" />
+            <el-table-column prop="parent_role" label="Role" width="120">
+              <template #default="{ row }">
+                <el-tag size="small" :type="row.parent_role === 'father' ? 'primary' : 'danger'">
+                  {{ row.parent_role }}
+                </el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <!-- Children -->
+        <div v-if="selectedItem?.lineage_summary?.children?.length">
+          <h4 style="margin-top:20px;">Progeny ({{ selectedItem.lineage_summary.child_count }})</h4>
+          <el-table :data="selectedItem.lineage_summary.children" border size="small" max-height="300">
+            <el-table-column prop="child_accession" label="Child Accession" width="180" />
+            <el-table-column prop="parent_role" label="As" width="100">
+              <template #default="{ row }">
+                <el-tag size="small" :type="row.parent_role === 'father' ? 'primary' : 'danger'">
+                  {{ row.parent_role }}
+                </el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
         <!-- Dynamic attributes -->
-        <div v-if="selectedItem.attributes && Object.keys(selectedItem.attributes).length > 0" style="margin-top:16px;">
-          <h4>Attributes</h4>
+        <div v-if="selectedItem.attributes && Object.keys(selectedItem.attributes).length > 0" style="margin-top:20px;">
+          <h4>Germplasm Attributes</h4>
           <el-descriptions :column="1" border size="small">
             <el-descriptions-item v-for="(val, key) in selectedItem.attributes" :key="key" :label="String(key)">
               <pre style="margin:0;white-space:pre-wrap;font-family:inherit;">{{ formatKw(val) }}</pre>
             </el-descriptions-item>
           </el-descriptions>
-        </div>
-
-        <!-- Lineage -->
-        <div v-if="selectedItem.parents && selectedItem.parents.length > 0" style="margin-top:16px;">
-          <h4>Lineage</h4>
-          <el-tag v-for="p in selectedItem.parents" :key="p.accession_id" size="small" style="margin:2px;">
-            {{ p.role }}: {{ p.accession_id }}
-          </el-tag>
         </div>
       </template>
       <el-empty v-else description="Loading..." />
