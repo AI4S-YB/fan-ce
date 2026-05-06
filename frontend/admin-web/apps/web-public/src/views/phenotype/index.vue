@@ -41,29 +41,19 @@ async function runQuery() {
   }
   if (selectedPlots.value.length) params.plot_ids = selectedPlots.value;
   const op = selectedTraits.value.length > 1 ? 'multi_trait_query' : 'trait_values';
-  await execute(selectedId.value, op, params, getAssetCode());
+  const result: any = await execute(selectedId.value, op, params, getAssetCode());
+  // Transform nested response for DataVisualization
+  const data = result?.data || result;
+  const items = data?.items || data?.data?.items || [];
+  queryResult.value = { items, total: items.length } as any;
 }
 
-async function loadExampleData(datasetId: number) {
-  const assetCode = getAssetCode();
+async function loadExampleData() {
+  if (!selectedId.value) return;
   exampleLoading.value = true;
   try {
-    const traitData: any = await execute(datasetId, 'trait_list', { limit: 20 }, assetCode);
-    traitOptions.value = (traitData?.data?.items || traitData?.items || []).map((t: any) => ({
-      label: t.trait_name || t.name,
-      value: String(t.trait_code || t.name),
-    }));
     if (traitOptions.value.length > 0) selectedTraits.value = [traitOptions.value[0].value];
-
-    const plotData: any = await execute(datasetId, 'plot_list', { limit: 100 }, assetCode);
-    const rawPlots = plotData?.data?.items || plotData?.items || [];
-    plotOptions.value = rawPlots.map((p: any) => ({
-      label: `${p.subject_name_cn || p.subject_name} (${p.plot_code})`,
-      value: String(p.id),
-      _block: p.block,
-    }));
     selectedPlots.value = plotOptions.value.slice(0, 6).map(p => p.value);
-
     if (selectedTraits.value.length) await runQuery();
   } finally {
     exampleLoading.value = false;
@@ -84,7 +74,25 @@ watch(selectedId, async (id) => {
   traitOptions.value = [];
   plotOptions.value = [];
   selectedBlocks.value = [];
+  await loadFormOptions(id);
 });
+
+async function loadFormOptions(datasetId: number) {
+  const assetCode = getAssetCode();
+  const traitData: any = await execute(datasetId, 'trait_list', { limit: 50 }, assetCode);
+  traitOptions.value = (traitData?.data?.items || traitData?.items || []).map((t: any) => ({
+    label: t.trait_name || t.name,
+    value: String(t.trait_code || t.name),
+  }));
+
+  const plotData: any = await execute(datasetId, 'plot_list', { limit: 100 }, assetCode);
+  const rawPlots = plotData?.data?.items || plotData?.items || [];
+  plotOptions.value = rawPlots.map((p: any) => ({
+    label: `${p.subject_name_cn || p.subject_name} (${p.plot_code})`,
+    value: String(p.id),
+    _block: p.block,
+  }));
+}
 </script>
 
 <template>
