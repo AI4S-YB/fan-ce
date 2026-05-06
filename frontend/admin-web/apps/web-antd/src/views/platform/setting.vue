@@ -61,10 +61,10 @@ const modelRows = ref<PlatformModelApiSetting[]>([]);
 const siteForm = reactive<PlatformSiteSetting>({
   site_name: '',
   site_title: '',
+  logo_text: '',
   filing_no: '',
-  domain: '',
-  ip_address: '',
-  port: 0,
+  contact_email: '',
+  footer_copyright: '',
   extra_json: '{}',
 });
 
@@ -209,10 +209,10 @@ async function loadSiteSetting() {
   siteForm.id = data.id;
   siteForm.site_name = data.site_name || '';
   siteForm.site_title = data.site_title || '';
+  siteForm.logo_text = data.logo_text || '';
   siteForm.filing_no = data.filing_no || '';
-  siteForm.domain = data.domain || '';
-  siteForm.ip_address = data.ip_address || '';
-  siteForm.port = Number(data.port || 0);
+  siteForm.contact_email = data.contact_email || '';
+  siteForm.footer_copyright = data.footer_copyright || '';
   siteForm.extra_json = data.extra_json || '{}';
 }
 
@@ -427,24 +427,22 @@ onMounted(() => {
                 :placeholder="$t('platform.setting.exampleIcp')"
               />
             </Form.Item>
-            <Form.Item :label="$t('platform.setting.domainLabel')">
+            <Form.Item :label="$t('platform.setting.logoTextLabel')">
               <Input
-                v-model:value="siteForm.domain"
-                :placeholder="$t('platform.setting.exampleDomain')"
+                v-model:value="siteForm.logo_text"
+                :placeholder="$t('platform.setting.exampleLogoText')"
               />
             </Form.Item>
-            <Form.Item :label="$t('platform.setting.ip')">
+            <Form.Item :label="$t('platform.setting.contactEmailLabel')">
               <Input
-                v-model:value="siteForm.ip_address"
-                :placeholder="$t('platform.setting.exampleIp')"
+                v-model:value="siteForm.contact_email"
+                :placeholder="$t('platform.setting.exampleContactEmail')"
               />
             </Form.Item>
-            <Form.Item :label="$t('platform.setting.portLabel')">
-              <InputNumber
-                v-model:value="siteForm.port"
-                :min="0"
-                :max="65535"
-                class="w-full"
+            <Form.Item :label="$t('platform.setting.footerCopyrightLabel')">
+              <Input
+                v-model:value="siteForm.footer_copyright"
+                :placeholder="$t('platform.setting.exampleFooterCopyright')"
               />
             </Form.Item>
           </div>

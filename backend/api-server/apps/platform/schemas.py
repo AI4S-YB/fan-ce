@@ -49,10 +49,10 @@ class PlatformSiteSettingInfoRequest(BaseModel):
 class PlatformSiteSettingUpdateRequest(BaseModel):
     site_name: Optional[str] = ""
     site_title: Optional[str] = ""
+    logo_text: Optional[str] = ""
     filing_no: Optional[str] = ""
-    domain: Optional[str] = ""
-    ip_address: Optional[str] = ""
-    port: Optional[int] = 0
+    contact_email: Optional[str] = ""
+    footer_copyright: Optional[str] = ""
     extra_json: Optional[str] = "{}"
 
 

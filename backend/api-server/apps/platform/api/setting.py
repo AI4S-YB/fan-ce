@@ -70,10 +70,10 @@ async def site_info(
         site_obj = PlatformSiteSetting(
             site_name="",
             site_title="",
+            logo_text="",
             filing_no="",
-            domain="",
-            ip_address="",
-            port=0,
+            contact_email="",
+            footer_copyright="",
             extra_json="{}",
             user_id=_user.id,
         )
@@ -97,10 +97,10 @@ async def site_update(
         db.add(site_obj)
     site_obj.site_name = request_data.site_name or ""
     site_obj.site_title = request_data.site_title or ""
+    site_obj.logo_text = request_data.logo_text or ""
     site_obj.filing_no = request_data.filing_no or ""
-    site_obj.domain = request_data.domain or ""
-    site_obj.ip_address = request_data.ip_address or ""
-    site_obj.port = int(request_data.port or 0)
+    site_obj.contact_email = request_data.contact_email or ""
+    site_obj.footer_copyright = request_data.footer_copyright or ""
     site_obj.extra_json = _normalize_json_text(request_data.extra_json)
     site_obj.user_id = _user.id
     site_obj.update_time = now
@@ -108,6 +108,21 @@ async def site_update(
     db.commit()
     db.refresh(site_obj)
     return response_200(data=_serialize_site_setting(site_obj))
+
+
+@setting_router.get("/site-info", summary="公开网站信息")
+def public_site_info(db=Depends(get_db)):
+    obj = db.query(PlatformSiteSetting).order_by(PlatformSiteSetting.id.asc()).first()
+    if not obj:
+        return response_200(data={})
+    return response_200(data={
+        "site_name": obj.site_name,
+        "site_title": obj.site_title,
+        "logo_text": obj.logo_text,
+        "filing_no": obj.filing_no,
+        "contact_email": obj.contact_email,
+        "footer_copyright": obj.footer_copyright,
+    })
 
 
 @setting_router.post("/setting/model/list", summary="模型API配置列表")

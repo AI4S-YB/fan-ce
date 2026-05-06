@@ -2,14 +2,51 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDatasetList } from '@/composables/useDatasets';
+import { useRequest } from '@/composables/useRequest';
 import AiFloatingButton from './components/AiChatDrawer/AiFloatingButton.vue';
 import AiChatDrawer from './components/AiChatDrawer/index.vue';
 
 const router = useRouter();
 const chatVisible = ref(false);
+const { get } = useRequest();
+
+interface SiteInfo {
+  site_name: string;
+  site_title: string;
+  logo_text: string;
+  filing_no: string;
+  contact_email: string;
+  footer_copyright: string;
+}
+
+const siteInfo = ref<SiteInfo>({
+  site_name: 'Rose Database',
+  site_title: 'Rose Genomics Data Platform',
+  logo_text: 'Rose DB',
+  filing_no: '',
+  contact_email: '',
+  footer_copyright: '',
+});
+
+async function loadSiteInfo() {
+  try {
+    const data = await get<SiteInfo>('/public/site-info');
+    if (data && data.site_name) {
+      siteInfo.value = data;
+      if (data.site_title) {
+        document.title = data.site_title;
+      }
+    }
+  } catch {
+    // use defaults
+  }
+}
 
 const { items: genomes, load: loadGenomes } = useDatasetList();
-onMounted(() => loadGenomes({ dataset_type: 'genome' }));
+onMounted(() => {
+  loadGenomes({ dataset_type: 'genome' });
+  loadSiteInfo();
+});
 
 function goGenome(id: number) {
   console.log('goGenome called with id:', id);
@@ -19,7 +56,7 @@ function goGenome(id: number) {
 <template>
   <div id="public-portal">
     <header class="portal-header">
-      <router-link to="/" class="logo">Rose Database</router-link>
+      <router-link to="/" class="logo">{{ siteInfo.logo_text || siteInfo.site_name }}</router-link>
 
       <el-dropdown class="nav-dropdown">
         <span class="nav-link active">Genomes ▾</span>
@@ -76,7 +113,9 @@ function goGenome(id: number) {
     </main>
 
     <footer class="portal-footer">
-      China Agricultural University — Rose Database &copy; 2024-2026
+      <span>{{ siteInfo.footer_copyright || siteInfo.site_name }}</span>
+      <span v-if="siteInfo.filing_no" class="footer-divider">|</span>
+      <a v-if="siteInfo.filing_no" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">{{ siteInfo.filing_no }}</a>
     </footer>
 
     <AiFloatingButton @click="chatVisible = true" />
@@ -103,4 +142,7 @@ body { margin: 0; font-family: -apple-system, 'Helvetica Neue', Arial, sans-seri
 .nav-links { display: flex; gap: 16px; font-size: 14px; margin-left: 12px; }
 .main-content { max-width: 1200px; margin: 0 auto; padding: 24px; min-height: 80vh; }
 .portal-footer { border-top: 1px solid #e5e5e5; padding: 16px; text-align: center; color: #999; font-size: 12px; }
+.portal-footer a { color: #999; text-decoration: none; }
+.portal-footer a:hover { color: #409eff; }
+.footer-divider { margin: 0 8px; }
 </style>

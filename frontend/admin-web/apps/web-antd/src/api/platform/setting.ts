@@ -6,10 +6,10 @@ export interface PlatformSiteSetting {
   id?: number;
   site_name: string;
   site_title: string;
+  logo_text: string;
   filing_no: string;
-  domain: string;
-  ip_address: string;
-  port: number;
+  contact_email: string;
+  footer_copyright: string;
   extra_json?: string;
   create_time?: number;
   update_time?: number;
