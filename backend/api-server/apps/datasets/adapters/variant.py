@@ -74,12 +74,13 @@ class VariantAdapter(DatasetQueryAdapter):
             "display_name": self.display_name,
             "dataset_type": dataset_payload.get("dataset_type"),
             "file_format": dataset_payload.get("query_profile", {}).get("file_format"),
-            "supported_operations": ["region_example", "samples_list", "query"],
+            "supported_operations": ["region_example", "samples_list", "query", "query_by_id"],
             "query_entrypoints": ["/api/v1/dataset/query/execute"],
             "examples": {
                 "region_example": {"operation": "region_example", "params": {}},
                 "samples_list": {"operation": "samples_list", "params": {}},
                 "query": {"operation": "query", "params": {"regions": query_regions}},
+                "query_by_id": {"operation": "query_by_id", "params": {"variant_ids": ["example_variant_id"]}},
             },
         }
 
@@ -146,6 +147,29 @@ class VariantAdapter(DatasetQueryAdapter):
                     "size": result["size"],
                     "preview": result["preview"] if result["size"] <= 1024 * 1024 else None,
                     "download_url": f"{DOWNLOAD_BASE_URL}/{file_id}",
+                },
+            }
+
+        if operation == "query_by_id":
+            variant_ids: List[str] = params.get("variant_ids") or []
+            if not variant_ids:
+                raise HTTPException(status_code=400, detail="variant_ids is required")
+            id_filter = " || ".join(f'ID="{vid}"' for vid in variant_ids)
+            cmd = ["bcftools", "view", "-i", id_filter, file_path]
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            if proc.returncode != 0:
+                raise HTTPException(status_code=500, detail=f"bcftools query_by_id failed: {proc.stderr}")
+            output = proc.stdout
+            count = sum(1 for line in output.split("\n") if line and not line.startswith("#"))
+            return {
+                "adapter": self.adapter_name,
+                "operation": operation,
+                "dataset_id": dataset_payload["id"],
+                "data": {
+                    "count": count,
+                    "size": len(output.encode()),
+                    "preview": output if len(output.encode()) <= 1024 * 1024 else None,
+                    "sample_count": len(output.strip().split("\t")) - 9 if "\t" in output else 0,
                 },
             }
 

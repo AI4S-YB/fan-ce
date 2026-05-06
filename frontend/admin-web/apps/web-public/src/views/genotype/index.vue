@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useDatasetList, useDatasetDetail, useDatasetQuery } from '@/composables/useDatasets';
-import DataVisualization from '@/components/DataVisualization/index.vue';
+import SmartSearchBar from '@/components/SmartSearchBar.vue';
+import VariantTable from '@/components/VariantTable.vue';
+import VariantDensityPlot from '@/components/VariantDensityPlot.vue';
+import SampleFilter from '@/components/SampleFilter.vue';
 
 const { items: datasets, load: loadDatasets } = useDatasetList();
 const { detail, load: loadDetail } = useDatasetDetail();
-const { queryLoading, queryResult, capabilities, loadCapabilities, execute } = useDatasetQuery();
+const { queryLoading, queryResult, execute } = useDatasetQuery();
 
 const selectedId = ref<number | null>(null);
-const chrom = ref('');
-const start = ref('');
-const end = ref('');
 const isDraft = ref(false);
-
-// Real example region fetched from backend via region_example
-const exampleRegion = ref<{ chrom: string; start: number; end: number } | null>(null);
+const sampleOptions = ref<string[]>([]);
+const selectedSamples = ref<string[]>([]);
+const searchInfo = ref('');
 
 loadDatasets({ dataset_type: 'variome' });
 
@@ -23,135 +23,135 @@ function getAssetCode(): string | undefined {
 }
 
 async function onDatasetSelect(datasetId: number) {
-  // Reset state
-  exampleRegion.value = null;
+  searchInfo.value = '';
+  sampleOptions.value = [];
+  selectedSamples.value = [];
+  queryResult.value = null;
 
-  // Load detail to get asset_code
   await loadDetail(datasetId);
   isDraft.value = detail.value?.lifecycle_state === 'draft';
   const assetCode = getAssetCode();
 
-  // Load query capabilities
-  await loadCapabilities(datasetId, assetCode);
-
-  // Fetch a real variant example region from the backend
   try {
-    const data = await execute(datasetId, 'region_example', {}, assetCode);
-    if (data?.chrom && data?.pos != null) {
-      const pos = Number(data.pos);
-      exampleRegion.value = {
-        chrom: data.chrom,
-        start: Math.max(1, pos - 5000),
-        end: pos + 5000,
-      };
-      // Pre-fill form with real variant data
-      chrom.value = exampleRegion.value.chrom;
-      start.value = String(exampleRegion.value.start);
-      end.value = String(exampleRegion.value.end);
-      // Auto-execute query so results appear immediately
-      await runQuery();
-    }
+    const data = await execute(datasetId, 'samples_list', {}, assetCode);
+    sampleOptions.value = data?.data?.samples || data?.samples || [];
   } catch (e) {
-    console.error('Failed to load region example:', e);
+    console.error('Failed to load samples:', e);
   }
 }
 
-async function runQuery() {
+function getVariantList(): { chrom: string; pos: number }[] {
+  const preview = queryResult.value?.data?.preview || queryResult.value?.preview || '';
+  if (!preview) return [];
+  return preview.split('\n')
+    .filter((l: string) => l && !l.startsWith('#'))
+    .map((line: string) => {
+      const fields = line.split('\t');
+      return { chrom: fields[0], pos: Number(fields[1]) };
+    })
+    .filter((v: { chrom: string; pos: number }) => v.chrom && !isNaN(v.pos));
+}
+
+async function handleSearch({ type, value }: { type: string; value: string }) {
   if (!selectedId.value) return;
-  await execute(
-    selectedId.value,
-    'variant_query',
-    {
-      chrom: chrom.value,
-      start: Number(start.value),
-      end: Number(end.value),
-    },
-    getAssetCode(),
-  );
+  const assetCode = getAssetCode();
+
+  if (type === 'gene') {
+    searchInfo.value = `Looking up gene: ${value}`;
+    // Gene→region via annotation adapter — see Task 7
+    // For now, query the genome's annotation linked to this variome
+    await execute(selectedId.value, 'query', {
+      regions: [value],
+      include_samples: selectedSamples.value.length > 0 ? selectedSamples.value : undefined,
+    }, assetCode);
+  } else if (type === 'region') {
+    searchInfo.value = `Region: ${value}`;
+    await execute(selectedId.value, 'query', {
+      regions: [value],
+      include_samples: selectedSamples.value.length > 0 ? selectedSamples.value : undefined,
+    }, assetCode);
+  } else if (type === 'variant_id') {
+    searchInfo.value = `Variant ID: ${value}`;
+    await execute(selectedId.value, 'query_by_id', {
+      variant_ids: [value],
+    }, assetCode);
+  }
 }
 
 async function tryExample() {
-  if (exampleRegion.value) {
-    chrom.value = exampleRegion.value.chrom;
-    start.value = String(exampleRegion.value.start);
-    end.value = String(exampleRegion.value.end);
-    await runQuery();
+  if (!selectedId.value) return;
+  const assetCode = getAssetCode();
+  try {
+    const data = await execute(selectedId.value, 'region_example', {}, assetCode);
+    const inner = data?.data || data;
+    const refId = inner?.ref_id || inner?.chrom;
+    const pos = inner?.variant_position || inner?.pos;
+    if (refId && pos != null) {
+      const region = `${refId}:${Math.max(1, pos - 5000)}-${pos + 5000}`;
+      searchInfo.value = `Example region: ${region}`;
+      await execute(selectedId.value, 'query', {
+        regions: [region],
+        include_samples: selectedSamples.value.length > 0 ? selectedSamples.value : undefined,
+      }, assetCode);
+    }
+  } catch (e) {
+    console.error('Failed to load example:', e);
   }
 }
+
 </script>
 
 <template>
   <div>
     <h2>Genotype Query</h2>
-    <div
-      style="
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        margin-bottom: 16px;
-        flex-wrap: wrap;
-      "
-    >
-      <el-select
-        v-model="selectedId"
-        placeholder="Select variome dataset"
-        style="width: 360px"
-        @change="onDatasetSelect"
-      >
-        <el-option
-          v-for="ds in datasets"
-          :key="ds.id"
-          :label="ds.title || ds.dataset_code"
-          :value="ds.id"
-        />
+
+    <div style="margin-bottom:16px;">
+      <el-select v-model="selectedId" placeholder="Select variome dataset" style="width:360px;"
+        @change="onDatasetSelect">
+        <el-option v-for="ds in datasets" :key="ds.id" :label="ds.title || ds.dataset_code" :value="ds.id" />
       </el-select>
     </div>
-    <el-alert
-      v-if="isDraft"
-      title="Dataset is in draft state"
-      type="warning"
-      :closable="false"
-      show-icon
-      style="margin-bottom:16px;"
-    >
-      This dataset may be incomplete or missing required index files.
+
+    <el-alert v-if="isDraft" title="Dataset is in draft state" type="warning" :closable="false" show-icon
+      style="margin-bottom:16px;">
       Query results may not be available until the dataset is fully registered.
     </el-alert>
-    <div
-      v-if="selectedId"
-      style="
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        margin-bottom: 16px;
-        flex-wrap: wrap;
-      "
-    >
-      <el-input
-        v-model="chrom"
-        placeholder="e.g. Chr1A"
-        style="width: 140px"
-      />
-      <el-input
-        v-model="start"
-        placeholder="e.g. 100000"
-        style="width: 120px"
-        type="number"
-      />
-      <el-input
-        v-model="end"
-        placeholder="e.g. 200000"
-        style="width: 120px"
-        type="number"
-      />
-      <el-button text size="small" @click="tryExample"> Try Example </el-button>
-      <el-button type="primary" :loading="queryLoading" @click="runQuery">
-        Query
-      </el-button>
-    </div>
-    <DataVisualization :result="queryResult" :loading="queryLoading" />
-    <div v-if="queryResult?.download_url" style="margin-top: 12px">
-      <el-button type="success">Download VCF</el-button>
+
+    <div v-if="selectedId">
+      <SmartSearchBar placeholder="Search genes, regions, or variant IDs..." @search="handleSearch" />
+
+      <div v-if="searchInfo" style="margin:8px 0;font-size:12px;color:#409eff;">
+        {{ searchInfo }}
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center;margin:12px 0;">
+        <SampleFilter v-if="sampleOptions.length > 0" :samples="sampleOptions"
+          @update="(v: string[]) => selectedSamples = v" />
+        <el-button text size="small" @click="tryExample">Try Example</el-button>
+      </div>
+
+      <div v-if="queryResult" style="margin-top:16px;">
+        <div style="color:#888;font-size:13px;margin-bottom:8px;">
+          Found {{ queryResult?.data?.count || queryResult?.count || 0 }} variants
+          <span v-if="queryResult?.data?.sample_count"> in {{ queryResult.data.sample_count }} samples</span>
+        </div>
+
+        <el-tabs type="border-card">
+          <el-tab-pane label="Table">
+            <VariantTable :result="queryResult" :loading="queryLoading" />
+          </el-tab-pane>
+          <el-tab-pane label="Density Plot">
+            <VariantDensityPlot :variants="getVariantList()" :loading="queryLoading" />
+          </el-tab-pane>
+        </el-tabs>
+
+        <div v-if="queryResult?.data?.download_url || queryResult?.download_url" style="margin-top:12px;">
+          <el-button type="success">Download VCF</el-button>
+        </div>
+      </div>
+
+      <el-empty v-if="!queryLoading && !queryResult"
+        description="Enter a search query to find variants. Try clicking 'Try Example' for demo data." />
     </div>
   </div>
 </template>

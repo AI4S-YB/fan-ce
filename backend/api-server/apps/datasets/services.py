@@ -2467,7 +2467,7 @@ class DatasetDomainService:
                 "dataset_type": self._infer_dataset_type(database_obj, file_obj),
                 "version": DEFAULT_DATASET_VERSION,
                 "title": database_name,
-                "lifecycle_state": "public" if database_is_public else ("uploaded" if database_is_active else "draft"),
+                "lifecycle_state": "ready" if database_is_public or database_is_active else "draft",
                 "visibility": "public" if database_is_public else "private",
                 "file_format": self._normalize_file_format(file_obj),
                 "query_engine": self._infer_query_engine(file_obj),
@@ -2691,7 +2691,7 @@ class DatasetDomainService:
         release_state = getattr(version_obj, "release_state", None)
         if release_state in DATASET_VERSION_RELEASE_STATES:
             return release_state
-        if str(getattr(version_obj, "visibility", "")).lower() == "public" or str(getattr(version_obj, "lifecycle_state", "")).lower() == "public":
+        if str(getattr(version_obj, "visibility", "")).lower() == "public":
             return "released"
         return "unreleased"
 
@@ -2775,16 +2775,9 @@ class DatasetDomainService:
             release_state = self._get_version_release_state(row)
             should_default = bool(default_version_id and row.id == default_version_id and release_state in {"released", "deprecated"})
             next_visibility = "public" if release_state in {"released", "deprecated"} else "private"
-            next_lifecycle_state = row.lifecycle_state
-            if should_default:
-                next_lifecycle_state = "public"
-            elif next_lifecycle_state == "public" and not should_default:
-                next_lifecycle_state = "ready"
             update_data = {}
             if row.visibility != next_visibility:
                 update_data["visibility"] = next_visibility
-            if row.lifecycle_state != next_lifecycle_state:
-                update_data["lifecycle_state"] = next_lifecycle_state
             if getattr(row, "is_default_public", 0) != (1 if should_default else 0):
                 update_data["is_default_public"] = 1 if should_default else 0
             if update_data:
@@ -2797,12 +2790,8 @@ class DatasetDomainService:
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
         current_version = dataset_version_db.get_filter(db=db, filters={"database_id": dataset_id, "is_current": 1})
         next_visibility = "public" if default_public_version_id else "private"
-        next_lifecycle_state = "public" if default_public_version_id else (current_version.lifecycle_state if current_version else registry_obj.lifecycle_state)
-        if next_lifecycle_state == "public" and not default_public_version_id:
-            next_lifecycle_state = "ready"
         update_data = {
             "visibility": next_visibility,
-            "lifecycle_state": next_lifecycle_state,
             "default_public_version_id": default_public_version_id,
             "update_time": self._now(),
         }
@@ -2830,7 +2819,7 @@ class DatasetDomainService:
             action="set_default_public",
             operator_id=operator_id,
             next_visibility="public",
-            next_lifecycle_state="public",
+            next_lifecycle_state=selected_version.lifecycle_state,
             note=note or f"set default public version {selected_version.version}",
         )
         return selected_version
@@ -2851,7 +2840,6 @@ class DatasetDomainService:
         dataset_payload = self._apply_version_to_dataset_payload(db=db, dataset_payload=dataset_payload, version_obj=public_version)
         dataset_payload = self._apply_assets_to_dataset_payload(db=db, dataset_payload=dataset_payload, version_obj=public_version)
         dataset_payload["visibility"] = "public"
-        dataset_payload["lifecycle_state"] = "public"
         default_public_version = self._get_public_version_obj(db=db, dataset_id=dataset_id, dataset_payload=dataset_payload)
         dataset_payload["default_public_version"] = self._build_dataset_version_payload(default_public_version, db=db) if default_public_version else None
         dataset_payload["selected_version"] = self._build_dataset_version_payload(public_version, db=db)
@@ -3196,7 +3184,7 @@ class DatasetDomainService:
         current_version = dataset_payload["current_version"]
         database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=dataset_id)
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
-        if registry_obj.lifecycle_state not in {"ready", "public"}:
+        if registry_obj.lifecycle_state != "ready":
             raise HTTPException(status_code=4000, detail="dataset must be ready before publish")
 
         before_visibility = registry_obj.visibility
@@ -3211,7 +3199,7 @@ class DatasetDomainService:
                 "visibility_before": before_visibility,
                 "visibility_after": "public",
                 "lifecycle_before": before_state,
-                "lifecycle_after": "public",
+                "lifecycle_after": before_state,
                 "operator_id": operator_id,
                 "note": request_data.note or f"publish dataset current version {current_version['version']}",
                 "create_time": self._now(),
@@ -3224,7 +3212,7 @@ class DatasetDomainService:
                 "task_type": "publish",
                 "task_status": "success",
                 "from_state": before_state,
-                "to_state": "public",
+                "to_state": before_state,
                 "operator_id": operator_id,
                 "detail": request_data.note or f"publish dataset current version {current_version['version']}",
                 "create_time": self._now(),
@@ -3250,7 +3238,6 @@ class DatasetDomainService:
                 or self._is_version_default_public(version_obj)
                 or version_obj.id in candidate_public_version_ids
                 or version_obj.visibility == "public"
-                or version_obj.lifecycle_state == "public"
             )
             if not is_candidate:
                 continue
@@ -3258,14 +3245,12 @@ class DatasetDomainService:
                 self.withdraw_dataset_version(db=db, version_id=version_obj.id, request_data=request_data, user=user)
                 continue
 
-            next_lifecycle_state = "ready" if version_obj.lifecycle_state == "public" else version_obj.lifecycle_state
             dataset_version_db.update_one(
                 db=db,
                 db_obj=version_obj,
                 obj_in={
                     "release_state": "unreleased",
                     "visibility": "private",
-                    "lifecycle_state": next_lifecycle_state,
                     "is_default_public": 0,
                     "update_time": self._now(),
                 },
@@ -3297,8 +3282,8 @@ class DatasetDomainService:
                 "database_id": dataset_id,
                 "task_type": "unpublish",
                 "task_status": "success",
-                "from_state": "public",
-                "to_state": next_state,
+                "from_state": before_state,
+                "to_state": before_state,
                 "operator_id": operator_id,
                 "detail": request_data.note,
                 "create_time": self._now(),
@@ -5970,7 +5955,7 @@ class DatasetDomainService:
     def release_dataset_version(self, db, version_id, request_data, user):
         operator_id = user.id
         version_obj = self._ensure_version_write_access(db=db, version_id=version_id, user=user)
-        if version_obj.lifecycle_state not in {"ready", "public"}:
+        if version_obj.lifecycle_state != "ready":
             raise HTTPException(status_code=400, detail="dataset version must be ready before release")
         registry_obj = self.ensure_registry(
             db=db,
@@ -6093,14 +6078,12 @@ class DatasetDomainService:
         before_visibility = version_obj.visibility
         before_lifecycle_state = version_obj.lifecycle_state
         was_default_public = self._is_version_default_public(version_obj)
-        next_lifecycle_state = "ready" if version_obj.lifecycle_state == "public" else version_obj.lifecycle_state
         version_obj = dataset_version_db.update_one(
             db=db,
             db_obj=version_obj,
             obj_in={
                 "release_state": "unreleased",
                 "visibility": "private",
-                "lifecycle_state": next_lifecycle_state,
                 "is_default_public": 0,
                 "update_time": self._now(),
             },
@@ -6117,7 +6100,7 @@ class DatasetDomainService:
             action="withdraw",
             operator_id=operator_id,
             next_visibility="private",
-            next_lifecycle_state=next_lifecycle_state,
+            next_lifecycle_state=before_lifecycle_state,
             note=request_data.note or f"withdraw dataset version {version_obj.version}",
         )
 

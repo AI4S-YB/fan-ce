@@ -71,4 +71,20 @@ export interface QueryResult {
   items?: Record<string, unknown>[];
   total?: number;
   download_url?: string;
+  // variant adapter returns wrapped data
+  data?: {
+    count?: number;
+    size?: number;
+    preview?: string;
+    sample_count?: number;
+    samples?: string[];
+    download_url?: string;
+    [key: string]: unknown;
+  };
+  // variant adapter top-level fields
+  count?: number;
+  preview?: string;
+  adapter?: string;
+  operation?: string;
+  [key: string]: unknown;
 }
