@@ -57,28 +57,92 @@ const TR_FAMILIES = new Set([
   'TAZ', 'TRAF',
 ]);
 
-// PK families recognized by RLK/group prefixes
 const PK_GROUP_PREFIXES = [
   'RLK-Pelle', 'AGC', 'CAMK', 'CK1', 'CMGC', 'STE', 'TKL',
   'Group', 'PEK', 'SCY1', 'RGC', 'Alpha', 'PPC', 'PDK', 'Rio', 'WNK', 'Bud32',
 ];
 
-// Categorize families
-const tfFamilies = computed(() => {
-  return allFamilies.value.filter(f => TF_FAMILIES.has(f));
-});
+// PK family descriptions (full names from iTAK / Shiu classification)
+const PK_DESCRIPTIONS: Record<string, string> = {
+  'AGC_MAST': 'Microtubule Associated Serine/Threonine Kinase',
+  'AGC_NDR': 'Nuclear Dbf2-Related kinases',
+  'AGC_PDK1': 'Phosphoinositide-Dependent protein Kinase 1',
+  'AGC_PKA-PKG': 'Protein Kinase A / Protein Kinase G (cyclic AMP/cGMP-dependent)',
+  'AGC_RSK-2': 'Ribosomal S6 Kinases 2',
+  'AGC-Pl': 'AGC Plant-specific',
+  'CAMK_AMPK': 'AMP-activated protein kinase',
+  'CAMK_CAMKL-CHK1': 'CAMK-Like, Checkpoint Kinase 1',
+  'CAMK_CAMKL-LKB': 'CAMK-Like, Liver Kinase B1',
+  'CAMK_CDPK': 'Calcium-Dependent Protein Kinases',
+  'CAMK_OST1L': 'Open Stomata-like Kinase',
+  'CK1_CK1': 'Cell Kinase 1',
+  'CK1_CK1-Pl': 'Cell Kinase 1, Plant-specific',
+  'CMGC_CDK-CCRK': 'Cyclin Dependent Kinase, Cell Cycle Regulated Kinase',
+  'CMGC_CDK-CDK7': 'Cyclin Dependent Kinase subfamily 7',
+  'CMGC_CDK-CDK8': 'Cyclin Dependent Kinase subfamily 8',
+  'CMGC_CDK-CRK7-CDK9': 'Cyclin Dependent Kinase, cdc2-related kinase 7 / Cyclin-dependent kinase 9',
+  'CMGC_CDK-PITSLRE': 'Cyclin Dependent Kinase, PITSLRE',
+  'CMGC_CDK-Pl': 'Cyclin Dependent Kinase, Plant-specific',
+  'CMGC_CDKL-Cr': 'Cyclin Dependent Kinase Like, C. reinhardtii-specific',
+  'CMGC_CK2': 'Cell Kinase 2',
+  'CMGC_CLK': 'CDC-Like Kinase (splicing)',
+  'CMGC_DYRK-PRP4': 'Dual-specificity Y Regulated Kinase, precursor mRNA processing 4',
+  'CMGC_DYRK-YAK': 'Dual-specificity Y Regulated Kinase, YAK subfamily',
+  'CMGC_GSK': 'Glycogen Synthase 3 Kinase',
+  'CMGC_GSKL': 'Glycogen Synthase 3 Kinase-like',
+  'CMGC_MAPK': 'Mitogen Activated Protein Kinase',
+  'CMGC_Pl-Tthe': 'CMGC shared between land plants and T. thermophila',
+  'CMGC_RCK': 'Ros Cross-hybridizing Kinase',
+  'CMGC_SRPK': 'SR Protein Kinase (phosphorylates SR splicing factors)',
+  'STE_STE-Pl': 'STE Plant-specific',
+  'STE_STE11': 'MAP3K (MAP kinase kinase kinase), homologous to yeast Ste11',
+  'STE_STE20-Fray': 'MAP4K, homologous to yeast Ste20, Fray',
+  'STE_STE20-Pl': 'MAP4K, homologous to yeast Ste20, Plant-specific',
+  'STE_STE20-YSK': 'MAP4K, yeast SPS1/STE20-like kinase',
+  'STE_STE7': 'MAP2K (MAP kinase kinase), homologous to yeast Ste7',
+  'TKL-Pl-1': 'Plant-specific 1',
+  'TKL-Pl-2': 'Plant-specific 2',
+  'TKL-Pl-3': 'Plant-specific 3',
+  'TKL-Pl-4': 'Plant-specific 4',
+  'TKL-Pl-5': 'Plant-specific 5',
+  'TKL-Pl-6': 'Plant-specific 6',
+  'TKL-Pl-7': 'Plant-specific 7',
+  'TKL_CTR1-DRK-1': 'CTR1-DRK-1',
+  'TKL_CTR1-DRK-2': 'CTR1-DRK-2',
+  'TKL_Gdt': 'Growth-Differentiation Transition',
+  'PEK_GCN2': 'Pancreatic eIF2alpha kinase, General Control Non-derepressible',
+  'PEK_PEK': 'Pancreatic eIF2alpha kinase',
+  'SCY1_SCYL1': 'SCY1-like 1',
+  'SCY1_SCYL2': 'SCY1-like 2',
+  'Aur': 'Aurora kinases',
+  'BUB': 'Mitotic checkpoint kinase BUB1',
+  'IRE1': 'Inositol Requiring / ERN (ER-to-nucleus signaling)',
+  'NAK': 'Numb-Associated Kinase',
+  'NEK': 'NimA-Related Kinase (NRK)',
+  'TLK': 'Tousled-like kinase',
+  'TTK': 'TTK',
+  'ULK_Fused': 'Unc-51 Like Kinase, Fused',
+  'ULK_ULK4': 'Unc-51 Like Kinase 4',
+  'WEE': 'WEE',
+  'WNK_NRBP': 'With No Lysine (K) kinases / nuclear receptor binding protein',
+  'Group-Pl-2': 'Group Plant-specific 2',
+  'Group-Pl-3': 'Group Plant-specific 3',
+  'Group-Pl-4': 'Group Plant-specific 4',
+};
 
-const trFamilies = computed(() => {
-  return allFamilies.value.filter(f => TR_FAMILIES.has(f));
-});
+function pkDesc(fam: string): string {
+  return PK_DESCRIPTIONS[fam] || '';
+}
+
+// Categorize families
+const tfFamilies = computed(() => allFamilies.value.filter(f => TF_FAMILIES.has(f)));
+const trFamilies = computed(() => allFamilies.value.filter(f => TR_FAMILIES.has(f)));
 
 const pkFamilies = computed(() => {
   const pk = new Set<string>();
   for (const f of allFamilies.value) {
     if (TF_FAMILIES.has(f) || TR_FAMILIES.has(f)) continue;
-    if (PK_GROUP_PREFIXES.some(p => f.startsWith(p))) {
-      pk.add(f);
-    }
+    if (PK_GROUP_PREFIXES.some(p => f.startsWith(p))) pk.add(f);
   }
   return [...pk];
 });
@@ -92,8 +156,19 @@ const pkGroups = computed(() => {
     if (!groups[group]) groups[group] = [];
     groups[group].push(f);
   }
-  return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  // Sort: groups by name, members by name
+  return Object.entries(groups)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([group, members]) => [group, members.sort()]);
 });
+
+// Expand / Collapse all PK groups
+function expandAllPk() {
+  pkExpanded.value = pkGroups.value.map(([g]) => g as string);
+}
+function collapseAllPk() {
+  pkExpanded.value = [];
+}
 
 // Load families from API
 async function loadFamilies() {
@@ -167,28 +242,32 @@ const tabStyle = (t: string) => ({
           style="cursor:pointer;font-size:12px;"
           @click="selectFamily(fam)"
         >
-          {{ fam }} ({{ fam === selectedFamily && geneTotal ? geneTotal : '' }})
+          {{ fam }}
         </el-tag>
       </div>
     </template>
 
-    <!-- PK: grouped tree -->
+    <!-- PK: tree with descriptions -->
     <template v-if="activeTab === 'PK'">
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <el-button size="small" text @click="expandAllPk">Expand All</el-button>
+        <el-button size="small" text @click="collapseAllPk">Collapse All</el-button>
+      </div>
       <div style="margin-bottom:20px;">
         <el-collapse v-model="pkExpanded">
-          <el-collapse-item v-for="[group, members] in pkGroups" :key="group" :title="`${group}  (${members.length})`" :name="group">
-            <div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 0;">
-              <el-tag
-                v-for="fam in members"
-                :key="fam"
-                :type="selectedFamily === fam ? 'primary' : 'info'"
-                :effect="selectedFamily === fam ? 'dark' : 'plain'"
-                size="default"
-                style="cursor:pointer;font-size:12px;"
-                @click="selectFamily(fam)"
-              >
+          <el-collapse-item v-for="[group, members] in pkGroups" :key="group" :name="group">
+            <template #title>
+              <span style="font-weight:600;">Group {{ group }}</span>
+              <span style="color:#909399;margin-left:8px;">({{ members.length }})</span>
+            </template>
+            <div style="font-size:13px;line-height:2;">
+              <div v-for="fam in members" :key="fam"
+                style="padding:2px 0;cursor:pointer;"
+                :style="{ color: selectedFamily === fam ? '#409eff' : '#303133', fontWeight: selectedFamily === fam ? '600' : '400' }"
+                @click="selectFamily(fam)">
                 {{ fam }}
-              </el-tag>
+                <span v-if="pkDesc(fam)" style="color:#909399;font-size:12px;"> — {{ pkDesc(fam) }}</span>
+              </div>
             </div>
           </el-collapse-item>
         </el-collapse>
@@ -200,6 +279,7 @@ const tabStyle = (t: string) => ({
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
         <el-button text size="small" @click="selectFamily(selectedFamily)">← Close</el-button>
         <h4 style="margin:0;">{{ selectedFamily }}</h4>
+        <span v-if="pkDesc(selectedFamily)" style="color:#909399;font-size:12px;">— {{ pkDesc(selectedFamily) }}</span>
         <span style="color:#888;font-size:12px;">{{ geneTotal }} genes</span>
       </div>
 
