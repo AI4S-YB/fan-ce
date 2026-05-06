@@ -543,6 +543,42 @@ class PhenomeSourceColumn(Base):
     create_time = Column(Integer, comment="创建时间")
 
 
+class PhenomeTrial(Base):
+    __tablename__ = "phn_trial"
+
+    id = Column(Integer, primary_key=True, index=True)
+    dataset_id = Column(Integer, index=True, comment="dataset ID")
+    version_id = Column(Integer, index=True, comment="version ID")
+    asset_id = Column(Integer, index=True, comment="asset ID")
+    trial_name = Column(String(256), comment="试验名称")
+    location = Column(String(128), comment="地点")
+    year = Column(Integer, comment="年份")
+    season = Column(String(64), comment="季节")
+    trial_type = Column(String(64), comment="试验类型")
+    design_type = Column(String(64), comment="设计类型")
+    program_id = Column(Integer, nullable=True, index=True, comment="关联育种项目 ID")
+    meta_json = Column(Text, comment="扩展元数据")
+    create_time = Column(Integer, comment="创建时间")
+    update_time = Column(Integer, comment="更新时间")
+
+
+class PhenomePlot(Base):
+    __tablename__ = "phn_plot"
+
+    id = Column(Integer, primary_key=True, index=True)
+    trial_id = Column(Integer, ForeignKey("phn_trial.id", ondelete="RESTRICT"), nullable=False, index=True, comment="试验 ID")
+    dataset_id = Column(Integer, index=True, comment="dataset ID")
+    version_id = Column(Integer, index=True, comment="version ID")
+    asset_id = Column(Integer, index=True, comment="asset ID")
+    plot_code = Column(String(64), comment="Plot 编码")
+    block_no = Column(Integer, comment="区组编号")
+    replicate_no = Column(Integer, comment="重复编号")
+    subject_id = Column(Integer, ForeignKey("phn_subject.id", ondelete="SET NULL"), nullable=True, index=True, comment="品种 ID")
+    meta_json = Column(Text, comment="扩展元数据")
+    create_time = Column(Integer, comment="创建时间")
+    update_time = Column(Integer, comment="更新时间")
+
+
 class PhenomeObservation(Base):
     __tablename__ = "phn_observation"
     __table_args__ = (
