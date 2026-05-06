@@ -40,15 +40,13 @@ async function loadExampleData(datasetId: number) {
   exampleLoading.value = true;
   try {
     const geneData: any = await execute(datasetId, 'genes_list', { max_records: 20 }, assetCode);
-    geneOptions.value = (geneData?.data?.items || geneData?.items || []).map((g: any) => ({
-      label: String(g), value: String(g),
-    }));
+    const rawGenes = geneData?.data?.genes || geneData?.genes || geneData?.data?.items || geneData?.items || [];
+    geneOptions.value = rawGenes.map((g: any) => ({ label: String(g), value: String(g) }));
     selectedGenes.value = geneOptions.value.slice(0, 5).map(g => g.value);
 
     const sampleData: any = await execute(datasetId, 'samples_list', { max_records: 20 }, assetCode);
-    sampleOptions.value = (sampleData?.data?.items || sampleData?.items || []).map((s: any) => ({
-      label: String(s), value: String(s),
-    }));
+    const rawSamples = sampleData?.data?.samples || sampleData?.samples || sampleData?.data?.items || sampleData?.items || [];
+    sampleOptions.value = rawSamples.map((s: any) => ({ label: String(s), value: String(s) }));
     selectedSamples.value = sampleOptions.value.slice(0, 5).map(s => s.value);
 
     if (selectedGenes.value.length) await runQuery();
