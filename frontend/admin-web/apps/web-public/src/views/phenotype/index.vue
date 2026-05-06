@@ -16,6 +16,7 @@ const selectedTrials = ref<string[]>([]);
 const exampleLoading = ref(false);
 const traitOptions = ref<{ label: string; value: string }[]>([]);
 const trialOptions = ref<{ label: string; value: string }[]>([]);
+const exampleHint = ref('');
 
 loadDatasets({ dataset_type: 'phenome' });
 
@@ -34,6 +35,7 @@ async function runQuery() {
 async function loadExampleData(datasetId: number) {
   const assetCode = getAssetCode();
   exampleLoading.value = true;
+  exampleHint.value = '';
   try {
     // Load traits
     const traitData: any = await execute(datasetId, 'trait_list', { limit: 20 }, assetCode);
@@ -42,7 +44,8 @@ async function loadExampleData(datasetId: number) {
       value: String(t.trait_code || t.name),
     }));
     traitOptions.value = traits;
-    selectedTraits.value = traits.slice(0, 3).map((t: any) => t.value);
+    const pickedTraits = traits.slice(0, 3);
+    selectedTraits.value = pickedTraits.map((t: any) => t.value);
 
     // Load trials
     const trialData: any = await execute(datasetId, 'trial_list', {}, assetCode);
@@ -53,7 +56,11 @@ async function loadExampleData(datasetId: number) {
     trialOptions.value = trials;
     if (trials.length > 0) selectedTrials.value = [trials[0].value];
 
-    // Run query with example data
+    // Show hint with what was selected
+    const traitNames = pickedTraits.map((t: any) => t.label).join(', ');
+    const trialName = trials[0]?.label || '';
+    exampleHint.value = `Example: ${traitNames}${trialName ? ' · Trial: ' + trialName : ''}`;
+
     if (selectedTraits.value.length) await runQuery();
   } finally {
     exampleLoading.value = false;
@@ -73,7 +80,7 @@ watch(selectedId, async (id) => {
   selectedTrials.value = [];
   traitOptions.value = [];
   trialOptions.value = [];
-  await loadExampleData(id);
+  exampleHint.value = '';
 });
 </script>
 
@@ -91,6 +98,7 @@ watch(selectedId, async (id) => {
       <el-button type="primary" :loading="queryLoading" @click="runQuery">Query</el-button>
       <el-button :loading="exampleLoading" @click="tryExample">Try Example</el-button>
     </div>
+    <div v-if="exampleHint" style="font-size:12px;color:#67c23a;margin-bottom:12px;">{{ exampleHint }}</div>
     <DataVisualization :result="queryResult" :loading="queryLoading" />
   </div>
 </template>
