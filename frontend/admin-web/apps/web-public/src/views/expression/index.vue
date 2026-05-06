@@ -59,7 +59,7 @@ async function loadExampleData(datasetId: number) {
     const pickedSamples = samples.slice(0, 5);
     selectedSamples.value = pickedSamples.map((s: any) => s.value);
 
-    exampleHint.value = `Example: ${pickedGenes.map(g => g.label).join(', ')} × ${pickedSamples.map(s => s.label).join(', ')}`;
+    exampleHint.value = `Example: ${pickedGenes.map((g: any) => g.label).join(', ')} × ${pickedSamples.map((s: any) => s.label).join(', ')}`;
 
     if (selectedGenes.value.length) await runQuery();
   } finally {
