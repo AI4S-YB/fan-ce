@@ -51,7 +51,7 @@ provide<Ref<boolean>>('genomeLoading', loading);
       <div style="display:flex;gap:0;border-bottom:2px solid #e5e5e5;margin-bottom:20px;">
         <div :style="tabStyle('home')" @click="navigate('home')">Overview</div>
         <div :style="tabStyle('search')" @click="navigate('search')">Gene Search</div>
-        <div :style="tabStyle('tf')" @click="navigate('tf')">Transcription Factors</div>
+        <div :style="tabStyle('tf')" @click="navigate('tf')">TFs/TRs/PKs</div>
 
         <el-dropdown trigger="click" style="display:flex;">
           <div :style="tabStyle('tools')">Tools ▾</div>
