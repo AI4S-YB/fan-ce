@@ -16,7 +16,6 @@ const selectedGenes = ref<string[]>([]);
 const selectedSamples = ref<string[]>([]);
 const selectedType = ref('count');
 const exampleLoading = ref(false);
-const exampleHint = ref('');
 
 const geneOptions = ref<{ label: string; value: string }[]>([]);
 const sampleOptions = ref<{ label: string; value: string }[]>([]);
@@ -39,27 +38,18 @@ async function runQuery() {
 async function loadExampleData(datasetId: number) {
   const assetCode = getAssetCode();
   exampleLoading.value = true;
-  exampleHint.value = '';
   try {
     const geneData: any = await execute(datasetId, 'genes_list', { max_records: 20 }, assetCode);
-    const genes = (geneData?.data?.items || geneData?.items || []).map((g: any) => ({
-      label: String(g),
-      value: String(g),
+    geneOptions.value = (geneData?.data?.items || geneData?.items || []).map((g: any) => ({
+      label: String(g), value: String(g),
     }));
-    geneOptions.value = genes;
-    const pickedGenes = genes.slice(0, 5);
-    selectedGenes.value = pickedGenes.map((g: any) => g.value);
+    selectedGenes.value = geneOptions.value.slice(0, 5).map(g => g.value);
 
     const sampleData: any = await execute(datasetId, 'samples_list', { max_records: 20 }, assetCode);
-    const samples = (sampleData?.data?.items || sampleData?.items || []).map((s: any) => ({
-      label: String(s),
-      value: String(s),
+    sampleOptions.value = (sampleData?.data?.items || sampleData?.items || []).map((s: any) => ({
+      label: String(s), value: String(s),
     }));
-    sampleOptions.value = samples;
-    const pickedSamples = samples.slice(0, 5);
-    selectedSamples.value = pickedSamples.map((s: any) => s.value);
-
-    exampleHint.value = `Example: ${pickedGenes.map((g: any) => g.label).join(', ')} × ${pickedSamples.map((s: any) => s.label).join(', ')}`;
+    selectedSamples.value = sampleOptions.value.slice(0, 5).map(s => s.value);
 
     if (selectedGenes.value.length) await runQuery();
   } finally {
@@ -80,30 +70,37 @@ watch(selectedDatasetId, async (id) => {
   selectedSamples.value = [];
   geneOptions.value = [];
   sampleOptions.value = [];
-  exampleHint.value = '';
 });
 </script>
 
 <template>
   <div>
     <h2>Expression Query</h2>
-    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;">
       <el-select v-model="selectedDatasetId" placeholder="Select transcriptome dataset" style="width:360px;">
         <el-option v-for="ds in datasets" :key="ds.id" :label="ds.title || ds.dataset_code" :value="ds.id" />
       </el-select>
     </div>
-    <div v-if="selectedDatasetId" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
-      <MultiSelectDropdown v-model="selectedGenes" :options="geneOptions" placeholder="e.g. select 1-5 genes" />
-      <MultiSelectDropdown v-model="selectedSamples" :options="sampleOptions" placeholder="e.g. select 1-5 samples" />
-      <el-select v-model="selectedType" style="width:140px;">
-        <el-option label="Count" value="count" />
-        <el-option label="FPKM" value="fpkm" />
-        <el-option label="TPM" value="tpm" />
-      </el-select>
+    <div v-if="selectedDatasetId" style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div>
+        <div style="font-size:12px;color:#888;margin-bottom:4px;">Genes</div>
+        <MultiSelectDropdown v-model="selectedGenes" :options="geneOptions" placeholder="Select genes" />
+      </div>
+      <div>
+        <div style="font-size:12px;color:#888;margin-bottom:4px;">Samples</div>
+        <MultiSelectDropdown v-model="selectedSamples" :options="sampleOptions" placeholder="Select samples" />
+      </div>
+      <div>
+        <div style="font-size:12px;color:#888;margin-bottom:4px;">Data Type</div>
+        <el-select v-model="selectedType" style="width:140px;">
+          <el-option label="Count" value="count" />
+          <el-option label="FPKM" value="fpkm" />
+          <el-option label="TPM" value="tpm" />
+        </el-select>
+      </div>
       <el-button type="primary" :loading="queryLoading" @click="runQuery">Query</el-button>
       <el-button :loading="exampleLoading" @click="tryExample">Try Example</el-button>
     </div>
-    <div v-if="exampleHint" style="font-size:12px;color:#67c23a;margin-bottom:12px;">{{ exampleHint }}</div>
     <DataVisualization :result="queryResult" :loading="queryLoading" />
   </div>
 </template>
