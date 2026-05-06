@@ -37,6 +37,13 @@ function onSubmit() {
   if (!v || !detectedType.value) return;
   emit('search', { type: detectedType.value, value: v });
 }
+
+// Exposed so parent can fill search box from example chips
+function setInput(value: string) {
+  input.value = value;
+}
+
+defineExpose({ setInput });
 </script>
 
 <template>

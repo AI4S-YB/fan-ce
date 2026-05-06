@@ -19,8 +19,9 @@ const searchInfo = ref('');
 
 // Linked genome dataset (via lineage) for gene→region lookup
 const linkedGenome = ref<{ id: number; code: string; annoAssetCode: string | null } | null>(null);
+const searchBarRef = ref<InstanceType<typeof SmartSearchBar> | null>(null);
 
-// Example chips for the search bar (region + 3 gene IDs from linked genome)
+// Example chips populated from backend (region + 3 gene IDs)
 const exampleRegion = ref<string>('');
 const exampleGenes = ref<string[]>([]);
 
@@ -35,14 +36,10 @@ async function resolveLinkedGenome() {
   try {
     const edges = lineage.value || [];
     const genomeEdge = edges.find((e: any) =>
-      e.relation_type === 'references'
-      && e.dst_dataset_id
-      && e.dst_dataset_code
-      && e.dst_dataset_id !== selectedId.value
+      e.relation_type === 'references' && e.dst_dataset_id && e.dst_dataset_code
     );
     if (!genomeEdge) return;
 
-    // Load genome detail to get its annotation asset_code
     const { post } = useRequest();
     const PRE = '/public/dataset';
     const genomeInfo: any = await post(`${PRE}/info`, { id: genomeEdge.dst_dataset_id });
@@ -72,10 +69,8 @@ async function onDatasetSelect(datasetId: number) {
   isDraft.value = detail.value?.lifecycle_state === 'draft';
   const assetCode = getAssetCode();
 
-  // Resolve linked genome from lineage (loaded by useDatasetDetail)
   await resolveLinkedGenome();
 
-  // Load samples
   try {
     const data = await execute(datasetId, 'samples_list', {}, assetCode);
     sampleOptions.value = data?.data?.samples || data?.samples || [];
@@ -83,12 +78,10 @@ async function onDatasetSelect(datasetId: number) {
     console.error('Failed to load samples:', e);
   }
 
-  // Load examples (region + gene IDs)
   await loadExamples(datasetId, assetCode);
 }
 
 async function loadExamples(datasetId: number, assetCode?: string) {
-  // Region example from variome
   try {
     const data = await execute(datasetId, 'region_example', {}, assetCode);
     const inner = data?.data || data;
@@ -101,7 +94,6 @@ async function loadExamples(datasetId: number, assetCode?: string) {
     console.warn('Failed to load region example:', e);
   }
 
-  // Gene examples from linked annotation adapter
   if (linkedGenome.value?.annoAssetCode) {
     try {
       const data: any = await execute(
@@ -178,14 +170,9 @@ async function handleSearch({ type, value }: { type: string; value: string }) {
   }
 }
 
-async function tryRegionExample() {
-  if (!selectedId.value || !exampleRegion.value) return;
-  await handleSearch({ type: 'region', value: exampleRegion.value });
-}
-
-async function tryGeneExample(geneId: string) {
-  if (!selectedId.value) return;
-  await handleSearch({ type: 'gene', value: geneId });
+// Fill the search box when user clicks an example chip
+function fillSearch(value: string) {
+  searchBarRef.value?.setInput(value);
 }
 </script>
 
@@ -206,22 +193,22 @@ async function tryGeneExample(geneId: string) {
     </el-alert>
 
     <div v-if="selectedId">
-      <SmartSearchBar placeholder="Search genes, regions, or variant IDs..." @search="handleSearch" />
+      <SmartSearchBar ref="searchBarRef" placeholder="Search genes, regions, or variant IDs..." @search="handleSearch" />
 
       <div v-if="searchInfo" style="margin:8px 0;font-size:12px;color:#409eff;">
         {{ searchInfo }}
       </div>
 
-      <!-- Examples row -->
+      <!-- Examples row: chips fill the search box -->
       <div v-if="exampleRegion || exampleGenes.length > 0"
         style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0;">
         <span style="font-size:12px;color:#909399;">Examples:</span>
         <el-tag v-if="exampleRegion" size="small" type="info" effect="plain"
-          style="cursor:pointer;" @click="tryRegionExample">
+          style="cursor:pointer;" @click="fillSearch(exampleRegion)">
           Region: {{ exampleRegion }}
         </el-tag>
         <el-tag v-for="g in exampleGenes" :key="g" size="small" type="success" effect="plain"
-          style="cursor:pointer;" @click="tryGeneExample(g)">
+          style="cursor:pointer;" @click="fillSearch(g)">
           Gene: {{ g }}
         </el-tag>
       </div>
@@ -231,7 +218,6 @@ async function tryGeneExample(geneId: string) {
           @update="(v: string[]) => selectedSamples = v" />
       </div>
 
-      <!-- Gene→region link status -->
       <div v-if="linkedGenome" style="font-size:12px;color:#67c23a;margin-top:4px;">
         Gene lookup enabled via {{ linkedGenome.code }}
       </div>
@@ -257,7 +243,7 @@ async function tryGeneExample(geneId: string) {
       </div>
 
       <el-empty v-if="!queryLoading && !queryResult"
-        description="Enter a search query to find variants. Click an example chip above to try a quick demo." />
+        description="Enter a search query or click an example chip above to get started." />
     </div>
   </div>
 </template>
