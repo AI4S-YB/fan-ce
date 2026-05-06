@@ -8,7 +8,7 @@ import AiChatDrawer from './components/AiChatDrawer/index.vue';
 
 const router = useRouter();
 const chatVisible = ref(false);
-const { get } = useRequest();
+const { get, post } = useRequest();
 
 interface SiteInfo {
   site_name: string;
@@ -43,9 +43,19 @@ async function loadSiteInfo() {
 }
 
 const { items: genomes, load: loadGenomes } = useDatasetList();
-onMounted(() => {
+const hasPublicGermplasm = ref(true); // hidden if no public data
+
+onMounted(async () => {
   loadGenomes({ dataset_type: 'genome' });
   loadSiteInfo();
+
+  // Check if any public germplasm exist
+  try {
+    const data: any = await post('/public/germplasm/list', { page: 1, size: 1 });
+    hasPublicGermplasm.value = (data?.total || 0) > 0;
+  } catch {
+    hasPublicGermplasm.value = false;
+  }
 });
 
 function goGenome(id: number) {
@@ -73,7 +83,7 @@ function goGenome(id: number) {
       </el-dropdown>
 
       <nav class="nav-links">
-        <router-link to="/germplasm">Germplasm</router-link>
+        <router-link v-if="hasPublicGermplasm" to="/germplasm">Germplasm</router-link>
         <router-link to="/genotype">Genotype</router-link>
         <router-link to="/phenotype">Phenotype</router-link>
         <router-link to="/expression">Expression</router-link>
