@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useDatasetList, useDatasetDetail, useDatasetQuery } from '@/composables/useDatasets';
+import { useRequest } from '@/composables/useRequest';
 import SmartSearchBar from '@/components/SmartSearchBar.vue';
 import VariantTable from '@/components/VariantTable.vue';
 import VariantDensityPlot from '@/components/VariantDensityPlot.vue';
 import SampleFilter from '@/components/SampleFilter.vue';
 
 const { items: datasets, load: loadDatasets } = useDatasetList();
-const { detail, load: loadDetail } = useDatasetDetail();
+const { detail, lineage, load: loadDetail } = useDatasetDetail();
 const { queryLoading, queryResult, execute } = useDatasetQuery();
 
 const selectedId = ref<number | null>(null);
@@ -16,10 +17,42 @@ const sampleOptions = ref<string[]>([]);
 const selectedSamples = ref<string[]>([]);
 const searchInfo = ref('');
 
+// Linked genome dataset (via lineage) for gene→region lookup
+const linkedGenome = ref<{ id: number; code: string; annoAssetCode: string | null } | null>(null);
+
 loadDatasets({ dataset_type: 'variome' });
 
 function getAssetCode(): string | undefined {
   return detail.value?.query_entry_asset?.asset_code;
+}
+
+async function resolveLinkedGenome() {
+  linkedGenome.value = null;
+  try {
+    const edges = lineage.value || [];
+    const genomeEdge = edges.find((e: any) =>
+      e.relation_type === 'references'
+      && e.dst_dataset_id
+      && e.dst_dataset_code
+      && e.dst_dataset_id !== selectedId.value
+    );
+    if (!genomeEdge) return;
+
+    // Load genome detail to get its annotation asset_code
+    const { post } = useRequest();
+    const PRE = '/public/dataset';
+    const genomeInfo: any = await post(`${PRE}/info`, { id: genomeEdge.dst_dataset_id });
+    const annoAsset = (genomeInfo?.assets || []).find(
+      (a: any) => a.asset_type === 'functional_annotation' && a.is_query_entry
+    );
+    linkedGenome.value = {
+      id: genomeEdge.dst_dataset_id!,
+      code: genomeEdge.dst_dataset_code || genomeInfo?.dataset_code || '',
+      annoAssetCode: annoAsset?.asset_code || null,
+    };
+  } catch (e) {
+    console.warn('Failed to resolve linked genome:', e);
+  }
 }
 
 async function onDatasetSelect(datasetId: number) {
@@ -27,11 +60,16 @@ async function onDatasetSelect(datasetId: number) {
   sampleOptions.value = [];
   selectedSamples.value = [];
   queryResult.value = null;
+  linkedGenome.value = null;
 
   await loadDetail(datasetId);
   isDraft.value = detail.value?.lifecycle_state === 'draft';
   const assetCode = getAssetCode();
 
+  // Resolve linked genome from lineage (loaded by useDatasetDetail)
+  await resolveLinkedGenome();
+
+  // Load samples
   try {
     const data = await execute(datasetId, 'samples_list', {}, assetCode);
     sampleOptions.value = data?.data?.samples || data?.samples || [];
@@ -52,16 +90,38 @@ function getVariantList(): { chrom: string; pos: number }[] {
     .filter((v: { chrom: string; pos: number }) => v.chrom && !isNaN(v.pos));
 }
 
+async function resolveGeneToRegion(geneId: string): Promise<string | null> {
+  if (!linkedGenome.value?.annoAssetCode) {
+    searchInfo.value = `No annotation dataset linked — cannot resolve gene "${geneId}"`;
+    return null;
+  }
+  const data: any = await execute(
+    linkedGenome.value.id,
+    'search_genes',
+    { keyword: geneId, size: 1 },
+    linkedGenome.value.annoAssetCode,
+  );
+  const genes = data?.data?.items || data?.items || [];
+  if (genes.length === 0) {
+    searchInfo.value = `Gene "${geneId}" not found`;
+    return null;
+  }
+  const gene = genes[0];
+  const pad = 5000;
+  return `${gene.chrom}:${Math.max(1, gene.start - pad)}-${gene.stop + pad}`;
+}
+
 async function handleSearch({ type, value }: { type: string; value: string }) {
   if (!selectedId.value) return;
   const assetCode = getAssetCode();
 
   if (type === 'gene') {
     searchInfo.value = `Looking up gene: ${value}`;
-    // Gene→region via annotation adapter — see Task 7
-    // For now, query the genome's annotation linked to this variome
+    const region = await resolveGeneToRegion(value);
+    if (!region) return;
+    searchInfo.value = `Gene ${value} → ${region}`;
     await execute(selectedId.value, 'query', {
-      regions: [value],
+      regions: [region],
       include_samples: selectedSamples.value.length > 0 ? selectedSamples.value : undefined,
     }, assetCode);
   } else if (type === 'region') {
@@ -98,7 +158,6 @@ async function tryExample() {
     console.error('Failed to load example:', e);
   }
 }
-
 </script>
 
 <template>
@@ -128,6 +187,11 @@ async function tryExample() {
         <SampleFilter v-if="sampleOptions.length > 0" :samples="sampleOptions"
           @update="(v: string[]) => selectedSamples = v" />
         <el-button text size="small" @click="tryExample">Try Example</el-button>
+      </div>
+
+      <!-- Gene→region link status -->
+      <div v-if="linkedGenome" style="font-size:12px;color:#67c23a;margin-top:4px;">
+        Gene lookup enabled via {{ linkedGenome.code }}
       </div>
 
       <div v-if="queryResult" style="margin-top:16px;">

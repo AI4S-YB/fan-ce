@@ -51,10 +51,12 @@ export interface PublicLineageItem {
   src_dataset_id?: number;
   src_dataset_title?: string;
   src_dataset_type?: string;
+  src_dataset_code?: string;
   src_version?: string;
   dst_dataset_id?: number;
   dst_dataset_title?: string;
   dst_dataset_type?: string;
+  dst_dataset_code?: string;
   dst_version?: string;
 }
 

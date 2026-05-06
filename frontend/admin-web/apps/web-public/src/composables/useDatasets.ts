@@ -46,8 +46,8 @@ export function useDatasetDetail() {
       detail.value = data;
       if (data?.dataset_code) {
         try {
-          const lin: any = await post(`${PRE}/${data.dataset_code}/lineage`);
-          lineage.value = lin?.items || lin || [];
+          const lin: any = await get(`${PRE}/${data.dataset_code}/lineage`);
+          lineage.value = lin?.lineage_edges || lin?.items || lin || [];
         } catch { /* lineage optional */ }
       }
     } catch (e: any) {
