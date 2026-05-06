@@ -22,7 +22,11 @@ const { loading: dlLoading, files: dlFiles, loadDownloads, downloadUrl } = useDo
 const dsCode = computed(() => detail?.value?.dataset_code || '');
 
 watch([tool, dsCode], ([t, code]) => {
-  if (t === 'download' && code) loadDownloads(code);
+  console.log('Tools watcher:', t, code, 'detail keys:', Object.keys(detail?.value || {}));
+  if (t === 'download' && code) {
+    console.log('Calling loadDownloads for', code);
+    loadDownloads(code);
+  }
 });
 </script>
 <template>
