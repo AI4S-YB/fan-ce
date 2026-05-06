@@ -45,7 +45,7 @@ async function runQuery() {
       samples.forEach((s, j) => { row[s] = matrix[i]?.[j] ?? null; });
       return row;
     });
-    queryResult.value = { rows, total: rows.length, data_type: data?.data_type };
+    queryResult.value = { rows, total: rows.length } as any;
   }
 }
 
