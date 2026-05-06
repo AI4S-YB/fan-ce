@@ -337,7 +337,7 @@ async def _execute_search_germplasm(db, arguments: dict, user) -> dict:
         keyword=keyword,
         taxonomy_tax_id=taxonomy_tax_id,
     )
-    result = breeding_domain_service.list_germplasms(db=db, request_data=request_data)
+    result = breeding_domain_service.list_germplasms(db=db, request_data=request_data, public_only=(user is None))
 
     items = []
     for item in result.get("items", []):
@@ -650,7 +650,7 @@ DATASET_TOOLS = [
             },
         },
         execute=_execute_search_germplasm,
-        require_admin=True,
+        require_admin=False,
     ),
 ]
 
