@@ -113,6 +113,6 @@ watch(selectedDatasetId, async (id) => {
       <el-button type="primary" :loading="queryLoading" @click="runQuery">Query</el-button>
       <el-button :loading="exampleLoading" @click="tryExample">Try Example</el-button>
     </div>
-    <DataVisualization :result="queryResult" :loading="queryLoading" />
+    <DataVisualization :result="queryResult" :loading="queryLoading" :precision="selectedType === 'fpkm' ? 2 : undefined" />
   </div>
 </template>
