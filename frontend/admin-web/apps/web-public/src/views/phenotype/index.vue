@@ -11,9 +11,9 @@ const { queryLoading, queryResult, loadCapabilities, execute } = useDatasetQuery
 
 const selectedId = ref<number | null>(null);
 const caps = ref<QueryCapabilities | null>(null);
-const selectedTrait = ref('');
+const selectedTraits = ref<string[]>([]);
 const selectedPlots = ref<string[]>([]);
-const selectedBlock = ref<number | null>(null);
+const selectedBlocks = ref<number[]>([]);
 const exampleLoading = ref(false);
 
 const traitOptions = ref<{ label: string; value: string }[]>([]);
@@ -26,15 +26,21 @@ function getAssetCode(): string | undefined {
 }
 
 const filteredPlotOptions = computed(() => {
-  if (!selectedBlock.value) return plotOptions.value;
-  return plotOptions.value.filter(p => p._block === selectedBlock.value);
+  if (!selectedBlocks.value.length) return plotOptions.value;
+  return plotOptions.value.filter(p => selectedBlocks.value.includes(p._block));
 });
 
 async function runQuery() {
-  if (!selectedId.value || !selectedTrait.value) return;
-  const params: Record<string, unknown> = { trait: selectedTrait.value, limit: 100 };
+  if (!selectedId.value || !selectedTraits.value.length) return;
+  const params: Record<string, unknown> = { limit: 100 };
+  if (selectedTraits.value.length === 1) {
+    params.trait = selectedTraits.value[0];
+  } else {
+    params.trait_codes = selectedTraits.value;
+  }
   if (selectedPlots.value.length) params.plot_ids = selectedPlots.value;
-  await execute(selectedId.value, 'trait_values', params, getAssetCode());
+  const op = selectedTraits.value.length > 1 ? 'multi_trait_query' : 'trait_values';
+  await execute(selectedId.value, op, params, getAssetCode());
 }
 
 async function loadExampleData(datasetId: number) {
@@ -46,7 +52,7 @@ async function loadExampleData(datasetId: number) {
       label: t.trait_name || t.name,
       value: String(t.trait_code || t.name),
     }));
-    if (traitOptions.value.length > 0) selectedTrait.value = traitOptions.value[0].value;
+    if (traitOptions.value.length > 0) selectedTraits.value = [traitOptions.value[0].value];
 
     const plotData: any = await execute(datasetId, 'plot_list', { limit: 100 }, assetCode);
     const rawPlots = plotData?.data?.items || plotData?.items || [];
@@ -57,7 +63,7 @@ async function loadExampleData(datasetId: number) {
     }));
     selectedPlots.value = plotOptions.value.slice(0, 6).map(p => p.value);
 
-    if (selectedTrait.value) await runQuery();
+    if (selectedTraits.value.length) await runQuery();
   } finally {
     exampleLoading.value = false;
   }
@@ -72,11 +78,11 @@ watch(selectedId, async (id) => {
   if (!id) return;
   caps.value = await loadCapabilities(id);
   await loadDetail(id);
-  selectedTrait.value = '';
+  selectedTraits.value = [];
   selectedPlots.value = [];
   traitOptions.value = [];
   plotOptions.value = [];
-  selectedBlock.value = null;
+  selectedBlocks.value = [];
 });
 </script>
 
@@ -95,16 +101,11 @@ watch(selectedId, async (id) => {
         <div style="display:flex;flex-direction:column;gap:16px;min-width:220px;">
           <div>
             <div style="font-size:13px;font-weight:500;color:#606266;margin-bottom:6px;">Trait</div>
-            <el-select v-model="selectedTrait" placeholder="Select trait" style="width:100%;" filterable @change="runQuery">
-              <el-option v-for="t in traitOptions" :key="t.value" :label="t.label" :value="t.value" />
-            </el-select>
+            <MultiSelectDropdown v-model="selectedTraits" :options="traitOptions" placeholder="Select traits" />
           </div>
           <div>
             <div style="font-size:13px;font-weight:500;color:#606266;margin-bottom:6px;">Block</div>
-            <el-select v-model="selectedBlock" placeholder="All blocks" clearable style="width:100%;">
-              <el-option label="Block 1" :value="1" />
-              <el-option label="Block 2" :value="2" />
-            </el-select>
+            <MultiSelectDropdown v-model="selectedBlocks" :options="[{label:'Block 1',value:1},{label:'Block 2',value:2}]" placeholder="All blocks" />
           </div>
         </div>
 
