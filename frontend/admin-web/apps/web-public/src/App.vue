@@ -73,7 +73,6 @@ function goGenome(id: number) {
           <el-dropdown-menu>
             <el-dropdown-item v-for="g in genomes" :key="g.id" @click="goGenome(g.id)">
               {{ g.title || g.dataset_code }}
-              <span style="color:#999;font-size:11px;margin-left:4px;">{{ g.organism }}</span>
             </el-dropdown-item>
             <el-dropdown-item divided>
               <router-link to="/genomes" style="color:#409eff;font-size:12px;">View all genomes →</router-link>
