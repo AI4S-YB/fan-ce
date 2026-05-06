@@ -29,6 +29,8 @@ from ..schemas import (
     BreedingGermplasmListRequest,
     BreedingGermplasmRelationshipRequest,
     BreedingGermplasmStatisticsRequest,
+    BreedingGermplasmSetPublicRequest,
+    BreedingGermplasmBatchSetPublicRequest,
     BreedingGermplasmTaxonomySearchRequest,
     BreedingGermplasmTaxonomyAuditRequest,
     BreedingGermplasmTaxonomySyncRequest,
@@ -236,6 +238,43 @@ async def breeding_germplasm_info(
             taxonomy_tax_id=request_data.taxonomy_tax_id,
         )
     )
+
+
+@breeding_router.post(
+    "/germplasm/set-public",
+    summary="设置种质资源公开状态",
+    dependencies=[Depends(ensure_taxonomy_ready)],
+)
+async def breeding_germplasm_set_public(
+    request_data: BreedingGermplasmSetPublicRequest,
+    db=Depends(get_db),
+    _user=Depends(get_active_user),
+):
+    breeding_domain_service.set_germplasm_public(
+        db=db,
+        accession_id=request_data.accession_id,
+        taxonomy_tax_id=request_data.taxonomy_tax_id,
+        is_public=request_data.is_public,
+    )
+    return response_2000(data={"ok": True})
+
+
+@breeding_router.post(
+    "/germplasm/import/set-public",
+    summary="设置导入批次公开状态",
+    dependencies=[Depends(ensure_taxonomy_ready)],
+)
+async def breeding_germplasm_batch_set_public(
+    request_data: BreedingGermplasmBatchSetPublicRequest,
+    db=Depends(get_db),
+    _user=Depends(get_active_user),
+):
+    breeding_domain_service.set_germplasm_batch_public(
+        db=db,
+        batch_id=request_data.id,
+        is_public=request_data.is_public,
+    )
+    return response_2000(data={"ok": True})
 
 
 @breeding_router.post(

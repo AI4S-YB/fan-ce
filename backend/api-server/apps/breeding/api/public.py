@@ -29,7 +29,7 @@ class PublicGermplasmInfoRequest(BaseModel):
 
 @public_germplasm_router.post("/list", summary="公开种质资源列表")
 def public_germplasm_list(request_data: PublicGermplasmListRequest, db=Depends(get_db)):
-    data = breeding_domain_service.list_germplasms(db=db, request_data=request_data)
+    data = breeding_domain_service.list_germplasms(db=db, request_data=request_data, public_only=True)
     return response_2000(data=jsonable_encoder(data))
 
 
@@ -39,5 +39,6 @@ def public_germplasm_info(request_data: PublicGermplasmInfoRequest, db=Depends(g
         db=db,
         accession_id=request_data.accession_id,
         taxonomy_tax_id=request_data.taxonomy_tax_id,
+        public_only=True,
     )
     return response_2000(data=jsonable_encoder(data))

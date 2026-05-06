@@ -84,6 +84,17 @@ class BreedingGermplasmImportBatchListRequest(BreedingPageRequest):
     taxonomy_tax_id: Optional[int] = None
 
 
+class BreedingGermplasmSetPublicRequest(BaseModel):
+    accession_id: str
+    taxonomy_tax_id: int
+    is_public: bool
+
+
+class BreedingGermplasmBatchSetPublicRequest(BaseModel):
+    id: int
+    is_public: bool
+
+
 class BreedingProgramListRequest(BreedingPageRequest):
     species_name: Optional[str] = None
 

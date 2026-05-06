@@ -1724,7 +1724,7 @@ class BreedingDomainService:
             "status": "deleted",
         }
 
-    def list_germplasms(self, db, request_data):
+    def list_germplasms(self, db, request_data, public_only=False):
         query = (
             db.query(
                 BreedingGermplasm,
@@ -1738,6 +1738,9 @@ class BreedingDomainService:
             .join(BreedingGermplasmImportBatch, BreedingGermplasm.batch_id == BreedingGermplasmImportBatch.id)
             .join(BreedingTaxonomyCache, BreedingGermplasm.taxonomy_tax_id == BreedingTaxonomyCache.tax_id)
         )
+        if public_only:
+            query = query.filter(BreedingGermplasmImportBatch.is_public == 1)
+            query = query.filter(BreedingGermplasm.is_public == 1)
         if request_data.taxonomy_tax_id is not None:
             query = query.filter(BreedingGermplasm.taxonomy_tax_id == request_data.taxonomy_tax_id)
         if request_data.batch_id is not None:
@@ -1785,6 +1788,7 @@ class BreedingDomainService:
                     "father_accession": germplasm.father_accession,
                     "mother_accession": germplasm.mother_accession,
                     "status": germplasm.status,
+                    "is_public": bool(germplasm.is_public),
                     "batch_id": germplasm.batch_id,
                     "batch_code": batch_code,
                     "source_filename": source_filename,
@@ -2120,8 +2124,39 @@ class BreedingDomainService:
             },
         }
 
-    def get_germplasm(self, db, accession_id, taxonomy_tax_id):
-        row = (
+    def set_germplasm_public(self, db, accession_id, taxonomy_tax_id, is_public):
+        germplasm = (
+            db.query(BreedingGermplasm)
+            .filter(
+                BreedingGermplasm.accession_id == accession_id,
+                BreedingGermplasm.taxonomy_tax_id == taxonomy_tax_id,
+            )
+            .first()
+        )
+        if germplasm is None:
+            raise HTTPException(status_code=404, detail="Germplasm not found")
+        germplasm.is_public = 1 if is_public else 0
+        germplasm.updated_at = func.now()
+        db.add(germplasm)
+        db.commit()
+        return {"ok": True}
+
+    def set_germplasm_batch_public(self, db, batch_id, is_public):
+        batch = (
+            db.query(BreedingGermplasmImportBatch)
+            .filter(BreedingGermplasmImportBatch.id == batch_id)
+            .first()
+        )
+        if batch is None:
+            raise HTTPException(status_code=404, detail="Batch not found")
+        batch.is_public = 1 if is_public else 0
+        batch.updated_at = func.now()
+        db.add(batch)
+        db.commit()
+        return {"ok": True}
+
+    def get_germplasm(self, db, accession_id, taxonomy_tax_id, public_only=False):
+        query = (
             db.query(
                 BreedingGermplasm,
                 BreedingGermplasmImportBatch.batch_code,
@@ -2139,8 +2174,11 @@ class BreedingDomainService:
                 BreedingGermplasm.accession_id == accession_id,
                 BreedingGermplasm.taxonomy_tax_id == taxonomy_tax_id,
             )
-            .first()
         )
+        if public_only:
+            query = query.filter(BreedingGermplasmImportBatch.is_public == 1)
+            query = query.filter(BreedingGermplasm.is_public == 1)
+        row = query.first()
         if row is None:
             return None
         (

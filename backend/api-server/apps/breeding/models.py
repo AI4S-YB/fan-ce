@@ -164,6 +164,7 @@ class BreedingGermplasmImportBatch(Base):
     warning_rows = Column(Integer, nullable=False, default=0, comment="警告行数")
     field_schema_json = Column(Text, comment="本批次字段结构快照 JSON")
     validation_report_json = Column(Text, comment="校验报告 JSON")
+    is_public = Column(Integer, nullable=False, default=0, comment="批次是否公开 0否1是")
     created_by = Column(_brd_bigint(), comment="创建人")
     updated_by = Column(_brd_bigint(), comment="更新人")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="创建时间")
@@ -196,6 +197,7 @@ class BreedingGermplasm(Base):
     status = Column(String(32), nullable=False, default="active", comment="状态")
     attributes_json = Column(Text, comment="扩展属性 JSON")
     search_text = Column(Text, comment="搜索文本")
+    is_public = Column(Integer, nullable=False, default=0, comment="是否公开 0否1是")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="创建时间")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="更新时间")
 
