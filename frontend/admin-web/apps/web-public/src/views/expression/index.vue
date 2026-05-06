@@ -35,6 +35,7 @@ async function runQuery() {
   }, getAssetCode(), selectedVersionId.value);
 
   // Transform matrix response into rows for DataVisualization
+  const data = result?.data || result;
   const genes: string[] = data?.genes || [];
   const samples: string[] = data?.samples || [];
   const rawMatrix: number[][] = data?.matrix || [];
