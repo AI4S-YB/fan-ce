@@ -201,3 +201,24 @@ export async function getGermplasmBatchRelationshipsApi(params: {
     params,
   );
 }
+
+/**
+ * 设置种质公开/私有
+ */
+export async function setGermplasmPublicApi(data: {
+  accession_id: string;
+  is_public: boolean;
+  taxonomy_tax_id: number;
+}) {
+  return requestClient.post('/breeding/germplasm/set-public', data);
+}
+
+/**
+ * 设置导入批次公开/私有
+ */
+export async function setGermplasmBatchPublicApi(data: {
+  id: number;
+  is_public: boolean;
+}) {
+  return requestClient.post('/breeding/germplasm/import/set-public', data);
+}

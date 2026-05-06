@@ -6,7 +6,7 @@ import { useRoute, useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 
-import { Button } from 'ant-design-vue';
+import { Button, Switch, message } from 'ant-design-vue';
 
 import { $t } from '@vben/locales';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -15,6 +15,7 @@ import { TableAction } from '#/components/Table';
 import GermplasmGraphModal from './components/GraphModal.vue';
 import StatisticsModal from './components/StatisticsModal.vue';
 import { formOptions, gridOptions } from './data';
+import { setGermplasmPublicApi } from './api';
 
 const route = useRoute();
 const router = useRouter();
@@ -103,6 +104,20 @@ function openFullGraphModal() {
   graphVisible.value = true;
 }
 
+async function togglePublic(row: GermplasmItem, checked: boolean) {
+  try {
+    await setGermplasmPublicApi({
+      accession_id: row.accession_id || row.id,
+      taxonomy_tax_id: row.taxonomy_tax_id!,
+      is_public: checked,
+    });
+    row.is_public = checked;
+    message.success(checked ? $t('germplasm.list.publicOn') : $t('germplasm.list.publicOff'));
+  } catch (e: any) {
+    message.error(e?.message || 'Failed');
+  }
+}
+
 function openRowGraph(row: GermplasmItem) {
   currentTaxonomyTaxId.value = row.taxonomy_tax_id || row.taxonomy?.tax_id;
   graphSelectedNodes.value = [row.accession_id || row.id];
@@ -125,6 +140,9 @@ function openRowGraph(row: GermplasmItem) {
         </Button>
         <Button @click="openImportBatchPage">{{ $t('germplasm.list.importBatch') }}</Button>
         <Button type="primary" @click="openImportPage">{{ $t('germplasm.list.import') }}</Button>
+      </template>
+      <template #is_public="{ row }">
+        <Switch :checked="row.is_public" size="small" @update:checked="(v: boolean) => togglePublic(row, v)" />
       </template>
       <template #action="{ row }">
         <TableAction

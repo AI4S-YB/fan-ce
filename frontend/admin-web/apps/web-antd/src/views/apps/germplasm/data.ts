@@ -128,13 +128,19 @@ export const generateDynamicColumns = (items: GermplasmItem[]) => {
 };
 
 function buildBaseColumns() {
-  return [
+  const columns: any[] = [
     { fixed: 'left', title: $t('germplasm.list.seq'), type: 'seq', width: 50 },
     ...fixedColumns.map((column) => ({
       field: column.dataIndex,
       title: column.title,
       width: column.width,
     })),
+    {
+      field: 'is_public',
+      title: $t('germplasm.list.public'),
+      width: 80,
+      slots: { default: 'is_public' },
+    },
     {
       field: 'action',
       fixed: 'right',
@@ -143,6 +149,7 @@ function buildBaseColumns() {
       minWidth: 120,
     },
   ];
+  return columns;
 }
 
 function applyGridColumns(gridApi: any, dynamicColumns: any[]) {

@@ -21,6 +21,7 @@ import {
   Modal,
   Select,
   Space,
+  Switch,
   Table,
   Tag,
 } from 'ant-design-vue';
@@ -31,6 +32,7 @@ import {
   getGermplasmImportBatchInfoApi,
   getGermplasmImportBatchListApi,
   getGermplasmTaxonomyOptionsApi,
+  setGermplasmBatchPublicApi,
 } from './api';
 
 defineOptions({ name: 'GermplasmImportBatchPage' });
@@ -128,6 +130,16 @@ function gotoBatchRecords(record: GermplasmImportBatchItem) {
   });
 }
 
+async function toggleBatchPublic(record: GermplasmImportBatchItem, checked: boolean) {
+  try {
+    await setGermplasmBatchPublicApi({ id: record.id, is_public: checked });
+    record.is_public = checked;
+    message.success(checked ? $t('germplasm.list.publicOn') : $t('germplasm.list.publicOff'));
+  } catch (e: any) {
+    message.error(e?.message || 'Failed');
+  }
+}
+
 const batchColumns = [
   { title: $t('germplasm.batch.batchCode'), dataIndex: 'batch_code', key: 'batch_code', width: 220 },
   {
@@ -153,6 +165,11 @@ const batchColumns = [
   { title: $t('germplasm.batch.warningRows'), dataIndex: 'warning_rows', key: 'warning_rows', width: 90 },
   { title: $t('germplasm.batch.status'), dataIndex: 'status', key: 'status', width: 110 },
   { title: $t('germplasm.batch.importTime'), dataIndex: 'created_at', key: 'created_at', width: 200 },
+  {
+    title: $t('germplasm.list.batchPublic'),
+    key: 'is_public',
+    width: 100,
+  },
 ];
 
 const issueColumns = [
@@ -279,6 +296,9 @@ onMounted(async () => {
             </template>
             <template v-else-if="column.key === 'created_at'">
               {{ record.created_at || '-' }}
+            </template>
+            <template v-else-if="column.key === 'is_public'">
+              <Switch :checked="record.is_public" size="small" @update:checked="(v: boolean) => toggleBatchPublic(record, v)" />
             </template>
           </template>
           <template #expandedRowRender="{ record }">

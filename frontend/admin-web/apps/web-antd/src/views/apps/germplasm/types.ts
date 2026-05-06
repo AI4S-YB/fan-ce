@@ -15,6 +15,7 @@ export interface GermplasmItem {
   father_accession?: null | string;
   mother_accession?: null | string;
   status?: string;
+  is_public?: boolean;
   batch_id?: number;
   batch_code?: null | string;
   source_filename?: null | string;
@@ -226,6 +227,7 @@ export interface GermplasmImportBatchItem {
   valid_rows: number;
   error_rows: number;
   warning_rows: number;
+  is_public?: boolean;
   created_by?: null | number;
   updated_by?: null | number;
   created_at?: null | string;

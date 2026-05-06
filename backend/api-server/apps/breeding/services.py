@@ -1498,6 +1498,7 @@ class BreedingDomainService:
                     "valid_rows": batch.valid_rows,
                     "error_rows": batch.error_rows,
                     "warning_rows": batch.warning_rows,
+                    "is_public": bool(batch.is_public),
                     "created_by": batch.created_by,
                     "updated_by": batch.updated_by,
                     "created_at": batch.created_at,
