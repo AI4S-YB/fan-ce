@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import {
-  Button, Space, Tag, Input, Select, Modal, Empty, message,
+  Button, Space, Tag, Input, Select, Modal, Empty, message, Switch,
 } from 'ant-design-vue';
 import { getAssetTypeOptionsApi } from '#/api/apps/dataset';
 import { $t } from '@vben/locales';
@@ -99,12 +99,13 @@ const fileForm = ref({
   local_path: '',
   file_format: '',
   index_of_file_id: undefined as number | undefined,
+  is_downloadable: true,
 });
 
 function openFileRegister(asset: DatasetAssetItem) {
   currentAssetForFile.value = asset;
   editingFile.value = null;
-  fileForm.value = { file_role: 'primary', local_path: '', file_format: '', index_of_file_id: undefined };
+  fileForm.value = { file_role: 'primary', local_path: '', file_format: '', index_of_file_id: undefined, is_downloadable: true };
   fileModalVisible.value = true;
 }
 
@@ -116,6 +117,7 @@ function openFileEdit(asset: DatasetAssetItem, file: AssetFileItem) {
     local_path: file.local_path || '',
     file_format: file.file_format || '',
     index_of_file_id: file.index_of_file_id,
+    is_downloadable: file.is_downloadable ?? true,
   };
   fileModalVisible.value = true;
 }
@@ -148,6 +150,11 @@ async function handleDeleteFile(file: AssetFileItem) {
   await deleteFile(file.id);
   message.success($t('dataset.list.fileDeleted'));
   emit('refresh');
+}
+
+async function handleToggleDownload(file: AssetFileItem, val: boolean) {
+  await updateFile({ id: file.id, is_downloadable: val });
+  message.success(val ? $t('dataset.list.downloadEnabled') : $t('dataset.list.downloadDisabled'));
 }
 </script>
 
@@ -188,6 +195,13 @@ async function handleDeleteFile(file: AssetFileItem) {
             <Tag v-if="file.file_format">{{ file.file_format }}</Tag>
             {{ file.file_name || file.local_path || '-' }}
           </div>
+          <Switch
+            v-model:checked="file.is_downloadable"
+            size="small"
+            checked-children="DL"
+            un-checked-children="DL"
+            @change="(val: boolean) => handleToggleDownload(file as AssetFileItem, val)"
+          />
           <Space size="small">
             <Button type="link" size="small" @click="openFileEdit(asset as DatasetAssetItem, file as AssetFileItem)">{{ $t('common.title.edit') }}</Button>
             <Button type="link" size="small" danger @click="handleDeleteFile(file as AssetFileItem)">{{ $t('dataset.list.delete') }}</Button>
@@ -232,6 +246,9 @@ async function handleDeleteFile(file: AssetFileItem) {
         <Select v-model:value="fileForm.file_role" :options="FILE_ROLE_OPTIONS" :placeholder="$t('dataset.list.fileRole')" />
         <Input v-model:value="fileForm.local_path" :placeholder="$t('dataset.list.filePath')" />
         <Input v-model:value="fileForm.file_format" :placeholder="$t('dataset.list.fileFormat')" />
+        <label>
+          <input type="checkbox" v-model="fileForm.is_downloadable" /> {{ $t('dataset.list.downloadable') }}
+        </label>
       </div>
     </Modal>
   </div>

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, inject, type Ref } from 'vue';
+import { ref, computed, inject, watch, type Ref } from 'vue';
 import { useRoute } from 'vue-router';
 import type { PublicDatasetDetail } from '@/types/dataset';
+import { useDownloads } from '@/composables/useDatasets';
 
 const route = useRoute();
 const tool = computed(() => route.params.tool as string);
@@ -15,6 +16,14 @@ const seqType = ref('genome');
 
 // BLAST
 const querySeq = ref('');
+
+// Downloads
+const { loading: dlLoading, files: dlFiles, loadDownloads, downloadUrl } = useDownloads();
+const dsCode = computed(() => detail?.value?.dataset_code || '');
+
+watch([tool, dsCode], ([t, code]) => {
+  if (t === 'download' && code) loadDownloads(code);
+});
 </script>
 <template>
   <div>
@@ -48,15 +57,23 @@ const querySeq = ref('');
 
       <div v-else-if="tool === 'download'">
         <h3>Downloads</h3>
-        <el-table :data="detail?.assets || []" border size="small" v-if="detail?.assets?.length">
-          <el-table-column prop="asset_code" label="Asset" width="180" />
-          <el-table-column prop="asset_name" label="Name" />
+        <el-table :data="dlFiles" border size="small" v-loading="dlLoading" v-if="dlFiles.length > 0">
+          <el-table-column prop="file_name" label="File" min-width="200" />
           <el-table-column prop="file_format" label="Format" width="100" />
-          <el-table-column label="Files" width="80">
-            <template #default="{ row }">{{ row.files?.length || 0 }}</template>
+          <el-table-column label="Size" width="120">
+            <template #default="{ row }">
+              {{ row.file_size ? (row.file_size / 1024 / 1024).toFixed(1) + ' MB' : '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column label="Download" width="120">
+            <template #default="{ row }">
+              <el-button type="primary" size="small" tag="a" :href="downloadUrl(dsCode, row.id)">
+                Download
+              </el-button>
+            </template>
           </el-table-column>
         </el-table>
-        <el-empty v-else description="No download files available" />
+        <el-empty v-else-if="!dlLoading" description="No downloadable files available" />
       </div>
 
       <el-empty v-else :description="`Unknown tool: ${tool}`" />

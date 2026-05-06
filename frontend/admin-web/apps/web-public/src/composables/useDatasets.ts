@@ -8,7 +8,7 @@ import type {
   QueryResult,
 } from '@/types/dataset';
 
-const { post } = useRequest();
+const { get, post } = useRequest();
 const PRE = '/public/dataset';
 
 // ── Dataset list ──
@@ -101,4 +101,27 @@ export function useDatasetQuery() {
   }
 
   return { queryLoading, queryResult, capabilities, loadCapabilities, execute };
+}
+
+// ── Dataset downloads ──
+export function useDownloads() {
+  const loading = ref(false);
+  const files = ref<any[]>([]);
+
+  async function loadDownloads(datasetCode: string) {
+    loading.value = true;
+    try {
+      const data: any = await get(`${PRE}/${datasetCode}/downloads`);
+      files.value = data?.files || [];
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  function downloadUrl(datasetCode: string, fileId: number) {
+    const base = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+    return `${base}${PRE}/${datasetCode}/download/${fileId}`;
+  }
+
+  return { loading, files, loadDownloads, downloadUrl };
 }

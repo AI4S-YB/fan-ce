@@ -121,6 +121,7 @@ export interface AssetFileItem {
   index_of_file_id?: number | null;
   status?: string;
   meta_json?: string | null;
+  is_downloadable?: boolean;
   create_time?: number;
   update_time?: number;
 }
