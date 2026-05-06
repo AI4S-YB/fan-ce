@@ -65,7 +65,7 @@ function goGenome(id: number) {
 <template>
   <div id="public-portal">
     <header class="portal-header">
-      <router-link to="/" class="logo">{{ siteInfo.logo_text || siteInfo.site_name }}</router-link>
+      <router-link to="/" class="logo">{{ siteInfo.site_name || siteInfo.logo_text }}</router-link>
 
       <el-dropdown class="nav-dropdown">
         <span class="nav-link active">Genomes ▾</span>
