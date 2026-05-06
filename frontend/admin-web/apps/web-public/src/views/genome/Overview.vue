@@ -47,18 +47,13 @@ provide<Ref<boolean>>('genomeLoading', loading);
         <span style="margin-left:6px;">v{{ detail.version || '-' }}</span>
       </div>
 
-      <!-- Tab bar with dropdowns -->
+      <!-- Tab bar -->
       <div style="display:flex;gap:0;border-bottom:2px solid #e5e5e5;margin-bottom:20px;">
         <div :style="tabStyle('home')" @click="navigate('home')">Overview</div>
+        <div :style="tabStyle('search')" @click="navigate('search')">Gene Search</div>
+        <div :style="tabStyle('tf')" @click="navigate('tf')">Transcription Factors</div>
 
         <el-dropdown trigger="click" style="display:flex;">
-          <div :style="tabStyle('search')" @click="navigate('search')">Gene Search ▾</div>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item @click="navigate('search')">Search Genes</el-dropdown-item>
-              <el-dropdown-item @click="navigate('tf')">Transcription Factors</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
         </el-dropdown>
 
         <el-dropdown trigger="click" style="display:flex;">
