@@ -92,6 +92,7 @@ export function useDatasetQuery() {
         params,
       });
       queryResult.value = data;
+      return data;
     } finally {
       queryLoading.value = false;
     }

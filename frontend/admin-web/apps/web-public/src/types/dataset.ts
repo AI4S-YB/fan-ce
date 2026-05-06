@@ -61,6 +61,9 @@ export interface PublicLineageItem {
 export interface QueryCapabilities {
   operations?: string[];
   filter_options?: Record<string, string[]>;
+  query_adapter?: {
+    examples?: Record<string, unknown>;
+  };
 }
 
 export interface QueryResult {

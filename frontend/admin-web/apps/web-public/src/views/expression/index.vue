@@ -16,15 +16,66 @@ const selectedGenes = ref<string[]>([]);
 const selectedSamples = ref<string[]>([]);
 const selectedType = ref('count');
 
+// Example data extracted from query capabilities
+const exampleGenes = ref<string[]>([]);
+const exampleSamples = ref<string[]>([]);
+const exampleType = ref('count');
+const hasExamples = ref(false);
+const firstLoad = ref(true);
+
 // Load transcriptome datasets on mount
 loadDatasets({ dataset_type: 'transcriptome' });
+
+function extractExamples(data: any) {
+  const examples = data?.query_adapter?.examples;
+  if (!examples) {
+    hasExamples.value = false;
+    return;
+  }
+
+  // Extract example genes (first 5 from genes_list)
+  const genesItems = examples.genes_list?.items;
+  if (Array.isArray(genesItems) && genesItems.length > 0) {
+    exampleGenes.value = genesItems.slice(0, 5).map(String);
+  }
+
+  // Extract example samples (first 5 from samples_list)
+  const samplesItems = examples.samples_list?.items;
+  if (Array.isArray(samplesItems) && samplesItems.length > 0) {
+    exampleSamples.value = samplesItems.slice(0, 5).map(String);
+  }
+
+  // Extract default matrix type from matrix_slice params
+  const dataType = examples.matrix_slice?.params?.data_type;
+  if (dataType) {
+    exampleType.value = String(dataType).toLowerCase();
+  }
+
+  hasExamples.value = exampleGenes.value.length > 0;
+}
+
+function applyExample() {
+  selectedGenes.value = [...exampleGenes.value];
+  selectedSamples.value = [...exampleSamples.value];
+  selectedType.value = exampleType.value;
+}
 
 // When dataset changes, load capabilities
 watch(selectedDatasetId, async (id) => {
   if (!id) return;
-  caps.value = await loadCapabilities(id, undefined, selectedVersionId.value);
+  const data = await loadCapabilities(id, undefined, selectedVersionId.value);
+  caps.value = data;
   selectedGenes.value = [];
   selectedSamples.value = [];
+
+  extractExamples(data as any);
+
+  // Auto-load example data on first dataset selection
+  if (firstLoad.value && hasExamples.value) {
+    firstLoad.value = false;
+    applyExample();
+    await runQuery();
+  }
 });
 
 async function runQuery() {
@@ -40,6 +91,11 @@ async function runQuery() {
     undefined,
     selectedVersionId.value,
   );
+}
+
+async function tryExample() {
+  applyExample();
+  await runQuery();
 }
 </script>
 
@@ -78,7 +134,7 @@ async function runQuery() {
             value: g,
           }))
         "
-        placeholder="Select genes"
+        placeholder="e.g. select 1-5 genes"
       />
       <MultiSelectDropdown
         v-model="selectedSamples"
@@ -88,7 +144,7 @@ async function runQuery() {
             value: s,
           }))
         "
-        placeholder="Select samples"
+        placeholder="e.g. select 1-5 samples"
       />
       <el-select v-model="selectedType" style="width: 140px;">
         <el-option label="Count" value="count" />
@@ -101,6 +157,13 @@ async function runQuery() {
         @click="runQuery"
       >
         Query
+      </el-button>
+      <el-button
+        v-if="hasExamples"
+        :loading="queryLoading"
+        @click="tryExample"
+      >
+        Try Example
       </el-button>
     </div>
 
