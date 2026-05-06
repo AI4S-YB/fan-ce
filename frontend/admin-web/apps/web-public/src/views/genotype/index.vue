@@ -218,10 +218,6 @@ function fillSearch(value: string) {
           @update="(v: string[]) => selectedSamples = v" />
       </div>
 
-      <div v-if="linkedGenome" style="font-size:12px;color:#67c23a;margin-top:4px;">
-        Gene lookup enabled via {{ linkedGenome.code }}
-      </div>
-
       <div v-if="queryResult" style="margin-top:16px;">
         <div style="color:#888;font-size:13px;margin-bottom:8px;">
           Found {{ queryResult?.data?.count || queryResult?.count || 0 }} variants

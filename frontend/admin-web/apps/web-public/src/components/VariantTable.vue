@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps<{
   result: Record<string, any> | null;
   loading?: boolean;
 }>();
 
-const expandedRows = ref<Set<number>>(new Set());
-
 interface VariantRow {
+  id: string;
   chrom: string;
   pos: number;
   ref: string;
@@ -23,7 +22,6 @@ const variants = computed<VariantRow[]>(() => {
   const lines = preview.split('\n').filter((l: string) => l && !l.startsWith('#'));
   if (lines.length === 0) return [];
 
-  // Find sample names from VCF header
   const headerLine = preview.split('\n').find((l: string) => l.startsWith('#CHROM'));
   const sampleNames = headerLine ? headerLine.split('\t').slice(9) : [];
 
@@ -34,6 +32,7 @@ const variants = computed<VariantRow[]>(() => {
       gt: fields[9 + i] ? fields[9 + i].split(':')[0] : './.',
     }));
     return {
+      id: `${fields[0]}:${fields[1]}`,
       chrom: fields[0],
       pos: Number(fields[1]),
       ref: fields[3],
@@ -44,32 +43,21 @@ const variants = computed<VariantRow[]>(() => {
   });
 });
 
-function toggleRow(idx: number) {
-  const s = new Set(expandedRows.value);
-  s.has(idx) ? s.delete(idx) : s.add(idx);
-  expandedRows.value = s;
-}
-
 function alleleDisplay(gt: string, ref: string, alt: string): string {
   return gt.replace(/0/g, ref).replace(/1/g, alt).replace(/\|/g, '/');
 }
-
-const parsedVariants = computed(() =>
-  variants.value.map(v => ({ chrom: v.chrom, pos: v.pos }))
-);
 </script>
 
 <template>
   <div>
-    <el-table :data="variants" border size="small" v-loading="loading" max-height="600" stripe
-      @expand-change="(row: any) => toggleRow(variants.indexOf(row))">
+    <el-table :data="variants" border size="small" v-loading="loading" max-height="600" stripe>
       <el-table-column type="expand">
-        <template #default="{ row }">
-          <el-table :data="row.genotypes" border size="small" max-height="300">
+        <template #default="scope">
+          <el-table :data="scope.row.genotypes" border size="small" max-height="300">
             <el-table-column prop="sample" label="Sample" min-width="140" />
             <el-table-column label="Allele" min-width="120">
               <template #default="{ row: gr }">
-                {{ alleleDisplay(gr.gt, row.ref, row.alt) }}
+                {{ alleleDisplay(gr.gt, scope.row.ref, scope.row.alt) }}
               </template>
             </el-table-column>
           </el-table>
