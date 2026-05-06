@@ -33,19 +33,20 @@ const filteredPlotOptions = computed(() => {
 
 async function runQuery() {
   if (!selectedId.value || !selectedTraits.value.length) return;
-  const params: Record<string, unknown> = { limit: 100 };
-  if (selectedTraits.value.length === 1) {
-    params.trait = selectedTraits.value[0];
-  } else {
-    params.trait_codes = selectedTraits.value;
+  const plotIds = selectedPlots.value.length ? selectedPlots.value : undefined;
+  const assetCode = getAssetCode();
+
+  // Call trait_values for each trait, merge results
+  const allItems: any[] = [];
+  for (const trait of selectedTraits.value) {
+    const result: any = await execute(selectedId.value, 'trait_values', { trait, limit: 100, ...(plotIds ? { plot_ids: plotIds } : {}) }, assetCode);
+    const data = result?.data || result;
+    const items = data?.items || data?.data?.items || [];
+    for (const item of items) {
+      allItems.push({ ...item, _trait: trait });
+    }
   }
-  if (selectedPlots.value.length) params.plot_ids = selectedPlots.value;
-  const op = selectedTraits.value.length > 1 ? 'multi_trait_query' : 'trait_values';
-  const result: any = await execute(selectedId.value, op, params, getAssetCode());
-  // Transform nested response for DataVisualization
-  const data = result?.data || result;
-  const items = data?.items || data?.data?.items || [];
-  queryResult.value = { items, total: items.length } as any;
+  queryResult.value = { items: allItems, total: allItems.length } as any;
 }
 
 async function loadExampleData() {
@@ -129,6 +130,6 @@ async function loadFormOptions(datasetId: number) {
       </div>
     </div>
 
-    <DataVisualization :result="queryResult" :loading="queryLoading" show-export />
+    <DataVisualization :result="queryResult" :loading="queryLoading" :modes="['table']" show-export />
   </div>
 </template>

@@ -8,11 +8,13 @@ const props = defineProps<{
   loading?: boolean;
   precision?: number;
   showExport?: boolean;
+  modes?: string[];
 }>();
 
 const emit = defineEmits<{ normalize: [method: string] }>();
 
-const mode = ref<'table' | 'bar' | 'line' | 'heatmap'>('table');
+const allowedModes = computed(() => props.modes || ['table', 'bar', 'line', 'heatmap']);
+const mode = ref(allowedModes.value[0] as 'table' | 'bar' | 'line' | 'heatmap');
 const chartRef = ref<HTMLElement>();
 let chartInst: echarts.ECharts | null = null;
 const normalizeMethod = ref('raw');
@@ -137,7 +139,7 @@ function exportCSV() {
 <template>
   <div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
-      <el-radio-group v-model="mode" size="small">
+      <el-radio-group v-if="allowedModes.length > 1" v-model="mode" size="small">
         <el-radio-button value="table">Table</el-radio-button>
         <el-radio-button value="bar">Bar</el-radio-button>
         <el-radio-button value="line">Line</el-radio-button>
