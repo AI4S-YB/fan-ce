@@ -20,6 +20,10 @@ const searchInfo = ref('');
 // Linked genome dataset (via lineage) for gene→region lookup
 const linkedGenome = ref<{ id: number; code: string; annoAssetCode: string | null } | null>(null);
 
+// Example chips for the search bar (region + 3 gene IDs from linked genome)
+const exampleRegion = ref<string>('');
+const exampleGenes = ref<string[]>([]);
+
 loadDatasets({ dataset_type: 'variome' });
 
 function getAssetCode(): string | undefined {
@@ -61,6 +65,8 @@ async function onDatasetSelect(datasetId: number) {
   selectedSamples.value = [];
   queryResult.value = null;
   linkedGenome.value = null;
+  exampleRegion.value = '';
+  exampleGenes.value = [];
 
   await loadDetail(datasetId);
   isDraft.value = detail.value?.lifecycle_state === 'draft';
@@ -75,6 +81,40 @@ async function onDatasetSelect(datasetId: number) {
     sampleOptions.value = data?.data?.samples || data?.samples || [];
   } catch (e) {
     console.error('Failed to load samples:', e);
+  }
+
+  // Load examples (region + gene IDs)
+  await loadExamples(datasetId, assetCode);
+}
+
+async function loadExamples(datasetId: number, assetCode?: string) {
+  // Region example from variome
+  try {
+    const data = await execute(datasetId, 'region_example', {}, assetCode);
+    const inner = data?.data || data;
+    const refId = inner?.ref_id || inner?.chrom;
+    const pos = inner?.variant_position || inner?.pos;
+    if (refId && pos != null) {
+      exampleRegion.value = `${refId}:${Math.max(1, pos - 5000)}-${pos + 5000}`;
+    }
+  } catch (e) {
+    console.warn('Failed to load region example:', e);
+  }
+
+  // Gene examples from linked annotation adapter
+  if (linkedGenome.value?.annoAssetCode) {
+    try {
+      const data: any = await execute(
+        linkedGenome.value.id,
+        'list_genes',
+        { page: 1, size: 3 },
+        linkedGenome.value.annoAssetCode,
+      );
+      const genes = data?.data?.items || data?.items || [];
+      exampleGenes.value = genes.slice(0, 3).map((g: any) => g.gene_id).filter(Boolean);
+    } catch (e) {
+      console.warn('Failed to load gene examples:', e);
+    }
   }
 }
 
@@ -138,25 +178,14 @@ async function handleSearch({ type, value }: { type: string; value: string }) {
   }
 }
 
-async function tryExample() {
+async function tryRegionExample() {
+  if (!selectedId.value || !exampleRegion.value) return;
+  await handleSearch({ type: 'region', value: exampleRegion.value });
+}
+
+async function tryGeneExample(geneId: string) {
   if (!selectedId.value) return;
-  const assetCode = getAssetCode();
-  try {
-    const data = await execute(selectedId.value, 'region_example', {}, assetCode);
-    const inner = data?.data || data;
-    const refId = inner?.ref_id || inner?.chrom;
-    const pos = inner?.variant_position || inner?.pos;
-    if (refId && pos != null) {
-      const region = `${refId}:${Math.max(1, pos - 5000)}-${pos + 5000}`;
-      searchInfo.value = `Example region: ${region}`;
-      await execute(selectedId.value, 'query', {
-        regions: [region],
-        include_samples: selectedSamples.value.length > 0 ? selectedSamples.value : undefined,
-      }, assetCode);
-    }
-  } catch (e) {
-    console.error('Failed to load example:', e);
-  }
+  await handleSearch({ type: 'gene', value: geneId });
 }
 </script>
 
@@ -183,10 +212,23 @@ async function tryExample() {
         {{ searchInfo }}
       </div>
 
+      <!-- Examples row -->
+      <div v-if="exampleRegion || exampleGenes.length > 0"
+        style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0;">
+        <span style="font-size:12px;color:#909399;">Examples:</span>
+        <el-tag v-if="exampleRegion" size="small" type="info" effect="plain"
+          style="cursor:pointer;" @click="tryRegionExample">
+          Region: {{ exampleRegion }}
+        </el-tag>
+        <el-tag v-for="g in exampleGenes" :key="g" size="small" type="success" effect="plain"
+          style="cursor:pointer;" @click="tryGeneExample(g)">
+          Gene: {{ g }}
+        </el-tag>
+      </div>
+
       <div style="display:flex;gap:8px;align-items:center;margin:12px 0;">
         <SampleFilter v-if="sampleOptions.length > 0" :samples="sampleOptions"
           @update="(v: string[]) => selectedSamples = v" />
-        <el-button text size="small" @click="tryExample">Try Example</el-button>
       </div>
 
       <!-- Gene→region link status -->
@@ -215,7 +257,7 @@ async function tryExample() {
       </div>
 
       <el-empty v-if="!queryLoading && !queryResult"
-        description="Enter a search query to find variants. Try clicking 'Try Example' for demo data." />
+        description="Enter a search query to find variants. Click an example chip above to try a quick demo." />
     </div>
   </div>
 </template>
