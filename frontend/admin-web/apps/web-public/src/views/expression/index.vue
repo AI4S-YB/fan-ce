@@ -107,37 +107,52 @@ watch(selectedDatasetId, async (id) => {
 <template>
   <div>
     <h2>Expression Query</h2>
-    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;">
+
+    <!-- Dataset selector -->
+    <div style="margin-bottom:16px;">
       <el-select v-model="selectedDatasetId" placeholder="Select transcriptome dataset" style="width:360px;">
         <el-option v-for="ds in datasets" :key="ds.id" :label="ds.title || ds.dataset_code" :value="ds.id" />
       </el-select>
     </div>
-    <div v-if="selectedDatasetId" style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
-      <div>
-        <div style="font-size:12px;color:#888;margin-bottom:4px;">Genes</div>
-        <el-input
-          v-model="selectedGenesText"
-          type="textarea"
-          :rows="6"
-          placeholder="Enter gene IDs, one per line..."
-          style="width:260px;font-family:monospace;font-size:12px;"
-        />
+
+    <!-- Query form -->
+    <div v-if="selectedDatasetId" style="background:#fafafa;border:1px solid #e5e5e5;border-radius:6px;padding:20px;margin-bottom:16px;">
+      <div style="display:flex;gap:24px;flex-wrap:wrap;">
+        <!-- Left: Genes -->
+        <div style="flex:1;min-width:280px;">
+          <div style="font-size:13px;font-weight:500;color:#606266;margin-bottom:6px;">Genes</div>
+          <el-input
+            v-model="selectedGenesText"
+            type="textarea"
+            :rows="8"
+            placeholder="Enter gene IDs, one per line..."
+            style="font-family:monospace;font-size:12px;"
+          />
+          <div style="font-size:11px;color:#bbb;margin-top:4px;">One gene ID per line, supports comma/space separation</div>
+        </div>
+
+        <!-- Right: Samples + Data Type + Actions -->
+        <div style="display:flex;flex-direction:column;gap:16px;min-width:260px;">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:#606266;margin-bottom:6px;">Samples</div>
+            <MultiSelectDropdown v-model="selectedSamples" :options="sampleOptions" placeholder="Select samples" />
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:500;color:#606266;margin-bottom:6px;">Data Type</div>
+            <el-select v-model="selectedType" style="width:100%;">
+              <el-option label="Count" value="count" />
+              <el-option label="FPKM" value="fpkm" />
+              <el-option label="TPM" value="tpm" />
+            </el-select>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:auto;">
+            <el-button type="primary" :loading="queryLoading" @click="runQuery">Query</el-button>
+            <el-button :loading="exampleLoading" @click="tryExample">Try Example</el-button>
+          </div>
+        </div>
       </div>
-      <div>
-        <div style="font-size:12px;color:#888;margin-bottom:4px;">Samples</div>
-        <MultiSelectDropdown v-model="selectedSamples" :options="sampleOptions" placeholder="Select samples" />
-      </div>
-      <div>
-        <div style="font-size:12px;color:#888;margin-bottom:4px;">Data Type</div>
-        <el-select v-model="selectedType" style="width:140px;">
-          <el-option label="Count" value="count" />
-          <el-option label="FPKM" value="fpkm" />
-          <el-option label="TPM" value="tpm" />
-        </el-select>
-      </div>
-      <el-button type="primary" :loading="queryLoading" @click="runQuery">Query</el-button>
-      <el-button :loading="exampleLoading" @click="tryExample">Try Example</el-button>
     </div>
+
     <DataVisualization :result="queryResult" :loading="queryLoading" :precision="selectedType === 'fpkm' ? 2 : undefined" show-export @normalize="handleNormalize" />
   </div>
 </template>
