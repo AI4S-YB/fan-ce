@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, inject, type Ref } from 'vue';
+import { ref, inject, watch, type Ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDatasetQuery } from '@/composables/useDatasets';
 import type { PublicDatasetDetail } from '@/types/dataset';
@@ -8,11 +8,22 @@ const router = useRouter();
 const detail = inject<Ref<PublicDatasetDetail | null>>('genomeDetail');
 const { queryLoading, queryResult, execute } = useDatasetQuery();
 
-const tfFamilies = [
-  'AP2/ERF', 'ARF', 'bHLH', 'bZIP', 'C2H2', 'C3H', 'Dof', 'GATA',
-  'GRAS', 'HSF', 'LOB', 'MADS', 'MYB', 'NAC', 'NF-Y', 'SBP',
-  'TCP', 'Trihelix', 'WRKY', 'ZF-HD',
-];
+const tfFamilies = ref<string[]>([]);
+
+async function loadFamilies() {
+  const d = detail?.value;
+  if (!d?.id) return;
+  const assetCode = d.query_entry_asset?.asset_code;
+  await execute(d.id, 'list_families', {}, assetCode);
+  const result = queryResult.value as any;
+  const inner = result?.data || result;
+  tfFamilies.value = inner?.families || [];
+}
+
+// Load families when genome detail is ready
+watch(() => detail?.value?.id, (id) => {
+  if (id) loadFamilies();
+}, { immediate: true });
 
 const selectedFamily = ref('');
 const geneList = ref<Record<string, unknown>[]>([]);

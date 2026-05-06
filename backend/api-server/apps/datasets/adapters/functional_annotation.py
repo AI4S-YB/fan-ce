@@ -307,6 +307,7 @@ class FunctionalAnnotationAdapter(DatasetQueryAdapter):
             "supported_operations": [
                 "search_genes",
                 "list_genes",
+                "list_families",
                 "gene_detail",
                 "transcript_detail",
                 "gene_function_summary",
@@ -383,6 +384,20 @@ class FunctionalAnnotationAdapter(DatasetQueryAdapter):
                 "operation": operation,
                 "dataset_id": dataset_payload["id"],
                 "data": {"source": "sqlite", **result},
+            }
+
+        if operation == "list_families":
+            rows = query_sqlite(
+                file_path,
+                "SELECT DISTINCT family FROM hse_genes WHERE family IS NOT NULL AND family != '' ORDER BY family",
+                (),
+            )
+            families = [r["family"] for r in rows]
+            return {
+                "adapter": self.adapter_name,
+                "operation": operation,
+                "dataset_id": dataset_payload["id"],
+                "data": {"source": "sqlite", "families": families},
             }
 
         if operation == "gene_detail":
