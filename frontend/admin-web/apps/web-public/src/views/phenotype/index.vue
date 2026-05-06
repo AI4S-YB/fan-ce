@@ -12,8 +12,10 @@ const { queryLoading, queryResult, loadCapabilities, execute } = useDatasetQuery
 const selectedId = ref<number | null>(null);
 const caps = ref<QueryCapabilities | null>(null);
 const selectedTraits = ref<string[]>([]);
-const selectedSamples = ref<string[]>([]);
+const selectedTrials = ref<string[]>([]);
 const exampleLoading = ref(false);
+const traitOptions = ref<{ label: string; value: string }[]>([]);
+const trialOptions = ref<{ label: string; value: string }[]>([]);
 
 loadDatasets({ dataset_type: 'phenome' });
 
@@ -21,57 +23,38 @@ function getAssetCode(): string | undefined {
   return detail.value?.query_entry_asset?.asset_code;
 }
 
-/** Extract string names from a query result row set. */
-function extractNames(result: any): string[] {
-  const rows = result?.rows || result?.items || [];
-  if (!rows.length) return [];
-  const first = rows[0];
-  if (typeof first === 'string') return rows;
-  const key =
-    Object.keys(first).find((k) =>
-      ['trait', 'name', 'subject', 'sample', 'id', 'value', 'label'].includes(
-        k.toLowerCase(),
-      ),
-    ) || Object.keys(first)[0];
-  return rows.map((r: any) => (typeof r === 'string' ? r : String(r[key] ?? ''))).filter(Boolean);
-}
-
 async function runQuery() {
-  if (!selectedId.value) return;
-  await execute(
-    selectedId.value,
-    'phenotype_query',
-    {
-      traits: selectedTraits.value,
-      samples: selectedSamples.value,
-    },
-    getAssetCode(),
-  );
+  if (!selectedId.value || !selectedTraits.value.length) return;
+  const params: Record<string, unknown> = {};
+  if (selectedTraits.value.length) params.traits = selectedTraits.value;
+  if (selectedTrials.value.length) params.trial_ids = selectedTrials.value;
+  await execute(selectedId.value, 'multi_trait_query', params, getAssetCode());
 }
 
-async function autoLoadExample(datasetId: number) {
-  const ops = caps.value?.operations ?? [];
-  if (!ops.includes('trait_list') && !ops.includes('subject_list')) return;
-
+async function loadExampleData(datasetId: number) {
   const assetCode = getAssetCode();
   exampleLoading.value = true;
   try {
-    if (ops.includes('trait_list')) {
-      await execute(datasetId, 'trait_list', { limit: 5 }, assetCode);
-      const traits = extractNames(queryResult.value);
-      selectedTraits.value = traits.slice(0, 3);
-    }
+    // Load traits
+    const traitData: any = await execute(datasetId, 'trait_list', { limit: 20 }, assetCode);
+    const traits = (traitData?.data?.items || traitData?.items || []).map((t: any) => ({
+      label: t.trait_name || t.name,
+      value: String(t.trait_code || t.name),
+    }));
+    traitOptions.value = traits;
+    selectedTraits.value = traits.slice(0, 3).map((t: any) => t.value);
 
-    if (ops.includes('subject_list')) {
-      await execute(datasetId, 'subject_list', { limit: 5 }, assetCode);
-      const subjects = extractNames(queryResult.value);
-      selectedSamples.value = subjects.slice(0, 3);
-    }
+    // Load trials
+    const trialData: any = await execute(datasetId, 'trial_list', {}, assetCode);
+    const trials = (trialData?.data?.items || trialData?.items || []).map((t: any) => ({
+      label: t.trial_name || String(t.id),
+      value: String(t.id),
+    }));
+    trialOptions.value = trials;
+    if (trials.length > 0) selectedTrials.value = [trials[0].value];
 
-    // Run the actual phenotype query with the auto-selected values
-    if (selectedTraits.value.length || selectedSamples.value.length) {
-      await runQuery();
-    }
+    // Run query with example data
+    if (selectedTraits.value.length) await runQuery();
   } finally {
     exampleLoading.value = false;
   }
@@ -79,7 +62,7 @@ async function autoLoadExample(datasetId: number) {
 
 async function tryExample() {
   if (!selectedId.value) return;
-  await autoLoadExample(selectedId.value);
+  await loadExampleData(selectedId.value);
 }
 
 watch(selectedId, async (id) => {
@@ -87,10 +70,10 @@ watch(selectedId, async (id) => {
   caps.value = await loadCapabilities(id);
   await loadDetail(id);
   selectedTraits.value = [];
-  selectedSamples.value = [];
-
-  // Auto-load example traits + subjects and show results immediately
-  await autoLoadExample(id);
+  selectedTrials.value = [];
+  traitOptions.value = [];
+  trialOptions.value = [];
+  await loadExampleData(id);
 });
 </script>
 
@@ -98,55 +81,15 @@ watch(selectedId, async (id) => {
   <div>
     <h2>Phenotype Query</h2>
     <div style="display: flex; gap: 12px; margin-bottom: 16px">
-      <el-select
-        v-model="selectedId"
-        placeholder="Select phenome dataset"
-        style="width: 360px"
-      >
-        <el-option
-          v-for="ds in datasets"
-          :key="ds.id"
-          :label="ds.title || ds.dataset_code"
-          :value="ds.id"
-        />
+      <el-select v-model="selectedId" placeholder="Select phenome dataset" style="width: 360px">
+        <el-option v-for="ds in datasets" :key="ds.id" :label="ds.title || ds.dataset_code" :value="ds.id" />
       </el-select>
     </div>
-    <div
-      v-if="selectedId"
-      style="
-        display: flex;
-        gap: 12px;
-        align-items: flex-end;
-        flex-wrap: wrap;
-        margin-bottom: 16px;
-      "
-    >
-      <MultiSelectDropdown
-        v-model="selectedTraits"
-        :options="
-          (caps?.filter_options?.traits || []).map((t: string) => ({
-            label: t,
-            value: t,
-          }))
-        "
-        placeholder="e.g. flower diameter, petal number"
-      />
-      <MultiSelectDropdown
-        v-model="selectedSamples"
-        :options="
-          (caps?.filter_options?.samples || []).map((s: string) => ({
-            label: s,
-            value: s,
-          }))
-        "
-        placeholder="e.g. select 1-5 samples"
-      />
-      <el-button type="primary" :loading="queryLoading" @click="runQuery">
-        Query
-      </el-button>
-      <el-button :loading="exampleLoading" @click="tryExample">
-        Try Example
-      </el-button>
+    <div v-if="selectedId" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 16px">
+      <MultiSelectDropdown v-model="selectedTraits" :options="traitOptions" placeholder="e.g. 花瓣长, 花瓣宽" />
+      <MultiSelectDropdown v-model="selectedTrials" :options="trialOptions" placeholder="Select trial" />
+      <el-button type="primary" :loading="queryLoading" @click="runQuery">Query</el-button>
+      <el-button :loading="exampleLoading" @click="tryExample">Try Example</el-button>
     </div>
     <DataVisualization :result="queryResult" :loading="queryLoading" />
   </div>

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { useDatasetList, useDatasetQuery } from '@/composables/useDatasets';
+import { useDatasetList, useDatasetDetail, useDatasetQuery } from '@/composables/useDatasets';
 import MultiSelectDropdown from '@/components/MultiSelectDropdown.vue';
 import DataVisualization from '@/components/DataVisualization/index.vue';
-import type { PublicDatasetItem, QueryCapabilities } from '@/types/dataset';
+import type { QueryCapabilities } from '@/types/dataset';
 
 const { items: datasets, load: loadDatasets } = useDatasetList();
-const { queryLoading, queryResult, loadCapabilities, execute } =
-  useDatasetQuery();
+const { detail, load: loadDetail } = useDatasetDetail();
+const { queryLoading, queryResult, loadCapabilities, execute } = useDatasetQuery();
 
 const selectedDatasetId = ref<number | null>(null);
 const selectedVersionId = ref<number | undefined>();
@@ -15,159 +15,90 @@ const caps = ref<QueryCapabilities | null>(null);
 const selectedGenes = ref<string[]>([]);
 const selectedSamples = ref<string[]>([]);
 const selectedType = ref('count');
+const exampleLoading = ref(false);
 
-// Example data extracted from query capabilities
-const exampleGenes = ref<string[]>([]);
-const exampleSamples = ref<string[]>([]);
-const exampleType = ref('count');
-const hasExamples = ref(false);
-const firstLoad = ref(true);
+const geneOptions = ref<{ label: string; value: string }[]>([]);
+const sampleOptions = ref<{ label: string; value: string }[]>([]);
 
-// Load transcriptome datasets on mount
 loadDatasets({ dataset_type: 'transcriptome' });
 
-function extractExamples(data: any) {
-  const examples = data?.query_adapter?.examples;
-  if (!examples) {
-    hasExamples.value = false;
-    return;
-  }
-
-  // Extract example genes (first 5 from genes_list)
-  const genesItems = examples.genes_list?.items;
-  if (Array.isArray(genesItems) && genesItems.length > 0) {
-    exampleGenes.value = genesItems.slice(0, 5).map(String);
-  }
-
-  // Extract example samples (first 5 from samples_list)
-  const samplesItems = examples.samples_list?.items;
-  if (Array.isArray(samplesItems) && samplesItems.length > 0) {
-    exampleSamples.value = samplesItems.slice(0, 5).map(String);
-  }
-
-  // Extract default matrix type from matrix_slice params
-  const dataType = examples.matrix_slice?.params?.data_type;
-  if (dataType) {
-    exampleType.value = String(dataType).toLowerCase();
-  }
-
-  hasExamples.value = exampleGenes.value.length > 0;
+function getAssetCode(): string | undefined {
+  return detail.value?.query_entry_asset?.asset_code;
 }
-
-function applyExample() {
-  selectedGenes.value = [...exampleGenes.value];
-  selectedSamples.value = [...exampleSamples.value];
-  selectedType.value = exampleType.value;
-}
-
-// When dataset changes, load capabilities
-watch(selectedDatasetId, async (id) => {
-  if (!id) return;
-  const data = await loadCapabilities(id, undefined, selectedVersionId.value);
-  caps.value = data;
-  selectedGenes.value = [];
-  selectedSamples.value = [];
-
-  extractExamples(data as any);
-
-  // Auto-load example data on first dataset selection
-  if (firstLoad.value && hasExamples.value) {
-    firstLoad.value = false;
-    applyExample();
-    await runQuery();
-  }
-});
 
 async function runQuery() {
   if (!selectedDatasetId.value) return;
-  await execute(
-    selectedDatasetId.value,
-    'expression_query',
-    {
-      genes: selectedGenes.value,
-      samples: selectedSamples.value,
-      type: selectedType.value,
-    },
-    undefined,
-    selectedVersionId.value,
-  );
+  await execute(selectedDatasetId.value, 'matrix_slice', {
+    genes: selectedGenes.value,
+    samples: selectedSamples.value,
+    data_type: selectedType.value,
+  }, getAssetCode(), selectedVersionId.value);
+}
+
+async function loadExampleData(datasetId: number) {
+  const assetCode = getAssetCode();
+  exampleLoading.value = true;
+  try {
+    // Load genes
+    const geneData: any = await execute(datasetId, 'genes_list', { max_records: 20 }, assetCode);
+    const genes = (geneData?.data?.items || geneData?.items || []).map((g: any) => ({
+      label: String(g),
+      value: String(g),
+    }));
+    geneOptions.value = genes;
+    selectedGenes.value = genes.slice(0, 5).map((g: any) => g.value);
+
+    // Load samples
+    const sampleData: any = await execute(datasetId, 'samples_list', { max_records: 20 }, assetCode);
+    const samples = (sampleData?.data?.items || sampleData?.items || []).map((s: any) => ({
+      label: String(s),
+      value: String(s),
+    }));
+    sampleOptions.value = samples;
+    selectedSamples.value = samples.slice(0, 5).map((s: any) => s.value);
+
+    if (selectedGenes.value.length) await runQuery();
+  } finally {
+    exampleLoading.value = false;
+  }
 }
 
 async function tryExample() {
-  applyExample();
-  await runQuery();
+  if (!selectedDatasetId.value) return;
+  await loadExampleData(selectedDatasetId.value);
 }
+
+watch(selectedDatasetId, async (id) => {
+  if (!id) return;
+  caps.value = await loadCapabilities(id, undefined, selectedVersionId.value);
+  await loadDetail(id);
+  selectedGenes.value = [];
+  selectedSamples.value = [];
+  geneOptions.value = [];
+  sampleOptions.value = [];
+  await loadExampleData(id);
+});
 </script>
 
 <template>
   <div>
     <h2>Expression Query</h2>
-
-    <!-- Dataset selector -->
-    <div
-      style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;"
-    >
-      <el-select
-        v-model="selectedDatasetId"
-        placeholder="Select transcriptome dataset"
-        style="width: 360px;"
-      >
-        <el-option
-          v-for="ds in datasets"
-          :key="ds.id"
-          :label="ds.title || ds.dataset_code"
-          :value="ds.id"
-        />
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+      <el-select v-model="selectedDatasetId" placeholder="Select transcriptome dataset" style="width:360px;">
+        <el-option v-for="ds in datasets" :key="ds.id" :label="ds.title || ds.dataset_code" :value="ds.id" />
       </el-select>
     </div>
-
-    <!-- Filters -->
-    <div
-      v-if="selectedDatasetId"
-      style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 16px;"
-    >
-      <MultiSelectDropdown
-        v-model="selectedGenes"
-        :options="
-          (caps?.filter_options?.genes || []).map((g) => ({
-            label: g,
-            value: g,
-          }))
-        "
-        placeholder="e.g. select 1-5 genes"
-      />
-      <MultiSelectDropdown
-        v-model="selectedSamples"
-        :options="
-          (caps?.filter_options?.samples || []).map((s) => ({
-            label: s,
-            value: s,
-          }))
-        "
-        placeholder="e.g. select 1-5 samples"
-      />
-      <el-select v-model="selectedType" style="width: 140px;">
+    <div v-if="selectedDatasetId" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <MultiSelectDropdown v-model="selectedGenes" :options="geneOptions" placeholder="e.g. select 1-5 genes" />
+      <MultiSelectDropdown v-model="selectedSamples" :options="sampleOptions" placeholder="e.g. select 1-5 samples" />
+      <el-select v-model="selectedType" style="width:140px;">
         <el-option label="Count" value="count" />
         <el-option label="FPKM" value="fpkm" />
         <el-option label="TPM" value="tpm" />
       </el-select>
-      <el-button
-        type="primary"
-        :loading="queryLoading"
-        @click="runQuery"
-      >
-        Query
-      </el-button>
-      <el-button
-        v-if="hasExamples"
-        :loading="queryLoading"
-        @click="tryExample"
-      >
-        Try Example
-      </el-button>
+      <el-button type="primary" :loading="queryLoading" @click="runQuery">Query</el-button>
+      <el-button :loading="exampleLoading" @click="tryExample">Try Example</el-button>
     </div>
-
-    <!-- Results -->
     <DataVisualization :result="queryResult" :loading="queryLoading" />
   </div>
 </template>
