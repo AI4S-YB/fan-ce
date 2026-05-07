@@ -58,8 +58,11 @@ function parseGeneData(result: any) {
   }
   blastByDb.value = dbMap;
 
+  // InterPro: dict with matches_format array
   const ipr = ann?.interpro;
-  if (Array.isArray(ipr) && ipr.length > 0 && ipr[0]?.matches_format) {
+  if (ipr && typeof ipr === 'object' && !Array.isArray(ipr) && ipr.matches_format) {
+    interpro.value = ipr.matches_format;
+  } else if (Array.isArray(ipr) && ipr.length > 0 && ipr[0]?.matches_format) {
     interpro.value = ipr[0].matches_format;
   } else if (Array.isArray(ipr)) {
     interpro.value = ipr;
@@ -67,6 +70,7 @@ function parseGeneData(result: any) {
     interpro.value = [];
   }
 
+  // GO: flat array of {term, name, namespace}
   const goData = ann?.go;
   if (Array.isArray(goData) && goData.length > 0 && goData[0]?.terms) {
     goTerms.value = goData[0].terms;
@@ -76,8 +80,11 @@ function parseGeneData(result: any) {
     goTerms.value = [];
   }
 
+  // Family: dict with family array, or flat array
   const fam = ann?.family;
-  if (Array.isArray(fam) && fam.length > 0 && fam[0]?.family) {
+  if (fam && !Array.isArray(fam) && fam.family) {
+    families.value = Array.isArray(fam.family) ? fam.family : [fam.family];
+  } else if (Array.isArray(fam) && fam.length > 0 && fam[0]?.family) {
     families.value = fam[0].family;
   } else if (Array.isArray(fam)) {
     families.value = fam;
@@ -93,6 +100,8 @@ async function loadGeneDetail() {
   try {
     await execute(d.id, 'gene_function_summary', { gene_id: geneId.value }, d.query_entry_asset?.asset_code);
     parseGeneData(queryResult.value);
+    await nextTick();
+    if (exons.value.length > 0) renderStructure();
   } catch (e: any) {
     errorMsg.value = 'Failed: ' + (e?.message || String(e));
   }
@@ -127,10 +136,12 @@ async function loadSequences(datasetId: number) {
 }
 
 async function tabHandleClick(tab: any) {
-  if (tab.name === '2' && !geneSeq.value && detail?.value?.id) {
+  // Element Plus passes the pane name string directly
+  const name = typeof tab === 'string' ? tab : tab?.name || tab?.props?.name;
+  if (name === '2' && !geneSeq.value && detail?.value?.id) {
     await loadSequences(detail.value.id);
   }
-  if (tab.name === '1' && exons.value.length > 0) {
+  if (name === '1' && exons.value.length > 0) {
     await nextTick();
     renderStructure();
   }
@@ -289,14 +300,17 @@ function getFamilyLabel(type: string): string {
         <el-tab-pane label="Gene Ontology" name="5">
           <div v-if="goTerms.length > 0">
             <h4>Gene Ontology Terms</h4>
-            <div v-for="(item, i) in goTerms" :key="i" style="margin-bottom:4px;font-size:13px;">
-              <b>Term:</b>
-              <el-link :href="'http://amigo.geneontology.org/amigo/term/' + item.term" target="_blank" type="primary" :underline="false">
-                {{ item.term }}
-              </el-link>
-              &nbsp;&nbsp; <b>Namespace:</b> {{ item.namespace }}
-              &nbsp;&nbsp; <b>Name:</b> {{ item.name }}
-            </div>
+            <el-table :data="goTerms" stripe size="small">
+              <el-table-column label="Term" width="180">
+                <template #default="{ row: r }">
+                  <el-link :href="'http://amigo.geneontology.org/amigo/term/' + r.term" target="_blank" type="primary" :underline="false">
+                    {{ r.term }}
+                  </el-link>
+                </template>
+              </el-table-column>
+              <el-table-column prop="name" label="Name" min-width="300" show-overflow-tooltip />
+              <el-table-column prop="namespace" label="Namespace" width="200" />
+            </el-table>
           </div>
           <el-empty v-else description="No GO annotations available" />
         </el-tab-pane>
