@@ -478,17 +478,6 @@ def init_dev_seed_data(db):
         ),
         _ensure_menu(
             db,
-            name="SystemTeam",
-            title="团队管理",
-            path="/system/team",
-            component="/system/team/index",
-            pid=system.id,
-            icon="lucide:users-round",
-            sort=3,
-            menu_type=2,
-        ),
-        _ensure_menu(
-            db,
             name="SystemMenu",
             title="菜单管理",
             path="/system/menu",
