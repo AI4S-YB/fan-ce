@@ -11,6 +11,12 @@ const detail = inject<Ref<PublicDatasetDetail | null>>('genomeDetail', ref(null)
 
 const hasGenome = computed(() => !!detail?.value);
 
+// Standalone mode genome selector
+const { items: genomeList, load: loadGenomeList } = useDatasetList();
+const selectedGenomeId = ref<number | null>(null);
+const batchDatasetId = computed(() => detail?.value?.id ?? selectedGenomeId.value);
+onMounted(() => { if (!hasGenome.value) loadGenomeList({ dataset_type: 'genome', page: 1, size: 50 }); });
+
 // Batch sequence retrieval
 const geneIds = ref('');
 const seqType = ref('gene');
@@ -38,7 +44,7 @@ function buildSequenceType(): string {
 async function retrieveSequences() {
   const inputList = geneIds.value.split('\n').map(s => s.trim()).filter(Boolean);
   if (inputList.length === 0) { seqError.value = 'Please enter at least one input'; return; }
-  if (!detail?.value?.id) { seqError.value = 'No genome dataset selected'; return; }
+  if (!batchDatasetId.value) { seqError.value = 'No genome dataset selected'; return; }
 
   seqLoading.value = true;
   seqError.value = '';
@@ -49,7 +55,7 @@ async function retrieveSequences() {
   try {
     const { post } = useRequest();
     const data: any = await post('/public/dataset/sequence/batch', {
-      dataset_id: detail.value.id,
+      dataset_id: batchDatasetId.value,
       sequence_type: buildSequenceType(),
       upstream: upstream.value,
       downstream: downstream.value,
@@ -81,12 +87,12 @@ function downloadAllSequences() {
 }
 
 async function loadBatchExample() {
-  if (!detail?.value?.id) return;
+  if (!batchDatasetId.value) return;
   exampleLoading.value = true;
   try {
     const { post } = useRequest();
     const data: any = await post('/public/dataset/query/execute', {
-      id: detail.value.id,
+      id: batchDatasetId.value,
       operation: 'list_genes',
       params: { page: 1, size: 5 },
     });
@@ -170,55 +176,23 @@ function siteDownloadUrl(datasetCode: string, fileId: number) {
 </script>
 <template>
   <div>
-    <div v-if="!hasGenome">
-      <!-- Standalone tools -->
-      <div v-if="tool === 'download'">
-        <h2>Site Downloads</h2>
-        <p style="color:#888;font-size:13px;margin-bottom:16px;">
-          Browse downloadable files from all public datasets.
-        </p>
-        <div v-loading="siteLoading">
-          <div v-if="siteDownloads.length === 0 && !siteLoading" style="text-align:center;padding:40px;color:#999;">
-            No downloadable files available at this time.
-          </div>
-          <div v-for="item in siteDownloads" :key="item.dataset.id" style="margin-bottom:24px;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-              <router-link :to="'/dataset/' + item.dataset.id" style="font-size:16px;font-weight:600;color:#409eff;text-decoration:none;">
-                {{ item.dataset.title || item.dataset.dataset_code }}
-              </router-link>
-              <el-tag size="small">{{ item.dataset.dataset_type }}</el-tag>
-              <span style="color:#888;font-size:12px;">{{ item.files.length }} file(s)</span>
-            </div>
-            <el-table :data="item.files" border size="small">
-              <el-table-column prop="file_name" label="File" min-width="240" />
-              <el-table-column prop="file_format" label="Format" width="100" />
-              <el-table-column label="Size" width="120">
-                <template #default="{ row }">
-                  {{ row.file_size ? (row.file_size / 1024 / 1024).toFixed(1) + ' MB' : '-' }}
-                </template>
-              </el-table-column>
-              <el-table-column label="" width="100">
-                <template #default="{ row }">
-                  <el-button type="primary" size="small" tag="a" :href="siteDownloadUrl(item.dataset.dataset_code, row.id)">
-                    Download
-                  </el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-        </div>
+    <!-- BATCH: works in both standalone and genome-scoped mode -->
+    <div v-if="tool === 'batch'">
+      <h2 v-if="!hasGenome">Batch Sequence Retrieval</h2>
+      <h3 v-else>Batch Sequence Retrieval</h3>
+      <p style="color:#888;font-size:13px;margin-bottom:16px;">
+        Retrieve sequences by gene ID or genomic coordinates from {{ hasGenome ? 'this' : 'public' }} genome dataset{{ hasGenome ? '' : 's' }}.
+      </p>
+
+      <!-- Genome selector (standalone only) -->
+      <div v-if="!hasGenome" style="margin-bottom:20px;">
+        <div style="font-weight:500;margin-bottom:4px;">Select Genome Dataset</div>
+        <el-select v-model="selectedGenomeId" placeholder="Select a genome..." style="width:400px;" filterable clearable>
+          <el-option v-for="g in genomeList" :key="g.id" :label="g.title || g.dataset_code" :value="g.id" />
+        </el-select>
       </div>
 
-      <el-empty v-else :description="`Unknown tool: ${tool}`" />
-    </div>
-
-    <template v-else>
-      <div v-if="tool === 'batch'">
-        <h3>Batch Sequence Retrieval</h3>
-        <p style="color:#888;font-size:13px;margin-bottom:16px;">
-          Retrieve sequences by gene ID or genomic coordinates from this genome dataset.
-        </p>
-
+      <template v-if="batchDatasetId">
         <!-- Sequence Type -->
         <div style="margin-bottom:12px;">
           <div style="font-weight:500;margin-bottom:4px;">Sequence Type</div>
@@ -288,9 +262,51 @@ function siteDownloadUrl(datasetCode: string, fileId: number) {
             </template>
           </div>
         </div>
-      </div>
+      </template>
+      <el-empty v-else description="Select a genome dataset to begin" />
+    </div>
 
-      <div v-else-if="tool === 'blast'">
+    <!-- Standalone download -->
+    <div v-if="!hasGenome && tool === 'download'">
+      <h2>Site Downloads</h2>
+      <p style="color:#888;font-size:13px;margin-bottom:16px;">
+        Browse downloadable files from all public datasets.
+      </p>
+      <div v-loading="siteLoading">
+        <div v-if="siteDownloads.length === 0 && !siteLoading" style="text-align:center;padding:40px;color:#999;">
+          No downloadable files available at this time.
+        </div>
+        <div v-for="item in siteDownloads" :key="item.dataset.id" style="margin-bottom:24px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <router-link :to="'/dataset/' + item.dataset.id" style="font-size:16px;font-weight:600;color:#409eff;text-decoration:none;">
+              {{ item.dataset.title || item.dataset.dataset_code }}
+            </router-link>
+            <el-tag size="small">{{ item.dataset.dataset_type }}</el-tag>
+            <span style="color:#888;font-size:12px;">{{ item.files.length }} file(s)</span>
+          </div>
+          <el-table :data="item.files" border size="small">
+            <el-table-column prop="file_name" label="File" min-width="240" />
+            <el-table-column prop="file_format" label="Format" width="100" />
+            <el-table-column label="Size" width="120">
+              <template #default="{ row }">
+                {{ row.file_size ? (row.file_size / 1024 / 1024).toFixed(1) + ' MB' : '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column label="" width="100">
+              <template #default="{ row }">
+                <el-button type="primary" size="small" tag="a" :href="siteDownloadUrl(item.dataset.dataset_code, row.id)">
+                  Download
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Genome-scoped non-batch tools -->
+    <template v-if="hasGenome && tool !== 'batch'">
+      <div v-if="tool === 'blast'">
         <h3>BLAST</h3>
         <el-input v-model="querySeq" type="textarea" :rows="6" placeholder="Paste query sequence in FASTA format..." style="margin-bottom:12px;" />
         <el-button type="primary">Run BLAST</el-button>
@@ -320,5 +336,8 @@ function siteDownloadUrl(datasetCode: string, fileId: number) {
 
       <el-empty v-else :description="`Unknown tool: ${tool}`" />
     </template>
+
+    <!-- Standalone unknown tool -->
+    <el-empty v-if="!hasGenome && tool !== 'batch' && tool !== 'download'" :description="`Unknown tool: ${tool}`" />
   </div>
 </template>
