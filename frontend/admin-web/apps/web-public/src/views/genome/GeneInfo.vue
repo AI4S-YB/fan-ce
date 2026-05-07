@@ -103,6 +103,17 @@ async function loadGeneDetail() {
   try {
     await execute(d.id, 'gene_function_summary', { gene_id: geneId.value }, d.query_entry_asset?.asset_code);
     parseGeneData(queryResult.value);
+    // Load gene+flanks for structure view
+    if (d?.id && exons.value.length > 0) {
+      try {
+        const { post } = useRequest();
+        const r: any = await post('/public/dataset/sequence/batch', {
+          dataset_id: d.id, sequence_type: 'gene_up_down',
+          upstream: 150, downstream: 150, inputs: [geneId.value],
+        });
+        geneSeq.value = r?.sequences?.[0]?.sequence || '';
+      } catch { /* ignore */ }
+    }
     await nextTick();
     if (exons.value.length > 0) tryRenderStructure();
   } catch (e: any) {
@@ -157,9 +168,8 @@ function tryRenderStructure() {
   container.innerHTML = '';
   const start = (g.start as number) || 1;
   const stop = (g.stop as number) || 1;
-  const geneLen = stop - start + 1;
-  const pad = Math.min(150, start - 1);
-  const seq = 'N'.repeat(pad + geneLen + pad);
+  const pad = 150;
+  const seq = geneSeq.value || 'N'.repeat(pad + (stop - start + 1) + pad);
 
   const fv = new FeatureViewer(seq, '#struc_view', {
     showAxis: true, showSequence: true, brushActive: true,
