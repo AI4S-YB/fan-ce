@@ -173,6 +173,7 @@ def admin_list_tools(_user=Depends(get_active_user)):
             "output_schema": t.get_output_schema(),
             "dependencies": t.dependencies,
             "plugin_class": f"{t.__class__.__module__}:{t.__class__.__qualname__}",
+            "status": getattr(t, "tool_status", "active"),
         }
         for t in tools
     ])
