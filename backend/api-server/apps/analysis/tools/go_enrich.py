@@ -133,17 +133,17 @@ print(f"Study genes (found): {{len(study_genes)}}, Population: {{len(pop_genes)}
 
 goea = GOEnrichmentStudy(
     pop_genes, geneid2gos, obodag,
-    methods=['{params['method']}'],
-    alpha={params['alpha']},
+    methods=['{params.get("method", "fdr_bh")}'],
+    alpha={params.get("alpha", 0.05)},
     propagate_counts=False,
 )
 results = goea.run_study(study_genes)
 
-method_key = 'p_{params['method']}'
+method_key = 'p_{params.get("method", "fdr_bh")}'
 
 rows = []
 for r in results:
-    if r.study_count < {params['min_genes']}:
+    if r.study_count < {params.get("min_genes", 3)}:
         continue
     p_corr = getattr(r, method_key, r.p_uncorrected)
     rows.append((r.GO, r.name, r.enrichment, r.p_uncorrected, p_corr, r.study_count, r.pop_count))
@@ -173,7 +173,7 @@ if rows:
     ax.set_yticks(list(y_pos))
     ax.set_yticklabels([r[1][:45] for r in top], fontsize=9)
     ax.set_xlabel('Fold Enrichment')
-    ax.set_title("GO Enrichment ({params['ontology']})")
+    ax.set_title("GO Enrichment ({params.get('ontology', 'BP')})")
     cbar = plt.colorbar(sc, ax=ax)
     cbar.set_label('-log10(P_corrected)')
     plt.tight_layout()
