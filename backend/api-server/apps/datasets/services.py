@@ -6174,32 +6174,35 @@ class DatasetDomainService:
                     dataset_type=request_data.dataset_type,
                     active_only=False,
                 )
+
+            # Lightweight query — avoid _build_public_dataset_payload per dataset
+            query = db.query(DatasetRegistry).filter(
+                DatasetRegistry.default_public_version_id.isnot(None),
+                DatasetRegistry.visibility == "public",
+            )
+            if dataset_type_filter:
+                query = query.filter(DatasetRegistry.dataset_type.in_(dataset_type_filter))
+
+            registry_rows = query.order_by(DatasetRegistry.id.desc()).all()
+
             data_list = []
-            registry_rows = dataset_registry_db.get_data(db=db, filters={})
-            registry_snapshots = [
-                {
+            for item in registry_rows:
+                if request_data.dataset_id and item.database_id != request_data.dataset_id:
+                    continue
+                if request_data.name and request_data.name not in (item.title or "") and request_data.name not in (item.dataset_code or ""):
+                    continue
+                data_list.append({
                     "id": item.id,
                     "database_id": item.database_id,
-                    "default_public_version_id": getattr(item, "default_public_version_id", None),
-                }
-                for item in registry_rows
-            ]
-            registry_snapshots = sorted(registry_snapshots, key=lambda item: item["id"], reverse=True)
-            for registry_row in registry_snapshots:
-                if not registry_row["default_public_version_id"]:
-                    continue
-                dataset_id = registry_row["database_id"]
-                if request_data.dataset_id and dataset_id != request_data.dataset_id:
-                    continue
-                try:
-                    payload = self._build_public_dataset_payload(db=db, dataset_id=dataset_id)
-                except HTTPException:
-                    continue
-                if request_data.name and request_data.name not in (payload["title"] or "") and request_data.name not in (payload["name"] or ""):
-                    continue
-                if dataset_type_filter and not self._dataset_type_matches(payload["dataset_type"], dataset_type_filter):
-                    continue
-                data_list.append(payload)
+                    "dataset_code": item.dataset_code,
+                    "title": item.title,
+                    "dataset_type": item.dataset_type,
+                    "organism": item.organism,
+                    "version": item.version,
+                    "lifecycle_state": item.lifecycle_state,
+                    "description_md": (item.description_md or "")[:500],
+                    "extra_json": item.extra_json,
+                })
 
             total = len(data_list)
             if request_data.page and request_data.size:
@@ -6207,7 +6210,7 @@ class DatasetDomainService:
                 end = start + request_data.size
                 data_list = data_list[start:end]
 
-            return {"dataList": data_list, "total": total}
+            return {"dataList": data_list, "items": data_list, "total": total}
         finally:
             db.close()
 
