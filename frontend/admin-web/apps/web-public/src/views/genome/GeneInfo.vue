@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { ref, inject, watch, type Ref } from 'vue';
+import { ref, inject, watch, nextTick, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useDatasetQuery } from '@/composables/useDatasets';
+import { useRequest } from '@/composables/useRequest';
 import type { PublicDatasetDetail } from '@/types/dataset';
+
+declare var FeatureViewer: any;
 
 const route = useRoute();
 const router = useRouter();
@@ -10,139 +13,317 @@ const detail = inject<Ref<PublicDatasetDetail | null>>('genomeDetail');
 const { queryLoading, queryResult, execute } = useDatasetQuery();
 
 const geneId = ref(route.query.gene_id as string || '');
-const gene = ref<Record<string, unknown> | null>(null);
+const gene = ref<Record<string, any> | null>(null);
+const exons = ref<any[]>([]);
+const canonicalId = ref('');
+const transcripts = ref<any[]>([]);
 const annotationCounts = ref<Record<string, number>>({});
-const annotations = ref<Record<string, any>>({});
-const transcriptCount = ref(0);
-const canonicalTranscript = ref('');
-const blastHits = ref<any[]>([]);
+
+const blastByDb = ref<Record<string, any[]>>({});
+const interpro = ref<any[]>([]);
+const goTerms = ref<any[]>([]);
+const families = ref<any[]>([]);
+
+const geneSeq = ref('');
+const mrnaSeq = ref('');
+const cdsSeq = ref('');
+const proteinSeq = ref('');
+const activeSeq = ref('');
+
+const activeName = ref('1');
+const dialogVisible = ref(false);
+const dialogContent = ref<any>({});
+const hit = ref<any>({});
 const errorMsg = ref('');
 
 watch(() => route.query.gene_id, (id) => {
   if (id) { geneId.value = String(id); loadGeneDetail(); }
 }, { immediate: true });
 
-function parseResult(result: any) {
-  if (!result) return;
+function parseGeneData(result: any) {
   const inner = result?.data || result;
   const g = inner?.gene;
   if (!g) return;
   gene.value = g;
+  canonicalId.value = inner?.canonical_transcript_id || '';
   annotationCounts.value = inner?.annotation_counts || {};
-  annotations.value = inner?.annotations || {};
-  transcriptCount.value = inner?.transcript_count || 0;
-  canonicalTranscript.value = inner?.canonical_transcript_id || '';
-  const blastData = inner?.annotations?.blast || {};
-  const hits: any[] = [];
-  Object.entries(blastData).forEach(([db, hitList]: [string, any]) => {
-    (Array.isArray(hitList) ? hitList : []).forEach((h: any) => hits.push({ ...h, _db: db }));
-  });
-  blastHits.value = hits;
-}
+  exons.value = inner?.exons || [];
+  transcripts.value = inner?.transcripts || [];
 
-watch(queryResult, (result) => parseResult(result));
+  const ann = inner?.annotations || {};
+  const blastData = ann?.blast || {};
+  const dbMap: Record<string, any[]> = {};
+  for (const [db, hitList] of Object.entries(blastData)) {
+    dbMap[db] = Array.isArray(hitList) ? hitList : [];
+  }
+  blastByDb.value = dbMap;
+
+  const ipr = ann?.interpro;
+  if (Array.isArray(ipr) && ipr.length > 0 && ipr[0]?.matches_format) {
+    interpro.value = ipr[0].matches_format;
+  } else if (Array.isArray(ipr)) {
+    interpro.value = ipr;
+  } else {
+    interpro.value = [];
+  }
+
+  const goData = ann?.go;
+  if (Array.isArray(goData) && goData.length > 0 && goData[0]?.terms) {
+    goTerms.value = goData[0].terms;
+  } else if (Array.isArray(goData)) {
+    goTerms.value = goData;
+  } else {
+    goTerms.value = [];
+  }
+
+  const fam = ann?.family;
+  if (Array.isArray(fam) && fam.length > 0 && fam[0]?.family) {
+    families.value = fam[0].family;
+  } else if (Array.isArray(fam)) {
+    families.value = fam;
+  } else {
+    families.value = [];
+  }
+}
 
 async function loadGeneDetail() {
   const d = detail?.value;
   if (!d?.id || !geneId.value) return;
-  const assetCode = d.query_entry_asset?.asset_code;
   errorMsg.value = '';
   try {
-    await execute(d.id, 'gene_function_summary', { gene_id: geneId.value }, assetCode);
-    parseResult(queryResult.value);
+    await execute(d.id, 'gene_function_summary', { gene_id: geneId.value }, d.query_entry_asset?.asset_code);
+    parseGeneData(queryResult.value);
   } catch (e: any) {
     errorMsg.value = 'Failed: ' + (e?.message || String(e));
   }
+}
+
+watch(queryResult, (result) => {
+  if (result) parseGeneData(result);
+});
+
+async function loadSequences(datasetId: number) {
+  const { post } = useRequest();
+  const tid = canonicalId.value || geneId.value;
+  try {
+    const r: any = await post('/public/dataset/sequence/batch', {
+      dataset_id: datasetId, sequence_type: 'gene', inputs: [geneId.value],
+    });
+    geneSeq.value = r?.sequences?.[0]?.sequence || '';
+  } catch { /* ignore */ }
+  try {
+    const r: any = await post('/public/dataset/sequence/batch', {
+      dataset_id: datasetId, sequence_type: 'mrna', inputs: [tid],
+    });
+    mrnaSeq.value = r?.sequences?.[0]?.sequence || '';
+  } catch { /* ignore */ }
+  try {
+    const r: any = await post('/public/dataset/sequence/batch', {
+      dataset_id: datasetId, sequence_type: 'protein', inputs: [tid],
+    });
+    proteinSeq.value = r?.sequences?.[0]?.sequence || '';
+  } catch { /* ignore */ }
+  cdsSeq.value = mrnaSeq.value;
+}
+
+async function tabHandleClick(tab: any) {
+  if (tab.name === '2' && !geneSeq.value && detail?.value?.id) {
+    await loadSequences(detail.value.id);
+  }
+  if (tab.name === '1' && exons.value.length > 0) {
+    await nextTick();
+    renderStructure();
+  }
+}
+
+function renderStructure() {
+  const container = document.getElementById('struc_view');
+  if (!container || typeof FeatureViewer === 'undefined') return;
+  container.innerHTML = '';
+  const g = gene.value;
+  if (!g) return;
+  const start = (g.start as number) || 1;
+  const stop = (g.stop as number) || 1;
+  const geneLen = stop - start + 1;
+  const pad = Math.min(150, start - 1);
+  const seq = 'N'.repeat(pad + geneLen + pad);
+  try {
+    const fv = new FeatureViewer(seq, '#struc_view', {
+      showAxis: true, showSequence: true, brushActive: true,
+      toolbar: true, bubbleHelp: true, zoomMax: 20,
+    });
+    const exonFeatures = exons.value.filter((e: any) => e.feature_type === 'exon');
+    exonFeatures.forEach((e: any) => {
+      fv.addFeature({
+        x: (e.start as number) - start + 1 + pad,
+        y: (e.stop as number) - start + 1 + pad,
+        fillColor: '#409eff',
+        strokeColor: '#337ecc',
+        shape: 'rect',
+        height: 12,
+      });
+    });
+  } catch (e) { /* ignore */ }
 }
 
 function backToSearch() {
   const path = router.currentRoute.value.path.replace('/geneinfo', '/search');
   router.push({ path, query: {} });
 }
+
+function openAlignment(db: string, row: any) {
+  dialogContent.value = { database: db, ...row };
+  hit.value = row;
+  dialogVisible.value = true;
+}
+
+function getBlastLink(accession: string, db: string): string {
+  const d = db.toLowerCase();
+  if (d.includes('nr')) return `https://www.ncbi.nlm.nih.gov/protein/${accession}`;
+  if (d.includes('swiss') || d.includes('trembl')) return `https://www.uniprot.org/uniprot/${accession}`;
+  if (d.includes('tair')) return `https://www.arabidopsis.org/servlets/Search?type=general&search_action=detail&method=1&show_obsolete=F&name=${accession}&sub_type=gene&SEARCH_EXACT=4&SEARCH_CONTAINS=1`;
+  return '#';
+}
+
+function getFamilyLabel(type: string): string {
+  if (type === 'TF') return 'Transcription Factor';
+  if (type === 'TR') return 'Transcriptional Regulator';
+  if (type === 'PK') return 'Protein Kinase';
+  return type;
+}
 </script>
 
 <template>
-  <div v-loading="queryLoading" class="gene-info">
+  <div v-loading="queryLoading" class="geneinfo-wrapper">
     <div class="gene-nav">
       <el-button text @click="backToSearch">← Back to Search</el-button>
     </div>
     <div v-if="errorMsg" class="gene-error">{{ errorMsg }}</div>
 
     <template v-if="gene">
-      <!-- Header -->
-      <div class="gene-header">
-        <h2 class="gene-title">{{ gene.gene_id }}</h2>
-        <div class="gene-subtitle">
-          <span class="gene-locus">{{ gene.chrom }}:{{ (gene.start as number)?.toLocaleString() }}-{{ (gene.stop as number)?.toLocaleString() }}</span>
-          <span class="gene-strand">{{ gene.strand === '+' ? '(+) Forward' : '(-) Reverse' }}</span>
-          <span v-if="canonicalTranscript" class="gene-transcript">Canonical: <code>{{ canonicalTranscript }}</code></span>
+      <h3>Gene: {{ geneId }}</h3>
+      <el-divider />
+      <el-tabs v-model="activeName" type="border-card" @tab-click="tabHandleClick">
+
+        <!-- Tab 1: Overview -->
+        <el-tab-pane label="Overview" name="1">
+          <el-descriptions :column="1">
+            <el-descriptions-item label="Gene ID">{{ gene.gene_id }}</el-descriptions-item>
+            <el-descriptions-item label="Description">{{ gene.description || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="Location">{{ gene.chrom }}:{{ (gene.start as number) - 1 }}-{{ gene.stop }}</el-descriptions-item>
+            <el-descriptions-item label="Strand">({{ gene.strand }})</el-descriptions-item>
+            <el-descriptions-item v-if="transcripts.length > 0" :label="'Transcripts (' + transcripts.length + ')'">
+              <span v-for="(t, i) in transcripts" :key="i">
+                {{ t.transcript_id }}<span v-if="t.transcript_id === canonicalId">*</span>
+                <span v-if="i < transcripts.length - 1">, </span>
+              </span>
+            </el-descriptions-item>
+          </el-descriptions>
+          <h4>Gene Structure</h4>
+          <div id="struc_view" style="min-height:60px;">
+            <div v-if="exons.length === 0" style="color:#999;font-size:12px;padding:12px;">No structural annotation available</div>
+          </div>
+        </el-tab-pane>
+
+        <!-- Tab 2: Sequence -->
+        <el-tab-pane label="Sequence" name="2">
+          <el-collapse v-model="activeSeq" accordion>
+            <el-collapse-item :title="'Gene sequence (' + geneSeq.length + ' bp)'" name="gene">
+              <pre class="seq-pre">{{ geneSeq || 'Not available' }}</pre>
+            </el-collapse-item>
+            <el-collapse-item :title="'mRNA (' + mrnaSeq.length + ' bp)'" name="mrna">
+              <pre class="seq-pre">{{ mrnaSeq || 'Not available' }}</pre>
+            </el-collapse-item>
+            <el-collapse-item :title="'CDS (' + cdsSeq.length + ' bp)'" name="cds">
+              <pre class="seq-pre">{{ cdsSeq || 'Not available' }}</pre>
+            </el-collapse-item>
+            <el-collapse-item :title="'Protein (' + proteinSeq.length + ' aa)'" name="protein">
+              <pre class="seq-pre">{{ proteinSeq || 'Not available' }}</pre>
+            </el-collapse-item>
+          </el-collapse>
+        </el-tab-pane>
+
+        <!-- Tab 3: BLAST -->
+        <el-tab-pane label="BLAST" name="3">
+          <div v-if="Object.keys(blastByDb).length === 0" style="padding:20px;color:#999;">No BLAST data available</div>
+          <div v-for="(hits, db) in blastByDb" :key="db" style="margin-bottom:24px;">
+            <h4>BLAST of {{ geneId }} vs. {{ db.replace('blast_', '').replace('_', ' ') }} Database</h4>
+            <el-table v-if="hits.length > 0" :data="hits" stripe size="small">
+              <el-table-column prop="Hit_accession" label="Accession" width="150">
+                <template #default="{ row: r }">
+                  <el-link :href="getBlastLink(r.Hit_accession, db)" target="_blank" type="primary" :underline="false">
+                    {{ r.Hit_accession }}
+                  </el-link>
+                </template>
+              </el-table-column>
+              <el-table-column prop="Hit_def" label="Description" min-width="400" show-overflow-tooltip />
+              <el-table-column label="E-value" width="120">
+                <template #default="{ row: r }">{{ r.Hit_hsps?.Hsp?.Hsp_evalue || '-' }}</template>
+              </el-table-column>
+              <el-table-column label="Identity" width="100">
+                <template #default="{ row: r }">{{ r.Hit_hsps?.Hsp?.Hsp_identity || '-' }}</template>
+              </el-table-column>
+              <el-table-column label="Alignment" width="100">
+                <template #default="{ row: r }">
+                  <el-link type="primary" :underline="false" @click="openAlignment(db, r)">Show</el-link>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </el-tab-pane>
+
+        <!-- Tab 4: Domain -->
+        <el-tab-pane label="Domain" name="4">
+          <el-table v-if="interpro.length > 0" :data="interpro" stripe size="small">
+            <el-table-column prop="ipr_term" label="IPR Term" width="120" />
+            <el-table-column prop="ipr_desc" label="IPR Description" min-width="200" show-overflow-tooltip />
+            <el-table-column prop="source_lib" label="Source" width="100" />
+            <el-table-column prop="source_term" label="Source Term" width="120" />
+            <el-table-column prop="source_desc" label="Source Name" min-width="200" show-overflow-tooltip />
+            <el-table-column prop="location" label="Location" width="150" />
+          </el-table>
+          <el-empty v-else description="No domain annotations available" />
+        </el-tab-pane>
+
+        <!-- Tab 5: Gene Ontology -->
+        <el-tab-pane label="Gene Ontology" name="5">
+          <div v-if="goTerms.length > 0">
+            <h4>Gene Ontology Terms</h4>
+            <div v-for="(item, i) in goTerms" :key="i" style="margin-bottom:4px;font-size:13px;">
+              <b>Term:</b>
+              <el-link :href="'http://amigo.geneontology.org/amigo/term/' + item.term" target="_blank" type="primary" :underline="false">
+                {{ item.term }}
+              </el-link>
+              &nbsp;&nbsp; <b>Namespace:</b> {{ item.namespace }}
+              &nbsp;&nbsp; <b>Name:</b> {{ item.name }}
+            </div>
+          </div>
+          <el-empty v-else description="No GO annotations available" />
+        </el-tab-pane>
+
+        <!-- Tab 6: Families -->
+        <el-tab-pane label="TFS/TRs/PKs" name="6">
+          <div v-if="families.length > 0">
+            <h4>Gene Families</h4>
+            <el-button v-for="(term, i) in families" :key="i" type="primary" style="margin:4px;">
+              {{ term.name }} ({{ getFamilyLabel(term.type) }})
+            </el-button>
+          </div>
+          <el-empty v-else description="No gene family annotations available" />
+        </el-tab-pane>
+
+      </el-tabs>
+
+      <!-- BLAST Alignment Modal -->
+      <el-dialog v-model="dialogVisible" :title="'BLAST alignment — ' + (hit.Hit_accession || '')" width="50%">
+        <div v-if="hit.Hit_hsps?.Hsp">
+          <p>Match: {{ hit.Hit_accession }} ({{ hit.Hit_def }})</p>
+          <p><b>HSP</b> Score: {{ hit.Hit_hsps.Hsp.Hsp_score }}, E-value: {{ hit.Hit_hsps.Hsp.Hsp_evalue }}, Identity: {{ hit.Hit_hsps.Hsp.Hsp_identity }}</p>
+          <pre class="alignment-pre">Query:  {{ hit.Hit_hsps.Hsp.Hsp_qseq }}
+            {{ hit.Hit_hsps.Hsp.Hsp_midline }}
+Sbjct:  {{ hit.Hit_hsps.Hsp.Hsp_hseq }}</pre>
         </div>
-        <p class="gene-desc">{{ gene.description || 'No description available' }}</p>
-        <div v-if="gene.family" class="gene-family">
-          <el-tag type="success" size="small">{{ gene.family }}</el-tag>
-        </div>
-      </div>
-
-      <!-- Quick stats -->
-      <div class="gene-stats">
-        <div class="stat-item"><span class="stat-val">{{ transcriptCount }}</span><span class="stat-label">Transcripts</span></div>
-        <div class="stat-item"><span class="stat-val">{{ annotationCounts.go || 0 }}</span><span class="stat-label">GO</span></div>
-        <div class="stat-item"><span class="stat-val">{{ annotationCounts.kegg || 0 }}</span><span class="stat-label">KEGG</span></div>
-        <div class="stat-item"><span class="stat-val">{{ annotationCounts.interpro || 0 }}</span><span class="stat-label">InterPro</span></div>
-        <div class="stat-item"><span class="stat-val">{{ blastHits.length }}</span><span class="stat-label">BLAST</span></div>
-      </div>
-
-      <!-- Location -->
-      <div class="gene-section">
-        <h3>Genomic Location</h3>
-        <table class="gene-table">
-          <tr><th>Chromosome</th><td>{{ gene.chrom }}</td><th>Start</th><td>{{ (gene.start as number)?.toLocaleString() }}</td></tr>
-          <tr><th>End</th><td>{{ (gene.stop as number)?.toLocaleString() }}</td><th>Strand</th><td>{{ gene.strand }}</td></tr>
-          <tr><th>Transcripts</th><td>{{ transcriptCount }}</td><th>Canonical</th><td><code v-if="canonicalTranscript">{{ canonicalTranscript }}</code><span v-else>-</span></td></tr>
-        </table>
-      </div>
-
-      <!-- BLAST -->
-      <div v-if="blastHits.length > 0" class="gene-section">
-        <h3>BLAST Homology ({{ blastHits.length }} hits)</h3>
-        <el-table :data="blastHits" size="small" border stripe max-height="500">
-          <el-table-column prop="_db" label="DB" width="70" />
-          <el-table-column prop="Hit_id" label="Subject ID" width="180" show-overflow-tooltip />
-          <el-table-column prop="Hit_def" label="Description" min-width="280" show-overflow-tooltip />
-          <el-table-column label="E-value" width="100" sortable sort-by="Hit_hsps.Hsp.Hsp_evalue">
-            <template #default="{ row }">{{ row.Hit_hsps?.Hsp?.Hsp_evalue || '-' }}</template>
-          </el-table-column>
-          <el-table-column label="Identity" width="70">
-            <template #default="{ row }">{{ row.Hit_hsps?.Hsp?.Hsp_identity || '-' }}</template>
-          </el-table-column>
-          <el-table-column label="Score" width="70">
-            <template #default="{ row }">{{ row.Hit_hsps?.Hsp?.Hsp_bit_score || '-' }}</template>
-          </el-table-column>
-        </el-table>
-      </div>
-
-      <!-- GO -->
-      <div v-if="annotations.go?.length" class="gene-section">
-        <h3>GO Terms ({{ annotations.go.length }})</h3>
-        <el-table :data="annotations.go" size="small" border stripe>
-          <el-table-column prop="term_id" label="Accession" width="140">
-            <template #default="{ row }">
-              <a :href="'https://amigo.geneontology.org/amigo/term/' + row.term_id" target="_blank" style="color:#409eff;">{{ row.term_id }}</a>
-            </template>
-          </el-table-column>
-          <el-table-column prop="term_name" label="Term" min-width="300" />
-          <el-table-column prop="term_type" label="Type" width="100" />
-        </el-table>
-      </div>
-
-      <!-- KEGG -->
-      <div v-if="annotations.kegg?.length" class="gene-section">
-        <h3>KEGG Pathways ({{ annotations.kegg.length }})</h3>
-        <el-table :data="annotations.kegg" size="small" border stripe>
-          <el-table-column prop="term_id" label="Pathway ID" width="140" />
-          <el-table-column prop="term_name" label="Pathway" min-width="300" />
-        </el-table>
-      </div>
+      </el-dialog>
     </template>
 
     <el-empty v-else-if="!queryLoading && !errorMsg" description="Gene not found" />
@@ -150,24 +331,9 @@ function backToSearch() {
 </template>
 
 <style scoped>
-.gene-info { font-size: 14px; }
+.geneinfo-wrapper { font-size: 14px; }
 .gene-nav { margin-bottom: 12px; }
 .gene-error { color: #f56c6c; margin: 8px 0; padding: 8px 12px; background: #fef0f0; border-radius: 4px; }
-.gene-header { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #e5e5e5; }
-.gene-title { margin: 0 0 6px; font-size: 20px; font-weight: 700; color: #303133; }
-.gene-subtitle { font-size: 13px; color: #888; margin-bottom: 8px; display: flex; gap: 16px; }
-.gene-locus { font-family: monospace; }
-.gene-strand { color: #409eff; }
-.gene-transcript code { background: #f0f0f0; padding: 1px 6px; border-radius: 3px; font-size: 12px; }
-.gene-desc { margin: 8px 0 4px; color: #555; line-height: 1.6; }
-.gene-family { margin-top: 4px; }
-.gene-stats { display: flex; gap: 16px; margin-bottom: 20px; }
-.stat-item { flex: 1; background: #f5f7fa; border-radius: 6px; padding: 12px; text-align: center; }
-.stat-val { display: block; font-size: 22px; font-weight: 700; color: #409eff; }
-.stat-label { display: block; font-size: 11px; color: #999; margin-top: 2px; }
-.gene-section { margin-bottom: 24px; }
-.gene-section h3 { font-size: 15px; margin: 0 0 8px; color: #303133; }
-.gene-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.gene-table th { background: #f5f7fa; padding: 8px 12px; text-align: right; width: 100px; color: #888; font-weight: 500; border: 1px solid #e5e5e5; }
-.gene-table td { padding: 8px 12px; border: 1px solid #e5e5e5; font-family: monospace; }
+.seq-pre { word-break: break-all; font-family: 'Lucida Console', Monaco, monospace; font-size: 12px; white-space: pre-wrap; max-height: 400px; overflow: auto; background: #f5f5f5; padding: 8px; border-radius: 4px; }
+.alignment-pre { font-family: 'Lucida Console', Monaco, monospace; font-size: 12px; white-space: pre; overflow-x: auto; background: #f5f5f5; padding: 12px; border-radius: 4px; }
 </style>

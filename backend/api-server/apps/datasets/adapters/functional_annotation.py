@@ -167,6 +167,24 @@ class FunctionalAnnotationAdapter(DatasetQueryAdapter):
         )
         return [self._serialize_transcript_row(dict(row)) for row in rows]
 
+    def _query_exons(self, file_path: str, gene_id: str) -> list:
+        rows = query_sqlite(
+            file_path,
+            "SELECT feature_type, start, stop, strand, transcript_id "
+            "FROM hse_exons WHERE gene_id=? ORDER BY start",
+            (gene_id,),
+        )
+        return [
+            {
+                "feature_type": r["feature_type"],
+                "start": r["start"],
+                "stop": r["stop"],
+                "strand": r["strand"],
+                "transcript_id": r["transcript_id"],
+            }
+            for r in rows
+        ]
+
     def _serialize_transcript_row(self, row: Dict[str, Any]) -> Dict[str, Any]:
         annotations = {
             "go": self._parse_json_value(row.pop("GO", None)) or [],
@@ -451,6 +469,7 @@ class FunctionalAnnotationAdapter(DatasetQueryAdapter):
                 "family": [],
                 "blast": {},
             }
+            exons = self._query_exons(file_path, gene_id)
             return {
                 "adapter": self.adapter_name,
                 "operation": operation,
@@ -462,6 +481,7 @@ class FunctionalAnnotationAdapter(DatasetQueryAdapter):
                     "transcript_count": len(transcripts),
                     "annotation_counts": self._build_annotation_counts(annotations),
                     "annotations": annotations,
+                    "exons": exons,
                 },
             }
 
