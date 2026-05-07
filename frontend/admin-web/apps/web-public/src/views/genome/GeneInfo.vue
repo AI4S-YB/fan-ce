@@ -16,12 +16,12 @@ const geneId = ref(route.query.gene_id as string || '');
 const gene = ref<Record<string, any> | null>(null);
 const exons = ref<any[]>([]);
 const canonicalId = ref('');
-const transcripts = ref<any[]>([]);
 const annotationCounts = ref<Record<string, number>>({});
 
 const blastByDb = ref<Record<string, any[]>>({});
 const interpro = ref<any[]>([]);
 const goTerms = ref<any[]>([]);
+const keggPathways = ref<any[]>([]);
 const families = ref<any[]>([]);
 
 const geneSeq = ref('');
@@ -48,7 +48,6 @@ function parseGeneData(result: any) {
   canonicalId.value = inner?.canonical_transcript_id || '';
   annotationCounts.value = inner?.annotation_counts || {};
   exons.value = inner?.exons || [];
-  transcripts.value = inner?.transcripts || [];
 
   const ann = inner?.annotations || {};
   const blastData = ann?.blast || {};
@@ -58,7 +57,7 @@ function parseGeneData(result: any) {
   }
   blastByDb.value = dbMap;
 
-  // InterPro: dict with matches_format array
+  // InterPro
   const ipr = ann?.interpro;
   if (ipr && typeof ipr === 'object' && !Array.isArray(ipr) && ipr.matches_format) {
     interpro.value = ipr.matches_format;
@@ -70,7 +69,7 @@ function parseGeneData(result: any) {
     interpro.value = [];
   }
 
-  // GO: flat array of {term, name, namespace}
+  // GO
   const goData = ann?.go;
   if (Array.isArray(goData) && goData.length > 0 && goData[0]?.terms) {
     goTerms.value = goData[0].terms;
@@ -80,7 +79,15 @@ function parseGeneData(result: any) {
     goTerms.value = [];
   }
 
-  // Family: dict with family array, or flat array
+  // KEGG pathways
+  const keggData = ann?.kegg;
+  if (Array.isArray(keggData)) {
+    keggPathways.value = keggData;
+  } else {
+    keggPathways.value = [];
+  }
+
+  // Family
   const fam = ann?.family;
   if (fam && !Array.isArray(fam) && fam.family) {
     families.value = Array.isArray(fam.family) ? fam.family : [fam.family];
@@ -101,7 +108,7 @@ async function loadGeneDetail() {
     await execute(d.id, 'gene_function_summary', { gene_id: geneId.value }, d.query_entry_asset?.asset_code);
     parseGeneData(queryResult.value);
     await nextTick();
-    if (exons.value.length > 0) renderStructure();
+    tryRenderStructure();
   } catch (e: any) {
     errorMsg.value = 'Failed: ' + (e?.message || String(e));
   }
@@ -136,20 +143,24 @@ async function loadSequences(datasetId: number) {
 }
 
 async function tabHandleClick(tab: any) {
-  // Element Plus passes the pane name string directly
   const name = typeof tab === 'string' ? tab : tab?.name || tab?.props?.name;
   if (name === '2' && !geneSeq.value && detail?.value?.id) {
     await loadSequences(detail.value.id);
   }
-  if (name === '1' && exons.value.length > 0) {
+  if (name === '1') {
     await nextTick();
-    renderStructure();
+    tryRenderStructure();
   }
 }
 
-function renderStructure() {
+function tryRenderStructure() {
+  if (typeof FeatureViewer === 'undefined') {
+    // Retry after CDN loads
+    setTimeout(() => tryRenderStructure(), 500);
+    return;
+  }
   const container = document.getElementById('struc_view');
-  if (!container || typeof FeatureViewer === 'undefined') return;
+  if (!container || exons.value.length === 0) return;
   container.innerHTML = '';
   const g = gene.value;
   if (!g) return;
@@ -175,6 +186,25 @@ function renderStructure() {
       });
     });
   } catch (e) { /* ignore */ }
+}
+
+function formatLocation(loc: any): string {
+  if (!loc) return '-';
+  if (typeof loc === 'string') return loc;
+  if (Array.isArray(loc)) {
+    return loc.map((l: any) =>
+      `${l.start || ''}-${l.end || ''}${l.score ? ' (score:' + l.score + ')' : ''}`
+    ).join('; ');
+  }
+  if (typeof loc === 'object') {
+    return `${loc.start || ''}-${loc.end || ''}${loc.score ? ' (score:' + loc.score + ')' : ''}`;
+  }
+  return String(loc);
+}
+
+function formatKO(orthology: any): string {
+  if (!orthology) return '';
+  return Array.isArray(orthology) ? orthology.join(', ') : String(orthology);
 }
 
 function backToSearch() {
@@ -223,15 +253,9 @@ function getFamilyLabel(type: string): string {
             <el-descriptions-item label="Description">{{ gene.description || '-' }}</el-descriptions-item>
             <el-descriptions-item label="Location">{{ gene.chrom }}:{{ (gene.start as number) - 1 }}-{{ gene.stop }}</el-descriptions-item>
             <el-descriptions-item label="Strand">({{ gene.strand }})</el-descriptions-item>
-            <el-descriptions-item v-if="transcripts.length > 0" :label="'Transcripts (' + transcripts.length + ')'">
-              <span v-for="(t, i) in transcripts" :key="i">
-                {{ t.transcript_id }}<span v-if="t.transcript_id === canonicalId">*</span>
-                <span v-if="i < transcripts.length - 1">, </span>
-              </span>
-            </el-descriptions-item>
           </el-descriptions>
           <h4>Gene Structure</h4>
-          <div id="struc_view" style="min-height:60px;">
+          <div id="struc_view" style="min-height:80px;">
             <div v-if="exons.length === 0" style="color:#999;font-size:12px;padding:12px;">No structural annotation available</div>
           </div>
         </el-tab-pane>
@@ -240,16 +264,16 @@ function getFamilyLabel(type: string): string {
         <el-tab-pane label="Sequence" name="2">
           <el-collapse v-model="activeSeq" accordion>
             <el-collapse-item :title="'Gene sequence (' + geneSeq.length + ' bp)'" name="gene">
-              <pre class="seq-pre">{{ geneSeq || 'Not available' }}</pre>
+              <pre class="seq-pre">{{ geneSeq || 'Click Sequence tab to load' }}</pre>
             </el-collapse-item>
             <el-collapse-item :title="'mRNA (' + mrnaSeq.length + ' bp)'" name="mrna">
-              <pre class="seq-pre">{{ mrnaSeq || 'Not available' }}</pre>
+              <pre class="seq-pre">{{ mrnaSeq || 'Click Sequence tab to load' }}</pre>
             </el-collapse-item>
             <el-collapse-item :title="'CDS (' + cdsSeq.length + ' bp)'" name="cds">
-              <pre class="seq-pre">{{ cdsSeq || 'Not available' }}</pre>
+              <pre class="seq-pre">{{ cdsSeq || 'Click Sequence tab to load' }}</pre>
             </el-collapse-item>
             <el-collapse-item :title="'Protein (' + proteinSeq.length + ' aa)'" name="protein">
-              <pre class="seq-pre">{{ proteinSeq || 'Not available' }}</pre>
+              <pre class="seq-pre">{{ proteinSeq || 'Click Sequence tab to load' }}</pre>
             </el-collapse-item>
           </el-collapse>
         </el-tab-pane>
@@ -258,7 +282,7 @@ function getFamilyLabel(type: string): string {
         <el-tab-pane label="BLAST" name="3">
           <div v-if="Object.keys(blastByDb).length === 0" style="padding:20px;color:#999;">No BLAST data available</div>
           <div v-for="(hits, db) in blastByDb" :key="db" style="margin-bottom:24px;">
-            <h4>BLAST of {{ geneId }} vs. {{ db.replace('blast_', '').replace('_', ' ') }} Database</h4>
+            <h4>BLAST of {{ geneId }} vs. {{ db.replace('blast_', '').replace(/_/g, ' ') }} Database</h4>
             <el-table v-if="hits.length > 0" :data="hits" stripe size="small">
               <el-table-column prop="Hit_accession" label="Accession" width="150">
                 <template #default="{ row: r }">
@@ -267,7 +291,7 @@ function getFamilyLabel(type: string): string {
                   </el-link>
                 </template>
               </el-table-column>
-              <el-table-column prop="Hit_def" label="Description" min-width="400" show-overflow-tooltip />
+              <el-table-column prop="Hit_def" label="Description" min-width="350" show-overflow-tooltip />
               <el-table-column label="E-value" width="120">
                 <template #default="{ row: r }">{{ r.Hit_hsps?.Hsp?.Hsp_evalue || '-' }}</template>
               </el-table-column>
@@ -290,8 +314,10 @@ function getFamilyLabel(type: string): string {
             <el-table-column prop="ipr_desc" label="IPR Description" min-width="200" show-overflow-tooltip />
             <el-table-column prop="source_lib" label="Source" width="100" />
             <el-table-column prop="source_term" label="Source Term" width="120" />
-            <el-table-column prop="source_desc" label="Source Name" min-width="200" show-overflow-tooltip />
-            <el-table-column prop="location" label="Location" width="150" />
+            <el-table-column prop="source_desc" label="Source Name" min-width="180" show-overflow-tooltip />
+            <el-table-column label="Location" width="200">
+              <template #default="{ row: r }">{{ formatLocation(r.location) }}</template>
+            </el-table-column>
           </el-table>
           <el-empty v-else description="No domain annotations available" />
         </el-tab-pane>
@@ -315,8 +341,23 @@ function getFamilyLabel(type: string): string {
           <el-empty v-else description="No GO annotations available" />
         </el-tab-pane>
 
-        <!-- Tab 6: Families -->
-        <el-tab-pane label="TFS/TRs/PKs" name="6">
+        <!-- Tab 6: KEGG Pathways -->
+        <el-tab-pane label="KEGG Pathways" name="6">
+          <div v-if="keggPathways.length > 0">
+            <h4>KEGG Pathway Annotations</h4>
+            <el-table :data="keggPathways" stripe size="small">
+              <el-table-column prop="pathway" label="Pathway ID" width="120" />
+              <el-table-column prop="description" label="Pathway" min-width="300" show-overflow-tooltip />
+              <el-table-column label="KEGG Orthology" width="200">
+                <template #default="{ row: r }">{{ formatKO(r.orthology) }}</template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <el-empty v-else description="No KEGG pathway annotations available" />
+        </el-tab-pane>
+
+        <!-- Tab 7: Families -->
+        <el-tab-pane label="TFS/TRs/PKs" name="7">
           <div v-if="families.length > 0">
             <h4>Gene Families</h4>
             <el-button v-for="(term, i) in families" :key="i" type="primary" style="margin:4px;">
