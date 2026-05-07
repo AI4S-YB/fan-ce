@@ -192,23 +192,28 @@ onMounted(loadTools);
         <!-- Parameter inputs -->
         <div v-for="p in selectedTool.parameter_schema" :key="p.name" style="margin-bottom:12px;">
           <div style="font-weight:500;margin-bottom:4px;">{{ p.label }}</div>
-          <el-select v-if="p.type === 'ChoiceParam'" v-model="paramValues[p.name]" style="width:100%;">
-            <el-option v-for="c in p.choices" :key="c" :label="c" :value="c" />
-          </el-select>
-          <el-input-number v-else-if="p.type === 'IntParam'" v-model="paramValues[p.name]"
-            :min="p.min" :max="p.max" style="width:100%;" />
-          <el-input-number v-else-if="p.type === 'FloatParam'" v-model="paramValues[p.name]"
-            :min="p.min" :max="p.max" :precision="3" :step="0.01" style="width:100%;" />
-          <el-input v-else-if="p.type === 'TextParam'" v-model="paramValues[p.name]"
-            type="textarea" :rows="6" placeholder="Enter gene IDs, one per line..."
-            style="width:100%;font-family:monospace;font-size:12px;" />
-          <div v-if="p.name === 'gene_list'" style="margin-top:4px;">
-            <el-button text size="small" :loading="exampleLoading" @click="loadExampleGenes">
-              Try Example
+          <div v-if="p.name === 'gene_list'" style="margin-bottom:4px;">
+            <el-button type="primary" plain size="small" :loading="exampleLoading" @click="loadExampleGenes">
+              ▶ Try with 300 example genes
             </el-button>
           </div>
+          <div v-if="p.type === 'ChoiceParam' || p.type === 'FloatParam' || p.type === 'IntParam'"
+            style="display:flex;gap:12px;align-items:center;">
+            <el-select v-if="p.type === 'ChoiceParam'" v-model="paramValues[p.name]" style="width:200px;">
+              <el-option v-for="c in p.choices" :key="c" :label="c" :value="c" />
+            </el-select>
+            <el-input-number v-else-if="p.type === 'IntParam'" v-model="paramValues[p.name]"
+              :min="p.min" :max="p.max" style="width:160px;" />
+            <el-input-number v-else-if="p.type === 'FloatParam'" v-model="paramValues[p.name]"
+              :min="p.min" :max="p.max" :precision="3" :step="0.01" style="width:160px;" />
+            <span style="font-size:11px;color:#888;">{{ p.description }}</span>
+          </div>
+          <div v-else-if="p.type === 'TextParam'">
+            <el-input v-model="paramValues[p.name]"
+              type="textarea" :rows="8" placeholder="Enter gene IDs, one per line..."
+              style="width:100%;font-family:monospace;font-size:12px;" />
+          </div>
           <el-input v-else v-model="paramValues[p.name]" style="width:100%;" />
-          <div v-if="p.description" style="font-size:11px;color:#bbb;margin-top:2px;">{{ p.description }}</div>
         </div>
 
         <el-button type="primary" :loading="submitting" @click="submitJob"

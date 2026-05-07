@@ -184,7 +184,7 @@ def go_enrich_example_genes(db: Session = Depends(get_db)):
                 fields = line.strip().split("\t")
                 if len(fields) >= 3:
                     gene_ids.add(fields[1])  # GAF col 2 = DB_Object_ID (gene)
-                if len(gene_ids) >= 20:
+                if len(gene_ids) >= 300:
                     break
     except Exception as e:
         return response_2000(data={"gene_ids": [], "message": str(e)})
