@@ -57,7 +57,6 @@ function parseGeneData(result: any) {
   }
   blastByDb.value = dbMap;
 
-  // InterPro
   const ipr = ann?.interpro;
   if (ipr && typeof ipr === 'object' && !Array.isArray(ipr) && ipr.matches_format) {
     interpro.value = ipr.matches_format;
@@ -69,7 +68,6 @@ function parseGeneData(result: any) {
     interpro.value = [];
   }
 
-  // GO
   const goData = ann?.go;
   if (Array.isArray(goData) && goData.length > 0 && goData[0]?.terms) {
     goTerms.value = goData[0].terms;
@@ -79,7 +77,6 @@ function parseGeneData(result: any) {
     goTerms.value = [];
   }
 
-  // KEGG pathways
   const keggData = ann?.kegg;
   if (Array.isArray(keggData)) {
     keggPathways.value = keggData;
@@ -87,7 +84,6 @@ function parseGeneData(result: any) {
     keggPathways.value = [];
   }
 
-  // Family
   const fam = ann?.family;
   if (fam && !Array.isArray(fam) && fam.family) {
     families.value = Array.isArray(fam.family) ? fam.family : [fam.family];
@@ -108,7 +104,7 @@ async function loadGeneDetail() {
     await execute(d.id, 'gene_function_summary', { gene_id: geneId.value }, d.query_entry_asset?.asset_code);
     parseGeneData(queryResult.value);
     await nextTick();
-    tryRenderStructure();
+    if (exons.value.length > 0) tryRenderStructure();
   } catch (e: any) {
     errorMsg.value = 'Failed: ' + (e?.message || String(e));
   }
@@ -159,66 +155,27 @@ function tryRenderStructure() {
   const g = gene.value;
   if (!g) return;
   container.innerHTML = '';
-
   const start = (g.start as number) || 1;
   const stop = (g.stop as number) || 1;
   const geneLen = stop - start + 1;
   const pad = Math.min(150, start - 1);
   const seq = 'N'.repeat(pad + geneLen + pad);
 
-  // Fallback: render with SVG if FeatureViewer not available
-  if (typeof FeatureViewer === 'undefined') {
-    renderSVGStructure(container, start, stop, geneLen, pad);
-    return;
-  }
-
-  try {
-    const fv = new FeatureViewer(seq, '#struc_view', {
-      showAxis: true, showSequence: true, brushActive: true,
-      toolbar: true, bubbleHelp: true, zoomMax: 20,
-    });
-    const exonFeatures = exons.value.filter((e: any) => e.feature_type === 'exon');
-    exonFeatures.forEach((e: any) => {
-      fv.addFeature({
-        x: (e.start as number) - start + 1 + pad,
-        y: (e.stop as number) - start + 1 + pad,
-        fillColor: '#409eff',
-        strokeColor: '#337ecc',
-        shape: 'rect',
-        height: 12,
-      });
-    });
-  } catch (e) {
-    console.error('FeatureViewer error:', e);
-    renderSVGStructure(container, start, stop, geneLen, pad);
-  }
-}
-
-function renderSVGStructure(container: HTMLElement, start: number, stop: number, geneLen: number, pad: number) {
-  const width = 900;
-  const totalLen = geneLen + pad * 2;
-  const scale = width / totalLen;
-  const height = 80;
-
-  let svg = '<svg width="100%" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" style="background:#fafafa;border:1px solid #e5e5e5;border-radius:4px;">';
-  // Gene body line
-  const y = height / 2;
-  const x1 = pad * scale;
-  const x2 = (pad + geneLen) * scale;
-  svg += '<line x1="' + x1 + '" y1="' + y + '" x2="' + x2 + '" y2="' + y + '" stroke="#999" stroke-width="2"/>';
-
-  // Exon boxes
+  const fv = new FeatureViewer(seq, '#struc_view', {
+    showAxis: true, showSequence: true, brushActive: true,
+    toolbar: true, bubbleHelp: true, zoomMax: 20,
+  });
   const exonFeatures = exons.value.filter((e: any) => e.feature_type === 'exon');
   exonFeatures.forEach((e: any) => {
-    const ex = ((e.start as number) - start + pad) * scale;
-    const ew = ((e.stop as number) - (e.start as number) + 1) * scale;
-    svg += '<rect x="' + ex + '" y="' + (y - 10) + '" width="' + Math.max(ew, 2) + '" height="20" fill="#409eff" stroke="#337ecc" stroke-width="1" rx="2"/>';
+    fv.addFeature({
+      x: (e.start as number) - start + 1 + pad,
+      y: (e.stop as number) - start + 1 + pad,
+      fillColor: '#409eff',
+      strokeColor: '#337ecc',
+      shape: 'rect',
+      height: 12,
+    });
   });
-
-  // Labels
-  svg += '<text x="' + (width / 2) + '" y="' + (height - 5) + '" text-anchor="middle" font-size="10" fill="#999">' + (gene.value as any).chrom + ':' + start.toLocaleString() + '-' + stop.toLocaleString() + ' (' + geneLen.toLocaleString() + ' bp, ' + exonFeatures.length + ' exons)</text>';
-  svg += '</svg>';
-  container.innerHTML = svg;
 }
 
 function formatLocation(loc: any): string {
@@ -279,7 +236,6 @@ function getFamilyLabel(type: string): string {
       <el-divider />
       <el-tabs v-model="activeName" type="border-card" @tab-click="tabHandleClick">
 
-        <!-- Tab 1: Overview -->
         <el-tab-pane label="Overview" name="1">
           <el-descriptions :column="1">
             <el-descriptions-item label="Gene ID">{{ gene.gene_id }}</el-descriptions-item>
@@ -293,7 +249,6 @@ function getFamilyLabel(type: string): string {
           </div>
         </el-tab-pane>
 
-        <!-- Tab 2: Sequence -->
         <el-tab-pane label="Sequence" name="2">
           <el-collapse v-model="activeSeq" accordion>
             <el-collapse-item :title="'Gene sequence (' + geneSeq.length + ' bp)'" name="gene">
@@ -311,7 +266,6 @@ function getFamilyLabel(type: string): string {
           </el-collapse>
         </el-tab-pane>
 
-        <!-- Tab 3: BLAST -->
         <el-tab-pane label="BLAST" name="3">
           <div v-if="Object.keys(blastByDb).length === 0" style="padding:20px;color:#999;">No BLAST data available</div>
           <div v-for="(hits, db) in blastByDb" :key="db" style="margin-bottom:24px;">
@@ -340,7 +294,6 @@ function getFamilyLabel(type: string): string {
           </div>
         </el-tab-pane>
 
-        <!-- Tab 4: Domain -->
         <el-tab-pane label="Domain" name="4">
           <el-table v-if="interpro.length > 0" :data="interpro" stripe size="small">
             <el-table-column label="IPR Term" width="120">
@@ -369,7 +322,6 @@ function getFamilyLabel(type: string): string {
           <el-empty v-else description="No domain annotations available" />
         </el-tab-pane>
 
-        <!-- Tab 5: Gene Ontology -->
         <el-tab-pane label="Gene Ontology" name="5">
           <div v-if="goTerms.length > 0">
             <h4>Gene Ontology Terms</h4>
@@ -388,7 +340,6 @@ function getFamilyLabel(type: string): string {
           <el-empty v-else description="No GO annotations available" />
         </el-tab-pane>
 
-        <!-- Tab 6: KEGG Pathways -->
         <el-tab-pane label="KEGG Pathways" name="6">
           <div v-if="keggPathways.length > 0">
             <h4>KEGG Pathway Annotations</h4>
@@ -409,7 +360,6 @@ function getFamilyLabel(type: string): string {
           <el-empty v-else description="No KEGG pathway annotations available" />
         </el-tab-pane>
 
-        <!-- Tab 7: Families -->
         <el-tab-pane label="TFS/TRs/PKs" name="7">
           <div v-if="families.length > 0">
             <h4>Gene Families</h4>
@@ -422,7 +372,6 @@ function getFamilyLabel(type: string): string {
 
       </el-tabs>
 
-      <!-- BLAST Alignment Modal -->
       <el-dialog v-model="dialogVisible" :title="'BLAST alignment — ' + (hit.Hit_accession || '')" width="50%">
         <div v-if="hit.Hit_hsps?.Hsp">
           <p>Match: {{ hit.Hit_accession }} ({{ hit.Hit_def }})</p>
