@@ -9,6 +9,7 @@ from libs.responses.response import response_2000
 from ..dataset_model import Dataset
 from ..models import AssetFile, DatasetAsset, DatasetRegistry, DatasetVersion
 from ..schemas import (
+    BatchSequenceRequest,
     PublicDatasetInfoRequest,
     PublicDatasetListRequest,
     PublicDatasetQueryCapabilitiesRequest,
@@ -93,6 +94,27 @@ async def public_dataset_version_query_execute(request_data: PublicDatasetVersio
         params=request_data.params or {},
     )
     return response_2000(data=jsonable_encoder(data))
+
+
+@public_dataset_router.post("/sequence/batch", summary="批量提取序列")
+def public_sequence_batch(request_data: BatchSequenceRequest):
+    """Batch sequence retrieval supporting coordinate (genome) and gene-ID modes."""
+    data = dataset_domain_service.batch_sequence_retrieval(request_data=request_data)
+    return response_2000(data=jsonable_encoder(data))
+
+
+@public_dataset_router.get("/sequence/download", summary="下载批量提取的序列")
+def public_sequence_download(file: str = None):
+    """Download batch sequence results as FASTA."""
+    if not file:
+        raise HTTPException(status_code=400, detail="file parameter is required")
+    basename = os.path.basename(file)
+    if not basename.startswith("fance-seq-"):
+        raise HTTPException(status_code=400, detail="Invalid file reference")
+    tmp_path = f"/tmp/{basename}"
+    if not os.path.exists(tmp_path):
+        raise HTTPException(status_code=404, detail="File not found or expired")
+    return FileResponse(tmp_path, filename="sequences.fasta", media_type="text/plain")
 
 
 @public_dataset_router.get("/{dataset_code}/lineage", summary="公开数据集血缘")

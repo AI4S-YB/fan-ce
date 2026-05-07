@@ -769,4 +769,14 @@ class DatasetRegistrationCandidateRegisterRequest(DatasetContext):
     is_public: Optional[bool] = False
     activate_version: Optional[bool] = True
 
+
+class BatchSequenceRequest(BaseModel):
+    dataset_id: int
+    sequence_type: str  # genome | mrna | protein | gene | gene_up | gene_down | gene_up_down
+    upstream: int = 2000
+    downstream: int = 1000
+    inputs: list[str]
+
+    model_config = ConfigDict(extra="forbid")
+
     model_config = ConfigDict(extra="forbid")

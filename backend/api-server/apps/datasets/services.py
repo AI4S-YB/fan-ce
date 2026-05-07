@@ -22,7 +22,7 @@ from apps.breeding.models import (
 )
 from apps.datasets.adapters import dataset_adapter_registry
 from basis.core.expression_utils import process_rnaseq_file
-from basis.core.samtools_utils import process_sequence
+from basis.core.samtools_utils import extract_batch_sequences, process_sequence
 from basis.core.variant_utils import process_variant_file
 
 from .interaction_matrix import inspect_interaction_matrix, list_interaction_resolutions
@@ -6499,6 +6499,194 @@ class DatasetDomainService:
             result["default_public_version"] = dataset_payload.get("default_public_version")
             result["published_version"] = dataset_payload["published_version"]
             return result
+        finally:
+            db.close()
+
+    def batch_sequence_retrieval(self, request_data):
+        """Resolve gene IDs or coordinates and extract sequences via samtools faidx."""
+        import os, uuid, sqlite3
+
+        db = mydb.get_dbs()
+        try:
+            dataset_id = request_data.dataset_id
+            seq_type = request_data.sequence_type
+            inputs = [s.strip() for s in request_data.inputs if s.strip()]
+            if not inputs:
+                raise HTTPException(status_code=400, detail="No inputs provided")
+
+            genome_path = None
+            mrna_path = None
+            protein_path = None
+            func_anno_path = None
+
+            cur_ver = db.query(DatasetVersion).filter(
+                DatasetVersion.database_id == dataset_id,
+                DatasetVersion.is_current == 1,
+            ).first()
+
+            if cur_ver:
+                asset_rows = db.query(DatasetAsset).filter_by(
+                    dataset_version_id=cur_ver.id,
+                ).all()
+                for asset in asset_rows:
+                    files = db.query(AssetFile).filter_by(dataset_asset_id=asset.id).all()
+                    for f in files:
+                        fp = f.local_path or f.storage_uri or ""
+                        ftc = f.asset_file_type_code or ""
+                        if not fp or not os.path.exists(fp):
+                            continue
+                        if asset.asset_type == "reference_fasta" and ftc == "genome_sequence":
+                            genome_path = fp
+                        elif asset.asset_type == "gene_annotation" and ftc == "transcript_sequence":
+                            mrna_path = fp
+                        elif asset.asset_type == "gene_annotation" and ftc == "protein_sequence":
+                            protein_path = fp
+                        elif asset.asset_type == "functional_annotation" and f.file_format in ("db", "sqlite"):
+                            func_anno_path = fp
+
+            gene_map = {}
+            if seq_type != "genome":
+                if not func_anno_path:
+                    raise HTTPException(status_code=400, detail="No functional annotation DB for gene resolution")
+                conn = sqlite3.connect(func_anno_path)
+                conn.row_factory = sqlite3.Row
+                for gene_id in inputs:
+                    row = conn.execute(
+                        "SELECT gene_id, chrom, start, stop, strand, canonical_transcript FROM hse_genes WHERE gene_id = ?",
+                        (gene_id,),
+                    ).fetchone()
+                    if row:
+                        gene_map[gene_id] = {
+                            "chrom": row["chrom"],
+                            "start": row["start"],
+                            "stop": row["stop"],
+                            "strand": row["strand"] or "+",
+                            "transcript_id": row["canonical_transcript"] or gene_id,
+                        }
+                conn.close()
+
+            regions = []
+            errors = []
+
+            if seq_type == "genome":
+                if not genome_path:
+                    raise HTTPException(status_code=400, detail="Genome FASTA not available")
+                for inp in inputs:
+                    if ":" in inp:
+                        regions.append((inp, inp, genome_path))
+                    else:
+                        errors.append({"input": inp, "error": "Invalid format. Expected: seq_id:start-end"})
+
+            elif seq_type == "mrna":
+                if not mrna_path:
+                    raise HTTPException(status_code=400, detail="mRNA FASTA not available")
+                for inp in inputs:
+                    ginfo = gene_map.get(inp)
+                    if not ginfo:
+                        errors.append({"input": inp, "error": "Gene not found"})
+                    else:
+                        regions.append((inp, ginfo["transcript_id"], mrna_path))
+
+            elif seq_type == "protein":
+                if not protein_path:
+                    raise HTTPException(status_code=400, detail="Protein FASTA not available")
+                for inp in inputs:
+                    ginfo = gene_map.get(inp)
+                    if not ginfo:
+                        errors.append({"input": inp, "error": "Gene not found"})
+                    else:
+                        regions.append((inp, ginfo["transcript_id"], protein_path))
+
+            elif seq_type in ("gene", "gene_up", "gene_down", "gene_up_down"):
+                if not genome_path:
+                    raise HTTPException(status_code=400, detail="Genome FASTA not available")
+                up = request_data.upstream if "up" in seq_type else 0
+                down = request_data.downstream if "down" in seq_type else 0
+                for inp in inputs:
+                    ginfo = gene_map.get(inp)
+                    if not ginfo:
+                        errors.append({"input": inp, "error": "Gene not found"})
+                        continue
+                    chrom = ginfo["chrom"]
+                    if seq_type == "gene":
+                        region = f"{chrom}:{ginfo['start']}-{ginfo['stop']}"
+                    elif seq_type == "gene_up":
+                        region = f"{chrom}:{max(1, ginfo['start'] - up)}-{ginfo['start']}"
+                    elif seq_type == "gene_down":
+                        region = f"{chrom}:{ginfo['stop']}-{ginfo['stop'] + down}"
+                    else:
+                        region = f"{chrom}:{max(1, ginfo['start'] - up)}-{ginfo['stop'] + down}"
+                    regions.append((inp, region, genome_path))
+            else:
+                raise HTTPException(status_code=400, detail=f"Unknown sequence_type: {seq_type}")
+
+            if not regions:
+                return {"sequences": errors, "total_length": 0, "truncated": False}
+
+            by_path = {}
+            for inp, reg, fp in regions:
+                by_path.setdefault(fp, []).append((inp, reg))
+
+            results = list(errors)
+            total_len = 0
+
+            for fp, items in by_path.items():
+                region_strs = [r for _, r in items]
+                out_path = extract_batch_sequences(fp, region_strs)
+                with open(out_path) as fh:
+                    fasta_text = fh.read()
+                os.unlink(out_path)
+
+                entries = {}
+                cur_hdr = None
+                cur_seq = []
+                for line in fasta_text.strip().split("\n"):
+                    if line.startswith(">"):
+                        if cur_hdr:
+                            entries[cur_hdr] = "".join(cur_seq)
+                        cur_hdr = line.strip()
+                        cur_seq = []
+                    elif cur_hdr:
+                        cur_seq.append(line.strip())
+                if cur_hdr:
+                    entries[cur_hdr] = "".join(cur_seq)
+
+                for inp, reg in items:
+                    seq = entries.pop(f">{reg}", "")
+                    if not seq:
+                        for h in list(entries.keys()):
+                            if reg in h:
+                                seq = entries.pop(h)
+                                break
+                    if not seq and entries:
+                        seq = list(entries.values())[0]
+                        entries.pop(list(entries.keys())[0])
+                    total_len += len(seq)
+                    results.append({
+                        "input": inp,
+                        "header": f">{inp}" if seq_type == "genome" else f">{inp} region={reg}",
+                        "length": len(seq),
+                        "sequence": seq,
+                    })
+
+            truncated = total_len > 1_000_000
+            download_url = None
+            if truncated:
+                tmp = f"/tmp/fance-seq-{uuid.uuid4().hex}.fasta"
+                with open(tmp, "w") as fh:
+                    for r in results:
+                        if r.get("sequence"):
+                            fh.write(f"{r['header']}\n{r['sequence']}\n")
+                download_url = f"/api/v1/public/dataset/sequence/download?file={os.path.basename(tmp)}"
+                for r in results:
+                    r["sequence"] = None
+
+            return {
+                "sequences": results,
+                "total_length": total_len,
+                "truncated": truncated,
+                "download_url": download_url,
+            }
         finally:
             db.close()
 
