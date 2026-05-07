@@ -13,13 +13,9 @@ export interface PublicDatasetItem {
 }
 
 export interface PublicDatasetDetail extends PublicDatasetItem {
-  query_profile?: { file_format?: string; query_engine?: string };
-  query_entry_asset?: { id: number; asset_code?: string; asset_name?: string };
+  query_entry_asset?: { id: number; asset_code?: string; asset_name?: string } | null;
+  primary_file?: { id: number; name?: string; size?: number; format?: string } | null;
   assets?: PublicAssetItem[];
-  current_version?: { id: number; version?: string; title?: string };
-  default_public_version?: { id: number; version?: string; title?: string };
-  version_count?: number;
-  file?: { id: number; name?: string; path?: string; size?: number; type?: string };
 }
 
 export interface PublicAssetItem {

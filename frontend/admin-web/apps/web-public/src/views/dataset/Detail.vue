@@ -65,16 +65,13 @@ function parseExtraJson(detail: PublicDatasetDetail): Record<string, string> {
           {{ detail.version || '-' }}
         </el-descriptions-item>
         <el-descriptions-item label="File Format">
-          {{ detail.query_profile?.file_format || detail.file?.type || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="Query Engine">
-          {{ detail.query_profile?.query_engine || '-' }}
+          {{ detail.primary_file?.format || '-' }}
         </el-descriptions-item>
         <el-descriptions-item
-          v-if="detail.file?.size"
+          v-if="detail.primary_file?.size"
           label="File Size"
         >
-          {{ (detail.file.size / 1024 / 1024).toFixed(1) }} MB
+          {{ (detail.primary_file.size / 1024 / 1024).toFixed(1) }} MB
         </el-descriptions-item>
       </el-descriptions>
 
@@ -125,9 +122,7 @@ function parseExtraJson(detail: PublicDatasetDetail): Record<string, string> {
       <div
         style="margin-bottom: 20px; font-size: 13px; color: #888;"
       >
-        <span>Current: <strong>{{ detail.current_version?.version || '-' }}</strong></span>
-        <span style="margin-left: 16px;">Public: <strong>{{ detail.default_public_version?.version || '-' }}</strong></span>
-        <span style="margin-left: 16px;">Versions: <strong>{{ detail.version_count ?? 0 }}</strong></span>
+        <span>Version: <strong>{{ detail.version || '-' }}</strong></span>
       </div>
 
       <!-- Lineage -->
