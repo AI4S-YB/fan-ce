@@ -213,6 +213,16 @@ function backToSearch() {
   router.push({ path, query: {} });
 }
 
+function openTool(toolName: string, type: string) {
+  const d = detail?.value;
+  const params = new URLSearchParams({
+    gene_id: geneId.value,
+    dataset_id: String(d?.id || ''),
+    type,
+  });
+  router.push(`/tools/${toolName}?${params.toString()}`);
+}
+
 function openAlignment(db: string, row: any) {
   dialogContent.value = { database: db, ...row };
   hit.value = row;
@@ -262,16 +272,34 @@ function getFamilyLabel(type: string): string {
 
         <el-tab-pane label="Sequence" name="2">
           <el-collapse v-model="activeSeq" accordion>
-            <el-collapse-item :title="'Gene sequence (' + geneSeq.length + ' bp)'" name="gene">
+            <el-collapse-item name="gene">
+              <template #title>
+                <span>Gene sequence ({{ geneSeq.length }} bp)</span>
+                <el-button size="small" style="margin-left:12px;" @click.stop="openTool('blast','gene')">BLAST</el-button>
+                <el-button size="small" style="margin-left:4px;" @click.stop="openTool('primer','gene')">Primer</el-button>
+                <el-button size="small" style="margin-left:4px;" @click.stop="openTool('grna','gene')">gRNA</el-button>
+              </template>
               <pre class="seq-pre">{{ geneSeq || 'Click Sequence tab to load' }}</pre>
             </el-collapse-item>
-            <el-collapse-item :title="'mRNA (' + mrnaSeq.length + ' bp)'" name="mrna">
+            <el-collapse-item name="mrna">
+              <template #title>
+                <span>mRNA ({{ mrnaSeq.length }} bp)</span>
+                <el-button size="small" style="margin-left:12px;" @click.stop="openTool('blast','mrna')">BLAST</el-button>
+              </template>
               <pre class="seq-pre">{{ mrnaSeq || 'Click Sequence tab to load' }}</pre>
             </el-collapse-item>
-            <el-collapse-item :title="'CDS (' + cdsSeq.length + ' bp)'" name="cds">
+            <el-collapse-item name="cds">
+              <template #title>
+                <span>CDS ({{ cdsSeq.length }} bp)</span>
+                <el-button size="small" style="margin-left:12px;" @click.stop="openTool('blast','cds')">BLAST</el-button>
+              </template>
               <pre class="seq-pre">{{ cdsSeq || 'Click Sequence tab to load' }}</pre>
             </el-collapse-item>
-            <el-collapse-item :title="'Protein (' + proteinSeq.length + ' aa)'" name="protein">
+            <el-collapse-item name="protein">
+              <template #title>
+                <span>Protein ({{ proteinSeq.length }} aa)</span>
+                <el-button size="small" style="margin-left:12px;" @click.stop="openTool('blast','protein')">BLAST</el-button>
+              </template>
               <pre class="seq-pre">{{ proteinSeq || 'Click Sequence tab to load' }}</pre>
             </el-collapse-item>
           </el-collapse>

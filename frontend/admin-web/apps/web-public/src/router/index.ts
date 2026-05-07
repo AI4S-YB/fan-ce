@@ -24,6 +24,12 @@ const routes = [
       { path: 'geneinfo', component: () => import('@/views/genome/GeneInfo.vue') },
     ],
   },
+  // Sequence analysis tool pages (pre-filled from gene context)
+  { path: '/tools/blast', component: () => import('@/views/tools/ToolRunner.vue') },
+  { path: '/tools/primer', component: () => import('@/views/tools/ToolRunner.vue') },
+  { path: '/tools/grna', component: () => import('@/views/tools/ToolRunner.vue') },
+  { path: '/tools/msa', component: () => import('@/views/tools/ToolRunner.vue') },
+  { path: '/tools/motif', component: () => import('@/views/tools/ToolRunner.vue') },
   // Standalone tools (no genome selected)
   { path: '/tools/:tool', component: () => import('@/views/genome/Tools.vue') },
   { path: '/community/:type', component: () => import('@/views/community/List.vue') },
