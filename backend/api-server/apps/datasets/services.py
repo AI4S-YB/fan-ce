@@ -22,7 +22,7 @@ from apps.breeding.models import (
 )
 from apps.datasets.adapters import dataset_adapter_registry
 from basis.core.expression_utils import process_rnaseq_file
-from basis.core.samtools_utils import extract_batch_sequences, process_sequence
+from basis.core.samtools_utils import process_sequence
 from basis.core.variant_utils import process_variant_file
 
 from .interaction_matrix import inspect_interaction_matrix, list_interaction_resolutions
@@ -6504,7 +6504,7 @@ class DatasetDomainService:
 
     def batch_sequence_retrieval(self, request_data):
         """Resolve gene IDs or coordinates and extract sequences via samtools faidx."""
-        import os, uuid, sqlite3
+        import os, uuid, sqlite3, subprocess
 
         db = mydb.get_dbs()
         try:
@@ -6532,14 +6532,17 @@ class DatasetDomainService:
                     files = db.query(AssetFile).filter_by(dataset_asset_id=asset.id).all()
                     for f in files:
                         fp = f.local_path or f.storage_uri or ""
-                        ftc = f.asset_file_type_code or ""
-                        if not fp or not os.path.exists(fp):
+                        role = f.file_role or ""
+                        if not fp or not os.path.exists(fp) or "index" in role.lower():
                             continue
-                        if asset.asset_type == "reference_fasta" and ftc == "genome_sequence":
+                        if asset.asset_type == "reference_fasta":
                             genome_path = fp
-                        elif asset.asset_type == "gene_annotation" and ftc == "transcript_sequence":
-                            mrna_path = fp
-                        elif asset.asset_type == "gene_annotation" and ftc == "protein_sequence":
+                        elif asset.asset_type == "gene_annotation" and role == "transcript_sequence":
+                            if "cds" in f.file_name.lower():
+                                pass  # skip CDS, prefer mRNA
+                            elif not mrna_path:
+                                mrna_path = fp
+                        elif asset.asset_type == "gene_annotation" and role == "protein_sequence":
                             protein_path = fp
                         elif asset.asset_type == "functional_annotation" and f.file_format in ("db", "sqlite"):
                             func_anno_path = fp
@@ -6631,36 +6634,23 @@ class DatasetDomainService:
             total_len = 0
 
             for fp, items in by_path.items():
-                region_strs = [r for _, r in items]
-                out_path = extract_batch_sequences(fp, region_strs)
-                with open(out_path) as fh:
-                    fasta_text = fh.read()
-                os.unlink(out_path)
-
-                entries = {}
-                cur_hdr = None
-                cur_seq = []
-                for line in fasta_text.strip().split("\n"):
-                    if line.startswith(">"):
-                        if cur_hdr:
-                            entries[cur_hdr] = "".join(cur_seq)
-                        cur_hdr = line.strip()
-                        cur_seq = []
-                    elif cur_hdr:
-                        cur_seq.append(line.strip())
-                if cur_hdr:
-                    entries[cur_hdr] = "".join(cur_seq)
-
                 for inp, reg in items:
-                    seq = entries.pop(f">{reg}", "")
-                    if not seq:
-                        for h in list(entries.keys()):
-                            if reg in h:
-                                seq = entries.pop(h)
-                                break
-                    if not seq and entries:
-                        seq = list(entries.values())[0]
-                        entries.pop(list(entries.keys())[0])
+                    if not reg or not all(c.isalnum() or c in ':_-.' for c in reg):
+                        seq = ""
+                    else:
+                        samtools_bin = "/opt/homebrew/bin/samtools"
+                        if not os.path.exists(samtools_bin):
+                            samtools_bin = "samtools"
+                        try:
+                            result = subprocess.run(
+                                [samtools_bin, "faidx", fp, reg],
+                                capture_output=True, text=True, timeout=30,
+                            )
+                            seq_lines = result.stdout.strip().split("\n")
+                            seq = "".join(seq_lines[1:]) if len(seq_lines) > 1 else ""
+                        except Exception:
+                            seq = ""
+                    total_len += len(seq)
                     total_len += len(seq)
                     results.append({
                         "input": inp,
