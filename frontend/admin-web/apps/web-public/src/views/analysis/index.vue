@@ -30,6 +30,7 @@ const submittedJob = ref<JobInfo | null>(null);
 const jobStatus = ref<JobInfo | null>(null);
 const polling = ref<ReturnType<typeof setInterval> | null>(null);
 const exampleLoading = ref(false);
+const outputViews = ref<Record<string, any>>({});
 
 // Available asset files for file params
 const fileOptions = ref<Record<string, { id: number; label: string; format: string }[]>>({});
@@ -125,6 +126,15 @@ function startPolling() {
       jobStatus.value = data;
       if (data.status === 'success' || data.status === 'failed' || data.status === 'timeout') {
         if (polling.value) clearInterval(polling.value);
+        // Load output views on success
+        if (data.status === 'success' && data.output_files?.length) {
+          for (const f of data.output_files) {
+            try {
+              const v: any = await get(`/analysis/jobs/${submittedJob.value.id}/output/${f.name}/view`);
+              outputViews.value[f.name] = v?.data || v;
+            } catch { /* view not available */ }
+          }
+        }
       }
     } catch { /* ignore */ }
   }, 2000);
@@ -211,10 +221,20 @@ onMounted(loadTools);
         <div>Status: <el-tag :type="jobStatus?.status === 'success' ? 'success' : jobStatus?.status === 'failed' ? 'danger' : 'warning'" size="small">{{ jobStatus?.status || 'pending' }}</el-tag></div>
         <div v-if="jobStatus?.error_message" style="color:red;margin-top:8px;font-size:13px;white-space:pre-wrap;">{{ jobStatus.error_message }}</div>
         <div v-if="jobStatus?.output_files?.length" style="margin-top:8px;">
-          <div style="font-weight:500;margin-bottom:4px;">Output Files:</div>
-          <div v-for="f in jobStatus.output_files" :key="f.name" style="display:flex;align-items:center;gap:8px;margin:4px 0;">
-            <span style="font-size:13px;">{{ f.name }} ({{ (f.size / 1024).toFixed(1) }} KB)</span>
-            <el-button size="small" @click="downloadOutput(submittedJob!.id, f.name)">Download</el-button>
+          <div v-for="f in jobStatus.output_files" :key="f.name" style="margin-bottom:16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <strong>{{ f.name }}</strong>
+              <span style="font-size:11px;color:#999;">({{ (f.size / 1024).toFixed(1) }} KB)</span>
+              <el-button size="small" @click="downloadOutput(submittedJob!.id, f.name)">Download</el-button>
+            </div>
+            <!-- Rendered output -->
+            <div v-if="outputViews[f.name]?.type === 'table'" style="max-height:400px;overflow:auto;">
+              <el-table :data="outputViews[f.name].rows" border size="small" stripe>
+                <el-table-column v-for="col in outputViews[f.name].columns" :key="col" :prop="col" :label="col" min-width="120" show-overflow-tooltip />
+              </el-table>
+            </div>
+            <img v-else-if="outputViews[f.name]?.type === 'image'"
+              :src="outputViews[f.name].url" style="max-width:100%;border-radius:4px;" />
           </div>
         </div>
         <div style="font-size:11px;color:#999;margin-top:8px;">

@@ -61,8 +61,8 @@ class GoEnrichTool(BaseAnalysisTool):
     ]
 
     outputs = [
-        FileOutput(name="enrichment_table", format="tsv", label="Enrichment Table"),
-        FileOutput(name="enrichment_plot", format="png", label="Dot Plot"),
+        FileOutput(name="enrichment_table", format="tsv", label="Enrichment Table", display="table"),
+        FileOutput(name="enrichment_plot", format="png", label="Dot Plot", display="image"),
     ]
 
     timeout_seconds = 600

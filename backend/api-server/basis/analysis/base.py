@@ -57,6 +57,7 @@ class FileOutput:
     name: str
     label: str
     format: str
+    display: str = "download"   # download | table | image | text
     description: str = ""
 
 
@@ -80,7 +81,8 @@ def _serialize_params(params: list) -> list:
 
 
 def _serialize_outputs(outputs: list) -> list:
-    return [{"name": o.name, "label": o.label, "format": o.format} for o in outputs]
+    return [{"name": o.name, "label": o.label, "format": o.format,
+             "display": getattr(o, "display", "download")} for o in outputs]
 
 
 class BaseAnalysisTool(ABC):

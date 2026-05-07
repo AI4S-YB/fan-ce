@@ -101,7 +101,9 @@ class AnalysisWorker:
             if proc.returncode == 0:
                 output_paths = tool.validate_outputs(work_dir)
                 job.output_files = json.dumps([
-                    {"name": out.name, "path": p, "size": os.path.getsize(p)}
+                    {"name": out.name, "path": p, "size": os.path.getsize(p),
+                     "format": getattr(out, "format", ""),
+                     "display": getattr(out, "display", "download")}
                     for out, p in zip(tool.outputs, output_paths)
                 ], ensure_ascii=False)
                 job.status = "success"

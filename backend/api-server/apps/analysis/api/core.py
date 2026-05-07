@@ -328,3 +328,32 @@ def download_output(job_id: int, file_name: str, db: Session = Depends(get_db)):
             if os.path.exists(path):
                 return FileResponse(path, filename=os.path.basename(path))
     raise HTTPException(status_code=404, detail="File not found")
+
+@analysis_router.get("/jobs/{job_id}/output/{file_name}/view", summary="查看输出内容（JSON）")
+def view_output(job_id: int, file_name: str, db: Session = Depends(get_db)):
+    import os, json
+    job = db.query(BrdAnalysisJob).filter_by(id=job_id).first()
+    if not job or not job.output_files:
+        raise HTTPException(status_code=404, detail="No outputs")
+    outputs = json.loads(job.output_files) if isinstance(job.output_files, str) else job.output_files
+    for f in outputs:
+        if f.get("name") == file_name:
+            path = f.get("path", "")
+            if not os.path.exists(path):
+                raise HTTPException(status_code=404, detail="File not found on disk")
+            fmt = file_name.split(".")[-1] if "." in file_name else f.get("format", "txt")
+            if fmt in ("tsv", "csv", "txt"):
+                rows = []
+                with open(path) as fh:
+                    lines = fh.read().strip().split("\n")
+                    if lines:
+                        cols = lines[0].split("\t")
+                        for line in lines[1:]:
+                            vals = line.split("\t")
+                            rows.append({cols[i]: vals[i] if i < len(vals) else "" for i in range(len(cols))})
+                return response_2000(data={"type": "table", "columns": cols, "rows": rows})
+            elif fmt in ("png", "jpg", "jpeg", "gif", "svg"):
+                return response_2000(data={"type": "image", "url": f"/api/v1/analysis/jobs/{job_id}/output/{file_name}"})
+            else:
+                return response_2000(data={"type": "text", "content": open(path).read()[:5000]})
+    raise HTTPException(status_code=404, detail="Output not found")
