@@ -92,7 +92,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { message, Drawer, Descriptions, DescriptionsItem, Divider } from 'ant-design-vue';
+import { message, Drawer, Descriptions, DescriptionsItem, Divider, Card, Popconfirm, Space, Upload } from 'ant-design-vue';
 import { Page } from '@vben/common-ui';
 import { requestClient } from '#/api/request';
 
