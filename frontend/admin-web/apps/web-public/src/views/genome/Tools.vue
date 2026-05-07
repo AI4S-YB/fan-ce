@@ -65,12 +65,17 @@ async function retrieveSequences() {
   }
 }
 
-function downloadSequence(item: any) {
-  const blob = new Blob([`${item.header}\n${item.sequence}\n`], { type: 'text/plain' });
+function downloadAllSequences() {
+  const fasta = seqResults.value
+    .filter((item: any) => item.sequence)
+    .map((item: any) => `${item.header}\n${item.sequence}`)
+    .join('\n');
+  if (!fasta) return;
+  const blob = new Blob([fasta + '\n'], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${item.input}.fasta`;
+  a.download = 'sequences.fasta';
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -267,6 +272,9 @@ function siteDownloadUrl(datasetCode: string, fileId: number) {
               Download sequences.fasta
             </el-button>
           </div>
+          <div v-if="!seqTruncated && seqResults.some((r: any) => r.sequence)" style="margin-bottom:12px;">
+            <el-button size="small" @click="downloadAllSequences">Download All (.fasta)</el-button>
+          </div>
           <div v-for="item in seqResults" :key="item.input" style="margin-bottom:16px;">
             <div v-if="item.error" style="color:#e6a23c;font-size:12px;margin-bottom:4px;">
               {{ item.input }}: {{ item.error }}
@@ -274,10 +282,7 @@ function siteDownloadUrl(datasetCode: string, fileId: number) {
             <template v-else>
               <div style="font-weight:600;font-size:13px;color:#409eff;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;">
                 <span>{{ item.header }}</span>
-                <span style="display:flex;align-items:center;gap:12px;">
-                  <span style="color:#999;font-weight:400;">{{ item.length?.toLocaleString() }} bp</span>
-                  <el-button v-if="item.sequence" size="small" @click="downloadSequence(item)">Download</el-button>
-                </span>
+                <span style="color:#999;font-weight:400;">{{ item.length?.toLocaleString() }} bp</span>
               </div>
               <pre v-if="item.sequence" style="background:#f5f5f5;padding:8px;border-radius:4px;font-size:12px;max-height:200px;overflow:auto;white-space:pre-wrap;word-break:break-all;">{{ item.sequence }}</pre>
             </template>
