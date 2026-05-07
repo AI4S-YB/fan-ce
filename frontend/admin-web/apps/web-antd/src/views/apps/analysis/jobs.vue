@@ -78,7 +78,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { Page } from '@vben/common-ui';
 import { requestClient } from '#/api/request';
-import { message } from 'ant-design-vue';
+import { message, Space, Select, Popconfirm, Tag, Descriptions, DescriptionsItem, Modal } from 'ant-design-vue';
 
 interface JobItem {
   id: number; tool_id: string; status: string;
