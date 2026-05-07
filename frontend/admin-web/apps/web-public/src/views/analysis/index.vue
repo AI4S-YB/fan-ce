@@ -34,6 +34,10 @@ const fileOptions = ref<Record<string, { id: number; label: string; format: stri
 async function loadTools() {
   const data: any = await get('/analysis/tools');
   tools.value = data || [];
+  // Auto-select the first tool — skip card list when there's only one
+  if (tools.value.length === 1) {
+    selectTool(tools.value[0]);
+  }
 }
 
 async function selectTool(tool: ToolSchema) {

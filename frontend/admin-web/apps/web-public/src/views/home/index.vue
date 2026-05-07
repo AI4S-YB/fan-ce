@@ -11,12 +11,19 @@ const { get } = useRequest();
 const keyword = ref('');
 const typeFilter = ref('');
 
+// ── Analysis tools ──
+const analysisTools = ref<any[]>([]);
+
+async function loadAnalysisTools() {
+  try { analysisTools.value = await get('/analysis/tools'); } catch { /* optional */ }
+}
+
 // ── News section ──
 const newsItems = ref<any[]>([]);
 async function loadNews() {
   try { newsItems.value = await get('/public/news?type=1'); } catch { /* optional */ }
 }
-onMounted(() => { loadNews(); });
+onMounted(() => { loadNews(); loadAnalysisTools(); });
 
 const typeOptions = [
   { value: 'genome', label: 'Genome' },
@@ -148,6 +155,23 @@ onMounted(() => {
         style="text-align:center;margin-top:16px;color:#999;"
       >
         {{ total }} datasets
+      </div>
+    </div>
+
+    <!-- Analysis Tools -->
+    <div v-if="analysisTools.length > 0" style="margin-top:32px;padding-top:24px;border-top:1px solid #e5e5e5;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="margin:0;font-size:16px;">Analysis Tools</h3>
+        <router-link to="/analysis" style="font-size:13px;color:#409eff;">View all →</router-link>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
+        <el-card v-for="t in analysisTools" :key="t.tool_id" shadow="hover" style="cursor:pointer;"
+          @click="router.push('/analysis')">
+          <h4 style="margin:0 0 4px;">{{ t.display_name }}</h4>
+          <el-tag size="small">{{ t.category }}</el-tag>
+          <span style="color:#888;font-size:11px;margin-left:6px;">v{{ t.version }}</span>
+          <p style="color:#666;font-size:12px;margin:6px 0 0;">{{ t.description }}</p>
+        </el-card>
       </div>
     </div>
   </div>
