@@ -10,7 +10,7 @@ interface ToolSchema {
   tool_id: string; display_name: string; description: string; category: string;
   version: string; timeout_seconds: number;
   input_schema: { name: string; label: string; accepted_asset_types: string[]; accepted_formats: string[]; accepted_file_roles: string[]; required: boolean }[];
-  parameter_schema: { name: string; label: string; type: string; default?: any; choices?: string[]; min?: number; max?: number }[];
+  parameter_schema: { name: string; label: string; type: string; default?: any; choices?: string[]; min?: number; max?: number; description?: string }[];
   output_schema: { name: string; label: string; format: string }[];
 }
 
@@ -175,7 +175,11 @@ onMounted(loadTools);
             :min="p.min" :max="p.max" style="width:100%;" />
           <el-input-number v-else-if="p.type === 'FloatParam'" v-model="paramValues[p.name]"
             :min="p.min" :max="p.max" :precision="3" :step="0.01" style="width:100%;" />
+          <el-input v-else-if="p.type === 'TextParam'" v-model="paramValues[p.name]"
+            type="textarea" :rows="6" placeholder="Enter gene IDs, one per line..."
+            style="width:100%;font-family:monospace;font-size:12px;" />
           <el-input v-else v-model="paramValues[p.name]" style="width:100%;" />
+          <div v-if="p.description" style="font-size:11px;color:#bbb;margin-top:2px;">{{ p.description }}</div>
         </div>
 
         <el-button type="primary" :loading="submitting" @click="submitJob"

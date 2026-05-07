@@ -74,6 +74,7 @@ def _serialize_params(params: list) -> list:
         if hasattr(p, "choices"): d["choices"] = p.choices
         if hasattr(p, "min"): d["min"] = p.min
         if hasattr(p, "max"): d["max"] = p.max
+        if hasattr(p, "description"): d["description"] = p.description
         result.append(d)
     return result
 

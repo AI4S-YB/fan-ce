@@ -29,27 +29,21 @@ class GoEnrichTool(BaseAnalysisTool):
 
     inputs = [
         FileParam(
-            name="gene_list",
-            label="Gene List File",
-            accepted_asset_types=["functional_annotation"],
-            accepted_formats=["txt", "tsv"],
-            accepted_file_roles=["functional_annotation_table"],
-            description="One gene ID per line. Genes not found in the annotation are skipped.",
-        ),
-        FileParam(
             name="go_annotation",
-            label="GO Annotation (GAF/TSV)",
+            label="GO Annotation (GAF)",
             accepted_asset_types=["functional_annotation"],
-            accepted_formats=["gaf", "txt"],
+            accepted_formats=["gaf"],
             accepted_file_roles=["functional_annotation_table"],
-            description="Gene-to-GO-term mapping file (go_gene.gaf or similar).",
+            description="Gene-to-GO-term mapping in GAF format (go_gene.gaf).",
         ),
     ]
 
     parameters = [
-        ChoiceParam(
-            name="ontology", label="Ontology",
-            choices=["BP", "MF", "CC"], default="BP",
+        TextParam(
+            name="gene_list",
+            label="Gene ID List",
+            default="",
+            description="One gene ID per line. Genes not found in the annotation are skipped.",
         ),
         ChoiceParam(
             name="method", label="Correction Method",
@@ -76,7 +70,12 @@ class GoEnrichTool(BaseAnalysisTool):
 
     def build_command(self, file_paths: dict, params: dict, work_dir: str) -> list:
         obo_path = _ensure_obo()
-        script = self._generate_script(file_paths, params, work_dir, obo_path)
+        # Write gene list from text param to temp file
+        gene_list = params.get("gene_list", "")
+        gene_path = os.path.join(work_dir, "gene_list.txt")
+        with open(gene_path, "w") as f:
+            f.write(gene_list)
+        script = self._generate_script(gene_path, file_paths, params, work_dir, obo_path)
         script_path = os.path.join(work_dir, "run_enrich.py")
         with open(script_path, "w") as f:
             f.write(script)
@@ -90,7 +89,7 @@ class GoEnrichTool(BaseAnalysisTool):
                 found.append(p)
         return found
 
-    def _generate_script(self, file_paths, params, work_dir, obo_path):
+    def _generate_script(self, gene_path, file_paths, params, work_dir, obo_path):
         return f'''
 import sys, os
 os.chdir("{work_dir}")
@@ -111,8 +110,8 @@ obodag = GODag("{obo_path}", optional_attrs=['relationship'])
 print(f"Loading annotations from {file_paths['go_annotation']}...")
 geneid2gos = read_gaf("{file_paths['go_annotation']}")
 
-print(f"Loading study genes from {file_paths['gene_list']}...")
-with open("{file_paths['gene_list']}") as f:
+print(f"Loading study genes from {gene_path}...")
+with open("{gene_path}") as f:
     study_genes = [line.strip().split()[0] for line in f if line.strip()]
 
 pop_genes = list(geneid2gos.keys())
