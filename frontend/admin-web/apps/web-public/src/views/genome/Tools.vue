@@ -11,9 +11,81 @@ const detail = inject<Ref<PublicDatasetDetail | null>>('genomeDetail', ref(null)
 
 const hasGenome = computed(() => !!detail?.value);
 
-// Batch
+// Batch sequence retrieval
 const geneIds = ref('');
-const seqType = ref('genome');
+const seqType = ref('gene');
+const enableUpstream = ref(false);
+const enableDownstream = ref(false);
+const upstream = ref(2000);
+const downstream = ref(1000);
+const seqLoading = ref(false);
+const seqResults = ref<any[]>([]);
+const seqTruncated = ref(false);
+const seqDownloadUrl = ref('');
+const seqError = ref('');
+const exampleLoading = ref(false);
+
+function buildSequenceType(): string {
+  if (seqType.value === 'gene') {
+    const parts = ['gene'];
+    if (enableUpstream.value) parts.push('up');
+    if (enableDownstream.value) parts.push('down');
+    return parts.join('_');
+  }
+  return seqType.value;
+}
+
+async function retrieveSequences() {
+  const inputList = geneIds.value.split('\n').map(s => s.trim()).filter(Boolean);
+  if (inputList.length === 0) { seqError.value = 'Please enter at least one input'; return; }
+  if (!detail?.value?.id) { seqError.value = 'No genome dataset selected'; return; }
+
+  seqLoading.value = true;
+  seqError.value = '';
+  seqResults.value = [];
+  seqTruncated.value = false;
+  seqDownloadUrl.value = '';
+
+  try {
+    const { post } = useRequest();
+    const data: any = await post('/public/dataset/sequence/batch', {
+      dataset_id: detail.value.id,
+      sequence_type: buildSequenceType(),
+      upstream: upstream.value,
+      downstream: downstream.value,
+      inputs: inputList,
+    });
+    seqResults.value = data?.sequences || [];
+    seqTruncated.value = data?.truncated || false;
+    seqDownloadUrl.value = data?.download_url || '';
+  } catch (e: any) {
+    seqError.value = e?.message || 'Sequence retrieval failed';
+  } finally {
+    seqLoading.value = false;
+  }
+}
+
+async function loadBatchExample() {
+  if (!detail?.value?.id) return;
+  exampleLoading.value = true;
+  try {
+    const { post } = useRequest();
+    const data: any = await post('/public/dataset/query/execute', {
+      id: detail.value.id,
+      operation: 'list_genes',
+      params: { page: 1, size: 5 },
+    });
+    const items = data?.data?.items || data?.items || [];
+    const ids = items.map((item: any) => item.gene_id || '').filter(Boolean);
+    if (ids.length > 0) {
+      geneIds.value = ids.join('\n');
+      upstream.value = 2000;
+      downstream.value = 1000;
+    }
+  } finally {
+    exampleLoading.value = false;
+  }
+}
 
 // BLAST
 const querySeq = ref('');
@@ -115,15 +187,74 @@ function siteDownloadUrl(datasetCode: string, fileId: number) {
     <template v-else>
       <div v-if="tool === 'batch'">
         <h3>Batch Sequence Retrieval</h3>
-        <el-input v-model="geneIds" type="textarea" :rows="6" placeholder="Enter gene IDs, one per line..." style="margin-bottom:12px;" />
-        <el-select v-model="seqType" style="width:160px;margin-right:8px;">
-          <el-option label="Genome" value="genome" />
-          <el-option label="mRNA" value="mrna" />
-          <el-option label="CDS" value="cds" />
-          <el-option label="Protein" value="protein" />
-        </el-select>
-        <el-button type="primary">Retrieve</el-button>
-        <div style="margin-top:12px;color:#888;font-size:13px;">Results will appear here</div>
+        <p style="color:#888;font-size:13px;margin-bottom:16px;">
+          Retrieve sequences by gene ID or genomic coordinates from this genome dataset.
+        </p>
+
+        <!-- Sequence Type -->
+        <div style="margin-bottom:12px;">
+          <div style="font-weight:500;margin-bottom:4px;">Sequence Type</div>
+          <el-radio-group v-model="seqType">
+            <el-radio value="genome">Genome (by coordinates)</el-radio>
+            <el-radio value="mrna">mRNA (by gene ID)</el-radio>
+            <el-radio value="protein">Protein (by gene ID)</el-radio>
+            <el-radio value="gene">Gene (by gene ID)</el-radio>
+          </el-radio-group>
+        </div>
+
+        <!-- Upstream / Downstream -->
+        <div v-if="seqType === 'gene'" style="margin-bottom:12px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+          <el-checkbox v-model="enableUpstream">Upstream</el-checkbox>
+          <el-input-number v-model="upstream" :min="1" :max="3000" :disabled="!enableUpstream" size="small" style="width:140px;" /> bp
+          <el-checkbox v-model="enableDownstream" style="margin-left:8px;">Downstream</el-checkbox>
+          <el-input-number v-model="downstream" :min="1" :max="3000" :disabled="!enableDownstream" size="small" style="width:140px;" /> bp
+        </div>
+
+        <!-- Input -->
+        <div style="margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+            <span style="font-weight:500;">
+              {{ seqType === 'genome' ? 'Coordinates (one per line, e.g. Chr1A:1000-5000)' : 'Gene IDs (one per line)' }}
+            </span>
+            <el-button v-if="seqType !== 'genome'" size="small" type="primary" plain :loading="exampleLoading" @click="loadBatchExample">
+              Try Example
+            </el-button>
+          </div>
+          <el-input
+            v-model="geneIds"
+            type="textarea"
+            :rows="8"
+            :placeholder="seqType === 'genome' ? 'Chr1A:1000000-1005000\nChr2B:2000000-2005000' : 'SAM1A000100\nSAM1A000200'"
+            style="font-family:monospace;font-size:13px;"
+          />
+        </div>
+
+        <el-button type="primary" :loading="seqLoading" @click="retrieveSequences" style="margin-bottom:16px;">
+          Retrieve
+        </el-button>
+
+        <!-- Results -->
+        <div v-if="seqResults.length > 0 || seqError" style="margin-top:16px;">
+          <div v-if="seqError" style="color:red;margin-bottom:12px;">{{ seqError }}</div>
+          <div v-if="seqTruncated" style="background:#fff3cd;padding:12px;border-radius:4px;margin-bottom:12px;">
+            Result exceeds 1MB.
+            <el-button v-if="seqDownloadUrl" size="small" type="primary" tag="a" :href="seqDownloadUrl">
+              Download sequences.fasta
+            </el-button>
+          </div>
+          <div v-for="item in seqResults" :key="item.input" style="margin-bottom:16px;">
+            <div v-if="item.error" style="color:#e6a23c;font-size:12px;margin-bottom:4px;">
+              {{ item.input }}: {{ item.error }}
+            </div>
+            <template v-else>
+              <div style="font-weight:600;font-size:13px;color:#409eff;margin-bottom:4px;display:flex;justify-content:space-between;">
+                <span>{{ item.header }}</span>
+                <span style="color:#999;font-weight:400;">{{ item.length?.toLocaleString() }} bp</span>
+              </div>
+              <pre v-if="item.sequence" style="background:#f5f5f5;padding:8px;border-radius:4px;font-size:12px;max-height:200px;overflow:auto;white-space:pre-wrap;word-break:break-all;">{{ item.sequence }}</pre>
+            </template>
+          </div>
+        </div>
       </div>
 
       <div v-else-if="tool === 'blast'">
