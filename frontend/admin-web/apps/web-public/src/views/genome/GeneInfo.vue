@@ -312,7 +312,7 @@ function getFamilyLabel(type: string): string {
           <el-table v-if="interpro.length > 0" :data="interpro" stripe size="small">
             <el-table-column label="IPR Term" width="120">
               <template #default="{ row: r }">
-                <el-link :href="'https://www.ebi.ac.uk/interpro/entry/InterPro/' + r.ipr_term + '/'" target="_blank" type="primary" :underline="false">
+                <el-link :href="'https://www.ebi.ac.uk/interpro/entry/InterPro/' + r.ipr_term" target="_blank" type="primary" :underline="false">
                   {{ r.ipr_term }}
                 </el-link>
               </template>
@@ -321,7 +321,7 @@ function getFamilyLabel(type: string): string {
             <el-table-column prop="source_lib" label="Source" width="100" />
             <el-table-column label="Source Term" width="120">
               <template #default="{ row: r }">
-                <el-link v-if="r.source_term" :href="'https://www.ebi.ac.uk/interpro/entry/' + r.source_lib?.toLowerCase() + '/' + r.source_term + '/'" target="_blank" type="primary" :underline="false">
+                <el-link v-if="r.source_term" :href="'https://www.ebi.ac.uk/interpro/entry/' + r.source_lib?.toLowerCase() + '/' + r.source_term" target="_blank" type="primary" :underline="false">
                   {{ r.source_term }}
                 </el-link>
                 <span v-else>-</span>
@@ -361,7 +361,7 @@ function getFamilyLabel(type: string): string {
             <el-table :data="keggPathways" stripe size="small">
               <el-table-column label="Pathway ID" width="120">
                 <template #default="{ row: r }">
-                  <el-link :href="'https://www.genome.jp/pathway/' + r.pathway" target="_blank" type="primary" :underline="false">
+                  <el-link :href="'https://www.kegg.jp/entry/' + r.pathway" target="_blank" type="primary" :underline="false">
                     {{ r.pathway }}
                   </el-link>
                 </template>
