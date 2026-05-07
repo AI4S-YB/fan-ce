@@ -36,15 +36,11 @@ const fileOptions = ref<Record<string, { id: number; label: string; format: stri
 async function loadTools() {
   const data: any = await get('/analysis/tools');
   tools.value = data || [];
-  // Auto-select tool from URL path (/analysis/:toolId) if specified
+  // Only auto-select when a specific tool is in the URL (/analysis/:toolId)
   const targetId = route.params.toolId as string;
   if (targetId) {
     const match = tools.value.find((t: ToolSchema) => t.tool_id === targetId);
-    if (match) { selectTool(match); return; }
-  }
-  // Fallback: auto-select first tool if only one exists
-  if (tools.value.length === 1) {
-    selectTool(tools.value[0]);
+    if (match) selectTool(match);
   }
 }
 
