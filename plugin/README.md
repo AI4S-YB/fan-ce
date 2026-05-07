@@ -78,10 +78,12 @@ class MyAnalysisTool(BaseAnalysisTool):
         ),
     ]
 
-    # ── Outputs ──
+    # ── Outputs (display field is REQUIRED) ──
     outputs = [
-        FileOutput(name="result_table", format="tsv", label="Result Table"),
-        FileOutput(name="result_plot", format="png", label="Result Plot"),
+        FileOutput(name="result_table", format="tsv", label="Result Table",
+                   display="table"),
+        FileOutput(name="result_plot", format="png", label="Result Plot",
+                   display="image"),
     ]
 
     timeout_seconds = 600                     # 10 min hard limit
@@ -176,7 +178,29 @@ curl -X POST http://localhost:8002/api/v1/analysis/jobs \
 | `genome_sequence` | Reference FASTA |
 | `genome_sequence_index` | FASTA index (.fai) |
 
-### Output File Formats
+### FileOutput (REQUIRED `display` field)
+
+**Every output must specify a `display` field** telling the frontend how to render it:
+
+| display | Frontend Render | Use For |
+|---------|----------------|---------|
+| `table` | `<el-table>` interactive table | TSV/CSV enrichment results, gene lists |
+| `image` | `<img>` embedded image | PNG/JPEG plots, heatmaps, diagrams |
+| `text` | `<pre>` plain text block | Logs, reports, sequence data |
+| `download` | Download button only | Large binary files, VCF, FASTA |
+
+```python
+from basis.analysis.base import FileOutput
+
+outputs = [
+    FileOutput(name="result", format="tsv", label="Result Table",
+               display="table"),       # ← REQUIRED
+    FileOutput(name="plot", format="png", label="Dot Plot",
+               display="image"),       # ← REQUIRED
+]
+```
+
+### Supported File Formats
 
 | Format | File Extension |
 |--------|---------------|

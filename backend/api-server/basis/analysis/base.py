@@ -56,8 +56,8 @@ class FloatParam:
 class FileOutput:
     name: str
     label: str
-    format: str
-    display: str = "download"   # download | table | image | text
+    format: str                     # e.g. "tsv", "png", "pdf"
+    display: str                    # REQUIRED: download | table | image | text
     description: str = ""
 
 
