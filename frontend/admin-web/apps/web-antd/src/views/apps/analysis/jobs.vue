@@ -4,18 +4,18 @@
       <h2>任务管理</h2>
       <p style="color: #888; margin-bottom: 16px;">管理所有分析任务的执行状态和结果。</p>
 
-      <a-space style="margin-bottom: 16px;">
-        <a-select v-model:value="filterStatus" style="width: 140px;" placeholder="筛选状态" @change="loadJobs" allow-clear>
-          <a-select-option value="">全部</a-select-option>
-          <a-select-option value="pending">pending</a-select-option>
-          <a-select-option value="running">running</a-select-option>
-          <a-select-option value="success">success</a-select-option>
-          <a-select-option value="failed">failed</a-select-option>
-          <a-select-option value="timeout">timeout</a-select-option>
-        </a-select>
+      <Space style="margin-bottom: 16px;">
+        <Select v-model:value="filterStatus" style="width: 140px;" placeholder="筛选状态" @change="loadJobs" allow-clear>
+          <SelectOption value="">全部</SelectOption>
+          <SelectOption value="pending">pending</SelectOption>
+          <SelectOption value="running">running</SelectOption>
+          <SelectOption value="success">success</SelectOption>
+          <SelectOption value="failed">failed</SelectOption>
+          <SelectOption value="timeout">timeout</SelectOption>
+        </Select>
         <a-button @click="loadJobs">刷新</a-button>
         <span v-if="hasRunning" style="color: #409eff; font-size: 12px;">自动刷新中...</span>
-      </a-space>
+      </Space>
 
       <a-table :columns="columns" :data-source="jobs" :loading="loading" row-key="id" size="small" bordered
         :pagination="{ current: page, pageSize: size, total, showSizeChanger: true, onChange: onPageChange }">
@@ -34,10 +34,10 @@
           </template>
           <template v-else-if="column.key === 'action'">
             <a-button size="small" @click="showDetail(record)">详情</a-button>
-            <a-popconfirm v-if="record.status === 'pending' || record.status === 'running'"
+            <Popconfirm v-if="record.status === 'pending' || record.status === 'running'"
               title="确定取消？" @confirm="cancelJob(record.id)">
               <a-button size="small" danger>取消</a-button>
-            </a-popconfirm>
+            </Popconfirm>
             <a-button v-if="record.status === 'failed' || record.status === 'timeout'"
               size="small" type="primary" @click="retryJob(record.id)">重试</a-button>
           </template>
@@ -45,22 +45,22 @@
       </a-table>
 
       <!-- Detail Modal -->
-      <a-modal v-model:open="detailVisible" title="任务详情" width="700px" :footer="null">
+      <Modal v-model:open="detailVisible" title="任务详情" width="700px" :footer="null">
         <template v-if="detail">
-          <a-descriptions :column="2" size="small" bordered>
-            <a-descriptions-item label="Job ID">{{ detail.id }}</a-descriptions-item>
-            <a-descriptions-item label="Tool">{{ detail.tool_id }}</a-descriptions-item>
-            <a-descriptions-item label="Status">
+          <Descriptions :column="2" size="small" bordered>
+            <Descriptions.Item label="Job ID">{{ detail.id }}</Descriptions.Item>
+            <Descriptions.Item label="Tool">{{ detail.tool_id }}</Descriptions.Item>
+            <Descriptions.Item label="Status">
               <a-tag :color="statusColor(detail.status)">{{ detail.status }}</a-tag>
-            </a-descriptions-item>
-            <a-descriptions-item label="Exit Code">{{ detail.exit_code ?? '-' }}</a-descriptions-item>
-            <a-descriptions-item label="Created">{{ formatTime(detail.created_at) }}</a-descriptions-item>
-            <a-descriptions-item label="Started">{{ detail.started_at ? formatTime(detail.started_at) : '-' }}</a-descriptions-item>
-            <a-descriptions-item label="Finished">{{ detail.finished_at ? formatTime(detail.finished_at) : '-' }}</a-descriptions-item>
-            <a-descriptions-item label="Error" :span="2" v-if="detail.error_message">
+            </Descriptions.Item>
+            <Descriptions.Item label="Exit Code">{{ detail.exit_code ?? '-' }}</Descriptions.Item>
+            <Descriptions.Item label="Created">{{ formatTime(detail.created_at) }}</Descriptions.Item>
+            <Descriptions.Item label="Started">{{ detail.started_at ? formatTime(detail.started_at) : '-' }}</Descriptions.Item>
+            <Descriptions.Item label="Finished">{{ detail.finished_at ? formatTime(detail.finished_at) : '-' }}</Descriptions.Item>
+            <Descriptions.Item label="Error" :span="2" v-if="detail.error_message">
               <pre style="color: red; white-space: pre-wrap; margin: 0;">{{ detail.error_message }}</pre>
-            </a-descriptions-item>
-          </a-descriptions>
+            </Descriptions.Item>
+          </Descriptions>
 
           <h4 style="margin-top: 16px;" v-if="detail.output_files?.length">Output Files</h4>
           <a-table v-if="detail.output_files?.length" :columns="outputCols" :data-source="detail.output_files"
@@ -69,7 +69,7 @@
           <h4 style="margin-top: 16px;" v-if="detail.command_log">Command</h4>
           <pre v-if="detail.command_log" style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 12px;">{{ detail.command_log }}</pre>
         </template>
-      </a-modal>
+      </Modal>
     </div>
   </Page>
 </template>

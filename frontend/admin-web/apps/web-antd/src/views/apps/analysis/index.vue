@@ -3,8 +3,8 @@
     <div style="padding: 24px;">
       <h2>工具插件管理</h2>
 
-      <a-card title="安装插件" size="small" style="margin-bottom: 16px;">
-        <a-upload-dragger
+      <Card title="安装插件" size="small" style="margin-bottom: 16px;">
+        <UploadDragger
           name="file"
           :multiple="false"
           accept=".whl"
@@ -14,11 +14,11 @@
           <p style="font-size: 36px; margin: 8px 0;">📦</p>
           <p>点击或拖放 .whl 文件到此区域安装</p>
           <p style="color: #bbb; font-size: 12px;">安装后默认为禁用状态，需手动启用</p>
-        </a-upload-dragger>
-        <a-space style="margin-top: 12px;">
+        </UploadDragger>
+        <Space style="margin-top: 12px;">
           <a-button @click="scanDirectory" :loading="scanning">扫描 plugin/ 目录</a-button>
-        </a-space>
-      </a-card>
+        </Space>
+      </Card>
 
       <a-table :columns="columns" :data-source="tools" :loading="loading" row-key="tool_id" size="small" bordered
         :pagination="false">
@@ -46,39 +46,39 @@
             <code style="font-size: 10px; color: #888;">{{ record.plugin_class?.split('.').slice(-1)[0] }}</code>
           </template>
           <template v-else-if="column.key === 'action'">
-            <a-space>
+            <Space>
               <a-button size="small" @click="showDetail(record)">详情</a-button>
               <a-button v-if="record.status !== 'active'" size="small" type="primary"
                 @click="enableTool(record.tool_id)">启用</a-button>
               <a-button v-if="record.status === 'active'" size="small"
                 @click="disableTool(record.tool_id)">禁用</a-button>
-              <a-popconfirm title="确定卸载此工具？" ok-text="确定" cancel-text="取消"
+              <Popconfirm title="确定卸载此工具？" ok-text="确定" cancel-text="取消"
                 @confirm="uninstallTool(record.tool_id)">
                 <a-button size="small" danger>卸载</a-button>
-              </a-popconfirm>
-            </a-space>
+              </Popconfirm>
+            </Space>
           </template>
         </template>
       </a-table>
 
-      <a-divider />
+      <Divider />
       <p style="color: #888; margin: 0;">共 {{ tools.length }} 个工具</p>
     </div>
 
     <!-- Detail Drawer -->
-    <a-drawer :open="drawerVisible" title="工具详情" width="640px" @close="drawerVisible = false">
+    <Drawer :open="drawerVisible" title="工具详情" width="640px" @close="drawerVisible = false">
       <template v-if="detail">
         <h3>{{ detail.display_name }}</h3>
-        <a-descriptions :column="2" size="small" bordered>
-          <a-descriptions-item label="Tool ID">{{ detail.tool_id }}</a-descriptions-item>
-          <a-descriptions-item label="Version">v{{ detail.version }}</a-descriptions-item>
-          <a-descriptions-item label="Category">{{ detail.category }}</a-descriptions-item>
-          <a-descriptions-item label="Status">
+        <Descriptions :column="2" size="small" bordered>
+          <Descriptions.Item label="Tool ID">{{ detail.tool_id }}</Descriptions.Item>
+          <Descriptions.Item label="Version">v{{ detail.version }}</Descriptions.Item>
+          <Descriptions.Item label="Category">{{ detail.category }}</Descriptions.Item>
+          <Descriptions.Item label="Status">
             <a-tag :color="detail.status === 'active' ? 'green' : 'default'">{{ detail.status }}</a-tag>
-          </a-descriptions-item>
-          <a-descriptions-item label="Timeout">{{ detail.timeout_seconds }}s</a-descriptions-item>
-          <a-descriptions-item label="Class"><code style="font-size: 11px;">{{ detail.plugin_class }}</code></a-descriptions-item>
-        </a-descriptions>
+          </Descriptions.Item>
+          <Descriptions.Item label="Timeout">{{ detail.timeout_seconds }}s</Descriptions.Item>
+          <Descriptions.Item label="Class"><code style="font-size: 11px;">{{ detail.plugin_class }}</code></Descriptions.Item>
+        </Descriptions>
         <h4 style="margin-top: 16px;">Inputs</h4>
         <a-table :columns="schemaCols.inp" :data-source="detail.input_schema" size="small" bordered :pagination="false" />
         <h4 style="margin-top: 16px;">Parameters</h4>
@@ -86,13 +86,13 @@
         <h4 style="margin-top: 16px;">Outputs</h4>
         <a-table :columns="schemaCols.out" :data-source="detail.output_schema" size="small" bordered :pagination="false" />
       </template>
-    </a-drawer>
+    </Drawer>
   </Page>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { message, Drawer, Descriptions, DescriptionsItem, Divider, Card, Popconfirm, Space, Upload } from 'ant-design-vue';
+import { message, Drawer, Descriptions, Divider, Card, Popconfirm, Space, Upload } from 'ant-design-vue';
 import { Page } from '@vben/common-ui';
 import { requestClient } from '#/api/request';
 
