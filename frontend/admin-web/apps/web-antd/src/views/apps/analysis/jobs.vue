@@ -4,6 +4,19 @@
       <h2>任务管理</h2>
       <p style="color: #888; margin-bottom: 16px;">管理所有分析任务的执行状态和结果。</p>
 
+      <a-space style="margin-bottom: 16px;">
+        <a-select v-model:value="filterStatus" style="width: 140px;" placeholder="筛选状态" @change="loadJobs" allow-clear>
+          <a-select-option value="">全部</a-select-option>
+          <a-select-option value="pending">pending</a-select-option>
+          <a-select-option value="running">running</a-select-option>
+          <a-select-option value="success">success</a-select-option>
+          <a-select-option value="failed">failed</a-select-option>
+          <a-select-option value="timeout">timeout</a-select-option>
+        </a-select>
+        <a-button @click="loadJobs">刷新</a-button>
+        <span v-if="hasRunning" style="color: #409eff; font-size: 12px;">自动刷新中...</span>
+      </a-space>
+
       <a-table :columns="columns" :data-source="jobs" :loading="loading" row-key="id" size="small" bordered
         :pagination="{ current: page, pageSize: size, total, showSizeChanger: true, onChange: onPageChange }">
         <template #bodyCell="{ column, record }">
@@ -21,13 +34,12 @@
           </template>
           <template v-else-if="column.key === 'action'">
             <a-button size="small" @click="showDetail(record)">详情</a-button>
-            <a-popconfirm
-              v-if="record.status === 'pending' || record.status === 'running'"
-              title="确定取消此任务？"
-              @confirm="cancelJob(record.id)"
-            >
-              <a-button size="small" danger style="margin-left: 4px;">取消</a-button>
+            <a-popconfirm v-if="record.status === 'pending' || record.status === 'running'"
+              title="确定取消？" @confirm="cancelJob(record.id)">
+              <a-button size="small" danger>取消</a-button>
             </a-popconfirm>
+            <a-button v-if="record.status === 'failed' || record.status === 'timeout'"
+              size="small" type="primary" @click="retryJob(record.id)">重试</a-button>
           </template>
         </template>
       </a-table>
@@ -63,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { Page } from '@vben/common-ui';
 import { requestClient } from '#/api/request';
 import { message } from 'ant-design-vue';
@@ -82,6 +94,10 @@ const size = ref(20);
 const total = ref(0);
 const detailVisible = ref(false);
 const detail = ref<JobItem | null>(null);
+const filterStatus = ref('');
+const autoRefreshTimer = ref<ReturnType<typeof setInterval> | null>(null);
+
+const hasRunning = computed(() => jobs.value.some(j => j.status === 'pending' || j.status === 'running'));
 
 const columns = [
   { title: 'Job ID', key: 'id', dataIndex: 'id', width: 80 },
@@ -110,13 +126,30 @@ function formatTime(ts?: number) {
 async function loadJobs() {
   loading.value = true;
   try {
-    const resp: any = await requestClient.get('/analysis/jobs', { params: { page: page.value, size: size.value } });
+    const params: any = { page: page.value, size: size.value };
+    if (filterStatus.value) params.status = filterStatus.value;
+    const resp: any = await requestClient.get('/analysis/jobs', { params });
     const data = resp?.data || resp || {};
     jobs.value = data.items || [];
     total.value = data.total || 0;
   } finally {
     loading.value = false;
   }
+}
+
+async function retryJob(id: number) {
+  try {
+    await requestClient.post(`/analysis/jobs/${id}/retry`);
+    message.success('已重新提交');
+    loadJobs();
+  } catch (e: any) { message.error('重试失败'); }
+}
+
+function startAutoRefresh() {
+  if (autoRefreshTimer.value) return;
+  autoRefreshTimer.value = setInterval(() => {
+    if (hasRunning.value) loadJobs();
+  }, 3000);
 }
 
 async function showDetail(record: JobItem) {
@@ -145,5 +178,12 @@ function onPageChange(p: number, ps: number) {
   loadJobs();
 }
 
-onMounted(loadJobs);
+onMounted(() => {
+  loadJobs();
+  startAutoRefresh();
+});
+
+onUnmounted(() => {
+  if (autoRefreshTimer.value) clearInterval(autoRefreshTimer.value);
+});
 </script>

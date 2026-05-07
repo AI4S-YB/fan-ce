@@ -1,7 +1,8 @@
 """Analysis API endpoints."""
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File as FastAPIFile
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -105,8 +106,11 @@ def get_job(job_id: int, db: Session = Depends(get_db)):
 
 
 @analysis_router.get("/jobs", summary="列出用户的任务")
-def list_jobs(page: int = 1, size: int = 20, db: Session = Depends(get_db)):
-    total = db.query(BrdAnalysisJob).count()
+def list_jobs(page: int = 1, size: int = 20, status: str = None, db: Session = Depends(get_db)):
+    query = db.query(BrdAnalysisJob)
+    if status and status != "all":
+        query = query.filter(BrdAnalysisJob.status == status)
+    total = query.count()
     jobs = db.query(BrdAnalysisJob).order_by(BrdAnalysisJob.id.desc()) \
         .offset((page - 1) * size).limit(size).all()
     return response_2000(data={
@@ -157,7 +161,8 @@ def search_files(req: FileSearchRequest, db: Session = Depends(get_db)):
 
 @analysis_router.get("/admin/tools", summary="管理端：列出分析工具（含状态）")
 def admin_list_tools(_user=Depends(get_active_user)):
-    tools = get_tools()
+    from apps.analysis.worker import get_all_tools
+    tools = get_all_tools()
     return response_2000(data=[
         {
             "tool_id": t.tool_id, "display_name": t.display_name,
@@ -188,7 +193,89 @@ def admin_get_tool(tool_id: str, _user=Depends(get_active_user)):
         "output_schema": t.get_output_schema(),
         "dependencies": t.dependencies,
         "plugin_class": f"{t.__class__.__module__}:{t.__class__.__qualname__}",
+        "status": getattr(t, "tool_status", "active"),
     })
+
+
+# ── Plugin management ──
+
+@analysis_router.post("/admin/plugins/install", summary="上传并安装插件(.whl)")
+async def admin_install_plugin(file: UploadFile = FastAPIFile(...), _user=Depends(get_active_user)):
+    if not file.filename or not file.filename.endswith('.whl'):
+        raise HTTPException(status_code=400, detail="Only .whl files are accepted")
+
+    import os, uuid
+    tmp_path = f"/tmp/{uuid.uuid4().hex}_{file.filename}"
+    with open(tmp_path, "wb") as f:
+        content = await file.read()
+        f.write(content)
+
+    from apps.analysis.worker import install_whl
+    try:
+        new_tools = install_whl(tmp_path)
+        os.remove(tmp_path)
+        return response_2000(data={"installed": new_tools})
+    except Exception as e:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@analysis_router.post("/admin/plugins/scan", summary="扫描plugin/目录安装插件")
+def admin_scan_plugins(_user=Depends(get_active_user)):
+    import os
+    base = os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )))
+    plugin_dir = os.path.join(base, "plugin")
+    from apps.analysis.worker import scan_plugin_dir
+    try:
+        new_tools = scan_plugin_dir(plugin_dir)
+        return response_2000(data={"new_tools": new_tools})
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@analysis_router.post("/admin/tools/{tool_id}/enable", summary="启用工具")
+def admin_enable_tool(tool_id: str, _user=Depends(get_active_user)):
+    from apps.analysis.worker import set_tool_status
+    if not set_tool_status(tool_id, "active"):
+        raise HTTPException(status_code=404, detail="Tool not found")
+    return response_2000(data={"tool_id": tool_id, "status": "active"})
+
+
+@analysis_router.post("/admin/tools/{tool_id}/disable", summary="禁用工具")
+def admin_disable_tool(tool_id: str, _user=Depends(get_active_user)):
+    from apps.analysis.worker import set_tool_status
+    if not set_tool_status(tool_id, "disabled"):
+        raise HTTPException(status_code=404, detail="Tool not found")
+    return response_2000(data={"tool_id": tool_id, "status": "disabled"})
+
+
+@analysis_router.post("/admin/tools/{tool_id}/uninstall", summary="卸载工具")
+def admin_uninstall_tool(tool_id: str, _user=Depends(get_active_user)):
+    from apps.analysis.worker import _get_tool, unregister_tool
+    tool = _get_tool(tool_id)
+    if not tool:
+        raise HTTPException(status_code=404, detail="Tool not found")
+    unregister_tool(tool_id)
+    return response_2000(data={"tool_id": tool_id, "status": "uninstalled"})
+
+
+@analysis_router.post("/jobs/{job_id}/retry", summary="重试失败任务")
+def retry_job(job_id: int, db: Session = Depends(get_db)):
+    old = db.query(BrdAnalysisJob).filter_by(id=job_id).first()
+    if not old:
+        raise HTTPException(status_code=404, detail="Job not found")
+    new_job = BrdAnalysisJob(
+        tool_id=old.tool_id, status="pending",
+        input_bindings=old.input_bindings, param_overrides=old.param_overrides,
+        created_by=old.created_by,
+    )
+    db.add(new_job)
+    db.commit()
+    db.refresh(new_job)
+    return response_2000(data={"id": new_job.id, "status": "pending"})
 
 
 @analysis_router.get("/jobs/{job_id}/output/{file_name}", summary="下载输出文件")

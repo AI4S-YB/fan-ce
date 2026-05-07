@@ -126,13 +126,76 @@ _tools: dict = {}
 
 def register_tool(tool):
     """Register an analysis tool instance."""
+    existing = _tools.get(tool.tool_id)
+    if existing:
+        existing.tool_version = tool.tool_version
+        for attr in ['display_name', 'description', 'category', 'inputs', 'parameters', 'outputs',
+                      'timeout_seconds', 'dependencies']:
+            if hasattr(tool, attr):
+                setattr(existing, attr, getattr(tool, attr))
+        return existing
     _tools[tool.tool_id] = tool
+    return tool
 
-def get_tools() -> list:
+def get_tools(active_only: bool = True) -> list:
+    tools = list(_tools.values())
+    if active_only:
+        tools = [t for t in tools if getattr(t, 'tool_status', 'active') == 'active']
+    return tools
+
+def get_all_tools() -> list:
     return list(_tools.values())
 
 def _get_tool(tool_id: str):
     return _tools.get(tool_id)
+
+def set_tool_status(tool_id: str, status: str) -> bool:
+    tool = _tools.get(tool_id)
+    if not tool:
+        return False
+    tool.tool_status = status
+    return True
+
+def unregister_tool(tool_id: str) -> bool:
+    return _tools.pop(tool_id, None) is not None
+
+
+# ── Plugin install / scan ──
+
+def install_whl(whl_path: str) -> list[dict]:
+    """pip install a .whl file and return newly discovered tools."""
+    import subprocess, importlib, os
+    proc = subprocess.run(["pip", "install", whl_path], capture_output=True, text=True, timeout=120)
+    if proc.returncode != 0:
+        raise RuntimeError(f"pip install failed: {proc.stderr[:500]}")
+    importlib.invalidate_caches()
+    return _scan_entry_points()
+
+def scan_plugin_dir(plugin_dir: str) -> list[dict]:
+    """Scan a directory for .whl files and install any not yet registered."""
+    import subprocess, importlib, os
+    discovered = []
+    for f in sorted(os.listdir(plugin_dir)):
+        if not f.endswith('.whl'):
+            continue
+        full = os.path.join(plugin_dir, f)
+        proc = subprocess.run(["pip", "install", full], capture_output=True, text=True, timeout=120)
+        if proc.returncode == 0:
+            discovered.append(f)
+    if discovered:
+        importlib.invalidate_caches()
+    return _scan_entry_points()
+
+def _scan_entry_points() -> list[dict]:
+    """Scan entry_points for new tools and register them as inactive."""
+    from basis.analysis.registry import discover_plugins
+    new_tools = []
+    for tool in discover_plugins():
+        t = register_tool(tool)
+        if getattr(t, 'tool_status', None) is None:
+            t.tool_status = "inactive"
+        new_tools.append({"tool_id": t.tool_id, "version": t.tool_version, "status": t.tool_status})
+    return new_tools
 
 
 # ── Singleton ──

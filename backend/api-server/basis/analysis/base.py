@@ -97,6 +97,7 @@ class BaseAnalysisTool(ABC):
     outputs: list = []
 
     timeout_seconds: int = 3600
+    tool_status: str = "active"  # active | inactive | disabled
     dependencies: dict = field(default_factory=dict)  # {"pixi": [...], "conda": [...]}
 
     def get_input_schema(self) -> list:
