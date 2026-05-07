@@ -14,11 +14,27 @@
           <SelectOption value="timeout">timeout</SelectOption>
         </Select>
         <Button @click="loadJobs">刷新</Button>
+        <Popconfirm v-if="selectedRowKeys.length > 0"
+          :title="`确定删除 ${selectedRowKeys.length} 个任务？`"
+          @confirm="batchDelete">
+          <Button danger>删除所选 ({{ selectedRowKeys.length }})</Button>
+        </Popconfirm>
         <span v-if="hasRunning" style="color: #409eff; font-size: 12px;">自动刷新中...</span>
       </Space>
 
+      <!-- Stats -->
+      <div v-if="stats.total_jobs > 0" style="margin-bottom:16px;padding:12px;background:#fafafa;border-radius:6px;display:flex;gap:24px;flex-wrap:wrap;">
+        <span>总任务: <strong>{{ stats.total_jobs }}</strong></span>
+        <span v-for="s in stats.stats" :key="s.tool_id">
+          {{ s.tool_id }}: <strong>{{ s.total }}</strong>
+          <span style="color:green;font-size:11px;"> ✓{{ s.success }}</span>
+          <span style="color:red;font-size:11px;"> ✗{{ s.failed }}</span>
+        </span>
+      </div>
+
       <Table :columns="columns" :data-source="jobs" :loading="loading" row-key="id" size="small" bordered
-        :pagination="{ current: page, pageSize: size, total, showSizeChanger: true, onChange: onPageChange }">
+        :pagination="{ current: page, pageSize: size, total, showSizeChanger: true, onChange: onPageChange }"
+        :row-selection="{ selectedRowKeys, onChange: (keys: number[]) => selectedRowKeys = keys }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'tool_id'">
             <Tag color="blue">{{ record.tool_id }}</Tag>
@@ -96,6 +112,8 @@ const detailVisible = ref(false);
 const detail = ref<JobItem | null>(null);
 const filterStatus = ref('');
 const autoRefreshTimer = ref<ReturnType<typeof setInterval> | null>(null);
+const selectedRowKeys = ref<number[]>([]);
+const stats = ref<any>({ stats: [], total_jobs: 0 });
 
 const hasRunning = computed(() => jobs.value.some(j => j.status === 'pending' || j.status === 'running'));
 
@@ -178,8 +196,27 @@ function onPageChange(p: number, ps: number) {
   loadJobs();
 }
 
+async function batchDelete() {
+  if (selectedRowKeys.value.length === 0) return;
+  try {
+    await requestClient.post('/analysis/jobs/batch-delete', { ids: selectedRowKeys.value });
+    message.success(`已删除 ${selectedRowKeys.value.length} 个任务`);
+    selectedRowKeys.value = [];
+    loadJobs();
+    loadStats();
+  } catch (e: any) { message.error('删除失败'); }
+}
+
+async function loadStats() {
+  try {
+    const resp: any = await requestClient.get('/analysis/stats');
+    stats.value = resp?.data || resp || { stats: [], total_jobs: 0 };
+  } catch { /* ignore */ }
+}
+
 onMounted(() => {
   loadJobs();
+  loadStats();
   startAutoRefresh();
 });
 

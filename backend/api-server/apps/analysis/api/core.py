@@ -357,3 +357,32 @@ def view_output(job_id: int, file_name: str, db: Session = Depends(get_db)):
             else:
                 return response_2000(data={"type": "text", "content": open(path).read()[:5000]})
     raise HTTPException(status_code=404, detail="Output not found")
+
+@analysis_router.post("/jobs/batch-delete", summary="批量删除任务")
+def batch_delete_jobs(ids: list[int] = None, db: Session = Depends(get_db)):
+    if not ids:
+        raise HTTPException(status_code=400, detail="ids is required")
+    deleted = 0
+    for job_id in ids:
+        job = db.query(BrdAnalysisJob).filter_by(id=job_id).first()
+        if job:
+            db.delete(job)
+            deleted += 1
+    db.commit()
+    return response_2000(data={"deleted": deleted})
+
+
+@analysis_router.get("/stats", summary="工具使用统计")
+def analysis_stats(db: Session = Depends(get_db)):
+    from sqlalchemy import func
+    all_jobs = db.query(BrdAnalysisJob).all()
+    tool_stats = {}
+    for j in all_jobs:
+        if j.tool_id not in tool_stats:
+            tool_stats[j.tool_id] = {"tool_id": j.tool_id, "total": 0, "success": 0, "failed": 0}
+        s = tool_stats[j.tool_id]
+        s["total"] += 1
+        if j.status == "success": s["success"] += 1
+        elif j.status in ("failed", "timeout"): s["failed"] += 1
+    stats = list(tool_stats.values())
+    return response_2000(data={"stats": stats, "total_jobs": len(all_jobs)})
