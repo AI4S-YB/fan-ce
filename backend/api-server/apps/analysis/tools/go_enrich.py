@@ -3,7 +3,7 @@ import os
 import subprocess
 import urllib.request
 from basis.analysis.base import (
-    BaseAnalysisTool, FileParam, ChoiceParam, FloatParam, IntParam, FileOutput,
+    BaseAnalysisTool, FileParam, TextParam, ChoiceParam, FloatParam, IntParam, FileOutput,
 )
 
 GO_OBO_URL = "http://purl.obolibrary.org/obo/go/go-basic.obo"
