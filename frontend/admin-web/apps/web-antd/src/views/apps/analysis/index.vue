@@ -4,7 +4,7 @@
       <h2>工具插件管理</h2>
 
       <Card title="安装插件" size="small" style="margin-bottom: 16px;">
-        <UploadDragger
+        <Upload.Dragger
           name="file"
           :multiple="false"
           accept=".whl"
@@ -14,7 +14,7 @@
           <p style="font-size: 36px; margin: 8px 0;">📦</p>
           <p>点击或拖放 .whl 文件到此区域安装</p>
           <p style="color: #bbb; font-size: 12px;">安装后默认为禁用状态，需手动启用</p>
-        </UploadDragger>
+        </Upload.Dragger>
         <Space style="margin-top: 12px;">
           <Button @click="scanDirectory" :loading="scanning">扫描 plugin/ 目录</Button>
         </Space>
