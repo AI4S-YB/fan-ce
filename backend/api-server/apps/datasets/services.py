@@ -66,6 +66,7 @@ from .models import (
     PhenomeSubject,
     PhenomeTrait,
     AssetTypeRegistry,
+    DatasetRegistry,
 )
 from core.config import settings
 from db.database import MyDBManager, mydb
