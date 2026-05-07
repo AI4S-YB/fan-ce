@@ -1381,38 +1381,107 @@ class DatasetDomainService:
             released_version_ids = {v.id for v in released_versions}
             if not released_version_ids:
                 return []
+
             lineage_rows = dataset_lineage_edge_db.get_data(db=db, filters={})
-            matched_rows = []
+            matched = []
+            all_dataset_ids = set()
             for item in lineage_rows:
                 if item.src_dataset_version_id not in released_version_ids and item.dst_dataset_version_id not in released_version_ids:
                     continue
-                src_version = dataset_version_db.get_one(db=db, id=item.src_dataset_version_id) if item.src_dataset_version_id else None
-                dst_version = dataset_version_db.get_one(db=db, id=item.dst_dataset_version_id) if item.dst_dataset_version_id else None
-                if not src_version or not dst_version:
+                sv = dataset_version_db.get_one(db=db, id=item.src_dataset_version_id) if item.src_dataset_version_id else None
+                dv = dataset_version_db.get_one(db=db, id=item.dst_dataset_version_id) if item.dst_dataset_version_id else None
+                if not sv or not dv:
                     continue
-                if not self._is_version_publicly_released(src_version) or not self._is_version_publicly_released(dst_version):
+                if not self._is_version_publicly_released(sv) or not self._is_version_publicly_released(dv):
                     continue
-                matched_rows.append(item)
-            matched_rows = sorted(matched_rows, key=lambda item: item.id, reverse=True)[:limit]
-            return [self._build_lineage_payload(db=db, lineage_obj=item) for item in matched_rows]
+                matched.append((item, sv, dv))
+                all_dataset_ids.add(sv.database_id)
+                all_dataset_ids.add(dv.database_id)
 
+            if not matched:
+                return []
+
+            # Bulk fetch registries — 1 query instead of 2 per edge
+            registries = db.query(DatasetRegistry).filter(
+                DatasetRegistry.database_id.in_(all_dataset_ids),
+            ).all()
+            registry_map = {r.database_id: r for r in registries}
+
+            matched.sort(key=lambda x: x[0].id, reverse=True)
+            results = []
+            for item, sv, dv in matched[:limit]:
+                src_reg = registry_map.get(sv.database_id)
+                dst_reg = registry_map.get(dv.database_id)
+                if not src_reg or not dst_reg:
+                    continue
+                results.append({
+                    "id": item.id,
+                    "relation_type": item.relation_type,
+                    "direction": item.direction,
+                    "src_dataset_id": sv.database_id,
+                    "src_dataset_title": src_reg.title or "",
+                    "src_dataset_type": src_reg.dataset_type or "",
+                    "src_dataset_code": src_reg.dataset_code or "",
+                    "src_version": sv.version or "",
+                    "dst_dataset_id": dv.database_id,
+                    "dst_dataset_title": dst_reg.title or "",
+                    "dst_dataset_type": dst_reg.dataset_type or "",
+                    "dst_dataset_code": dst_reg.dataset_code or "",
+                    "dst_version": dv.version or "",
+                })
+            return results
+
+        # version_id branch
         version_obj = dataset_version_db.get(db=db, id=version_id)
         if not version_obj or not self._is_version_publicly_released(version_obj):
             return []
         lineage_rows = dataset_lineage_edge_db.get_data(db=db, filters={})
-        matched_rows = []
+        matched = []
+        all_dataset_ids = set()
         for item in lineage_rows:
             if item.src_dataset_version_id != version_id and item.dst_dataset_version_id != version_id:
                 continue
-            src_version = dataset_version_db.get_one(db=db, id=item.src_dataset_version_id) if item.src_dataset_version_id else None
-            dst_version = dataset_version_db.get_one(db=db, id=item.dst_dataset_version_id) if item.dst_dataset_version_id else None
-            if not src_version or not dst_version:
+            sv = dataset_version_db.get_one(db=db, id=item.src_dataset_version_id) if item.src_dataset_version_id else None
+            dv = dataset_version_db.get_one(db=db, id=item.dst_dataset_version_id) if item.dst_dataset_version_id else None
+            if not sv or not dv:
                 continue
-            if not self._is_version_publicly_released(src_version) or not self._is_version_publicly_released(dst_version):
+            if not self._is_version_publicly_released(sv) or not self._is_version_publicly_released(dv):
                 continue
-            matched_rows.append(item)
-        matched_rows = sorted(matched_rows, key=lambda item: item.id, reverse=True)[:limit]
-        return [self._build_lineage_payload(db=db, lineage_obj=item) for item in matched_rows]
+            matched.append((item, sv, dv))
+            all_dataset_ids.add(sv.database_id)
+            all_dataset_ids.add(dv.database_id)
+
+        if not matched:
+            return []
+
+        registries = db.query(DatasetRegistry).filter(
+            DatasetRegistry.database_id.in_(all_dataset_ids),
+        ).all()
+        registry_map = {r.database_id: r for r in registries}
+
+        matched.sort(key=lambda x: x[0].id, reverse=True)
+        results = []
+        for item, sv, dv in matched[:limit]:
+            src_reg = registry_map.get(sv.database_id)
+            dst_reg = registry_map.get(dv.database_id)
+            if not src_reg or not dst_reg:
+                continue
+            results.append({
+                "id": item.id,
+                "relation_type": item.relation_type,
+                "direction": item.direction,
+                "src_dataset_id": sv.database_id,
+                "src_dataset_title": src_reg.title or "",
+                "src_dataset_type": src_reg.dataset_type or "",
+                "src_dataset_code": src_reg.dataset_code or "",
+                "src_version": sv.version or "",
+                "dst_dataset_id": dv.database_id,
+                "dst_dataset_title": dst_reg.title or "",
+                "dst_dataset_type": dst_reg.dataset_type or "",
+                "dst_dataset_code": dst_reg.dataset_code or "",
+                "dst_version": dv.version or "",
+            })
+        return results
 
     def _list_asset_file_rows(self, db, asset_id):
         rows = asset_file_db.get_data(db=db, filters={"dataset_asset_id": asset_id})
