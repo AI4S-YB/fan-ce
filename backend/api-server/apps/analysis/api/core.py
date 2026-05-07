@@ -25,6 +25,10 @@ class FileSearchRequest(BaseModel):
     file_formats: list = []
     file_roles: list = []
 
+
+class BatchDeleteRequest(BaseModel):
+    ids: list[int]
+
 analysis_router = APIRouter(tags=["app:analysis:分析任务"])
 
 
@@ -359,11 +363,11 @@ def view_output(job_id: int, file_name: str, db: Session = Depends(get_db)):
     raise HTTPException(status_code=404, detail="Output not found")
 
 @analysis_router.post("/jobs/batch-delete", summary="批量删除任务")
-def batch_delete_jobs(ids: list[int] = None, db: Session = Depends(get_db)):
-    if not ids:
+def batch_delete_jobs(req: BatchDeleteRequest, db: Session = Depends(get_db)):
+    if not req.ids:
         raise HTTPException(status_code=400, detail="ids is required")
     deleted = 0
-    for job_id in ids:
+    for job_id in req.ids:
         job = db.query(BrdAnalysisJob).filter_by(id=job_id).first()
         if job:
             db.delete(job)
