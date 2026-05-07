@@ -3889,14 +3889,24 @@ class DatasetDomainService:
         )
         if next_file_format is None:
             next_file_format = self._guess_file_suffix(next_local_path) if request_data.local_path is not None else file_obj.file_format
-        registry_row, normalized_file_format = self._validate_asset_file_registry_binding(
-            db=db,
-            asset_type=asset_obj.asset_type,
-            file_role=next_file_role,
-            file_format=next_file_format,
-            local_path=next_local_path,
-            asset_file_type_code=next_asset_file_type_code,
+        # Only validate registry binding when changing file-related fields
+        registry_row = None
+        normalized_file_format = next_file_format
+        has_registry_change = (
+            request_data.file_role is not None
+            or request_data.file_format is not None
+            or request_data.asset_file_type_code is not None
+            or request_data.local_path is not None
         )
+        if has_registry_change:
+            registry_row, normalized_file_format = self._validate_asset_file_registry_binding(
+                db=db,
+                asset_type=asset_obj.asset_type,
+                file_role=next_file_role,
+                file_format=next_file_format,
+                local_path=next_local_path,
+                asset_file_type_code=next_asset_file_type_code,
+            )
         for field in [
             "asset_file_type_code",
             "file_role",

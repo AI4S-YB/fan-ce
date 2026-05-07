@@ -323,7 +323,7 @@ DEFAULT_ASSET_FILE_TYPE_REGISTRY_ITEMS = [
         "base_code": "functional_annotation_primary",
         "name": "功能注释表",
         "description": "功能注释结果表或矩阵文件。",
-        "supported_file_formats": ["tsv", "csv", "xlsx", "xls", "h5", "hdf5"],
+        "supported_file_formats": ["tsv", "csv", "xlsx", "xls", "h5", "hdf5", "txt", "gaf", "json"],
         "file_role": "primary",
         "allowed_asset_types": ["functional_annotation"],
         "is_system": 1,
