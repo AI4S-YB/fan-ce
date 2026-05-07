@@ -5,7 +5,7 @@
       <p style="color: #888; margin-bottom: 16px;">管理所有分析任务的执行状态和结果。</p>
 
       <Space style="margin-bottom: 16px;">
-        <Select v-model:value="filterStatus" style="width: 140px;" placeholder="筛选状态" @change="loadJobs" allow-clear>
+        <Select v-model:value="filterStatus" style="width: 140px;" placeholder="筛选状态" @change="loadJobs(true)" allow-clear>
           <SelectOption value="">全部</SelectOption>
           <SelectOption value="pending">pending</SelectOption>
           <SelectOption value="running">running</SelectOption>
@@ -13,7 +13,7 @@
           <SelectOption value="failed">failed</SelectOption>
           <SelectOption value="timeout">timeout</SelectOption>
         </Select>
-        <Button @click="loadJobs">刷新</Button>
+        <Button @click="loadJobs(true)">刷新</Button>
         <Popconfirm v-if="selectedRowKeys.length > 0"
           :title="`确定删除 ${selectedRowKeys.length} 个任务？`"
           @confirm="batchDelete">
@@ -141,12 +141,13 @@ function formatTime(ts?: number) {
   return new Date(ts * 1000).toLocaleString();
 }
 
-async function loadJobs() {
+async function loadJobs(resetPage = false) {
+  if (resetPage) page.value = 1;
   loading.value = true;
   try {
     const params: any = { page: page.value, size: size.value };
     if (filterStatus.value) params.status = filterStatus.value;
-    const resp: any = await requestClient.get('/analysis/jobs', { params });
+    const resp: any = await requestClient.get('/analysis/jobs', params);
     const data = resp?.data || resp || {};
     jobs.value = data.items || [];
     total.value = data.total || 0;

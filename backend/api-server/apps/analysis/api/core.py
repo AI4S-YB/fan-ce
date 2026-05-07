@@ -196,6 +196,34 @@ def go_enrich_example_genes(db: Session = Depends(get_db)):
     return response_2000(data={"gene_ids": list(gene_ids)})
 
 
+@analysis_router.post("/tools/kegg_enrich/example-genes", summary="从func_anno SQLite中提取示例基因ID")
+def kegg_enrich_example_genes(db: Session = Depends(get_db)):
+    """Read KEGG annotations from func_anno SQLite and return example gene IDs."""
+    import os, sqlite3
+    from apps.datasets.models import AssetFile
+    af = db.query(AssetFile).filter(
+        AssetFile.file_format.in_(["db", "sqlite"]),
+    ).first()
+    if not af:
+        return response_2000(data={"gene_ids": [], "message": "No functional annotation DB found"})
+
+    path = getattr(af, "local_path", None) or getattr(af, "storage_uri", None) or ""
+    if not path or not os.path.exists(path):
+        return response_2000(data={"gene_ids": [], "message": f"File not found: {path}"})
+
+    gene_ids = set()
+    try:
+        conn = sqlite3.connect(path)
+        rows = conn.execute("SELECT transcript_id FROM hse_transcripts WHERE KEGG IS NOT NULL AND KEGG != '' AND KEGG != '[]' LIMIT 300").fetchall()
+        for r in rows:
+            gene_ids.add(r[0])
+        conn.close()
+    except Exception as e:
+        return response_2000(data={"gene_ids": [], "message": str(e)})
+
+    return response_2000(data={"gene_ids": list(gene_ids)})
+
+
 # ── Admin endpoints ──
 
 @analysis_router.get("/admin/tools", summary="管理端：列出分析工具（含状态）")
