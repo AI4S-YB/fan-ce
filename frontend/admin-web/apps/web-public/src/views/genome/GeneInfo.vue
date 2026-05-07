@@ -310,10 +310,23 @@ function getFamilyLabel(type: string): string {
         <!-- Tab 4: Domain -->
         <el-tab-pane label="Domain" name="4">
           <el-table v-if="interpro.length > 0" :data="interpro" stripe size="small">
-            <el-table-column prop="ipr_term" label="IPR Term" width="120" />
+            <el-table-column label="IPR Term" width="120">
+              <template #default="{ row: r }">
+                <el-link :href="'https://www.ebi.ac.uk/interpro/entry/InterPro/' + r.ipr_term + '/'" target="_blank" type="primary" :underline="false">
+                  {{ r.ipr_term }}
+                </el-link>
+              </template>
+            </el-table-column>
             <el-table-column prop="ipr_desc" label="IPR Description" min-width="200" show-overflow-tooltip />
             <el-table-column prop="source_lib" label="Source" width="100" />
-            <el-table-column prop="source_term" label="Source Term" width="120" />
+            <el-table-column label="Source Term" width="120">
+              <template #default="{ row: r }">
+                <el-link v-if="r.source_term" :href="'https://www.ebi.ac.uk/interpro/entry/' + r.source_lib?.toLowerCase() + '/' + r.source_term + '/'" target="_blank" type="primary" :underline="false">
+                  {{ r.source_term }}
+                </el-link>
+                <span v-else>-</span>
+              </template>
+            </el-table-column>
             <el-table-column prop="source_desc" label="Source Name" min-width="180" show-overflow-tooltip />
             <el-table-column label="Location" width="200">
               <template #default="{ row: r }">{{ formatLocation(r.location) }}</template>
@@ -346,7 +359,13 @@ function getFamilyLabel(type: string): string {
           <div v-if="keggPathways.length > 0">
             <h4>KEGG Pathway Annotations</h4>
             <el-table :data="keggPathways" stripe size="small">
-              <el-table-column prop="pathway" label="Pathway ID" width="120" />
+              <el-table-column label="Pathway ID" width="120">
+                <template #default="{ row: r }">
+                  <el-link :href="'https://www.genome.jp/pathway/' + r.pathway" target="_blank" type="primary" :underline="false">
+                    {{ r.pathway }}
+                  </el-link>
+                </template>
+              </el-table-column>
               <el-table-column prop="description" label="Pathway" min-width="300" show-overflow-tooltip />
               <el-table-column label="KEGG Orthology" width="200">
                 <template #default="{ row: r }">{{ formatKO(r.orthology) }}</template>
