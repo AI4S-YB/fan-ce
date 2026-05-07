@@ -76,11 +76,24 @@ async function loadBatchExample() {
       params: { page: 1, size: 5 },
     });
     const items = data?.data?.items || data?.items || [];
-    const ids = items.map((item: any) => item.gene_id || '').filter(Boolean);
-    if (ids.length > 0) {
-      geneIds.value = ids.join('\n');
-      upstream.value = 2000;
-      downstream.value = 1000;
+
+    if (seqType.value === 'genome') {
+      // Build example coordinate strings from chromosome names
+      const chroms = [...new Set(items.map((item: any) => String(item.chrom || '')).filter(Boolean))] as string[];;
+      const examples = chroms.slice(0, 3).map((c: string) => `${c}:1000-5000`);
+      if (examples.length > 0) geneIds.value = examples.join('\n');
+    } else if (seqType.value === 'mrna' || seqType.value === 'protein') {
+      // Use transcript IDs for mRNA/protein FASTA lookup
+      const tids = items.map((item: any) => item.canonical_transcript || '').filter(Boolean);
+      if (tids.length > 0) geneIds.value = tids.join('\n');
+    } else {
+      // Gene mode: use gene IDs
+      const ids = items.map((item: any) => item.gene_id || '').filter(Boolean);
+      if (ids.length > 0) {
+        geneIds.value = ids.join('\n');
+        upstream.value = 2000;
+        downstream.value = 1000;
+      }
     }
   } finally {
     exampleLoading.value = false;
@@ -214,9 +227,11 @@ function siteDownloadUrl(datasetCode: string, fileId: number) {
         <div style="margin-bottom:12px;">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
             <span style="font-weight:500;">
-              {{ seqType === 'genome' ? 'Coordinates (one per line, e.g. Chr1A:1000-5000)' : 'Gene IDs (one per line)' }}
+              {{ seqType === 'genome' ? 'Coordinates (one per line, e.g. Chr1A:1000-5000)' :
+                 seqType === 'mrna' || seqType === 'protein' ? 'Transcript IDs (one per line)' :
+                 'Gene IDs (one per line)' }}
             </span>
-            <el-button v-if="seqType !== 'genome'" size="small" type="primary" plain :loading="exampleLoading" @click="loadBatchExample">
+            <el-button size="small" type="primary" plain :loading="exampleLoading" @click="loadBatchExample">
               Try Example
             </el-button>
           </div>
@@ -224,7 +239,7 @@ function siteDownloadUrl(datasetCode: string, fileId: number) {
             v-model="geneIds"
             type="textarea"
             :rows="8"
-            :placeholder="seqType === 'genome' ? 'Chr1A:1000000-1005000\nChr2B:2000000-2005000' : 'SAM1A000100\nSAM1A000200'"
+            :placeholder="seqType === 'genome' ? 'Chr1A:1000000-1005000\nChr2B:2000000-2005000' : seqType === 'mrna' || seqType === 'protein' ? 'SAM1A000100.1\nSAM1A000200.1' : 'SAM1A000100\nSAM1A000200'"
             style="font-family:monospace;font-size:13px;"
           />
         </div>

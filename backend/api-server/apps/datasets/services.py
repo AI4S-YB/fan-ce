@@ -6584,21 +6584,13 @@ class DatasetDomainService:
                 if not mrna_path:
                     raise HTTPException(status_code=400, detail="mRNA FASTA not available")
                 for inp in inputs:
-                    ginfo = gene_map.get(inp)
-                    if not ginfo:
-                        errors.append({"input": inp, "error": "Gene not found"})
-                    else:
-                        regions.append((inp, ginfo["transcript_id"], mrna_path))
+                    regions.append((inp, inp, mrna_path))
 
             elif seq_type == "protein":
                 if not protein_path:
                     raise HTTPException(status_code=400, detail="Protein FASTA not available")
                 for inp in inputs:
-                    ginfo = gene_map.get(inp)
-                    if not ginfo:
-                        errors.append({"input": inp, "error": "Gene not found"})
-                    else:
-                        regions.append((inp, ginfo["transcript_id"], protein_path))
+                    regions.append((inp, inp, protein_path))
 
             elif seq_type in ("gene", "gene_up", "gene_down", "gene_up_down"):
                 if not genome_path:
