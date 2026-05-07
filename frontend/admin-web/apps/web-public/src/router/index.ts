@@ -32,6 +32,7 @@ const routes = [
   { path: '/germplasm', component: () => import('@/views/germplasm/index.vue') },
   { path: '/chat', component: () => import('@/views/chat/index.vue') },
   { path: '/analysis', component: () => import('@/views/analysis/index.vue') },
+  { path: '/analysis/:toolId', component: () => import('@/views/analysis/index.vue') },
   { path: '/phenotype', component: () => import('@/views/phenotype/index.vue') },
 ];
 

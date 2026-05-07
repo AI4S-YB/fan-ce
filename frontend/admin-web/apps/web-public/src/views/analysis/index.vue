@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { useRequest } from '@/composables/useRequest';
 
+const route = useRoute();
 const { get, post } = useRequest();
 
 interface ToolSchema {
@@ -34,7 +36,13 @@ const fileOptions = ref<Record<string, { id: number; label: string; format: stri
 async function loadTools() {
   const data: any = await get('/analysis/tools');
   tools.value = data || [];
-  // Auto-select the first tool — skip card list when there's only one
+  // Auto-select tool from URL path (/analysis/:toolId) if specified
+  const targetId = route.params.toolId as string;
+  if (targetId) {
+    const match = tools.value.find((t: ToolSchema) => t.tool_id === targetId);
+    if (match) { selectTool(match); return; }
+  }
+  // Fallback: auto-select first tool if only one exists
   if (tools.value.length === 1) {
     selectTool(tools.value[0]);
   }
