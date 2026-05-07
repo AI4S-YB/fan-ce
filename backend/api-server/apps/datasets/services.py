@@ -57,6 +57,9 @@ from .crud import (
 )
 from .legacy_bridge import dataset_legacy_bridge
 from .models import (
+    AssetFile,
+    DatasetAsset,
+    DatasetVersion,
     FunctionalGene,
     FunctionalTerm,
     FunctionalTermAssignment,
@@ -2828,6 +2831,103 @@ class DatasetDomainService:
             note=note or f"set default public version {selected_version.version}",
         )
         return selected_version
+
+    def _build_public_dataset_summary(self, db, dataset_id):
+        """Lightweight public dataset payload for the /info endpoint.
+
+        Returns only the fields the public-web frontend actually renders.
+        Target: ~5 DB queries, <100ms.
+        """
+        # 1. Registry row
+        registry = db.query(DatasetRegistry).filter(
+            DatasetRegistry.database_id == dataset_id,
+            DatasetRegistry.visibility == "public",
+            DatasetRegistry.default_public_version_id.isnot(None),
+        ).first()
+        if not registry:
+            raise HTTPException(status_code=404, detail=f"Public dataset not found: {dataset_id}")
+
+        # 2. Current version
+        current_version = db.query(DatasetVersion).filter(
+            DatasetVersion.database_id == dataset_id,
+            DatasetVersion.is_current == 1,
+        ).first()
+
+        version_str = current_version.version if current_version else (registry.version or "")
+        dataset_type = current_version.dataset_type if (current_version and current_version.dataset_type) else (registry.dataset_type or "")
+        organism = registry.organism or ""
+
+        # 3. Query entry asset (needed by GeneSearch, GeneInfo, Genotype, Phenotype, Expression)
+        query_entry_asset = None
+        if current_version:
+            qea = db.query(DatasetAsset).filter(
+                DatasetAsset.dataset_version_id == current_version.id,
+                DatasetAsset.is_query_entry == 1,
+            ).first()
+            if qea:
+                query_entry_asset = {"id": qea.id, "asset_code": qea.asset_code, "asset_name": qea.asset_name}
+
+        # 4. Primary file (needed by Detail.vue and Tools.vue)
+        primary_file = None
+        if current_version:
+            primary_asset = db.query(DatasetAsset).filter_by(
+                dataset_version_id=current_version.id,
+            ).order_by(DatasetAsset.is_query_entry.desc(), DatasetAsset.id.asc()).first()
+            if primary_asset:
+                pf = db.query(AssetFile).filter_by(
+                    dataset_asset_id=primary_asset.id,
+                ).order_by(AssetFile.id.asc()).first()
+                if pf:
+                    primary_file = {
+                        "id": pf.id,
+                        "name": pf.file_name or "",
+                        "size": pf.file_size or 0,
+                        "format": pf.file_format or "",
+                    }
+
+        # 5. All assets with their files (needed by Detail.vue)
+        assets = []
+        if current_version:
+            asset_rows = db.query(DatasetAsset).filter_by(
+                dataset_version_id=current_version.id,
+            ).order_by(DatasetAsset.display_order.asc(), DatasetAsset.id.asc()).all()
+            if asset_rows:
+                asset_ids = [a.id for a in asset_rows]
+                all_files = db.query(AssetFile).filter(
+                    AssetFile.dataset_asset_id.in_(asset_ids),
+                ).order_by(AssetFile.id.asc()).all()
+                files_by_asset = {}
+                for f in all_files:
+                    files_by_asset.setdefault(f.dataset_asset_id, []).append(f)
+                for a in asset_rows:
+                    flist = files_by_asset.get(a.id, [])
+                    assets.append({
+                        "id": a.id,
+                        "asset_code": a.asset_code,
+                        "asset_name": a.asset_name,
+                        "asset_type": a.asset_type,
+                        "file_format": a.file_format,
+                        "files": [
+                            {"id": f.id, "file_name": f.file_name, "file_format": f.file_format, "file_size": f.file_size}
+                            for f in flist
+                        ],
+                    })
+
+        return {
+            "id": registry.database_id,
+            "dataset_code": registry.dataset_code,
+            "title": registry.title or "",
+            "dataset_type": dataset_type,
+            "organism": organism,
+            "version": version_str,
+            "lifecycle_state": registry.lifecycle_state or "",
+            "visibility": "public",
+            "description_md": registry.description_md or "",
+            "extra_json": registry.extra_json,
+            "query_entry_asset": query_entry_asset,
+            "primary_file": primary_file,
+            "assets": assets,
+        }
 
     def _build_public_dataset_payload(self, db, dataset_id, version_obj=None):
         database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=dataset_id)
@@ -6182,7 +6282,7 @@ class DatasetDomainService:
                 DatasetRegistry.visibility == "public",
             )
             if dataset_type_filter:
-                query = query.filter(DatasetRegistry.dataset_type.in_(dataset_type_filter))
+                query = query.filter(DatasetRegistry.dataset_type.in_([dataset_type_filter]))
 
             registry_rows = query.order_by(DatasetRegistry.id.desc()).all()
 
@@ -6218,7 +6318,7 @@ class DatasetDomainService:
     def get_public_dataset(self, dataset_id):
         db = mydb.get_dbs()
         try:
-            return self._build_public_dataset_payload(db=db, dataset_id=dataset_id)
+            return self._build_public_dataset_summary(db=db, dataset_id=dataset_id)
         finally:
             db.close()
 
