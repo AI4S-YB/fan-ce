@@ -98,7 +98,6 @@ sys.path.insert(0, "{work_dir}")
 try:
     from goatools.obo_parser import GODag
     from goatools.go_enrichment import GOEnrichmentStudy
-    from goatools.associations import read_gaf
 except ImportError as e:
     print(f"Missing dependency: {{e}}")
     print("Install: pip install goatools statsmodels")
@@ -108,7 +107,21 @@ print(f"Loading GO DAG from {obo_path}...")
 obodag = GODag("{obo_path}", optional_attrs=['relationship'])
 
 print(f"Loading annotations from {file_paths['go_annotation']}...")
-geneid2gos = read_gaf("{file_paths['go_annotation']}")
+# Custom GAF parser — goatools read_gaf is too strict for non-standard dates
+geneid2gos = {{}}
+with open("{file_paths['go_annotation']}") as f:
+    for line in f:
+        if line.startswith("!"):
+            continue
+        fields = line.strip().split("\\t")
+        if len(fields) < 6:
+            continue
+        gene_id = fields[1]  # col 2: DB_Object_ID
+        go_id = fields[4]    # col 5: GO ID
+        if gene_id not in geneid2gos:
+            geneid2gos[gene_id] = set()
+        geneid2gos[gene_id].add(go_id)
+print(f"Loaded {{len(geneid2gos)}} genes with GO annotations")
 
 print(f"Loading study genes from {gene_path}...")
 with open("{gene_path}") as f:
