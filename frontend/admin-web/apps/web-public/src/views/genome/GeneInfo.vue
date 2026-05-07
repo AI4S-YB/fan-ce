@@ -159,11 +159,19 @@ function tryRenderStructure() {
   const g = gene.value;
   if (!g) return;
   container.innerHTML = '';
+
   const start = (g.start as number) || 1;
   const stop = (g.stop as number) || 1;
   const geneLen = stop - start + 1;
   const pad = Math.min(150, start - 1);
   const seq = 'N'.repeat(pad + geneLen + pad);
+
+  // Fallback: render with SVG if FeatureViewer not available
+  if (typeof FeatureViewer === 'undefined') {
+    renderSVGStructure(container, start, stop, geneLen, pad);
+    return;
+  }
+
   try {
     const fv = new FeatureViewer(seq, '#struc_view', {
       showAxis: true, showSequence: true, brushActive: true,
@@ -180,7 +188,37 @@ function tryRenderStructure() {
         height: 12,
       });
     });
-  } catch (e) { /* ignore */ }
+  } catch (e) {
+    console.error('FeatureViewer error:', e);
+    renderSVGStructure(container, start, stop, geneLen, pad);
+  }
+}
+
+function renderSVGStructure(container: HTMLElement, start: number, stop: number, geneLen: number, pad: number) {
+  const width = 900;
+  const totalLen = geneLen + pad * 2;
+  const scale = width / totalLen;
+  const height = 80;
+
+  let svg = '<svg width="100%" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" style="background:#fafafa;border:1px solid #e5e5e5;border-radius:4px;">';
+  // Gene body line
+  const y = height / 2;
+  const x1 = pad * scale;
+  const x2 = (pad + geneLen) * scale;
+  svg += '<line x1="' + x1 + '" y1="' + y + '" x2="' + x2 + '" y2="' + y + '" stroke="#999" stroke-width="2"/>';
+
+  // Exon boxes
+  const exonFeatures = exons.value.filter((e: any) => e.feature_type === 'exon');
+  exonFeatures.forEach((e: any) => {
+    const ex = ((e.start as number) - start + pad) * scale;
+    const ew = ((e.stop as number) - (e.start as number) + 1) * scale;
+    svg += '<rect x="' + ex + '" y="' + (y - 10) + '" width="' + Math.max(ew, 2) + '" height="20" fill="#409eff" stroke="#337ecc" stroke-width="1" rx="2"/>';
+  });
+
+  // Labels
+  svg += '<text x="' + (width / 2) + '" y="' + (height - 5) + '" text-anchor="middle" font-size="10" fill="#999">' + (gene.value as any).chrom + ':' + start.toLocaleString() + '-' + stop.toLocaleString() + ' (' + geneLen.toLocaleString() + ' bp, ' + exonFeatures.length + ' exons)</text>';
+  svg += '</svg>';
+  container.innerHTML = svg;
 }
 
 function formatLocation(loc: any): string {
