@@ -13,18 +13,18 @@
           <SelectOption value="failed">failed</SelectOption>
           <SelectOption value="timeout">timeout</SelectOption>
         </Select>
-        <a-button @click="loadJobs">刷新</a-button>
+        <Button @click="loadJobs">刷新</Button>
         <span v-if="hasRunning" style="color: #409eff; font-size: 12px;">自动刷新中...</span>
       </Space>
 
-      <a-table :columns="columns" :data-source="jobs" :loading="loading" row-key="id" size="small" bordered
+      <Table :columns="columns" :data-source="jobs" :loading="loading" row-key="id" size="small" bordered
         :pagination="{ current: page, pageSize: size, total, showSizeChanger: true, onChange: onPageChange }">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'tool_id'">
-            <a-tag color="blue">{{ record.tool_id }}</a-tag>
+            <Tag color="blue">{{ record.tool_id }}</Tag>
           </template>
           <template v-else-if="column.key === 'status'">
-            <a-tag :color="statusColor(record.status)">{{ record.status }}</a-tag>
+            <Tag :color="statusColor(record.status)">{{ record.status }}</Tag>
           </template>
           <template v-else-if="column.key === 'created_at'">
             {{ formatTime(record.created_at) }}
@@ -33,16 +33,16 @@
             {{ record.finished_at ? formatTime(record.finished_at) : '-' }}
           </template>
           <template v-else-if="column.key === 'action'">
-            <a-button size="small" @click="showDetail(record)">详情</a-button>
+            <Button size="small" @click="showDetail(record)">详情</Button>
             <Popconfirm v-if="record.status === 'pending' || record.status === 'running'"
               title="确定取消？" @confirm="cancelJob(record.id)">
-              <a-button size="small" danger>取消</a-button>
+              <Button size="small" danger>取消</Button>
             </Popconfirm>
-            <a-button v-if="record.status === 'failed' || record.status === 'timeout'"
-              size="small" type="primary" @click="retryJob(record.id)">重试</a-button>
+            <Button v-if="record.status === 'failed' || record.status === 'timeout'"
+              size="small" type="primary" @click="retryJob(record.id)">重试</Button>
           </template>
         </template>
-      </a-table>
+      </Table>
 
       <!-- Detail Modal -->
       <Modal v-model:open="detailVisible" title="任务详情" width="700px" :footer="null">
@@ -51,7 +51,7 @@
             <Descriptions.Item label="Job ID">{{ detail.id }}</Descriptions.Item>
             <Descriptions.Item label="Tool">{{ detail.tool_id }}</Descriptions.Item>
             <Descriptions.Item label="Status">
-              <a-tag :color="statusColor(detail.status)">{{ detail.status }}</a-tag>
+              <Tag :color="statusColor(detail.status)">{{ detail.status }}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Exit Code">{{ detail.exit_code ?? '-' }}</Descriptions.Item>
             <Descriptions.Item label="Created">{{ formatTime(detail.created_at) }}</Descriptions.Item>
@@ -63,7 +63,7 @@
           </Descriptions>
 
           <h4 style="margin-top: 16px;" v-if="detail.output_files?.length">Output Files</h4>
-          <a-table v-if="detail.output_files?.length" :columns="outputCols" :data-source="detail.output_files"
+          <Table v-if="detail.output_files?.length" :columns="outputCols" :data-source="detail.output_files"
             size="small" bordered :pagination="false" />
 
           <h4 style="margin-top: 16px;" v-if="detail.command_log">Command</h4>
@@ -78,7 +78,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { Page } from '@vben/common-ui';
 import { requestClient } from '#/api/request';
-import { message, Space, Select, Popconfirm, Tag, Descriptions, DescriptionsItem, Modal } from 'ant-design-vue';
+import { message, Space, Select, Popconfirm, Tag, Descriptions, DescriptionsItem, Modal, Table, Button } from 'ant-design-vue';
 
 interface JobItem {
   id: number; tool_id: string; status: string;
