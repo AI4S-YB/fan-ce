@@ -154,16 +154,11 @@ async function tabHandleClick(tab: any) {
 }
 
 function tryRenderStructure() {
-  if (typeof FeatureViewer === 'undefined') {
-    // Retry after CDN loads
-    setTimeout(() => tryRenderStructure(), 500);
-    return;
-  }
   const container = document.getElementById('struc_view');
   if (!container || exons.value.length === 0) return;
-  container.innerHTML = '';
   const g = gene.value;
   if (!g) return;
+  container.innerHTML = '';
   const start = (g.start as number) || 1;
   const stop = (g.stop as number) || 1;
   const geneLen = stop - start + 1;
