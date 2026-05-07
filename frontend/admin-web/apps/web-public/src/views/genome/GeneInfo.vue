@@ -25,6 +25,7 @@ const keggPathways = ref<any[]>([]);
 const families = ref<any[]>([]);
 
 const geneSeq = ref('');
+const geneFlankSeq = ref('');
 const mrnaSeq = ref('');
 const cdsSeq = ref('');
 const proteinSeq = ref('');
@@ -111,7 +112,7 @@ async function loadGeneDetail() {
           dataset_id: d.id, sequence_type: 'gene_up_down',
           upstream: 150, downstream: 150, inputs: [geneId.value],
         });
-        geneSeq.value = r?.sequences?.[0]?.sequence || '';
+        geneFlankSeq.value = r?.sequences?.[0]?.sequence || '';
       } catch { /* ignore */ }
     }
     await nextTick();
@@ -169,7 +170,7 @@ function tryRenderStructure() {
   const start = (g.start as number) || 1;
   const stop = (g.stop as number) || 1;
   const pad = 150;
-  const seq = geneSeq.value || 'N'.repeat(pad + (stop - start + 1) + pad);
+  const seq = geneFlankSeq.value || 'N'.repeat(pad + (stop - start + 1) + pad);
 
   const fv = new FeatureViewer(seq, '#struc_view', {
     showAxis: true, showSequence: true, brushActive: true,
