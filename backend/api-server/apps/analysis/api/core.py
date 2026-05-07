@@ -157,6 +157,40 @@ def search_files(req: FileSearchRequest, db: Session = Depends(get_db)):
     return response_2000(data={"items": items, "total": len(items)})
 
 
+@analysis_router.post("/tools/go_enrich/example-genes", summary="从GAF文件中提取示例基因ID")
+def go_enrich_example_genes(db: Session = Depends(get_db)):
+    """Read a GAF file and return the first N unique gene IDs as example."""
+    import os
+    from apps.datasets.models import AssetFile
+    # Find go_gene.gaf from any functional_annotation asset
+    af = db.query(AssetFile).filter(
+        AssetFile.file_name.ilike("%go_gene%"),
+        AssetFile.file_format == "gaf",
+    ).first()
+    if not af:
+        return response_2000(data={"gene_ids": [], "message": "No GAF file found"})
+
+    path = getattr(af, "local_path", None) or getattr(af, "storage_uri", None) or ""
+    if not path or not os.path.exists(path):
+        return response_2000(data={"gene_ids": [], "message": f"File not found: {path}"})
+
+    gene_ids = set()
+    try:
+        with open(path) as f:
+            for line in f:
+                if line.startswith("!"):
+                    continue
+                fields = line.strip().split("\t")
+                if len(fields) >= 3:
+                    gene_ids.add(fields[1])  # GAF col 2 = DB_Object_ID (gene)
+                if len(gene_ids) >= 20:
+                    break
+    except Exception as e:
+        return response_2000(data={"gene_ids": [], "message": str(e)})
+
+    return response_2000(data={"gene_ids": list(gene_ids)})
+
+
 # ── Admin endpoints ──
 
 @analysis_router.get("/admin/tools", summary="管理端：列出分析工具（含状态）")

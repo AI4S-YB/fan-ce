@@ -29,6 +29,7 @@ const submitting = ref(false);
 const submittedJob = ref<JobInfo | null>(null);
 const jobStatus = ref<JobInfo | null>(null);
 const polling = ref<ReturnType<typeof setInterval> | null>(null);
+const exampleLoading = ref(false);
 
 // Available asset files for file params
 const fileOptions = ref<Record<string, { id: number; label: string; format: string }[]>>({});
@@ -99,6 +100,19 @@ async function submitJob() {
     alert('Failed to submit: ' + (e?.message || 'Unknown error'));
   } finally {
     submitting.value = false;
+  }
+}
+
+async function loadExampleGenes() {
+  exampleLoading.value = true;
+  try {
+    const data: any = await post('/analysis/tools/go_enrich/example-genes', {});
+    const ids = data?.gene_ids || data?.data?.gene_ids || [];
+    if (ids.length > 0) {
+      paramValues.value['gene_list'] = ids.join('\n');
+    }
+  } finally {
+    exampleLoading.value = false;
   }
 }
 
@@ -178,6 +192,11 @@ onMounted(loadTools);
           <el-input v-else-if="p.type === 'TextParam'" v-model="paramValues[p.name]"
             type="textarea" :rows="6" placeholder="Enter gene IDs, one per line..."
             style="width:100%;font-family:monospace;font-size:12px;" />
+          <div v-if="p.name === 'gene_list'" style="margin-top:4px;">
+            <el-button text size="small" :loading="exampleLoading" @click="loadExampleGenes">
+              Try Example
+            </el-button>
+          </div>
           <el-input v-else v-model="paramValues[p.name]" style="width:100%;" />
           <div v-if="p.description" style="font-size:11px;color:#bbb;margin-top:2px;">{{ p.description }}</div>
         </div>
