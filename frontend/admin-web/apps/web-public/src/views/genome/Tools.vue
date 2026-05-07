@@ -65,6 +65,16 @@ async function retrieveSequences() {
   }
 }
 
+function downloadSequence(item: any) {
+  const blob = new Blob([`${item.header}\n${item.sequence}\n`], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${item.input}.fasta`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 async function loadBatchExample() {
   if (!detail?.value?.id) return;
   exampleLoading.value = true;
@@ -262,9 +272,12 @@ function siteDownloadUrl(datasetCode: string, fileId: number) {
               {{ item.input }}: {{ item.error }}
             </div>
             <template v-else>
-              <div style="font-weight:600;font-size:13px;color:#409eff;margin-bottom:4px;display:flex;justify-content:space-between;">
+              <div style="font-weight:600;font-size:13px;color:#409eff;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;">
                 <span>{{ item.header }}</span>
-                <span style="color:#999;font-weight:400;">{{ item.length?.toLocaleString() }} bp</span>
+                <span style="display:flex;align-items:center;gap:12px;">
+                  <span style="color:#999;font-weight:400;">{{ item.length?.toLocaleString() }} bp</span>
+                  <el-button v-if="item.sequence" size="small" @click="downloadSequence(item)">Download</el-button>
+                </span>
               </div>
               <pre v-if="item.sequence" style="background:#f5f5f5;padding:8px;border-radius:4px;font-size:12px;max-height:200px;overflow:auto;white-space:pre-wrap;word-break:break-all;">{{ item.sequence }}</pre>
             </template>
