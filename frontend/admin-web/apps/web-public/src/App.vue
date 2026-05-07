@@ -85,7 +85,6 @@ function goGenome(id: number) {
         <router-link to="/genotype">Genotype</router-link>
         <router-link to="/phenotype">Phenotype</router-link>
         <router-link to="/expression">Expression</router-link>
-        <router-link to="/analysis">Tools</router-link>
         <router-link v-if="siteInfo.public_ai_chat_enabled" to="/chat">AI Chat</router-link>
       </nav>
 
@@ -97,6 +96,7 @@ function goGenome(id: number) {
           <el-dropdown-menu>
             <el-dropdown-item @click="router.push('/tools/batch')">Batch Sequence Retrieval</el-dropdown-item>
             <el-dropdown-item @click="router.push('/tools/blast')">BLAST</el-dropdown-item>
+            <el-dropdown-item @click="router.push('/analysis')">GO Enrichment</el-dropdown-item>
             <el-dropdown-item @click="router.push('/tools/download')">Downloads</el-dropdown-item>
             <el-dropdown-item divided disabled>Primer Design <small>(soon)</small></el-dropdown-item>
             <el-dropdown-item disabled>GO Enrichment <small>(soon)</small></el-dropdown-item>
