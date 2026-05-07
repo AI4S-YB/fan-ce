@@ -1,7 +1,6 @@
 """GO Enrichment analysis — embedded reference implementation."""
 import os
 import subprocess
-import urllib.request
 from basis.analysis.base import (
     BaseAnalysisTool, FileParam, TextParam, ChoiceParam, FloatParam, IntParam, FileOutput,
 )
@@ -14,7 +13,8 @@ def _ensure_obo() -> str:
     """Return path to go-basic.obo, downloading if necessary."""
     if not os.path.exists(GO_OBO_CACHE):
         print(f"Downloading GO OBO from {GO_OBO_URL}...")
-        urllib.request.urlretrieve(GO_OBO_URL, GO_OBO_CACHE)
+        import subprocess
+        subprocess.run(["curl", "-sL", "-o", GO_OBO_CACHE, GO_OBO_URL], check=True, timeout=120)
         print(f"Cached to {GO_OBO_CACHE}")
     return GO_OBO_CACHE
 
