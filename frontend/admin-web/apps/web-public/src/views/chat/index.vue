@@ -189,7 +189,7 @@ async function send() {
         <span style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">
           {{ s.title }}
         </span>
-        <el-button v-if="sessions.length > 1" text size="small" type="danger"
+        <el-button text size="small" type="danger"
           @click.stop="deleteSession(s.id)" style="margin-left:4px;">✕</el-button>
       </div>
     </div>

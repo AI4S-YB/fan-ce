@@ -379,7 +379,7 @@ onMounted(() => {
             <div class="hero-eyebrow">Platform Configuration Center</div>
             <h2 class="hero-title">{{ $t('platform.setting.title') }}</h2>
             <p class="hero-description">
-              $t('platform.setting.heroDescription')
+              {{ $t('platform.setting.heroDescription') }}
             </p>
           </div>
         </div>
@@ -397,11 +397,11 @@ onMounted(() => {
           <div>
             <div class="setup-card__title">{{ $t('platform.setting.taxonomyBaseData') }}</div>
             <div class="setup-card__desc">
-              $t('platform.setting.taxonomyBaseDataDesc')
+              {{ $t('platform.setting.taxonomyBaseDataDesc') }}
             </div>
           </div>
           <Button type="primary" ghost @click="goToTaxonomySetup">
-            $t('platform.setting.enterTaxonomyInit')
+            {{ $t('platform.setting.enterTaxonomyInit') }}
           </Button>
         </div>
       </Card>
@@ -463,7 +463,7 @@ onMounted(() => {
       <Card :title="$t('platform.setting.modelApiConfig')" :bordered="false" :loading="pageLoading">
         <template #extra>
           <Button type="primary" @click="openCreateModelModal">
-            $t('platform.setting.addModel') API
+            {{ $t('platform.setting.addModel') }} API
           </Button>
         </template>
 

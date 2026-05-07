@@ -96,11 +96,10 @@ function goGenome(id: number) {
           <el-dropdown-menu>
             <el-dropdown-item @click="router.push('/tools/batch')">Batch Sequence Retrieval</el-dropdown-item>
             <el-dropdown-item @click="router.push('/tools/blast')">BLAST</el-dropdown-item>
-            <el-dropdown-item @click="router.push('/analysis/go_enrich')">GO Enrichment</el-dropdown-item>
             <el-dropdown-item @click="router.push('/tools/download')">Downloads</el-dropdown-item>
-            <el-dropdown-item divided disabled>Primer Design <small>(soon)</small></el-dropdown-item>
-            <el-dropdown-item disabled>GO Enrichment <small>(soon)</small></el-dropdown-item>
-            <el-dropdown-item disabled>Sequence Converter <small>(soon)</small></el-dropdown-item>
+            <el-dropdown-item divided />
+            <el-dropdown-item @click="router.push('/analysis/go_enrich')">GO Enrichment Analysis</el-dropdown-item>
+            <el-dropdown-item @click="router.push('/analysis/kegg_enrich')">KEGG Pathway Enrichment</el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>

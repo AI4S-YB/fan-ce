@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useRequest } from '@/composables/useRequest';
 
@@ -105,9 +105,11 @@ async function submitJob() {
 }
 
 async function loadExampleGenes() {
+  if (!selectedTool.value) return;
   exampleLoading.value = true;
   try {
-    const data: any = await post('/analysis/tools/go_enrich/example-genes', {});
+    const toolId = selectedTool.value.tool_id;
+    const data: any = await post(`/analysis/tools/${toolId}/example-genes`, {});
     const ids = data?.gene_ids || data?.data?.gene_ids || [];
     if (ids.length > 0) {
       paramValues.value['gene_list'] = ids.join('\n');
@@ -150,6 +152,12 @@ function formatTime(ts?: number): string {
 }
 
 onMounted(loadTools);
+watch(() => route.params.toolId, (newId) => {
+  if (newId) {
+    const match = tools.value.find((t: ToolSchema) => t.tool_id === newId);
+    if (match) selectTool(match);
+  }
+});
 </script>
 
 <template>
@@ -194,7 +202,7 @@ onMounted(loadTools);
           <div style="font-weight:500;margin-bottom:4px;">{{ p.label }}</div>
           <div v-if="p.name === 'gene_list'" style="margin-bottom:4px;">
             <el-button type="primary" plain size="small" :loading="exampleLoading" @click="loadExampleGenes">
-              ▶ Try with 300 example genes
+              Try Example
             </el-button>
           </div>
           <div v-if="p.type === 'ChoiceParam' || p.type === 'FloatParam' || p.type === 'IntParam'"

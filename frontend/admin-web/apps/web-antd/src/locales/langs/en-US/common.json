@@ -9,10 +9,10 @@
   "dark": "Dark",
   "delMessage": "Do you want to delete data?",
   "delSuccessText": "Delete success",
-  "addSuccessText": "Delete success",
+  "addSuccessText": "Add success",
   "delText": "Delete",
   "errorText": "Error",
-  "warnning": "Warnning",
+  "warnning": "Warning",
   "exportMessage": "Do you want to export data?",
   "exportSuccessText": "Export success",
   "exportTitle": "Export",
@@ -28,7 +28,7 @@
   "saveText": "Save",
   "searchText": "Search",
   "successText": "Success",
-  "createdTime": "createdTime",
+  "createdTime": "Created Time",
   "title": {
     "add": "Add",
     "addRoot": "Add Root",
@@ -51,10 +51,10 @@
     "resetPwd": "Reset Password"
   },
   "file": {
-    "originalFileName": "originalFileName",
+    "originalFileName": "Original File Name",
     "bucket": "Bucket",
-    "storageType": "storageType",
-    "fileType": "fileType",
-    "fileSize": "fileSize"
+    "storageType": "Storage Type",
+    "fileType": "File Type",
+    "fileSize": "File Size"
   }
 }
