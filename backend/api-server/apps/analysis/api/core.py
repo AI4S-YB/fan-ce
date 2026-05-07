@@ -61,7 +61,8 @@ def list_tools():
 
 
 @analysis_router.post("/jobs", summary="提交分析任务")
-def submit_job(req: SubmitJobRequest, db: Session = Depends(get_db), user_id: int = None):
+def submit_job(req: SubmitJobRequest, db: Session = Depends(get_db)):
+    """Submit a new analysis job. No auth required for public usage."""
     tool = _get_tool(req.tool_id)
     if not tool:
         raise HTTPException(status_code=400, detail=f"Unknown tool: {req.tool_id}")
@@ -78,7 +79,7 @@ def submit_job(req: SubmitJobRequest, db: Session = Depends(get_db), user_id: in
         status="pending",
         input_bindings=json.dumps(req.input_bindings),
         param_overrides=json.dumps(req.param_overrides),
-        created_by=user_id,
+        created_by=None,
     )
     db.add(job)
     db.commit()
