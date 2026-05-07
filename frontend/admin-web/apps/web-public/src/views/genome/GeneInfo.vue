@@ -312,9 +312,10 @@ function getFamilyLabel(type: string): string {
           <el-table v-if="interpro.length > 0" :data="interpro" stripe size="small">
             <el-table-column label="IPR Term" width="120">
               <template #default="{ row: r }">
-                <el-link :href="'https://www.ebi.ac.uk/interpro/entry/InterPro/' + r.ipr_term" target="_blank" type="primary" :underline="false">
+                <el-link v-if="r.ipr_term && r.ipr_term !== 'None' && r.ipr_term !== 'none'" :href="'https://www.ebi.ac.uk/interpro/entry/InterPro/' + r.ipr_term" target="_blank" type="primary" :underline="false">
                   {{ r.ipr_term }}
                 </el-link>
+                <span v-else>{{ r.ipr_term || '-' }}</span>
               </template>
             </el-table-column>
             <el-table-column prop="ipr_desc" label="IPR Description" min-width="200" show-overflow-tooltip />
