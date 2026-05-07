@@ -153,7 +153,7 @@ rows.sort(key=lambda x: x[4])
 with open("{work_dir}/enrichment_table.tsv", "w") as out:
     out.write("GO_ID\\tTerm\\tEnrichment\\tP_value\\tP_corrected\\tStudyCount\\tPopCount\\n")
     for r in rows:
-        out.write(f"{{r[0]}}\\t{{r[1]}}\\t{{r[2]:.2f}}\\t{{r[3]:.4e}}\\t{{r[4]:.4e}}\\t{{r[5]}}\\t{{r[6]}}\\n")
+        out.write(f"{{r[0]}}\\t{{r[1]}}\\t{{r[2]}}\\t{{r[3]:.4e}}\\t{{r[4]:.4e}}\\t{{r[5]}}\\t{{r[6]}}\\n")
 print(f"Wrote {{len(rows)}} enriched terms")
 
 if rows:
