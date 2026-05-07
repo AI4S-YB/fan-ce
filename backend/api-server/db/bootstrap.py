@@ -363,6 +363,40 @@ def init_dev_seed_data(db):
         menu_type=2,
     )
 
+    analysis_root = _ensure_menu(
+        db,
+        name="AnalysisParent",
+        title="数据分析",
+        path="/analysis",
+        component="BasicLayout",
+        icon="lucide:flask-conical",
+        redirect="/analysis/tools",
+        sort=500,
+        menu_type=1,
+    )
+    analysis_tools_menu = _ensure_menu(
+        db,
+        name="AnalysisTools",
+        title="工具插件",
+        path="/analysis/tools",
+        component="/apps/analysis/index",
+        pid=analysis_root.id,
+        icon="lucide:package",
+        sort=1,
+        menu_type=2,
+    )
+    analysis_jobs_menu = _ensure_menu(
+        db,
+        name="AnalysisJobs",
+        title="任务管理",
+        path="/analysis/jobs",
+        component="/apps/analysis/jobs",
+        pid=analysis_root.id,
+        icon="lucide:list-checks",
+        sort=2,
+        menu_type=2,
+    )
+
     platform = _ensure_menu(
         db,
         name="Platform",
@@ -502,6 +536,9 @@ def init_dev_seed_data(db):
         germplasm_import_batch_menu,
         breeding_root,
         breeding_program_menu,
+        analysis_root,
+        analysis_tools_menu,
+        analysis_jobs_menu,
         platform,
         platform_setting,
         news,
