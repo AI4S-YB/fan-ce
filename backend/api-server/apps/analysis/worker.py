@@ -162,9 +162,25 @@ def unregister_tool(tool_id: str) -> bool:
 
 # ── Plugin install / scan ──
 
+def _validate_whl(whl_path: str) -> bool:
+    """Check .whl metadata for fance.analysis_tools entry point."""
+    import zipfile, configparser, os
+    if not zipfile.is_zipfile(whl_path):
+        return False
+    with zipfile.ZipFile(whl_path) as z:
+        # Look for entry_points.txt in the .dist-info directory
+        for name in z.namelist():
+            if name.endswith('.dist-info/entry_points.txt'):
+                cp = configparser.ConfigParser()
+                cp.read_string(z.read(name).decode('utf-8', errors='replace'))
+                return cp.has_section('fance.analysis_tools')
+    return False
+
 def install_whl(whl_path: str) -> list[dict]:
     """pip install a .whl file and return newly discovered tools."""
     import subprocess, importlib, os
+    if not _validate_whl(whl_path):
+        raise RuntimeError("Not a valid FAN-CE analysis plugin: missing 'fance.analysis_tools' entry point")
     proc = subprocess.run(["pip", "install", whl_path], capture_output=True, text=True, timeout=120)
     if proc.returncode != 0:
         raise RuntimeError(f"pip install failed: {proc.stderr[:500]}")
@@ -179,6 +195,8 @@ def scan_plugin_dir(plugin_dir: str) -> list[dict]:
         if not f.endswith('.whl'):
             continue
         full = os.path.join(plugin_dir, f)
+        if not _validate_whl(full):
+            continue
         proc = subprocess.run(["pip", "install", full], capture_output=True, text=True, timeout=120)
         if proc.returncode == 0:
             discovered.append(f)

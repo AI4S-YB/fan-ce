@@ -151,7 +151,7 @@ async function beforeInstall(file: File) {
   const form = new FormData();
   form.append('file', file);
   try {
-    await requestClient.post('/analysis/admin/plugins/install', form, {
+    await requestClient.post2('/analysis/admin/plugins/install', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     message.success(`插件 ${file.name} 安装成功`);
