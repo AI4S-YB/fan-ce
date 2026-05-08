@@ -36,10 +36,10 @@ const routes = [
   { path: '/analysis/grna', component: () => import('@/views/tools/ToolRunner.vue'), name: 'analysis-grna' },
   { path: '/analysis/msa', component: () => import('@/views/tools/ToolRunner.vue'), name: 'analysis-msa' },
   { path: '/analysis/motif', component: () => import('@/views/tools/ToolRunner.vue'), name: 'analysis-motif' },
-  { path: '/analysis/go_enrich', component: () => import('@/views/analysis/index.vue'), name: 'analysis-go' },
-  { path: '/analysis/kegg_enrich', component: () => import('@/views/analysis/index.vue'), name: 'analysis-kegg' },
-  // Catch-all for future plugins (GO/KEGG pattern or new ToolRunner-based tools)
-  { path: '/analysis/:toolId', component: () => import('@/views/analysis/index.vue') },
+  { path: '/analysis/go_enrich', component: () => import('@/views/tools/ToolRunner.vue'), name: 'analysis-go' },
+  { path: '/analysis/kegg_enrich', component: () => import('@/views/tools/ToolRunner.vue'), name: 'analysis-kegg' },
+  // Catch-all for future plugins
+  { path: '/analysis/:toolId', component: () => import('@/views/tools/ToolRunner.vue') },
   // Standalone tools (no genome selected)
   { path: '/tools/:tool', component: () => import('@/views/genome/Tools.vue') },
   { path: '/community/:type', component: () => import('@/views/community/List.vue') },
