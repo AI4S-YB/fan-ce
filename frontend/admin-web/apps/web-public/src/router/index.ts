@@ -30,6 +30,8 @@ const routes = [
   { path: '/tools/grna', component: () => import('@/views/tools/ToolRunner.vue'), name: 'tool-grna' },
   { path: '/tools/msa', component: () => import('@/views/tools/ToolRunner.vue'), name: 'tool-msa' },
   { path: '/tools/motif', component: () => import('@/views/tools/ToolRunner.vue'), name: 'tool-motif' },
+  // Menu-accessible analysis tools
+  { path: '/analysis/blast', component: () => import('@/views/tools/ToolRunner.vue'), name: 'analysis-blast' },
   // Standalone tools (no genome selected)
   { path: '/tools/:tool', component: () => import('@/views/genome/Tools.vue') },
   { path: '/community/:type', component: () => import('@/views/community/List.vue') },

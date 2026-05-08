@@ -100,6 +100,7 @@ function goGenome(id: number) {
             <el-dropdown-item divided />
             <el-dropdown-item @click="router.push('/analysis/go_enrich')">GO Enrichment Analysis</el-dropdown-item>
             <el-dropdown-item @click="router.push('/analysis/kegg_enrich')">KEGG Pathway Enrichment</el-dropdown-item>
+            <el-dropdown-item @click="router.push('/analysis/blast')">BLAST</el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
