@@ -2,6 +2,7 @@
 import json
 import os
 import subprocess
+import sys
 import threading
 import time
 import logging
@@ -89,6 +90,9 @@ class AnalysisWorker:
 
             # Build command
             cmd = tool.build_command(file_paths, params, work_dir)
+            # Use sys.executable to ensure subprocess uses the same Python as the worker
+            if cmd and cmd[0] == "python":
+                cmd[0] = sys.executable
             job.command_log = " ".join(cmd)
 
             # Execute
