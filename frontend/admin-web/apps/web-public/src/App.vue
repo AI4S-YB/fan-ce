@@ -42,11 +42,18 @@ async function loadSiteInfo() {
 }
 
 const { items: genomes, load: loadGenomes } = useDatasetList();
-const hasPublicGermplasm = ref(true); // hidden if no public data
+const hasPublicGermplasm = ref(true);
+const analysisTools = ref<any[]>([]);
 
 onMounted(async () => {
   loadGenomes({ dataset_type: 'genome' });
   loadSiteInfo();
+
+  // Load available analysis tools
+  try {
+    const data: any = await get('/analysis/tools');
+    analysisTools.value = data || [];
+  } catch { /* ignore */ }
 
   // Check if any public germplasm exist
   try {
@@ -97,10 +104,11 @@ function goGenome(id: number) {
             <el-dropdown-item @click="router.push('/tools/batch')">Batch Sequence Retrieval</el-dropdown-item>
             <el-dropdown-item @click="router.push('/tools/blast')">BLAST</el-dropdown-item>
             <el-dropdown-item @click="router.push('/tools/download')">Downloads</el-dropdown-item>
-            <el-dropdown-item divided />
-            <el-dropdown-item @click="router.push('/analysis/go_enrich')">GO Enrichment Analysis</el-dropdown-item>
-            <el-dropdown-item @click="router.push('/analysis/kegg_enrich')">KEGG Pathway Enrichment</el-dropdown-item>
-            <el-dropdown-item @click="router.push('/analysis/blast')">BLAST</el-dropdown-item>
+            <el-dropdown-item v-if="analysisTools.length > 0" divided />
+            <el-dropdown-item v-for="t in analysisTools" :key="t.tool_id"
+              @click="router.push('/analysis/' + t.tool_id)">
+              {{ t.display_name }}
+            </el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
