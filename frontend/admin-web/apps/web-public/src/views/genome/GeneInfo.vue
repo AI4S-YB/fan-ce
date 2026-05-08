@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { ref, inject, watch, nextTick, type Ref } from 'vue';
+import { ref, computed, inject, watch, nextTick, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useDatasetQuery } from '@/composables/useDatasets';
 import { useRequest } from '@/composables/useRequest';
 import type { PublicDatasetDetail } from '@/types/dataset';
+import { groupGeneInfoBlast, detectSeqType } from '@/visuals/blast-helpers';
+import BlastHitsOverview from '@/components/BlastHitsOverview.vue';
+import BlastKablammo from '@/components/BlastKablammo.vue';
+import BlastLengthDistribution from '@/components/BlastLengthDistribution.vue';
 
 declare var FeatureViewer: any;
 
@@ -19,6 +23,7 @@ const canonicalId = ref('');
 const annotationCounts = ref<Record<string, number>>({});
 
 const blastByDb = ref<Record<string, any[]>>({});
+const blastQueryGroups = ref<Record<string, any>>({});
 const interpro = ref<any[]>([]);
 const goTerms = ref<any[]>([]);
 const keggPathways = ref<any[]>([]);
@@ -57,6 +62,16 @@ function parseGeneData(result: any) {
     dbMap[db] = Array.isArray(hitList) ? hitList : [];
   }
   blastByDb.value = dbMap;
+
+  // Transform BLAST data per-db for D3 visualizations
+  blastQueryGroups.value = {};
+  for (const [db, hitList] of Object.entries(dbMap)) {
+    if (!hitList || hitList.length === 0) continue;
+    const seqLen = (geneSeq.value || '').replace(/[^A-Za-z]/g, '').length || 1000;
+    const seqType = detectSeqType(geneSeq.value || 'ATCG');
+    const queries = groupGeneInfoBlast({ [db]: hitList }, geneId.value, seqLen, seqType);
+    if (queries.length > 0) blastQueryGroups.value[db] = queries[0];
+  }
 
   const ipr = ann?.interpro;
   if (ipr && typeof ipr === 'object' && !Array.isArray(ipr) && ipr.matches_format) {
@@ -237,6 +252,25 @@ function getBlastLink(accession: string, db: string): string {
   return '#';
 }
 
+function formatAlignment(qseq: string, midline: string, sseq: string): string {
+  const W = 60;
+  const out: string[] = [];
+  const n = Math.max(qseq.length, midline.length, sseq.length);
+  for (let i = 0; i < n; i += W) {
+    const q = qseq.slice(i, i + W);
+    const m = midline.slice(i, i + W);
+    const s = sseq.slice(i, i + W);
+    const qEnd = Math.min(i + q.length, n);
+    const sEnd = Math.min(i + s.length, n);
+    const prefix = `Query  ${String(i + 1).padStart(4)}  `;
+    out.push(`${prefix}${q.padEnd(W)}  ${qEnd}`);
+    out.push(`${' '.repeat(prefix.length)}${m.padEnd(W)}`);
+    out.push(`Sbjct  ${String(i + 1).padStart(4)}  ${s.padEnd(W)}  ${sEnd}`);
+    out.push('');
+  }
+  return out.join('\n');
+}
+
 function getFamilyLabel(type: string): string {
   if (type === 'TF') return 'Transcription Factor';
   if (type === 'TR') return 'Transcriptional Regulator';
@@ -330,6 +364,16 @@ function getFamilyLabel(type: string): string {
                 </template>
               </el-table-column>
             </el-table>
+
+            <!-- D3 Visualizations for this database -->
+            <BlastHitsOverview v-if="blastQueryGroups[db]" :data="blastQueryGroups[db]" style="margin-top:12px;" />
+            <BlastLengthDistribution v-if="blastQueryGroups[db]" :data="blastQueryGroups[db]" style="margin-top:8px;" />
+
+            <div v-if="blastQueryGroups[db]" style="margin-top:4px;">
+              <div v-for="hit in blastQueryGroups[db].hits" :key="hit.id">
+                <BlastKablammo :data="hit" />
+              </div>
+            </div>
           </div>
         </el-tab-pane>
 
@@ -415,9 +459,11 @@ function getFamilyLabel(type: string): string {
         <div v-if="hit.Hit_hsps?.Hsp">
           <p>Match: {{ hit.Hit_accession }} ({{ hit.Hit_def }})</p>
           <p><b>HSP</b> Score: {{ hit.Hit_hsps.Hsp.Hsp_score }}, E-value: {{ hit.Hit_hsps.Hsp.Hsp_evalue }}, Identity: {{ hit.Hit_hsps.Hsp.Hsp_identity }}</p>
-          <pre class="alignment-pre">Query:  {{ hit.Hit_hsps.Hsp.Hsp_qseq }}
-            {{ hit.Hit_hsps.Hsp.Hsp_midline }}
-Sbjct:  {{ hit.Hit_hsps.Hsp.Hsp_hseq }}</pre>
+          <pre class="alignment-pre">{{ formatAlignment(
+            hit.Hit_hsps.Hsp.Hsp_qseq || '',
+            hit.Hit_hsps.Hsp.Hsp_midline || '',
+            hit.Hit_hsps.Hsp.Hsp_hseq || ''
+          ) }}</pre>
         </div>
       </el-dialog>
     </template>

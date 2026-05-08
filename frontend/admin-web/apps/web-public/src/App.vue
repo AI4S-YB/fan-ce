@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDatasetList } from '@/composables/useDatasets';
 import { useRequest } from '@/composables/useRequest';
@@ -44,6 +44,15 @@ async function loadSiteInfo() {
 const { items: genomes, load: loadGenomes } = useDatasetList();
 const hasPublicGermplasm = ref(true);
 const analysisTools = ref<any[]>([]);
+const sortedAnalysisTools = computed(() => {
+  const order = ['annotation', 'utility'];
+  return [...analysisTools.value].sort((a, b) => {
+    const ia = order.indexOf(a.category);
+    const ib = order.indexOf(b.category);
+    if (ia !== ib) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    return a.display_name.localeCompare(b.display_name);
+  });
+});
 
 onMounted(async () => {
   loadGenomes({ dataset_type: 'genome' });
@@ -102,10 +111,9 @@ function goGenome(id: number) {
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item @click="router.push('/tools/batch')">Batch Sequence Retrieval</el-dropdown-item>
-            <el-dropdown-item @click="router.push('/tools/blast')">BLAST</el-dropdown-item>
             <el-dropdown-item @click="router.push('/tools/download')">Downloads</el-dropdown-item>
-            <el-dropdown-item v-if="analysisTools.length > 0" divided />
-            <el-dropdown-item v-for="t in analysisTools" :key="t.tool_id"
+            <el-dropdown-item v-if="sortedAnalysisTools.length > 0" divided />
+            <el-dropdown-item v-for="t in sortedAnalysisTools" :key="t.tool_id"
               @click="router.push('/analysis/' + t.tool_id)">
               {{ t.display_name }}
             </el-dropdown-item>

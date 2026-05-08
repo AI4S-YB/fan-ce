@@ -1,15 +1,23 @@
 <script setup lang="ts">
 import { ref, computed, inject, watch, onMounted, type Ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import type { PublicDatasetDetail } from '@/types/dataset';
 import { useDatasetList, useDownloads } from '@/composables/useDatasets';
 import { useRequest } from '@/composables/useRequest';
 
 const route = useRoute();
+const router = useRouter();
 const tool = computed(() => route.params.tool as string);
 const detail = inject<Ref<PublicDatasetDetail | null>>('genomeDetail', ref(null));
 
 const hasGenome = computed(() => !!detail?.value);
+
+// Redirect BLAST to unified tool page with genome context
+watch([tool, detail], ([t, d]) => {
+  if (t === 'blast' && d?.dataset_code) {
+    router.replace({ path: '/tools/blast', query: { dataset_code: d.dataset_code, db_type: 'mRNA' } });
+  }
+}, { immediate: true });
 
 // Standalone mode genome selector
 const { items: genomeList, load: loadGenomeList } = useDatasetList();
@@ -120,9 +128,6 @@ async function loadBatchExample() {
     exampleLoading.value = false;
   }
 }
-
-// BLAST
-const querySeq = ref('');
 
 // ── Downloads ──
 const { loading: dlLoading, files: dlFiles, loadDownloads, downloadUrl } = useDownloads();
@@ -307,10 +312,7 @@ function siteDownloadUrl(datasetCode: string, fileId: number) {
     <!-- Genome-scoped non-batch tools -->
     <template v-if="hasGenome && tool !== 'batch'">
       <div v-if="tool === 'blast'">
-        <h3>BLAST</h3>
-        <el-input v-model="querySeq" type="textarea" :rows="6" placeholder="Paste query sequence in FASTA format..." style="margin-bottom:12px;" />
-        <el-button type="primary">Run BLAST</el-button>
-        <div style="margin-top:12px;color:#888;font-size:13px;">Results will appear here</div>
+        <div style="text-align:center;padding:60px;color:#999;">Redirecting to BLAST tool...</div>
       </div>
 
       <div v-else-if="tool === 'download'">

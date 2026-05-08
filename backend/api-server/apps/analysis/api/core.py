@@ -170,7 +170,7 @@ def go_enrich_example_genes(db: Session = Depends(get_db)):
     # Find go_gene.gaf from any functional_annotation asset
     af = db.query(AssetFile).filter(
         AssetFile.file_name.ilike("%go_gene%"),
-        AssetFile.file_format == "gaf",
+        AssetFile.file_role == "go_annotation",
     ).first()
     if not af:
         return response_2000(data={"gene_ids": [], "message": "No GAF file found"})
@@ -196,16 +196,17 @@ def go_enrich_example_genes(db: Session = Depends(get_db)):
     return response_2000(data={"gene_ids": list(gene_ids)})
 
 
-@analysis_router.post("/tools/kegg_enrich/example-genes", summary="从func_anno SQLite中提取示例基因ID")
+@analysis_router.post("/tools/kegg_enrich/example-genes", summary="从kegg_gene.txt中提取示例基因ID")
 def kegg_enrich_example_genes(db: Session = Depends(get_db)):
-    """Read KEGG annotations from func_anno SQLite and return example gene IDs."""
-    import os, sqlite3
+    """Read gene IDs from kegg_gene.txt annotation file (tab-separated: gene_id\\tko\\tmap_id\\tdescription)."""
+    import os
     from apps.datasets.models import AssetFile
     af = db.query(AssetFile).filter(
-        AssetFile.file_format.in_(["db", "sqlite"]),
+        AssetFile.file_name.ilike("%kegg_gene%"),
+        AssetFile.file_role == "kegg_pathway_annotation",
     ).first()
     if not af:
-        return response_2000(data={"gene_ids": [], "message": "No functional annotation DB found"})
+        return response_2000(data={"gene_ids": [], "message": "No kegg_gene.txt file found"})
 
     path = getattr(af, "local_path", None) or getattr(af, "storage_uri", None) or ""
     if not path or not os.path.exists(path):
@@ -213,11 +214,16 @@ def kegg_enrich_example_genes(db: Session = Depends(get_db)):
 
     gene_ids = set()
     try:
-        conn = sqlite3.connect(path)
-        rows = conn.execute("SELECT transcript_id FROM hse_transcripts WHERE KEGG IS NOT NULL AND KEGG != '' AND KEGG != '[]' LIMIT 300").fetchall()
-        for r in rows:
-            gene_ids.add(r[0])
-        conn.close()
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                fields = line.split("\t")
+                if len(fields) >= 3:
+                    gene_ids.add(fields[0].strip())
+                if len(gene_ids) >= 300:
+                    break
     except Exception as e:
         return response_2000(data={"gene_ids": [], "message": str(e)})
 
