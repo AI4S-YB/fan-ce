@@ -6,7 +6,15 @@ import { useRequest } from '@/composables/useRequest';
 const route = useRoute();
 const { get, post } = useRequest();
 
-const toolName = computed(() => route.params.name as string);
+const toolName = computed(() => {
+  const p = route.path;
+  if (p.includes('/blast')) return 'blast';
+  if (p.includes('/primer')) return 'primer';
+  if (p.includes('/grna')) return 'grna';
+  if (p.includes('/msa')) return 'msa';
+  if (p.includes('/motif')) return 'motif';
+  return '';
+});
 const geneId = ref((route.query.gene_id as string) || '');
 const geneIds = ref((route.query.gene_ids as string) || '');
 const datasetId = ref(Number(route.query.dataset_id) || 0);
@@ -194,7 +202,7 @@ function startPolling() {
         <div class="form-group">
           <label class="form-label">{{ inputLabel }}</label>
           <textarea v-model="inputSeq" rows="10" placeholder="Paste query sequence(s) in FASTA format..."
-            class="seq-input" v-loading="loading"></textarea>
+            class="seq-input"></textarea>
         </div>
 
         <!-- Advanced -->

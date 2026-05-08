@@ -25,11 +25,11 @@ const routes = [
     ],
   },
   // Sequence analysis tool pages (pre-filled from gene context)
-  { path: '/tools/blast', component: () => import('@/views/tools/ToolRunner.vue') },
-  { path: '/tools/primer', component: () => import('@/views/tools/ToolRunner.vue') },
-  { path: '/tools/grna', component: () => import('@/views/tools/ToolRunner.vue') },
-  { path: '/tools/msa', component: () => import('@/views/tools/ToolRunner.vue') },
-  { path: '/tools/motif', component: () => import('@/views/tools/ToolRunner.vue') },
+  { path: '/tools/blast', component: () => import('@/views/tools/ToolRunner.vue'), name: 'tool-blast' },
+  { path: '/tools/primer', component: () => import('@/views/tools/ToolRunner.vue'), name: 'tool-primer' },
+  { path: '/tools/grna', component: () => import('@/views/tools/ToolRunner.vue'), name: 'tool-grna' },
+  { path: '/tools/msa', component: () => import('@/views/tools/ToolRunner.vue'), name: 'tool-msa' },
+  { path: '/tools/motif', component: () => import('@/views/tools/ToolRunner.vue'), name: 'tool-motif' },
   // Standalone tools (no genome selected)
   { path: '/tools/:tool', component: () => import('@/views/genome/Tools.vue') },
   { path: '/community/:type', component: () => import('@/views/community/List.vue') },
