@@ -226,61 +226,6 @@ def kegg_enrich_example_genes(db: Session = Depends(get_db)):
 
 # ── Admin endpoints ──
 
-@analysis_router.get("/tools/blast/databases", summary="列出可用的 BLAST 数据库（已注册的 FASTA 文件）")
-def blast_databases(db: Session = Depends(get_db)):
-    """List registered FASTA files that can serve as BLAST databases."""
-    import os
-    from apps.datasets.models import AssetFile, DatasetAsset, DatasetVersion, DatasetRegistry
-
-    results = []
-    # Get all public, current-version FASTA files
-    fasta_files = db.query(AssetFile, DatasetAsset, DatasetRegistry).join(
-        DatasetAsset, AssetFile.dataset_asset_id == DatasetAsset.id
-    ).join(
-        DatasetVersion, DatasetAsset.dataset_version_id == DatasetVersion.id
-    ).join(
-        DatasetRegistry, DatasetVersion.database_id == DatasetRegistry.database_id
-    ).filter(
-        AssetFile.file_format.in_([
-            "fa", "fasta", "fna", "faa", "fa.gz", "fasta.gz", "fna.gz", "faa.gz"
-        ]),
-        DatasetVersion.is_current == 1,
-        DatasetRegistry.visibility == "public",
-    ).all()
-
-    for af, asset, reg in fasta_files:
-        fp = af.local_path or af.storage_uri or ""
-        if not fp or not os.path.exists(fp):
-            continue
-
-        # Guess BLAST DB type from file role / name
-        db_type = "nucl"
-        role = (af.file_role or "").lower()
-        fname = (af.file_name or "").lower()
-        if "protein" in role or "protein" in fname or "faa" in af.file_format:
-            db_type = "prot"
-
-        # Check BLAST index status
-        indexed = os.path.exists(fp + ".phr") or os.path.exists(fp + ".pin") or os.path.exists(fp + ".psq")
-
-        results.append({
-            "id": af.id,
-            "name": af.file_name,
-            "path": fp,
-            "format": af.file_format,
-            "type": db_type,
-            "size": af.file_size or 0,
-            "dataset": reg.title or reg.dataset_code,
-            "dataset_code": reg.dataset_code,
-            "asset_type": asset.asset_type,
-            "indexed": indexed,
-        })
-
-    return response_2000(data={"databases": results})
-
-
-# ── Admin endpoints ──
-
 @analysis_router.get("/admin/tools", summary="管理端：列出分析工具（含状态）")
 def admin_list_tools(_user=Depends(get_active_user)):
     from apps.analysis.worker import get_all_tools

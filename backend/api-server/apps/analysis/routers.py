@@ -4,6 +4,13 @@ from .api.core import analysis_router
 app_analysis_router = APIRouter()
 app_analysis_router.include_router(analysis_router, prefix="/analysis")
 
+# Include plugin API routers
+from basis.analysis.registry import discover_plugin_routers
+for name, plugin_router in discover_plugin_routers():
+    app_analysis_router.include_router(plugin_router, prefix="/analysis")
+    import logging
+    logging.getLogger(__name__).info(f"Loaded plugin router: {name}")
+
 
 def on_startup():
     """Register built-in tools and start the worker. Called from main.py startup."""
