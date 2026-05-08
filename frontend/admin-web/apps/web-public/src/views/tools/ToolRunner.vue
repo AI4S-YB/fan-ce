@@ -20,7 +20,7 @@ const submitting = ref(false);
 
 // Tool-specific state
 const databases = ref<any[]>([]);
-const selectedDb = ref('');
+const selectedDb = ref<string[]>([]);
 const evalue = ref(0.001);
 const maxHits = ref(50);
 const showDbSelect = computed(() => toolName.value === 'blast');
@@ -40,8 +40,8 @@ onMounted(async () => {
       databases.value = data?.databases || data?.data?.databases || [];
       // Auto-select indexed protein DB for protein queries, first indexed otherwise
       const indexed = databases.value.filter((d: any) => d.indexed);
-      const match = indexed.find((d: any) => d.type === seqType.value) || indexed[0];
-      if (match) selectedDb.value = match.path;
+      const match = indexed.find((d: any) => d.type === seqType.value);
+      if (match) selectedDb.value = [match.path];
     } catch { /* ignore */ }
   }
 
@@ -91,7 +91,7 @@ async function submitJob() {
       evalue: evalue.value,
       max_hits: maxHits.value,
     };
-    if (selectedDb.value) params.database = selectedDb.value;
+    if (selectedDb.value.length > 0) params.database = selectedDb.value.join(' ');
 
     const data: any = await post('/analysis/jobs', {
       tool_id: toolName.value,
@@ -153,7 +153,7 @@ function formatSize(bytes: number): string {
     <!-- Database selector (BLAST only) -->
     <div v-if="showDbSelect" style="margin-bottom:16px;">
       <div style="font-weight:500;margin-bottom:4px;">BLAST Database</div>
-      <el-select v-model="selectedDb" placeholder="Select database..." style="width:100%;max-width:500px;" filterable>
+      <el-select v-model="selectedDb" placeholder="Select databases..." style="width:100%;max-width:600px;" filterable multiple>
         <el-option v-for="db in databases" :key="db.id" :label="`${db.dataset} / ${db.name} (${db.type}) ${db.indexed ? '' : '[not indexed]'}`" :value="db.path" :disabled="!db.indexed" />
       </el-select>
     </div>
