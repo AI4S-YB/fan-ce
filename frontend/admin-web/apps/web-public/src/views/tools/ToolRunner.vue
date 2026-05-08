@@ -75,17 +75,22 @@ const outputViews = ref<Record<string, any>>({});
 const selectedRow = ref<any>(null);
 const polling = ref<ReturnType<typeof setInterval> | null>(null);
 
+// Reload tool when route changes
+watch(() => route.path, () => {
+  if (polling.value) clearInterval(polling.value);
+  jobId.value = null; jobStatus.value = ''; jobError.value = ''; outputViews.value = {};
+  selectedRow.value = null;
+  loadCurrentTool();
+});
+
 // ── Load tool and setup ──
-onMounted(async () => {
-  // Load tools
+async function loadCurrentTool() {
   toolLoading.value = true;
   try {
     const tools: any = await get('/analysis/tools');
     const match = (tools || []).find((t: any) => t.tool_id === toolId.value);
-    if (match) {
-      tool.value = match;
-      setupTool(match);
-    }
+    if (match) { tool.value = match; setupTool(match); }
+    else { tool.value = null; }
   } finally { toolLoading.value = false; }
 
   // Load sequence from gene context
@@ -110,15 +115,12 @@ onMounted(async () => {
       inputLabel.value = `Sequences from ${ids.length} genes (${seqType.value})`;
     } catch { /* ignore */ }
   }
-});
+}
 
+onMounted(() => { loadCurrentTool(); });
 onUnmounted(() => { if (polling.value) clearInterval(polling.value); });
 
 // Watch route change for tool switching
-watch(() => route.path, () => {
-  if (polling.value) clearInterval(polling.value);
-  jobId.value = null; jobStatus.value = ''; jobError.value = ''; outputViews.value = {};
-});
 
 // ── Tool setup ──
 async function setupTool(t: ToolSchema) {
