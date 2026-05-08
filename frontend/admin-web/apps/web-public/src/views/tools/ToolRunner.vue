@@ -48,6 +48,7 @@ const jobId = ref<number | null>(null);
 const jobStatus = ref('');
 const jobError = ref('');
 const outputViews = ref<Record<string, any>>({});
+const selectedRow = ref<any>(null);
 const polling = ref<ReturnType<typeof setInterval> | null>(null);
 
 // ── Preview ──
@@ -276,20 +277,20 @@ function startPolling() {
           </el-table-column>
           <el-table-column label="Alignment" width="80">
             <template #default="{ row }">
-              <el-button size="small" @click="outputViews['_selected'] = row">Show</el-button>
+              <el-button size="small" @click="selectedRow = row">Show</el-button>
             </template>
           </el-table-column>
         </el-table>
       </div>
       <!-- Alignment detail -->
-      <div v-if="outputViews['_selected']" class="alignment-detail">
+      <div v-if="selectedRow" class="alignment-detail">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <strong>{{ outputViews['_selected'].Hit_ID }}</strong>
-          <el-button size="small" text @click="outputViews['_selected'] = null">✕</el-button>
+          <strong>{{ selectedRow.Hit_ID }}</strong>
+          <el-button size="small" text @click="selectedRow = null">✕</el-button>
         </div>
-        <pre class="alignment-pre">Query:  {{ outputViews['_selected'].QSeq }}
-        {{ outputViews['_selected'].Midline }}
-Sbjct:  {{ outputViews['_selected'].SSeq }}</pre>
+        <pre class="alignment-pre">Query:  {{ selectedRow.QSeq }}
+        {{ selectedRow.Midline }}
+Sbjct:  {{ selectedRow.SSeq }}</pre>
       </div>
     </div>
   </div>
