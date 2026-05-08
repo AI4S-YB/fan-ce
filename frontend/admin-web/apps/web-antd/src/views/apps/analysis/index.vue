@@ -56,6 +56,8 @@
                 @confirm="uninstallTool(record.tool_id)">
                 <Button size="small" danger>卸载</Button>
               </Popconfirm>
+              <Button v-if="record.tool_id === 'blast'" size="small" type="primary"
+                @click="router.push('/analysis/blast-db')">管理</Button>
             </Space>
           </template>
         </template>
@@ -92,10 +94,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { message, Drawer, Descriptions, Divider, Card, Popconfirm, Space, Upload, Table, Button, Tag } from 'ant-design-vue';
 import { Page } from '@vben/common-ui';
 import { requestClient } from '#/api/request';
 
+const router = useRouter();
 const tools = ref<any[]>([]);
 const loading = ref(false);
 const scanning = ref(false);
