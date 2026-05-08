@@ -188,7 +188,7 @@ function startPolling() {
               class="db-item" :class="{ 'db-disabled': !db.indexed, 'db-selected': selectedDbs.includes(db.path) }">
               <input type="checkbox" :checked="selectedDbs.includes(db.path)"
                 :disabled="!db.indexed" @change="toggleDb(db.path)" />
-              <span class="db-name">{{ db.dataset }} / {{ db.name }}</span>
+              <span class="db-name">{{ db.name }}</span>
               <span class="db-type" :class="'type-' + db.type">{{ db.type }}</span>
               <span v-if="!db.indexed" class="db-badge">not indexed</span>
             </label>
