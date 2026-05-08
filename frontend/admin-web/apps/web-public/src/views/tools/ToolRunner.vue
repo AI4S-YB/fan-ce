@@ -6,6 +6,10 @@ import { useRequest } from '@/composables/useRequest';
 const route = useRoute();
 const router = useRouter();
 const { get, post } = useRequest();
+import { groupBlastTable } from '@/visuals/blast-helpers';
+import BlastHitsOverview from '@/components/BlastHitsOverview.vue';
+import BlastKablammo from '@/components/BlastKablammo.vue';
+import BlastLengthDistribution from '@/components/BlastLengthDistribution.vue';
 
 // ── Tool identification ──
 const toolId = computed(() => {
@@ -28,6 +32,8 @@ const geneIds = ref((route.query.gene_ids as string) || '');
 const datasetId = ref(Number(route.query.dataset_id) || 0);
 const seqType = ref((route.query.type as string) || 'gene');
 const prefillSeq = ref((route.query.seq as string) || '');
+const datasetCode = ref((route.query.dataset_code as string) || '');
+const dbType = ref((route.query.db_type as string) || '');
 
 // ── Tool schema ──
 interface ToolSchema { tool_id: string; display_name: string; description: string; category: string; version: string; timeout_seconds: number; input_schema: { name: string; label: string; accepted_asset_types: string[]; accepted_formats: string[]; accepted_file_roles: string[]; required: boolean }[]; parameter_schema: { name: string; label: string; type: string; default?: any; choices?: string[]; min?: number; max?: number; description?: string }[]; output_schema: { name: string; label: string; format: string; display: string }[]; }
@@ -67,6 +73,7 @@ const previewSeqType = computed(() => {
   const nonDna = [...s].filter(c => c >= 'A' && c <= 'Z' && !dna.has(c)).length;
   return nonDna / s.length > 0.1 ? 'protein' : 'nucleotide';
 });
+const blastQueries = ref<any[]>([]);
 
 // ── Shared job state ──
 const submitting = ref(false);
@@ -130,10 +137,30 @@ async function setupTool(t: ToolSchema) {
     try {
       const data: any = await get('/analysis/blast/databases');
       databases.value = data?.databases || data?.data?.databases || [];
-      const indexed = databases.value.filter((d: any) => d.indexed);
-      const st = seqType.value === 'protein' ? 'prot' : 'nucl';
-      const matches = indexed.filter((d: any) => d.type === st);
-      if (matches.length > 0) selectedDbs.value = matches.map((d: any) => d.path);
+      let indexed = databases.value.filter((d: any) => d.indexed);
+      // Filter by genome context (dataset_code) if provided
+      if (datasetCode.value) {
+        indexed = indexed.filter((d: any) => d.dataset_code === datasetCode.value);
+      }
+      // Filter by db_type (mRNA, protein, genome) if provided
+      if (dbType.value) {
+        const typeMap: Record<string, string> = { mRNA: 'nucl', protein: 'prot', genome: 'nucl' };
+        const targetType = typeMap[dbType.value] || dbType.value;
+        indexed = indexed.filter((d: any) => {
+          if (d.type !== targetType) return false;
+          if (dbType.value === 'mRNA') return d.name.toLowerCase().includes('mrna');
+          if (dbType.value === 'protein') return d.name.toLowerCase().includes('protein');
+          if (dbType.value === 'genome') return !d.name.toLowerCase().includes('mrna') && !d.name.toLowerCase().includes('protein');
+          return true;
+        });
+      } else {
+        // Default: filter by inferred sequence type
+        const st = seqType.value === 'protein' ? 'prot' : 'nucl';
+        indexed = indexed.filter((d: any) => d.type === st);
+      }
+      if (indexed.length > 0) {
+        selectedDbs.value = indexed.map((d: any) => d.path);
+      }
     } catch { /* ignore */ }
     return;
   }
@@ -204,6 +231,9 @@ async function submitJob() {
     params = Object.fromEntries(
       tool.value?.parameter_schema.map(p => [p.name, paramValues.value[p.name] ?? p.default ?? '']) || []
     );
+    // Inject the sequence textarea value into the TextParam
+    const textParam = tool.value?.parameter_schema.find(p => p.type === 'TextParam');
+    if (textParam) params[textParam.name] = inputSeq.value;
   }
 
   try {
@@ -233,6 +263,9 @@ function startPolling() {
             try {
               const v: any = await get(`/analysis/jobs/${jobId.value}/output/${f.name}/view`);
               outputViews.value[f.name] = v?.data || v;
+              if (f.name === 'blast_table' && v?.data?.rows) {
+                blastQueries.value = groupBlastTable(v.data.rows, inputSeq.value);
+              }
             } catch { /* ignore */ }
           }
         }
@@ -256,6 +289,25 @@ function getBlastLink(acc: string, db: string): string {
   if (d.includes('nr')) return `https://www.ncbi.nlm.nih.gov/protein/${acc}`;
   if (d.includes('swiss') || d.includes('trembl')) return `https://www.uniprot.org/uniprot/${acc}`;
   return '#';
+}
+
+function formatAlignment(qseq: string, midline: string, sseq: string): string {
+  const W = 60;
+  const out: string[] = [];
+  const n = Math.max(qseq.length, midline.length, sseq.length);
+  for (let i = 0; i < n; i += W) {
+    const q = qseq.slice(i, i + W);
+    const m = midline.slice(i, i + W);
+    const s = sseq.slice(i, i + W);
+    const qEnd = Math.min(i + q.length, n);
+    const sEnd = Math.min(i + s.length, n);
+    const prefix = `Query  ${String(i + 1).padStart(4)}  `;
+    out.push(`${prefix}${q.padEnd(W)}  ${qEnd}`);
+    out.push(`${' '.repeat(prefix.length)}${m.padEnd(W)}`);
+    out.push(`Sbjct  ${String(i + 1).padStart(4)}  ${s.padEnd(W)}  ${sEnd}`);
+    out.push('');
+  }
+  return out.join('\n');
 }
 </script>
 
@@ -376,12 +428,22 @@ function getBlastLink(acc: string, db: string): string {
         </el-table>
       </div>
 
+      <!-- BLAST Visualizations -->
+      <div v-if="blastQueries.length > 0" style="margin-top:20px;">
+        <div v-for="(q, qi) in blastQueries" :key="qi" style="margin-bottom:24px;">
+          <BlastHitsOverview :data="q" />
+          <BlastLengthDistribution :data="q" style="margin-top:12px;" />
+
+          <div v-for="hit in q.hits" :key="hit.id" style="margin-top:4px;">
+            <BlastKablammo :data="hit" />
+          </div>
+        </div>
+      </div>
+
       <!-- Alignment -->
       <div v-if="selectedRow" class="alignment-detail">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><strong>{{ selectedRow.Hit_ID }}</strong><el-button size="small" text @click="selectedRow = null">✕</el-button></div>
-        <pre class="alignment-pre">Query:  {{ selectedRow.QSeq }}
-        {{ selectedRow.Midline }}
-Sbjct:  {{ selectedRow.SSeq }}</pre>
+        <pre class="alignment-pre">{{ formatAlignment(selectedRow.QSeq || '', selectedRow.Midline || '', selectedRow.SSeq || '') }}</pre>
       </div>
 
       <!-- Generic table output -->
