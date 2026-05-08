@@ -15,6 +15,8 @@ const toolId = computed(() => {
   if (p.includes('/grna')) return 'grna';
   if (p.includes('/msa')) return 'msa';
   if (p.includes('/motif')) return 'motif';
+  if (p.includes('/go_enrich')) return 'go_enrich';
+  if (p.includes('/kegg_enrich')) return 'kegg_enrich';
   return (route.params.toolId as string) || '';
 });
 
