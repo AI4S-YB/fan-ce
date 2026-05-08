@@ -243,7 +243,7 @@ function formatLocation(loc: any): string {
   if (!loc) return '-';
   if (typeof loc === 'string') return loc;
   if (Array.isArray(loc)) return loc.map((l: any) => `${l.start || ''}-${l.end || ''}`).join('; ');
-  if (typeof loc === 'object') return `${loc.start || ''}-${l.end || ''}`;
+  if (typeof loc === 'object') return `${loc.start || ''}-${loc.end || ''}`;
   return String(loc);
 }
 function formatKO(o: any): string { return Array.isArray(o) ? o.join(', ') : String(o || ''); }
