@@ -29,6 +29,16 @@ const routes: RouteRecordRaw[] = [
           title: '任务管理',
         },
       },
+      {
+        name: 'BlastDatabases',
+        path: '/analysis/blast-db',
+        component: () => import('#/views/apps/analysis/blast-db.vue'),
+        meta: {
+          icon: 'lucide:database',
+          title: 'BLAST Databases',
+          hideInMenu: true,
+        },
+      },
     ],
   },
 ];
