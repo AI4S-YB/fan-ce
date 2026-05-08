@@ -30,8 +30,16 @@ const routes = [
   { path: '/tools/grna', component: () => import('@/views/tools/ToolRunner.vue'), name: 'tool-grna' },
   { path: '/tools/msa', component: () => import('@/views/tools/ToolRunner.vue'), name: 'tool-msa' },
   { path: '/tools/motif', component: () => import('@/views/tools/ToolRunner.vue'), name: 'tool-motif' },
-  // Menu-accessible analysis tools
+  // Analysis tools — each tool has its own route
   { path: '/analysis/blast', component: () => import('@/views/tools/ToolRunner.vue'), name: 'analysis-blast' },
+  { path: '/analysis/primer', component: () => import('@/views/tools/ToolRunner.vue'), name: 'analysis-primer' },
+  { path: '/analysis/grna', component: () => import('@/views/tools/ToolRunner.vue'), name: 'analysis-grna' },
+  { path: '/analysis/msa', component: () => import('@/views/tools/ToolRunner.vue'), name: 'analysis-msa' },
+  { path: '/analysis/motif', component: () => import('@/views/tools/ToolRunner.vue'), name: 'analysis-motif' },
+  { path: '/analysis/go_enrich', component: () => import('@/views/analysis/index.vue'), name: 'analysis-go' },
+  { path: '/analysis/kegg_enrich', component: () => import('@/views/analysis/index.vue'), name: 'analysis-kegg' },
+  // Catch-all for future plugins (GO/KEGG pattern or new ToolRunner-based tools)
+  { path: '/analysis/:toolId', component: () => import('@/views/analysis/index.vue') },
   // Standalone tools (no genome selected)
   { path: '/tools/:tool', component: () => import('@/views/genome/Tools.vue') },
   { path: '/community/:type', component: () => import('@/views/community/List.vue') },
@@ -40,7 +48,6 @@ const routes = [
   { path: '/germplasm', component: () => import('@/views/germplasm/index.vue') },
   { path: '/chat', component: () => import('@/views/chat/index.vue') },
   { path: '/analysis', component: () => import('@/views/analysis/index.vue') },
-  { path: '/analysis/:toolId', component: () => import('@/views/analysis/index.vue') },
   { path: '/phenotype', component: () => import('@/views/phenotype/index.vue') },
 ];
 
