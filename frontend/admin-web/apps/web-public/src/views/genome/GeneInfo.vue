@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, inject, watch, nextTick, type Ref } from 'vue';
+import { ref, inject, watch, nextTick, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useDatasetQuery } from '@/composables/useDatasets';
 import { useRequest } from '@/composables/useRequest';
 import type { PublicDatasetDetail } from '@/types/dataset';
-import { groupGeneInfoBlast, detectSeqType } from '@/visuals/blast-helpers';
-import BlastHitsOverview from '@/components/BlastHitsOverview.vue';
-import BlastKablammo from '@/components/BlastKablammo.vue';
-import BlastLengthDistribution from '@/components/BlastLengthDistribution.vue';
 
 declare var FeatureViewer: any;
 
@@ -23,7 +19,6 @@ const canonicalId = ref('');
 const annotationCounts = ref<Record<string, number>>({});
 
 const blastByDb = ref<Record<string, any[]>>({});
-const blastQueryGroups = ref<Record<string, any>>({});
 const interpro = ref<any[]>([]);
 const goTerms = ref<any[]>([]);
 const keggPathways = ref<any[]>([]);
@@ -62,16 +57,6 @@ function parseGeneData(result: any) {
     dbMap[db] = Array.isArray(hitList) ? hitList : [];
   }
   blastByDb.value = dbMap;
-
-  // Transform BLAST data per-db for D3 visualizations
-  blastQueryGroups.value = {};
-  for (const [db, hitList] of Object.entries(dbMap)) {
-    if (!hitList || hitList.length === 0) continue;
-    const seqLen = (geneSeq.value || '').replace(/[^A-Za-z]/g, '').length || 1000;
-    const seqType = detectSeqType(geneSeq.value || 'ATCG');
-    const queries = groupGeneInfoBlast({ [db]: hitList }, geneId.value, seqLen, seqType);
-    if (queries.length > 0) blastQueryGroups.value[db] = queries[0];
-  }
 
   const ipr = ann?.interpro;
   if (ipr && typeof ipr === 'object' && !Array.isArray(ipr) && ipr.matches_format) {
@@ -364,16 +349,6 @@ function getFamilyLabel(type: string): string {
                 </template>
               </el-table-column>
             </el-table>
-
-            <!-- D3 Visualizations for this database -->
-            <BlastHitsOverview v-if="blastQueryGroups[db]" :data="blastQueryGroups[db]" style="margin-top:12px;" />
-            <BlastLengthDistribution v-if="blastQueryGroups[db]" :data="blastQueryGroups[db]" style="margin-top:8px;" />
-
-            <div v-if="blastQueryGroups[db]" style="margin-top:4px;">
-              <div v-for="hit in blastQueryGroups[db].hits" :key="hit.id">
-                <BlastKablammo :data="hit" />
-              </div>
-            </div>
           </div>
         </el-tab-pane>
 

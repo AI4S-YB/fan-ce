@@ -28,7 +28,11 @@ class AnalysisWorker:
             t = threading.Thread(target=self._loop, name=f"analysis-wkr-{i}", daemon=True)
             t.start()
             self._threads.append(t)
-        logger.info(f"AnalysisWorker started with {self.num_workers} threads")
+        # Start cleanup thread (runs once per hour)
+        t = threading.Thread(target=self._cleanup_loop, name="analysis-cleanup", daemon=True)
+        t.start()
+        self._threads.append(t)
+        logger.info(f"AnalysisWorker started with {self.num_workers} threads + cleanup")
 
     def stop(self):
         self._running = False
@@ -52,6 +56,39 @@ class AnalysisWorker:
                     except Exception:
                         pass
             time.sleep(self.poll_interval)
+
+    def _cleanup_loop(self):
+        """Periodically delete job files older than 30 days."""
+        import shutil
+        RETENTION_SECONDS = 30 * 24 * 3600  # 30 days
+        CLEANUP_INTERVAL = 3600  # run once per hour
+        while self._running:
+            db = None
+            try:
+                cutoff = int(time.time()) - RETENTION_SECONDS
+                db = self.db_factory()
+                from apps.analysis.models import BrdAnalysisJob
+                old_jobs = db.query(BrdAnalysisJob).filter(
+                    BrdAnalysisJob.created_at < cutoff,
+                    BrdAnalysisJob.status.in_(["success", "failed", "timeout", "cancelled"]),
+                ).all()
+                for job in old_jobs:
+                    work_dir = f"/tmp/fance-jobs/{job.id}"
+                    if os.path.exists(work_dir):
+                        shutil.rmtree(work_dir, ignore_errors=True)
+                    job.status = "expired"
+                if old_jobs:
+                    db.commit()
+                    logger.info(f"Cleanup: marked {len(old_jobs)} old jobs as expired")
+            except Exception as e:
+                logger.error(f"Cleanup error: {e}")
+            finally:
+                if db:
+                    try:
+                        db.close()
+                    except Exception:
+                        pass
+            time.sleep(CLEANUP_INTERVAL)
 
     def _execute(self, db: Session, job):
         from apps.analysis.models import BrdAnalysisJob

@@ -10,6 +10,8 @@ import { groupBlastTable } from '@/visuals/blast-helpers';
 import BlastHitsOverview from '@/components/BlastHitsOverview.vue';
 import BlastKablammo from '@/components/BlastKablammo.vue';
 import BlastLengthDistribution from '@/components/BlastLengthDistribution.vue';
+import PrimerMap from '@/components/PrimerMap.vue';
+import GrnaTrack from '@/components/GrnaTrack.vue';
 
 // ── Tool identification ──
 const toolId = computed(() => {
@@ -74,6 +76,8 @@ const previewSeqType = computed(() => {
   return nonDna / s.length > 0.1 ? 'protein' : 'nucleotide';
 });
 const blastQueries = ref<any[]>([]);
+const primerData = ref<{ templateLength: number; templateSeq: string; pairs: any[] } | null>(null);
+const grnaData = ref<{ targetLength: number; sites: any[] } | null>(null);
 
 // ── Shared job state ──
 const submitting = ref(false);
@@ -83,6 +87,52 @@ const jobError = ref('');
 const outputViews = ref<Record<string, any>>({});
 const selectedRow = ref<any>(null);
 const polling = ref<ReturnType<typeof setInterval> | null>(null);
+
+// ── Recent jobs (localStorage) ──
+const RECENT_JOBS_KEY = 'recent_job_ids';
+const MAX_RECENT = 20;
+const recentJobs = ref<{ id: number; tool_id: string; status: string; created_at?: number }[]>([]);
+const filteredRecentJobs = computed(() => recentJobs.value.filter(j => j.tool_id === toolId.value));
+const recentLoading = ref(false);
+
+function loadRecentJobs() {
+  try {
+    const ids: number[] = JSON.parse(localStorage.getItem(RECENT_JOBS_KEY) || '[]');
+    if (ids.length === 0) return;
+    recentLoading.value = true;
+    // Fetch all recent jobs in parallel
+    Promise.all(ids.map(id => get(`/analysis/jobs/${id}`).catch(() => null)))
+      .then(results => {
+        recentJobs.value = results
+          .filter(Boolean)
+          .map((r: any) => ({ id: r.id, tool_id: r.tool_id, status: r.status, created_at: r.created_at }));
+      })
+      .finally(() => { recentLoading.value = false; });
+  } catch { /* ignore */ }
+}
+
+function addRecentJob(id: number) {
+  try {
+    const ids: number[] = JSON.parse(localStorage.getItem(RECENT_JOBS_KEY) || '[]');
+    const filtered = ids.filter(x => x !== id);
+    filtered.unshift(id);
+    if (filtered.length > MAX_RECENT) filtered.length = MAX_RECENT;
+    localStorage.setItem(RECENT_JOBS_KEY, JSON.stringify(filtered));
+  } catch { /* ignore */ }
+}
+
+function viewRecentJob(job: { id: number }) {
+  jobId.value = job.id;
+  jobStatus.value = '';
+  jobError.value = '';
+  outputViews.value = {};
+  selectedRow.value = null;
+  blastQueries.value = [];
+  primerData.value = null;
+  grnaData.value = null;
+  if (polling.value) clearInterval(polling.value);
+  startPolling();
+}
 
 // Reload tool when route changes
 watch(() => route.path, () => {
@@ -126,7 +176,7 @@ async function loadCurrentTool() {
   }
 }
 
-onMounted(() => { loadCurrentTool(); });
+onMounted(() => { loadCurrentTool(); loadRecentJobs(); });
 onUnmounted(() => { if (polling.value) clearInterval(polling.value); });
 
 // Watch route change for tool switching
@@ -241,6 +291,7 @@ async function submitJob() {
       tool_id: toolId.value, input_bindings: bindings, param_overrides: params,
     });
     jobId.value = data?.id || data?.data?.id;
+    if (jobId.value) addRecentJob(jobId.value);
     jobStatus.value = 'pending';
     startPolling();
   } catch (e: any) { jobError.value = e?.message || 'Submit failed'; }
@@ -263,8 +314,16 @@ function startPolling() {
             try {
               const v: any = await get(`/analysis/jobs/${jobId.value}/output/${f.name}/view`);
               outputViews.value[f.name] = v?.data || v;
-              if (f.name === 'blast_table' && v?.data?.rows) {
-                blastQueries.value = groupBlastTable(v.data.rows, inputSeq.value);
+              if (f.name === 'blast_table' && v?.rows) {
+                blastQueries.value = groupBlastTable(v.rows, inputSeq.value);
+              }
+              if (f.name === 'primer_table' && v?.rows) {
+                const seq = inputSeq.value.replace(/^>[^\n]*\n/g, '').replace(/\s/g, '');
+                primerData.value = { templateLength: seq.length, templateSeq: seq, pairs: v.rows };
+              }
+              if (f.name === 'grna_table' && v?.rows) {
+                const seq = inputSeq.value.replace(/^>[^\n]*\n/g, '').replace(/\s/g, '');
+                grnaData.value = { targetLength: seq.length, sites: v.rows };
               }
             } catch { /* ignore */ }
           }
@@ -313,6 +372,24 @@ function formatAlignment(qseq: string, midline: string, sseq: string): string {
 
 <template>
   <div style="max-width:1100px;margin:0 auto;padding:24px 16px;">
+
+    <!-- Recent Jobs Sidebar -->
+    <div v-if="filteredRecentJobs.length > 0" style="margin-bottom:20px;background:#f8f9fa;border:1px solid #e9ecef;border-radius:8px;padding:12px 16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-weight:600;font-size:13px;">Recent Jobs</span>
+        <el-button size="small" text @click="recentJobs = []; localStorage.removeItem(RECENT_JOBS_KEY)">Clear</el-button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div v-for="j in filteredRecentJobs" :key="j.id"
+          @click="viewRecentJob(j)"
+          :style="{ cursor:'pointer', padding:'4px 10px', borderRadius:'4px', fontSize:'12px', border:'1px solid ' + (j.id === jobId ? '#409eff' : '#ddd'), background: j.id === jobId ? '#ecf5ff' : '#fff' }">
+          <span style="font-weight:500;">#{{ j.id }}</span>
+          <span style="margin-left:4px;color:#888;">{{ j.tool_id }}</span>
+          <el-tag :type="j.status === 'success' ? 'success' : j.status === 'failed' ? 'danger' : j.status === 'running' ? 'warning' : 'info'" size="small" style="margin-left:6px;">{{ j.status }}</el-tag>
+        </div>
+      </div>
+    </div>
+
     <!-- Loading -->
     <div v-if="toolLoading" style="text-align:center;padding:60px;color:#999;">Loading tool...</div>
 
@@ -417,33 +494,35 @@ function formatAlignment(qseq: string, midline: string, sseq: string): string {
 
       <!-- BLAST table -->
       <div v-if="outputViews['blast_table']?.type === 'table'" style="max-height:600px;overflow:auto;">
-        <el-table :data="outputViews['blast_table'].rows" border size="small" stripe>
+        <el-table :data="outputViews['blast_table'].rows" border size="small" stripe @row-click="(row: any) => selectedRow = row" highlight-current-row>
           <el-table-column prop="Hit_ID" label="Subject ID" width="180" show-overflow-tooltip />
           <el-table-column prop="Hit_Def" label="Description" min-width="300" show-overflow-tooltip />
           <el-table-column prop="Score" label="Score" width="80" />
           <el-table-column prop="Evalue" label="E-value" width="90" />
           <el-table-column prop="Identity" label="Identity" width="90" />
           <el-table-column label="Link" width="70"><template #default="{ row }"><a v-if="row.Link" :href="row.Link" target="_blank" class="ext-link">View</a></template></el-table-column>
-          <el-table-column label="Alignment" width="80"><template #default="{ row }"><el-button size="small" @click="selectedRow = row">Show</el-button></template></el-table-column>
+          <el-table-column label="Alignment" width="80"><template #default="{ row }"><el-button size="small" @click.stop="selectedRow = row">Show</el-button></template></el-table-column>
         </el-table>
       </div>
 
-      <!-- BLAST Visualizations -->
-      <div v-if="blastQueries.length > 0" style="margin-top:20px;">
-        <div v-for="(q, qi) in blastQueries" :key="qi" style="margin-bottom:24px;">
-          <BlastHitsOverview :data="q" />
-          <BlastLengthDistribution :data="q" style="margin-top:12px;" />
-
-          <div v-for="hit in q.hits" :key="hit.id" style="margin-top:4px;">
-            <BlastKablammo :data="hit" />
-          </div>
+      <!-- Selected hit detail: viz + alignment -->
+      <div v-if="selectedRow && blastQueries.length > 0" style="margin-top:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <strong>{{ selectedRow.Hit_ID }}</strong>
+          <el-button size="small" text @click="selectedRow = null">✕</el-button>
         </div>
-      </div>
 
-      <!-- Alignment -->
-      <div v-if="selectedRow" class="alignment-detail">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><strong>{{ selectedRow.Hit_ID }}</strong><el-button size="small" text @click="selectedRow = null">✕</el-button></div>
-        <pre class="alignment-pre">{{ formatAlignment(selectedRow.QSeq || '', selectedRow.Midline || '', selectedRow.SSeq || '') }}</pre>
+        <template v-for="q in blastQueries" :key="q.name">
+          <BlastHitsOverview v-if="q.hits.some((h: any) => h.id === selectedRow.Hit_ID)" :data="q" />
+          <BlastLengthDistribution v-if="q.hits.some((h: any) => h.id === selectedRow.Hit_ID)" :data="q" style="margin-top:12px;" />
+          <template v-for="hit in q.hits" :key="hit.id">
+            <BlastKablammo v-if="hit.id === selectedRow.Hit_ID" :data="hit" style="margin-top:12px;" />
+          </template>
+        </template>
+
+        <div class="alignment-detail" style="margin-top:12px;">
+          <pre class="alignment-pre">{{ formatAlignment(selectedRow.QSeq || '', selectedRow.Midline || '', selectedRow.SSeq || '') }}</pre>
+        </div>
       </div>
 
       <!-- Generic table output -->
@@ -456,6 +535,12 @@ function formatAlignment(qseq: string, midline: string, sseq: string): string {
         <img v-else-if="view.type === 'image'" :src="view.url" style="max-width:100%;border-radius:4px;" />
         <pre v-else-if="view.type === 'text'" style="font-size:12px;max-height:400px;overflow:auto;white-space:pre-wrap;">{{ view.content }}</pre>
       </div>
+
+      <!-- Primer Map Visualization -->
+      <PrimerMap v-if="primerData" :data="primerData" />
+
+      <!-- gRNA Track Visualization -->
+      <GrnaTrack v-if="grnaData" :data="grnaData" />
     </div>
   </div>
 </template>
