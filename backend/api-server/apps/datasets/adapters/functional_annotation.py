@@ -410,7 +410,16 @@ class FunctionalAnnotationAdapter(DatasetQueryAdapter):
                 "SELECT DISTINCT family FROM hse_genes WHERE family IS NOT NULL AND family != '' ORDER BY family",
                 (),
             )
-            families = [r["family"] for r in rows]
+            families = []
+            seen = set()
+            for r in rows:
+                parsed = self._parse_json_value(r["family"])
+                items = parsed if isinstance(parsed, list) else [parsed] if parsed else []
+                for item in items:
+                    key = str(item)
+                    if key not in seen:
+                        seen.add(key)
+                        families.append(item)
             return {
                 "adapter": self.adapter_name,
                 "operation": operation,
