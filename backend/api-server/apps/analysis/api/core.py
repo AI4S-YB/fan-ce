@@ -116,7 +116,7 @@ def list_jobs(page: int = 1, size: int = 20, status: str = None, db: Session = D
     if status and status != "all":
         query = query.filter(BrdAnalysisJob.status == status)
     total = query.count()
-    jobs = db.query(BrdAnalysisJob).order_by(BrdAnalysisJob.id.desc()) \
+    jobs = query.order_by(BrdAnalysisJob.id.desc()) \
         .offset((page - 1) * size).limit(size).all()
     return response_2000(data={
         "items": [

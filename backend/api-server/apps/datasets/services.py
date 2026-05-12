@@ -2911,7 +2911,6 @@ class DatasetDomainService:
         registry = db.query(DatasetRegistry).filter(
             DatasetRegistry.database_id == dataset_id,
             DatasetRegistry.visibility == "public",
-            DatasetRegistry.default_public_version_id.isnot(None),
         ).first()
         if not registry:
             raise HTTPException(status_code=404, detail=f"Public dataset not found: {dataset_id}")
