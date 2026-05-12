@@ -49,6 +49,10 @@ const routes = [
   { path: '/chat', component: () => import('@/views/chat/index.vue') },
   { path: '/analysis', component: () => import('@/views/analysis/index.vue') },
   { path: '/phenotype', component: () => import('@/views/phenotype/index.vue') },
+  {
+    path: '/:pathMatch(.*)*',
+    component: { template: '<div style="text-align:center;padding:80px 20px;"><h2 style="color:#999;">404</h2><p style="color:#bbb;">Page not found</p><router-link to="/" style="color:#409eff;">Back to Home</router-link></div>' },
+  },
 ];
 
 export default createRouter({

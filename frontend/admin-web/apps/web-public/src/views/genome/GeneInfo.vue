@@ -215,12 +215,17 @@ function backToSearch() {
 
 function openTool(toolName: string, type: string) {
   const d = detail?.value;
+  const genomeId = d?.id;
   const params = new URLSearchParams({
     gene_id: geneId.value,
-    dataset_id: String(d?.id || ''),
+    dataset_id: String(genomeId || ''),
     type,
   });
-  router.push(`/tools/${toolName}?${params.toString()}`);
+  if (genomeId) {
+    router.push(`/genome/${genomeId}/tools/${toolName}?${params.toString()}`);
+  } else {
+    router.push(`/tools/${toolName}?${params.toString()}`);
+  }
 }
 
 function openAlignment(db: string, row: any) {

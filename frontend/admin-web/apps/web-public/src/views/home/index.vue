@@ -129,7 +129,7 @@ onMounted(() => {
           :key="item.id"
           shadow="hover"
           style="cursor:pointer;"
-          @click="router.push('/dataset/' + item.id)"
+          @click="item.dataset_type === 'genome' ? router.push('/genome/' + item.id) : router.push('/dataset/' + item.id)"
         >
           <div style="display:flex;justify-content:space-between;align-items:flex-start;">
             <h3 style="margin:0 0 8px;font-size:16px;">

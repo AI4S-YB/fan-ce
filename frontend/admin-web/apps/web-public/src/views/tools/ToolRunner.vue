@@ -262,7 +262,11 @@ async function submitJob() {
   let bindings: any = {};
 
   if (isBlast.value) {
-    if (!inputSeq.value.trim() || selectedDbs.value.length === 0) { submitting.value = false; return; }
+    if (!inputSeq.value.trim() || selectedDbs.value.length === 0) {
+      jobError.value = 'Please enter a query sequence and select at least one database';
+      submitting.value = false;
+      return;
+    }
     params = { query_seq: inputSeq.value, database: selectedDbs.value.join(' ') };
     const adv = advanced.value.trim().split(/\s+/);
     for (let i = 0; i < adv.length; i++) {
@@ -277,7 +281,11 @@ async function submitJob() {
     }
     params = { ...paramValues.value };
   } else {
-    if (!inputSeq.value.trim()) { submitting.value = false; return; }
+    if (!inputSeq.value.trim()) {
+      jobError.value = 'Please enter a sequence';
+      submitting.value = false;
+      return;
+    }
     params = Object.fromEntries(
       tool.value?.parameter_schema.map(p => [p.name, paramValues.value[p.name] ?? p.default ?? '']) || []
     );

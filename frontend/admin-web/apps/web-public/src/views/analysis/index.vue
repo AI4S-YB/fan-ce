@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useRequest } from '@/composables/useRequest';
 
 const route = useRoute();
+const router = useRouter();
 const { get, post } = useRequest();
 
 interface ToolSchema {
@@ -38,6 +39,13 @@ const fileOptions = ref<Record<string, { id: number; label: string; format: stri
 async function loadTools() {
   const data: any = await get('/analysis/tools');
   tools.value = data || [];
+  // Check route.query.tool first
+  const queryTool = route.query.tool as string;
+  if (queryTool) {
+    const match = tools.value.find((t: ToolSchema) => t.tool_id === queryTool);
+    if (match) selectTool(match);
+    return;
+  }
   // Only auto-select when a specific tool is in the URL (/analysis/:toolId)
   const targetId = route.params.toolId as string;
   if (targetId) {
@@ -48,6 +56,7 @@ async function loadTools() {
 
 async function selectTool(tool: ToolSchema) {
   selectedTool.value = tool;
+  router.replace({ path: '/analysis', query: { tool: tool.tool_id } });
   selectedFiles.value = {};
   paramValues.value = {};
   submittedJob.value = null;
