@@ -162,7 +162,9 @@ async function send() {
           }
           await nextTick();
           if (chatRef.value) chatRef.value.scrollTop = chatRef.value.scrollHeight;
-        } catch {}
+        } catch {
+          console.warn('SSE parse error, skipping malformed event');
+        }
       }
     }
   } catch (e: any) {

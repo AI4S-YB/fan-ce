@@ -14,8 +14,12 @@ const hasGenome = computed(() => !!detail?.value);
 
 // Redirect BLAST to unified tool page with genome context
 watch([tool, detail], ([t, d]) => {
-  if (t === 'blast' && d?.dataset_code) {
-    router.replace({ path: '/tools/blast', query: { dataset_code: d.dataset_code, db_type: 'mRNA' } });
+  if (t === 'blast') {
+    if (d?.dataset_code) {
+      router.replace({ path: '/tools/blast', query: { dataset_code: d.dataset_code, db_type: 'mRNA' } });
+    } else {
+      router.replace({ path: '/tools/blast' });
+    }
   }
 }, { immediate: true });
 

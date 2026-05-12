@@ -235,7 +235,7 @@ function fillSearch(value: string) {
         </el-tabs>
 
         <div v-if="queryResult?.data?.download_url || queryResult?.download_url" style="margin-top:12px;">
-          <el-button type="success">Download VCF</el-button>
+          <el-button type="success" tag="a" :href="queryResult?.data?.download_url || queryResult?.download_url" target="_blank">Download VCF</el-button>
         </div>
       </div>
 

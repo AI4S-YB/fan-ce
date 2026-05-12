@@ -31,7 +31,6 @@ const total = computed(() => {
 watch(() => detail?.value?.id, (id) => {
   if (id) {
     page.value = 1;
-    doQuery();
   }
 }, { immediate: true });
 
