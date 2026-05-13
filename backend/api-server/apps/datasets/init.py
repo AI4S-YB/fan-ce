@@ -121,10 +121,6 @@ def _ensure_dataset_schema_columns():
         ddl_statements.append("ALTER TABLE dataset_scan_root ADD COLUMN last_scan_time INTEGER")
     if "create_user_id" not in table_columns["dataset_scan_root"]:
         ddl_statements.append("ALTER TABLE dataset_scan_root ADD COLUMN create_user_id INTEGER")
-    if "auto_scan_enabled" not in table_columns["dataset_scan_root"]:
-        ddl_statements.append("ALTER TABLE dataset_scan_root ADD COLUMN auto_scan_enabled INTEGER DEFAULT 0")
-    if "scan_interval_minutes" not in table_columns["dataset_scan_root"]:
-        ddl_statements.append("ALTER TABLE dataset_scan_root ADD COLUMN scan_interval_minutes INTEGER DEFAULT 1440")
     if "changed_file_count" not in table_columns["dataset_scan_job"]:
         ddl_statements.append("ALTER TABLE dataset_scan_job ADD COLUMN changed_file_count INTEGER DEFAULT 0")
     if "missing_file_count" not in table_columns["dataset_scan_job"]:

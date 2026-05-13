@@ -66,8 +66,6 @@ class DatasetScanRoot(Base):
     scan_recursive = Column(Integer, default=1, comment="是否递归扫描")
     include_hidden = Column(Integer, default=0, comment="是否包含隐藏文件")
     is_active = Column(Integer, default=1, comment="是否启用")
-    auto_scan_enabled = Column(Integer, default=0, comment="是否启用自动扫描")
-    scan_interval_minutes = Column(Integer, default=1440, comment="自动扫描间隔分钟")
     last_scan_time = Column(Integer, comment="最近扫描时间")
     create_user_id = Column(Integer, comment="创建人")
     create_time = Column(Integer, comment="创建时间")

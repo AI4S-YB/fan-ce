@@ -613,8 +613,6 @@ class DatasetScanRootCreateRequest(DatasetContext):
     scan_recursive: Optional[bool] = True
     include_hidden: Optional[bool] = False
     is_active: Optional[bool] = True
-    auto_scan_enabled: Optional[bool] = False
-    scan_interval_minutes: Optional[int] = 1440
 
     model_config = ConfigDict(extra="forbid")
 
@@ -627,8 +625,6 @@ class DatasetScanRootUpdateRequest(DatasetContext):
     scan_recursive: Optional[bool] = None
     include_hidden: Optional[bool] = None
     is_active: Optional[bool] = None
-    auto_scan_enabled: Optional[bool] = None
-    scan_interval_minutes: Optional[int] = None
 
     model_config = ConfigDict(extra="forbid")
 

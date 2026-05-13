@@ -919,10 +919,6 @@ class DatasetDomainService:
 
     def _build_scan_root_payload(self, root_obj):
         last_scan_time = getattr(root_obj, "last_scan_time", None)
-        scan_interval_minutes = getattr(root_obj, "scan_interval_minutes", None) or 1440
-        next_scan_time = None
-        if getattr(root_obj, "auto_scan_enabled", 0) and last_scan_time:
-            next_scan_time = int(last_scan_time) + int(scan_interval_minutes) * 60
         return {
             "id": root_obj.id,
             "root_code": root_obj.root_code,
@@ -932,10 +928,7 @@ class DatasetDomainService:
             "scan_recursive": bool(getattr(root_obj, "scan_recursive", 1)),
             "include_hidden": bool(getattr(root_obj, "include_hidden", 0)),
             "is_active": bool(getattr(root_obj, "is_active", 1)),
-            "auto_scan_enabled": bool(getattr(root_obj, "auto_scan_enabled", 0)),
-            "scan_interval_minutes": scan_interval_minutes,
             "last_scan_time": last_scan_time,
-            "next_scan_time": next_scan_time,
             "create_user_id": getattr(root_obj, "create_user_id", None),
             "create_time": getattr(root_obj, "create_time", None),
             "update_time": getattr(root_obj, "update_time", None),
@@ -4784,8 +4777,6 @@ class DatasetDomainService:
                 "scan_recursive": 1 if request_data.scan_recursive else 0,
                 "include_hidden": 1 if request_data.include_hidden else 0,
                 "is_active": 1 if request_data.is_active else 0,
-                "auto_scan_enabled": 1 if request_data.auto_scan_enabled else 0,
-                "scan_interval_minutes": max(int(request_data.scan_interval_minutes or 1440), 5),
                 "last_scan_time": None,
                 "create_user_id": user.id,
                 "create_time": now,
@@ -4822,10 +4813,6 @@ class DatasetDomainService:
             update_data["include_hidden"] = 1 if request_data.include_hidden else 0
         if request_data.is_active is not None:
             update_data["is_active"] = 1 if request_data.is_active else 0
-        if request_data.auto_scan_enabled is not None:
-            update_data["auto_scan_enabled"] = 1 if request_data.auto_scan_enabled else 0
-        if request_data.scan_interval_minutes is not None:
-            update_data["scan_interval_minutes"] = max(int(request_data.scan_interval_minutes or 1440), 5)
         root_obj = self._update_db_obj(db, root_obj, **update_data)
         return self._build_scan_root_payload(root_obj)
 
