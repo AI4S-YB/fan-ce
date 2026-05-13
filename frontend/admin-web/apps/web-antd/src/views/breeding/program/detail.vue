@@ -40,12 +40,14 @@ import {
   getBreedingProgramOverviewApi,
   getBreedingTrialListApi,
 } from '#/api/breeding/program';
+import Timeline from './components/Timeline.vue';
 import { $t } from '@vben/locales';
 
 defineOptions({ name: 'BreedingProgramDetailPage' });
 
 type DetailTabKey =
   | 'overview'
+  | 'timeline'
   | 'materials'
   | 'trials'
   | 'plots'
@@ -80,6 +82,7 @@ const dataFileRows = ref<BreedingDataFileItem[]>([]);
 
 const loadedTabs = reactive<Record<DetailTabKey, boolean>>({
   overview: false,
+  timeline: false,
   materials: false,
   trials: false,
   plots: false,
@@ -798,6 +801,9 @@ async function ensureTabLoaded(tab: DetailTabKey) {
   if (tab === 'overview' && !loadedTabs.overview) {
     await loadSummary();
   }
+  if (tab === 'timeline' && !loadedTabs.timeline) {
+    loadedTabs.timeline = true;
+  }
   if (tab === 'materials' && !loadedTabs.materials) {
     await loadMaterials();
   }
@@ -1172,6 +1178,19 @@ onMounted(() => {
                 </div>
               </Card>
             </div>
+          </TabPane>
+
+          <TabPane key="timeline" tab="Timeline">
+            <Timeline
+              :materials="materialRows"
+              :trials="trialRows"
+              :plots="plotRows"
+              :observations="observationRows"
+              :biosamples="biosampleRows"
+              :assays="assayRows"
+              :data-files="dataFileRows"
+              @navigate="(tab: string) => (activeTab = tab as DetailTabKey)"
+            />
           </TabPane>
 
           <TabPane key="materials" :tab="$t('breeding.detail.materials')">
