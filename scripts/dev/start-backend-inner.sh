@@ -5,25 +5,20 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BACKEND_DIR="$ROOT_DIR/backend/api-server"
 PIXI_ENV_BIN="$ROOT_DIR/.pixi/envs/default/bin"
 
-if [ -d "$PIXI_ENV_BIN" ]; then
-  export PATH="$PIXI_ENV_BIN:$PATH"
-fi
-
-if [ -x "$BACKEND_DIR/.venv/bin/uvicorn" ]; then
-  UVICORN_BIN="$BACKEND_DIR/.venv/bin/uvicorn"
-elif [ -x "$ROOT_DIR/.venv/bin/uvicorn" ]; then
-  UVICORN_BIN="$ROOT_DIR/.venv/bin/uvicorn"
-else
-  echo "uvicorn not found in $BACKEND_DIR/.venv or $ROOT_DIR/.venv" >&2
+# pixi must manage the Python environment
+if [ ! -d "$PIXI_ENV_BIN" ]; then
+  echo "pixi environment not found at $PIXI_ENV_BIN" >&2
+  echo "Run: pixi install" >&2
   exit 1
 fi
 
-if [ -x "$BACKEND_DIR/.venv/bin/python" ]; then
-  PYTHON_BIN="$BACKEND_DIR/.venv/bin/python"
-elif [ -x "$ROOT_DIR/.venv/bin/python" ]; then
-  PYTHON_BIN="$ROOT_DIR/.venv/bin/python"
-else
-  echo "python not found in $BACKEND_DIR/.venv or $ROOT_DIR/.venv" >&2
+export PATH="$PIXI_ENV_BIN:$PATH"
+
+UVICORN_BIN="$PIXI_ENV_BIN/uvicorn"
+PYTHON_BIN="$PIXI_ENV_BIN/python3"
+
+if [ ! -x "$UVICORN_BIN" ]; then
+  echo "uvicorn not found in pixi environment. Run: pixi install" >&2
   exit 1
 fi
 

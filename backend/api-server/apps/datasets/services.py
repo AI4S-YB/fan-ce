@@ -6639,12 +6639,9 @@ class DatasetDomainService:
                     if not reg or not all(c.isalnum() or c in ':_-.' for c in reg):
                         seq = ""
                     else:
-                        samtools_bin = "/opt/homebrew/bin/samtools"
-                        if not os.path.exists(samtools_bin):
-                            samtools_bin = "samtools"
                         try:
                             result = subprocess.run(
-                                [samtools_bin, "faidx", fp, reg],
+                                ["samtools", "faidx", fp, reg],
                                 capture_output=True, text=True, timeout=30,
                             )
                             seq_lines = result.stdout.strip().split("\n")
