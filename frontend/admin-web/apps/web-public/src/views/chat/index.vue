@@ -201,7 +201,7 @@ async function send() {
       <div ref="chatRef" style="flex:1;overflow-y:auto;padding:12px 0;">
         <div v-if="activeSession.messages.length === 0" style="text-align:center;color:#bbb;padding:60px 0;">
           <p style="font-size:16px;">Ask me anything about public datasets</p>
-          <p style="font-size:13px;">e.g. "What datasets are available?" or "Search for rose genes"</p>
+          <p style="font-size:13px;">e.g. "What datasets are available?" or "Search for genes of interest"</p>
         </div>
         <div v-for="(msg, i) in activeSession.messages" :key="i" style="margin-bottom:14px;">
           <div v-if="msg.role === 'user'" style="text-align:right;">

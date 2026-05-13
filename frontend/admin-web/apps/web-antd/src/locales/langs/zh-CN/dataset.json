@@ -129,7 +129,7 @@
     "versionSetDefault": "已设为默认版本",
     "backToList": "返回列表",
     "descriptionMd": "数据说明文档 (Markdown)",
-    "descriptionMdPlaceholder": "用 Markdown 格式描述数据集内容，例如：\n# 数据集概述\n- 物种：Rosa chinensis\n- 实验设计：干旱处理，3个时间点",
+    "descriptionMdPlaceholder": "用 Markdown 格式描述数据集内容，例如：\n# 数据集概述\n- 物种：属名 种名\n- 实验设计：干旱处理，3个时间点",
     "extraJson": "结构化属性",
     "extraJsonHint": "定义数据集的键值对属性信息，如物种、组织、处理条件等。LLM 可检索这些属性。",
     "extraJsonEmpty": "暂无属性，点击下方按钮添加",

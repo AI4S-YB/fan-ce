@@ -129,7 +129,7 @@
     "versionSetDefault": "Set as default version",
     "backToList": "Back to list",
     "descriptionMd": "Data Description (Markdown)",
-    "descriptionMdPlaceholder": "Describe the dataset in Markdown, e.g.:\n# Overview\n- Species: Rosa chinensis\n- Experimental design: drought treatment, 3 timepoints",
+    "descriptionMdPlaceholder": "Describe the dataset in Markdown, e.g.:\n# Overview\n- Species: Genus species\n- Experimental design: drought treatment, 3 timepoints",
     "extraJson": "Structured Attributes",
     "extraJsonHint": "Define key-value attributes for the dataset, such as species, tissue, treatment conditions. Searchable by LLM.",
     "extraJsonEmpty": "No attributes yet, click the button below to add",

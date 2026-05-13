@@ -84,7 +84,7 @@ const templateDownloadUrl = computed(() => {
   }
   return '';
 });
-const riceDemoDownloadUrl =
+const demoDownloadUrl =
   '/static/templates/germplasm/crop_germplasm_rice_demo.xlsx';
 
 function downloadTemplateExample() {
@@ -95,8 +95,8 @@ function downloadTemplateExample() {
   window.open(templateDownloadUrl.value, '_blank', 'noopener,noreferrer');
 }
 
-function downloadRiceDemo() {
-  window.open(riceDemoDownloadUrl, '_blank', 'noopener,noreferrer');
+function downloadDemoData() {
+  window.open(demoDownloadUrl, '_blank', 'noopener,noreferrer');
 }
 
 const templateFieldColumns = [
@@ -433,7 +433,7 @@ function fieldSchemaRowKey(record: GermplasmFieldSchemaItem) {
                 <Button type="primary" ghost @click="downloadTemplateExample">
                   {{ $t('germplasm.import.downloadTemplateExample') }}
                 </Button>
-                <Button @click="downloadRiceDemo">{{ $t('germplasm.import.downloadRiceDemo') }}</Button>
+                <Button @click="downloadDemoData">{{ $t('germplasm.import.downloadDemoData') }}</Button>
                 <Button @click="helpVisible = true">{{ $t('germplasm.import.viewFieldHelp') }}</Button>
                 <span class="field-helper">
                   {{ $t('germplasm.import.downloadHint') }}

@@ -18,9 +18,9 @@ interface SiteInfo {
 }
 
 const siteInfo = ref<SiteInfo>({
-  site_name: 'Rose Database',
-  site_title: 'Rose Genomics Data Platform',
-  logo_text: 'Rose DB',
+  site_name: 'FAN-CE',
+  site_title: 'FAN Community Edition',
+  logo_text: 'FAN-CE',
   filing_no: '',
   contact_email: '',
   footer_copyright: '',

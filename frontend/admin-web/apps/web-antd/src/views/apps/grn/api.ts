@@ -16,7 +16,7 @@ export async function getGrnListApi(params: GrnListParams = {}) {
   const defaultParams = {
     page: 1,
     page_size: 10,
-    file_path: '/data/biodata/rosedb_mn/grn/rose_grn_test.xlsx',
+    file_path: '/data/biodata/grn/demo_grn.xlsx',
     ...params,
   };
 
@@ -28,7 +28,7 @@ export async function getGrnListApi(params: GrnListParams = {}) {
  */
 export async function getGrnDetailApi(
   gene_id: string,
-  file_path: string = '/data/biodata/rosedb_mn/grn/rose_grn_test.xlsx'
+  file_path: string = '/data/biodata/grn/demo_grn.xlsx'
 ) {
   return requestClient.post<GrnDetailResponse>('/grn/info', null, {
     gene_id,
