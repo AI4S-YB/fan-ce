@@ -48,6 +48,15 @@ const menus: any = computed(() => [
     icon: 'ant-design:user-outlined',
     text: $t('page.profile'),
   },
+  {
+    handler: () => {
+      const url =
+        import.meta.env.VITE_PUBLIC_PORTAL_URL || 'http://localhost:5677';
+      window.open(url, '_blank');
+    },
+    icon: 'ant-design:global-outlined',
+    text: 'View Public Portal',
+  },
 ]);
 const { isDark } = usePreferences();
 const headerColor = computed(() => {
