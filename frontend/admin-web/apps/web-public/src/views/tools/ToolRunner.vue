@@ -95,6 +95,55 @@ const recentJobs = ref<{ id: number; tool_id: string; status: string; created_at
 const filteredRecentJobs = computed(() => recentJobs.value.filter(j => j.tool_id === toolId.value));
 const recentLoading = ref(false);
 
+// ── Gene sets (localStorage) ──
+const GENE_SETS_KEY = 'fan_gene_sets';
+const MAX_GENE_SETS = 20;
+const geneSets = ref<any[]>([]);
+
+function loadGeneSets() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(GENE_SETS_KEY) || '[]');
+    // Filter out expired (>30 days)
+    const cutoff = Math.floor(Date.now() / 1000) - 30 * 24 * 3600;
+    geneSets.value = raw.filter((s: any) => s.createdAt > cutoff);
+    if (geneSets.value.length < raw.length) {
+      localStorage.setItem(GENE_SETS_KEY, JSON.stringify(geneSets.value));
+    }
+  } catch { geneSets.value = []; }
+}
+
+function deleteGeneSet(id: string) {
+  geneSets.value = geneSets.value.filter((s: any) => s.id !== id);
+  localStorage.setItem(GENE_SETS_KEY, JSON.stringify(geneSets.value));
+}
+
+function useGeneSet(gs: any) {
+  const geneList = (gs.genes || []).join('\n');
+  // Fill the gene_list parameter for file-input tools (GO/KEGG)
+  if (hasFileInput.value && paramValues.value.gene_list !== undefined) {
+    paramValues.value.gene_list = geneList;
+  }
+  // Fill the textarea for sequence/batch tools
+  if (toolId.value === 'batch' || !hasFileInput.value) {
+    const ids = (gs.genes || []).join(', ');
+    // For primer/gRNA/MSA/blast — use inputSeq
+    if (!hasFileInput.value && !isBlast.value) {
+      // It's a text-input tool — can't auto-fill sequences, but can set gene ID context
+      // Navigate doesn't make sense, just fill what we can
+    }
+  }
+  // For batch tools specifically, fill gene IDs
+  const el = document.querySelector('textarea[placeholder*="gene"], input[placeholder*="gene"]') as HTMLTextAreaElement;
+  if (!el) {
+    // Try to find the gene_ids input in parameter form
+    for (const p of (tool.value?.parameter_schema || [])) {
+      if (p.name === 'gene_list' && p.type === 'TextParam') {
+        paramValues.value.gene_list = geneList;
+      }
+    }
+  }
+}
+
 function loadRecentJobs() {
   try {
     const ids: number[] = JSON.parse(localStorage.getItem(RECENT_JOBS_KEY) || '[]');
@@ -176,7 +225,7 @@ async function loadCurrentTool() {
   }
 }
 
-onMounted(() => { loadCurrentTool(); loadRecentJobs(); });
+onMounted(() => { loadCurrentTool(); loadRecentJobs(); loadGeneSets(); });
 onUnmounted(() => { if (polling.value) clearInterval(polling.value); });
 
 // Watch route change for tool switching
@@ -394,6 +443,21 @@ function formatAlignment(qseq: string, midline: string, sseq: string): string {
           <span style="font-weight:500;">#{{ j.id }}</span>
           <span style="margin-left:4px;color:#888;">{{ j.tool_id }}</span>
           <el-tag :type="j.status === 'success' ? 'success' : j.status === 'failed' ? 'danger' : j.status === 'running' ? 'warning' : 'info'" size="small" style="margin-left:6px;">{{ j.status }}</el-tag>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gene Sets -->
+    <div v-if="geneSets.length > 0" style="margin-bottom:20px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-weight:600;font-size:13px;">Gene Sets</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div v-for="gs in geneSets" :key="gs.id"
+          style="cursor:pointer;padding:4px 10px;border-radius:4px;font-size:12px;border:1px solid #ddd;background:#fff;display:flex;align-items:center;gap:6px;">
+          <span @click="useGeneSet(gs)" style="font-weight:500;">{{ gs.name }}</span>
+          <span @click="useGeneSet(gs)" style="color:#888;">({{ gs.genes.length }} genes)</span>
+          <span @click.stop="deleteGeneSet(gs.id)" style="color:#ccc;cursor:pointer;font-size:14px;">×</span>
         </div>
       </div>
     </div>
