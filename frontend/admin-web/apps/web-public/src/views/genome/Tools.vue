@@ -61,6 +61,15 @@ function useGeneSet(gs: any) {
   lastGeneSet.value = { geneIds: geneIdsArr, transcripts };
 }
 
+function deleteGeneSet(id: string) {
+  geneSets.value = geneSets.value.filter((s: any) => s.id !== id);
+  localStorage.setItem(GENE_SETS_KEY, JSON.stringify(geneSets.value));
+}
+
+// Batch sequence retrieval
+const geneIds = ref('');
+const seqType = ref('gene');
+
 // Track last used gene set for auto-switching IDs when seqType changes
 const lastGeneSet = ref<any>(null);
 
@@ -73,15 +82,6 @@ watch(seqType, () => {
     }
   }
 });
-
-function deleteGeneSet(id: string) {
-  geneSets.value = geneSets.value.filter((s: any) => s.id !== id);
-  localStorage.setItem(GENE_SETS_KEY, JSON.stringify(geneSets.value));
-}
-
-// Batch sequence retrieval
-const geneIds = ref('');
-const seqType = ref('gene');
 const enableUpstream = ref(false);
 const enableDownstream = ref(false);
 const upstream = ref(2000);

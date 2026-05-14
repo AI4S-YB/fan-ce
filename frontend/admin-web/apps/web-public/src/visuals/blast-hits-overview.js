@@ -9,6 +9,7 @@ const MAX_INITIAL = 20;
 export function createHitsOverview(container, data, _options) {
   const state = { collapsed: false, showAll: false };
   container._blastState = state;
+  container._blastOptions = _options;
 
   render(container, data, state);
 
@@ -18,6 +19,7 @@ export function createHitsOverview(container, data, _options) {
 }
 
 export function updateHitsOverview(container, data, _options) {
+  container._blastOptions = _options;
   render(container, data, container._blastState || { collapsed: false, showAll: false });
 }
 
@@ -64,6 +66,8 @@ function render(container, data, state) {
   g.append('g').attr('transform', `translate(0,${displayHits.length * ROW_HEIGHT})`).call(xAxis)
     .selectAll('text').style('font-size', '10px');
 
+  const onHitClick = container._blastOptions?.onHitClick || null;
+
   g.selectAll('.hit-label')
     .data(displayHits)
     .enter().append('text')
@@ -73,8 +77,11 @@ function render(container, data, state) {
     .attr('dy', '0.3em')
     .attr('text-anchor', 'end')
     .style('font-size', '10px')
+    .style('fill', onHitClick ? '#409eff' : '#606266')
+    .style('cursor', onHitClick ? 'pointer' : 'default')
     .text(d => d.id.length > 25 ? d.id.slice(0, 25) + '…' : d.id)
-    .append('title').text(d => `${d.id}: ${d.def}`);
+    .on('click', (_, d) => { if (onHitClick) onHitClick(d); })
+    .append('title').text(d => `${d.id}: ${d.def}${onHitClick ? '\nClick to view details' : ''}`);
 
   for (let i = 0; i < displayHits.length; i++) {
     const hit = displayHits[i];

@@ -216,16 +216,28 @@ function backToSearch() {
 function openTool(toolName: string, type: string) {
   const d = detail?.value;
   const genomeId = d?.id;
+
+  // Use transcript ID for mRNA/CDS/protein, gene ID for gene
+  const id = type === 'gene' ? geneId.value : (canonicalId.value || geneId.value);
+
+  // Get the actual sequence for pre-fill
+  let seq = '';
+  if (type === 'gene') seq = geneSeq.value;
+  else if (type === 'mrna') seq = mrnaSeq.value;
+  else if (type === 'cds') seq = cdsSeq.value;
+  else if (type === 'protein') seq = proteinSeq.value;
+
+  const cleanSeq = seq.replace(/\s/g, '');
+  const fasta = cleanSeq ? `>${id}\n${cleanSeq}` : '';
+
   const params = new URLSearchParams({
-    gene_id: geneId.value,
+    gene_id: id,
     dataset_id: String(genomeId || ''),
     type,
   });
-  if (genomeId) {
-    router.push(`/genome/${genomeId}/tools/${toolName}?${params.toString()}`);
-  } else {
-    router.push(`/tools/${toolName}?${params.toString()}`);
-  }
+  if (fasta) params.set('seq', fasta);
+
+  router.push(`/tools/${toolName}?${params.toString()}`);
 }
 
 function openAlignment(db: string, row: any) {

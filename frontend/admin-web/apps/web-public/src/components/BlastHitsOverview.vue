@@ -4,9 +4,11 @@ import { createHitsOverview, updateHitsOverview, destroyHitsOverview } from '@/v
 import { getCollapsed, setCollapsed } from '@/visuals/blast-helpers';
 
 const props = defineProps<{ data: { name: string; length: number; type: string; hits: any[] } }>();
+const emit = defineEmits<{ (e: 'hit-click', hit: any): void }>();
 
 const container = ref<HTMLElement>();
 const collapsed = ref(getCollapsed('hits-overview'));
+const opts = { onHitClick: (hit: any) => emit('hit-click', hit) };
 
 function toggle() {
   collapsed.value = !collapsed.value;
@@ -15,7 +17,7 @@ function toggle() {
 
 onMounted(() => {
   if (container.value && !collapsed.value) {
-    createHitsOverview(container.value, props.data);
+    createHitsOverview(container.value, props.data, opts);
   }
 });
 
@@ -24,13 +26,13 @@ onUnmounted(() => {
 });
 
 watch(() => props.data, (d) => {
-  if (container.value && !collapsed.value) updateHitsOverview(container.value, d);
+  if (container.value && !collapsed.value) updateHitsOverview(container.value, d, opts);
 }, { deep: true });
 
 watch(collapsed, (c) => {
   if (container.value) {
     if (c) destroyHitsOverview(container.value);
-    else createHitsOverview(container.value, props.data);
+    else createHitsOverview(container.value, props.data, opts);
   }
 });
 </script>

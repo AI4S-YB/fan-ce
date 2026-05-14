@@ -86,6 +86,8 @@ const jobStatus = ref('');
 const jobError = ref('');
 const outputViews = ref<Record<string, any>>({});
 const selectedRow = ref<any>(null);
+const selectedHitId = ref('');
+const selectedHsp = ref<any>(null);
 const polling = ref<ReturnType<typeof setInterval> | null>(null);
 
 // ── Recent jobs (localStorage) ──
@@ -176,11 +178,17 @@ function viewRecentJob(job: { id: number }) {
   jobError.value = '';
   outputViews.value = {};
   selectedRow.value = null;
+  selectedHitId.value = '';
   blastQueries.value = [];
   primerData.value = null;
   grnaData.value = null;
   if (polling.value) clearInterval(polling.value);
   startPolling();
+}
+
+function clearRecentJobs() {
+  recentJobs.value = [];
+  localStorage.removeItem(RECENT_JOBS_KEY);
 }
 
 // Reload tool when route changes
@@ -369,6 +377,8 @@ function startPolling() {
         if (j.status === 'success' && j.output_files?.length) {
           for (const f of j.output_files) {
             try {
+              // Skip blast_report text — download link only
+              if (f.name === 'blast_report') continue;
               const v: any = await get(`/analysis/jobs/${jobId.value}/output/${f.name}/view`);
               outputViews.value[f.name] = v?.data || v;
               if (f.name === 'blast_table' && v?.rows) {
@@ -434,7 +444,7 @@ function formatAlignment(qseq: string, midline: string, sseq: string): string {
     <div v-if="filteredRecentJobs.length > 0" style="margin-bottom:20px;background:#f8f9fa;border:1px solid #e9ecef;border-radius:8px;padding:12px 16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
         <span style="font-weight:600;font-size:13px;">Recent Jobs</span>
-        <el-button size="small" text @click="recentJobs = []; localStorage.removeItem(RECENT_JOBS_KEY)">Clear</el-button>
+        <el-button size="small" text @click="clearRecentJobs">Clear</el-button>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <div v-for="j in filteredRecentJobs" :key="j.id"
@@ -564,36 +574,48 @@ function formatAlignment(qseq: string, midline: string, sseq: string): string {
       </div>
       <div v-if="jobError" style="color:#f56c6c;font-size:13px;white-space:pre-wrap;margin-bottom:8px;">{{ jobError }}</div>
 
-      <!-- BLAST table -->
-      <div v-if="outputViews['blast_table']?.type === 'table'" style="max-height:600px;overflow:auto;">
-        <el-table :data="outputViews['blast_table'].rows" border size="small" stripe @row-click="(row: any) => selectedRow = row" highlight-current-row>
-          <el-table-column prop="Hit_ID" label="Subject ID" width="180" show-overflow-tooltip />
-          <el-table-column prop="Hit_Def" label="Description" min-width="300" show-overflow-tooltip />
-          <el-table-column prop="Score" label="Score" width="80" />
-          <el-table-column prop="Evalue" label="E-value" width="90" />
-          <el-table-column prop="Identity" label="Identity" width="90" />
-          <el-table-column label="Link" width="70"><template #default="{ row }"><a v-if="row.Link" :href="row.Link" target="_blank" class="ext-link">View</a></template></el-table-column>
-          <el-table-column label="Alignment" width="80"><template #default="{ row }"><el-button size="small" @click.stop="selectedRow = row">Show</el-button></template></el-table-column>
-        </el-table>
-      </div>
-
-      <!-- Selected hit detail: viz + alignment -->
-      <div v-if="selectedRow && blastQueries.length > 0" style="margin-top:16px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <strong>{{ selectedRow.Hit_ID }}</strong>
-          <el-button size="small" text @click="selectedRow = null">✕</el-button>
+      <!-- BLAST Visualizations -->
+      <div v-if="blastQueries.length > 0" style="margin-top:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <span style="font-weight:600;">BLAST Results</span>
+          <div style="display:flex;gap:8px;">
+            <a v-if="outputViews['blast_table']?.type === 'table'" :href="'/api/v1/analysis/jobs/' + jobId + '/output/blast_table'" download class="dl-btn">Download TSV</a>
+            <a v-if="isBlast" :href="'/api/v1/analysis/jobs/' + jobId + '/output/blast_report'" download class="dl-btn">Download Report</a>
+          </div>
         </div>
 
-        <template v-for="q in blastQueries" :key="q.name">
-          <BlastHitsOverview v-if="q.hits.some((h: any) => h.id === selectedRow.Hit_ID)" :data="q" />
-          <BlastLengthDistribution v-if="q.hits.some((h: any) => h.id === selectedRow.Hit_ID)" :data="q" style="margin-top:12px;" />
-          <template v-for="hit in q.hits" :key="hit.id">
-            <BlastKablammo v-if="hit.id === selectedRow.Hit_ID" :data="hit" style="margin-top:12px;" />
-          </template>
-        </template>
+        <div v-for="(q, qi) in blastQueries" :key="qi" style="margin-bottom:20px;background:#fff;border:1px solid #e5e5e5;border-radius:8px;padding:12px;">
+          <BlastHitsOverview :data="q" @hit-click="(hit: any) => { selectedHitId = hit.id; selectedHsp = null; }" />
+          <BlastLengthDistribution :data="q" style="margin-top:8px;" />
 
-        <div class="alignment-detail" style="margin-top:12px;">
-          <pre class="alignment-pre">{{ formatAlignment(selectedRow.QSeq || '', selectedRow.Midline || '', selectedRow.SSeq || '') }}</pre>
+          <!-- Hit selector -->
+          <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:8px;background:#f8f9fa;border-radius:6px;">
+            <span style="font-size:13px;font-weight:600;color:#606266;">Hits:</span>
+            <span v-for="hit in q.hits" :key="hit.id"
+              @click="selectedHitId = (selectedHitId === hit.id ? '' : hit.id); selectedHsp = null"
+              :style="{
+                cursor:'pointer', padding:'3px 10px', borderRadius:'4px', fontSize:'12px', fontWeight:'500',
+                border:'1px solid ' + (selectedHitId === hit.id ? '#409eff' : '#d9d9d9'),
+                background: selectedHitId === hit.id ? '#ecf5ff' : '#fff',
+                color: selectedHitId === hit.id ? '#409eff' : '#303133',
+              }">
+              {{ hit.id }}
+            </span>
+          </div>
+
+          <!-- Kablammo + alignment for selected hit -->
+          <template v-for="hit in q.hits" :key="hit.id">
+            <div v-if="hit.id === selectedHitId" style="margin-top:12px;">
+              <BlastKablammo :data="hit" :seq-type="q.type" @hsp-click="(hsp: any) => selectedHsp = hsp" />
+              <div v-if="selectedHsp" style="margin-top:20px;padding:12px;background:#f5f7fa;border-radius:6px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <span style="font-size:12px;font-weight:600;">HSP: Q {{ selectedHsp.qStart }}-{{ selectedHsp.qEnd }} / S {{ selectedHsp.sStart }}-{{ selectedHsp.sEnd }}</span>
+                  <el-button size="small" text @click="selectedHsp = null">✕</el-button>
+                </div>
+                <pre class="alignment-pre">{{ formatAlignment(selectedHsp.qSeq || '', selectedHsp.midline || '', selectedHsp.sSeq || '') }}</pre>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
 
@@ -605,7 +627,7 @@ function formatAlignment(qseq: string, midline: string, sseq: string): string {
           </el-table>
         </template>
         <img v-else-if="view.type === 'image'" :src="view.url" style="max-width:100%;border-radius:4px;" />
-        <pre v-else-if="view.type === 'text'" style="font-size:12px;max-height:400px;overflow:auto;white-space:pre-wrap;">{{ view.content }}</pre>
+        <pre v-else-if="view.type === 'text' && name !== 'blast_report'" style="font-size:12px;max-height:400px;overflow:auto;white-space:pre-wrap;">{{ view.content }}</pre>
       </div>
 
       <!-- Primer Map Visualization -->
@@ -657,6 +679,7 @@ function formatAlignment(qseq: string, midline: string, sseq: string): string {
 
 /* Shared */
 .ext-link { color: #409eff; text-decoration: none; }
-.alignment-detail { margin-top: 16px; padding: 16px; background: #f5f7fa; border-radius: 8px; }
-.alignment-pre { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; white-space: pre; overflow-x: auto; background: #101828; color: #d4d4d4; padding: 12px; border-radius: 6px; }
+.dl-btn { display:inline-block;padding:4px 12px;font-size:12px;border:1px solid #409eff;border-radius:4px;color:#409eff;text-decoration:none;transition:all .2s; }
+.dl-btn:hover { background:#409eff;color:#fff; }
+.alignment-pre { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 11px; white-space: pre-wrap; overflow-x: auto; background: #101828; color: #d4d4d4; padding: 10px; border-radius: 4px; max-height: 400px; overflow-y: auto; }
 </style>

@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { createKablammo, updateKablammo, destroyKablammo } from '@/visuals/blast-kablammo';
 import { getCollapsed, setCollapsed } from '@/visuals/blast-helpers';
 
-const props = defineProps<{ data: { id: string; length: number; hsps: any[] } }>();
+const props = defineProps<{ data: { id: string; length: number; hsps: any[] }; seqType?: string }>();
+const emit = defineEmits<{ (e: 'hsp-click', hsp: any, index: number): void }>();
 
 const container = ref<HTMLElement>();
 const collapsed = ref(getCollapsed('kablammo'));
+const opts = computed(() => ({ onHspClick: (hsp: any, idx: number) => emit('hsp-click', hsp, idx), seqType: props.seqType }));
 
 function toggle() {
   collapsed.value = !collapsed.value;
@@ -14,7 +16,7 @@ function toggle() {
 }
 
 onMounted(() => {
-  if (container.value && !collapsed.value) createKablammo(container.value, props.data);
+  if (container.value && !collapsed.value) createKablammo(container.value, props.data, opts.value);
 });
 
 onUnmounted(() => {
@@ -22,13 +24,13 @@ onUnmounted(() => {
 });
 
 watch(() => props.data, (d) => {
-  if (container.value && !collapsed.value) updateKablammo(container.value, d);
+  if (container.value && !collapsed.value) updateKablammo(container.value, d, opts.value);
 }, { deep: true });
 
 watch(collapsed, (c) => {
   if (container.value) {
     if (c) destroyKablammo(container.value);
-    else createKablammo(container.value, props.data);
+    else createKablammo(container.value, props.data, opts.value);
   }
 });
 </script>
