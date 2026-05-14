@@ -9,17 +9,22 @@
     "preview": "vite preview --host 127.0.0.1 --port 5678"
   },
   "dependencies": {
+    "@jbrowse/react-linear-genome-view": "^3.1.0",
     "@vueuse/core": "catalog:",
     "axios": "catalog:",
     "d3": "^7.9.0",
     "echarts": "catalog:",
     "element-plus": "catalog:",
     "pinia": "catalog:",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "vue": "catalog:",
     "vue-router": "catalog:"
   },
   "devDependencies": {
     "@types/d3": "^7.4.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-vue": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",

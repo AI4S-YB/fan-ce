@@ -4,8 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useDatasetQuery } from '@/composables/useDatasets';
 import { useRequest } from '@/composables/useRequest';
 import type { PublicDatasetDetail } from '@/types/dataset';
-
-declare var FeatureViewer: any;
+import GeneBrowser from '@/components/GeneBrowser.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -116,7 +115,6 @@ async function loadGeneDetail() {
       } catch { /* ignore */ }
     }
     await nextTick();
-    if (exons.value.length > 0) tryRenderStructure();
   } catch (e: any) {
     errorMsg.value = 'Failed: ' + (e?.message || String(e));
   }
@@ -155,38 +153,6 @@ async function tabHandleClick(tab: any) {
   if (name === '2' && !geneSeq.value && detail?.value?.id) {
     await loadSequences(detail.value.id);
   }
-  if (name === '1') {
-    await nextTick();
-    tryRenderStructure();
-  }
-}
-
-function tryRenderStructure() {
-  const container = document.getElementById('struc_view');
-  if (!container || exons.value.length === 0) return;
-  const g = gene.value;
-  if (!g) return;
-  container.innerHTML = '';
-  const start = (g.start as number) || 1;
-  const stop = (g.stop as number) || 1;
-  const pad = 150;
-  const seq = geneFlankSeq.value || 'N'.repeat(pad + (stop - start + 1) + pad);
-
-  const fv = new FeatureViewer(seq, '#struc_view', {
-    showAxis: true, showSequence: true, brushActive: true,
-    toolbar: true, bubbleHelp: true, zoomMax: 20,
-  });
-  const exonFeatures = exons.value.filter((e: any) => e.feature_type === 'exon');
-  exonFeatures.forEach((e: any) => {
-    fv.addFeature({
-      x: (e.start as number) - start + 1 + pad,
-      y: (e.stop as number) - start + 1 + pad,
-      fillColor: '#409eff',
-      strokeColor: '#337ecc',
-      shape: 'rect',
-      height: 12,
-    });
-  });
 }
 
 function formatLocation(loc: any): string {
@@ -301,9 +267,17 @@ function getFamilyLabel(type: string): string {
             <el-descriptions-item label="Strand">({{ gene.strand }})</el-descriptions-item>
           </el-descriptions>
           <h4>Gene Structure</h4>
-          <div id="struc_view" style="min-height:80px;">
-            <div v-if="exons.length === 0" style="color:#999;font-size:12px;padding:12px;">No structural annotation available</div>
-          </div>
+          <GeneBrowser
+            v-if="gene && geneFlankSeq"
+            seq-name="ref"
+            :seq="geneFlankSeq"
+            :start="(gene.start as number) || 1"
+            :stop="(gene.stop as number) || 1"
+            :exons="exons"
+            :gene-id="geneId"
+          />
+          <div v-else-if="exons.length === 0" style="color:#999;font-size:12px;padding:12px;">No structural annotation available</div>
+          <div v-else style="color:#999;font-size:12px;padding:12px;text-align:center;">Loading gene structure...</div>
         </el-tab-pane>
 
         <el-tab-pane label="Sequence" name="2">
