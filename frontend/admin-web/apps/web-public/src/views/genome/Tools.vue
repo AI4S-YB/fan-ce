@@ -27,7 +27,28 @@ watch([tool, detail], ([t, d]) => {
 const { items: genomeList, load: loadGenomeList } = useDatasetList();
 const selectedGenomeId = ref<number | null>(null);
 const batchDatasetId = computed(() => detail?.value?.id ?? selectedGenomeId.value);
-onMounted(() => { if (!hasGenome.value) loadGenomeList({ dataset_type: 'genome', page: 1, size: 50 }); });
+onMounted(() => { if (!hasGenome.value) loadGenomeList({ dataset_type: 'genome', page: 1, size: 50 }); loadGeneSets(); });
+
+// ── Gene sets (shared with ToolRunner) ──
+const GENE_SETS_KEY = 'fan_gene_sets';
+const geneSets = ref<any[]>([]);
+
+function loadGeneSets() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(GENE_SETS_KEY) || '[]');
+    const cutoff = Math.floor(Date.now() / 1000) - 30 * 24 * 3600;
+    geneSets.value = raw.filter((s: any) => s.createdAt > cutoff);
+  } catch { geneSets.value = []; }
+}
+
+function useGeneSet(gs: any) {
+  geneIds.value = (gs.genes || []).join('\n');
+}
+
+function deleteGeneSet(id: string) {
+  geneSets.value = geneSets.value.filter((s: any) => s.id !== id);
+  localStorage.setItem(GENE_SETS_KEY, JSON.stringify(geneSets.value));
+}
 
 // Batch sequence retrieval
 const geneIds = ref('');
@@ -219,6 +240,19 @@ function siteDownloadUrl(datasetCode: string, fileId: number) {
           <el-input-number v-model="upstream" :min="1" :max="3000" :disabled="!enableUpstream" size="small" style="width:140px;" /> bp
           <el-checkbox v-model="enableDownstream" style="margin-left:8px;">Downstream</el-checkbox>
           <el-input-number v-model="downstream" :min="1" :max="3000" :disabled="!enableDownstream" size="small" style="width:140px;" /> bp
+        </div>
+
+        <!-- Gene Sets -->
+        <div v-if="geneSets.length > 0 && tool === 'batch'" style="margin-bottom:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:8px 12px;">
+          <div style="font-size:12px;font-weight:600;color:#166534;margin-bottom:6px;">Gene Sets</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <div v-for="gs in geneSets" :key="gs.id"
+              style="cursor:pointer;padding:3px 8px;border-radius:3px;font-size:11px;border:1px solid #ddd;background:#fff;display:flex;align-items:center;gap:4px;">
+              <span @click="useGeneSet(gs)" style="font-weight:500;">{{ gs.name }}</span>
+              <span @click="useGeneSet(gs)" style="color:#888;">({{ gs.genes.length }})</span>
+              <span @click.stop="deleteGeneSet(gs.id)" style="color:#ccc;cursor:pointer;font-size:12px;">×</span>
+            </div>
+          </div>
         </div>
 
         <!-- Input -->

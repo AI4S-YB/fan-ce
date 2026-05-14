@@ -354,6 +354,49 @@ async def _execute_search_germplasm(db, arguments: dict, user) -> dict:
     return {"items": items, "total": result.get("total", 0), "page": page, "size": size}
 
 
+async def _save_genes_as_gene_set(db, arguments: dict, user) -> dict:
+    """Save a list of gene IDs as a gene set."""
+    name = arguments.get("name", "").strip()
+    gene_ids = arguments.get("gene_ids", [])
+    genome_file_path = arguments.get("genome_file_path", "")
+
+    if not name:
+        return {"success": False, "message": "Gene set name is required"}
+    if not gene_ids:
+        return {"success": False, "message": "At least one gene ID is required"}
+
+    from apps.gene.crud import crud_gene_set, crud_gene_set_link
+
+    # Create gene set
+    gene_set = crud_gene_set.create(db, obj_in={
+        "name": name,
+        "description": f"Created by LLM. Genome: {genome_file_path}" if genome_file_path else "Created by LLM",
+        "user_id": user.id if user else None,
+    })
+    db.commit()
+
+    # Link genes
+    added = 0
+    for gene_id in gene_ids:
+        try:
+            crud_gene_set_link.create(db, obj_in={
+                "geneset_id": gene_set.id,
+                "gene_id": str(gene_id).strip(),
+                "file_path": genome_file_path or "",
+            })
+            added += 1
+        except Exception:
+            pass  # skip duplicates
+    db.commit()
+
+    return {
+        "success": True,
+        "gene_set_id": gene_set.id,
+        "gene_count": added,
+        "message": f"Gene set '{name}' created with {added} genes",
+    }
+
+
 # ---------------------------------------------------------------------------
 # Tool definitions
 # ---------------------------------------------------------------------------
@@ -650,6 +693,34 @@ DATASET_TOOLS = [
             },
         },
         execute=_execute_search_germplasm,
+        require_admin=False,
+    ),
+    ToolDefinition(
+        name="save_genes_as_gene_set",
+        description=(
+            "将搜索或查询到的一组基因ID保存为一个基因集（Gene Set）。"
+            "Save a list of gene IDs as a named gene set for later use."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name for the gene set, e.g. 'drought response genes' or '乙烯响应基因'",
+                },
+                "gene_ids": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of gene identifiers",
+                },
+                "genome_file_path": {
+                    "type": "string",
+                    "description": "Optional genome file path to associate genes with a specific genome",
+                },
+            },
+            "required": ["name", "gene_ids"],
+        },
+        execute=_save_genes_as_gene_set,
         require_admin=False,
     ),
 ]
