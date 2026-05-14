@@ -3,6 +3,7 @@ import { ref, computed, inject, watch, type Ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDatasetQuery } from '@/composables/useDatasets';
 import type { PublicDatasetDetail } from '@/types/dataset';
+import { ElMessage } from 'element-plus';
 
 const router = useRouter();
 const detail = inject<Ref<PublicDatasetDetail | null>>('genomeDetail');
@@ -217,6 +218,41 @@ function goToGene(geneId: string) {
   router.push({ path: router.currentRoute.value.path.replace(/\/tf$/, '/geneinfo'), query: { gene_id: geneId } });
 }
 
+// ── Gene set selection ──
+const tableRef = ref<any>(null);
+const selectedGenes = ref<any[]>([]);
+const showGeneSetDialog = ref(false);
+const geneSetName = ref('');
+
+function handleSelectionChange(rows: any[]) { selectedGenes.value = rows; }
+function selectAll() { if (tableRef.value) tableRef.value.toggleAllSelection(); }
+function deselectAll() { if (tableRef.value) tableRef.value.clearSelection(); }
+function openGeneSetDialog() { geneSetName.value = ''; showGeneSetDialog.value = true; }
+
+function saveGeneSet() {
+  if (!geneSetName.value.trim() || selectedGenes.value.length === 0) return;
+  try {
+    const sets = JSON.parse(localStorage.getItem('fan_gene_sets') || '[]');
+    const genes = selectedGenes.value.map((r: any) => ({
+      gene_id: r.gene_id || '',
+      canonical_transcript: r.canonical_transcript || r.gene_id || '',
+    }));
+    const detailData = detail?.value;
+    sets.unshift({
+      id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2),
+      name: geneSetName.value.trim(),
+      genes,
+      genomeId: detailData?.id || 0,
+      genomeTitle: detailData?.title || detailData?.dataset_code || '',
+      createdAt: Math.floor(Date.now() / 1000),
+    });
+    if (sets.length > 20) sets.length = 20;
+    localStorage.setItem('fan_gene_sets', JSON.stringify(sets));
+    showGeneSetDialog.value = false;
+    ElMessage.success(`Gene set "${geneSetName.value}" saved (${genes.length} genes)`);
+  } catch { /* ignore */ }
+}
+
 function currentFamilies() {
   if (activeTab.value === 'TF') return tfFamilies.value;
   if (activeTab.value === 'TR') return trFamilies.value;
@@ -292,7 +328,16 @@ const tabStyle = (t: string) => ({
         <span style="color:#888;font-size:12px;">{{ geneTotal }} genes</span>
       </div>
 
-      <el-table :data="geneList" size="small" border stripe v-loading="queryLoading" v-if="geneList.length > 0">
+      <div v-if="geneList.length > 0" style="margin-bottom:8px;display:flex;gap:8px;align-items:center;">
+        <el-button size="small" @click="selectAll">Select All</el-button>
+        <el-button size="small" @click="deselectAll">Clear</el-button>
+        <el-button v-if="selectedGenes.length > 0" type="success" size="small" @click="openGeneSetDialog">
+          Save as Gene Set ({{ selectedGenes.length }} genes)
+        </el-button>
+      </div>
+
+      <el-table ref="tableRef" :data="geneList" size="small" border stripe v-loading="queryLoading" v-if="geneList.length > 0" @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="40" />
         <el-table-column prop="gene_id" label="Gene ID" width="180">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="goToGene(row.gene_id)">{{ row.gene_id }}</el-button>
@@ -302,6 +347,7 @@ const tabStyle = (t: string) => ({
         <el-table-column prop="start" label="Start" width="100" />
         <el-table-column prop="stop" label="End" width="100" />
         <el-table-column prop="strand" label="Strand" width="70" />
+        <el-table-column prop="canonical_transcript" label="Canonical Transcript" width="180" show-overflow-tooltip />
         <el-table-column prop="description" label="Description" min-width="200" show-overflow-tooltip />
       </el-table>
 
@@ -311,5 +357,14 @@ const tabStyle = (t: string) => ({
         <el-pagination v-model:current-page="genePage" :page-size="20" :total="geneTotal" layout="prev, pager, next" small @current-change="onGenePageChange" />
       </div>
     </template>
+
+    <el-dialog v-model="showGeneSetDialog" title="Save Gene Set" width="400px">
+      <el-input v-model="geneSetName" placeholder="Gene set name..." maxlength="100" />
+      <p style="color:#888;font-size:12px;margin-top:4px;">{{ selectedGenes.length }} genes will be saved</p>
+      <template #footer>
+        <el-button @click="showGeneSetDialog = false">Cancel</el-button>
+        <el-button type="primary" @click="saveGeneSet" :disabled="!geneSetName.trim()">Save</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>

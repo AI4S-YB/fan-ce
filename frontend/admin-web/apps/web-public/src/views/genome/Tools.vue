@@ -42,8 +42,37 @@ function loadGeneSets() {
 }
 
 function useGeneSet(gs: any) {
-  geneIds.value = (gs.genes || []).join('\n');
+  const items = gs.genes || [];
+  // For gene mode: use gene_id
+  const geneIdsArr = typeof items[0] === 'string'
+    ? items
+    : items.map((g: any) => g.gene_id || '');
+  // Store transcripts for mRNA/protein mode
+  const transcripts = typeof items[0] === 'string'
+    ? items
+    : items.map((g: any) => g.canonical_transcript || g.gene_id || '');
+
+  if (seqType.value === 'mrna' || seqType.value === 'protein' || seqType.value === 'cds') {
+    geneIds.value = transcripts.join('\n');
+  } else {
+    geneIds.value = geneIdsArr.join('\n');
+  }
+
+  lastGeneSet.value = { geneIds: geneIdsArr, transcripts };
 }
+
+// Track last used gene set for auto-switching IDs when seqType changes
+const lastGeneSet = ref<any>(null);
+
+watch(seqType, () => {
+  if (lastGeneSet.value) {
+    if (seqType.value === 'mrna' || seqType.value === 'protein' || seqType.value === 'cds') {
+      geneIds.value = lastGeneSet.value.transcripts.join('\n');
+    } else {
+      geneIds.value = lastGeneSet.value.geneIds.join('\n');
+    }
+  }
+});
 
 function deleteGeneSet(id: string) {
   geneSets.value = geneSets.value.filter((s: any) => s.id !== id);

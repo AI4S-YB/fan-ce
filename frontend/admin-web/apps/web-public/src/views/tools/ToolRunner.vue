@@ -118,30 +118,30 @@ function deleteGeneSet(id: string) {
 }
 
 function useGeneSet(gs: any) {
-  const geneList = (gs.genes || []).join('\n');
-  // Fill the gene_list parameter for file-input tools (GO/KEGG)
+  const items = gs.genes || [];
+  const plainGenes = typeof items[0] === 'string'
+    ? items
+    : items.map((g: any) => g.gene_id || '');
+  const transcripts = typeof items[0] === 'string'
+    ? items
+    : items.map((g: any) => g.canonical_transcript || g.gene_id || '');
+
+  const geneList = plainGenes.join('\n');
+  const transcriptList = transcripts.join('\n');
+
+  // For GO/KEGG Enrich: use gene IDs
   if (hasFileInput.value && paramValues.value.gene_list !== undefined) {
     paramValues.value.gene_list = geneList;
   }
-  // Fill the textarea for sequence/batch tools
-  if (toolId.value === 'batch' || !hasFileInput.value) {
-    const ids = (gs.genes || []).join(', ');
-    // For primer/gRNA/MSA/blast — use inputSeq
-    if (!hasFileInput.value && !isBlast.value) {
-      // It's a text-input tool — can't auto-fill sequences, but can set gene ID context
-      // Navigate doesn't make sense, just fill what we can
+  // For text-input tools, check the parameter name
+  for (const p of (tool.value?.parameter_schema || [])) {
+    if (p.name === 'gene_list' && p.type === 'TextParam') {
+      paramValues.value.gene_list = geneList;
     }
   }
-  // For batch tools specifically, fill gene IDs
-  const el = document.querySelector('textarea[placeholder*="gene"], input[placeholder*="gene"]') as HTMLTextAreaElement;
-  if (!el) {
-    // Try to find the gene_ids input in parameter form
-    for (const p of (tool.value?.parameter_schema || [])) {
-      if (p.name === 'gene_list' && p.type === 'TextParam') {
-        paramValues.value.gene_list = geneList;
-      }
-    }
-  }
+  // For tools that need transcript IDs: store both
+  (gs as any)._transcriptList = transcriptList;
+  (gs as any)._geneList = geneList;
 }
 
 function loadRecentJobs() {

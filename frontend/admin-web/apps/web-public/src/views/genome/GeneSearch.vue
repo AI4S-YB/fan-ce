@@ -16,6 +16,8 @@ const keyword = ref('');
 const page = ref(1);
 const pageSize = ref(20);
 
+const tableRef = ref<any>(null);
+
 const rows = computed(() => {
   const result = queryResult.value;
   if (!result) return [];
@@ -32,6 +34,7 @@ const total = computed(() => {
 watch(() => detail?.value?.id, (id) => {
   if (id) {
     page.value = 1;
+    doQuery();
   }
 }, { immediate: true });
 
@@ -82,7 +85,10 @@ function saveGeneSet() {
   if (!geneSetName.value.trim() || selectedGenes.value.length === 0) return;
   try {
     const sets = JSON.parse(localStorage.getItem('fan_gene_sets') || '[]');
-    const genes = selectedGenes.value.map((r: any) => r.gene_id || '');
+    const genes = selectedGenes.value.map((r: any) => ({
+      gene_id: r.gene_id || '',
+      canonical_transcript: r.canonical_transcript || r.gene_id || '',
+    }));
     const detailData = detail?.value;
     sets.unshift({
       id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2),
@@ -97,6 +103,14 @@ function saveGeneSet() {
     showGeneSetDialog.value = false;
     ElMessage.success(`Gene set "${geneSetName.value}" saved (${genes.length} genes)`);
   } catch { /* ignore */ }
+}
+
+function selectAll() {
+  if (tableRef.value) tableRef.value.toggleAllSelection();
+}
+
+function deselectAll() {
+  if (tableRef.value) tableRef.value.clearSelection();
 }
 </script>
 
@@ -115,8 +129,10 @@ function saveGeneSet() {
       <el-button type="primary" :loading="queryLoading" @click="onSearch">Search</el-button>
     </div>
 
-    <div v-if="selectedGenes.length > 0" style="margin-bottom:8px;">
-      <el-button type="success" size="small" @click="openGeneSetDialog">
+    <div v-if="rows.length > 0" style="margin-bottom:8px;display:flex;gap:8px;align-items:center;">
+      <el-button size="small" @click="selectAll">Select All</el-button>
+      <el-button size="small" @click="deselectAll">Clear</el-button>
+      <el-button v-if="selectedGenes.length > 0" type="success" size="small" @click="openGeneSetDialog">
         Save as Gene Set ({{ selectedGenes.length }} genes)
       </el-button>
     </div>
@@ -126,7 +142,7 @@ function saveGeneSet() {
       <el-empty v-if="!queryLoading && rows.length === 0" description="No results found" />
 
       <template v-if="rows.length > 0">
-        <el-table :data="rows" size="small" border stripe @selection-change="handleSelectionChange">
+        <el-table ref="tableRef" :data="rows" size="small" border stripe @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="40" />
           <el-table-column prop="gene_id" label="Gene ID" width="160">
             <template #default="{ row }">
@@ -138,7 +154,8 @@ function saveGeneSet() {
           <el-table-column prop="chrom" label="Chr" width="100" />
           <el-table-column prop="start" label="Start" width="100" />
           <el-table-column prop="stop" label="End" width="100" />
-          <el-table-column prop="strand" label="Strand" width="80" />
+          <el-table-column prop="strand" label="Strand" width="70" />
+          <el-table-column prop="canonical_transcript" label="Canonical Transcript" width="180" show-overflow-tooltip />
           <el-table-column prop="description" label="Description" min-width="200">
             <template #default="{ row }">
               <span>{{ row.description || row.gene_name || '-' }}</span>
