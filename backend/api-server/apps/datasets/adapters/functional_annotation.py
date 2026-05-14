@@ -329,6 +329,7 @@ class FunctionalAnnotationAdapter(DatasetQueryAdapter):
                 "gene_detail",
                 "transcript_detail",
                 "gene_function_summary",
+                "gene_descriptions",
                 "term_lookup",
                 "term_gene_list",
                 "term_aggregation",
@@ -402,6 +403,21 @@ class FunctionalAnnotationAdapter(DatasetQueryAdapter):
                 "operation": operation,
                 "dataset_id": dataset_payload["id"],
                 "data": {"source": "sqlite", **result},
+            }
+
+        if operation == "gene_descriptions":
+            gene_ids = params.get("gene_ids") or []
+            if not gene_ids:
+                return {"adapter": self.adapter_name, "operation": operation, "dataset_id": dataset_payload["id"], "data": {"descriptions": {}}}
+            # Build IN clause for batch query
+            placeholders = ",".join(["?" for _ in gene_ids])
+            rows = query_sqlite(file_path, f"SELECT gene_id, description FROM hse_genes WHERE gene_id IN ({placeholders})", tuple(gene_ids))
+            descriptions = {r["gene_id"]: r.get("description") or "" for r in rows}
+            return {
+                "adapter": self.adapter_name,
+                "operation": operation,
+                "dataset_id": dataset_payload["id"],
+                "data": {"descriptions": descriptions},
             }
 
         if operation == "list_families":

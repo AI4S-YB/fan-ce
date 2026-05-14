@@ -595,11 +595,16 @@ function formatAlignment(qseq: string, midline: string, sseq: string): string {
           </el-table>
         </template>
         <img v-else-if="view.type === 'image'" :src="view.url" style="max-width:100%;border-radius:4px;" />
-        <pre v-else-if="view.type === 'text' && name !== 'blast_report'" style="font-size:12px;max-height:400px;overflow:auto;white-space:pre-wrap;">{{ view.content }}</pre>
+        <pre v-else-if="view.type === 'text' && name !== 'blast_report' && name !== 'alignment' && name !== 'tree'" style="font-size:12px;max-height:400px;overflow:auto;white-space:pre-wrap;">{{ view.content }}</pre>
       </div>
 
       <!-- MSA Visualization -->
-      <MsaViewer v-if="outputViews['alignment']?.type === 'text'" :data="outputViews['alignment']" style="margin-top:12px;" />
+      <!-- MSA downloads -->
+      <div v-if="outputViews['alignment']?.type === 'text' || outputViews['tree']?.type === 'text'" style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end;">
+        <a v-if="outputViews['alignment']?.type === 'text'" :href="'/api/v1/analysis/jobs/' + jobId + '/output/alignment'" download class="dl-btn">Download Alignment</a>
+        <a v-if="outputViews['tree']?.type === 'text'" :href="'/api/v1/analysis/jobs/' + jobId + '/output/tree'" download class="dl-btn">Download Tree</a>
+      </div>
+      <MsaViewer v-if="outputViews['alignment']?.type === 'text'" :data="outputViews['alignment']" style="margin-top:8px;" />
       <TreeViewer v-if="outputViews['tree']?.type === 'text'" :data="outputViews['tree']" style="margin-top:8px;" />
 
       <!-- Primer Map Visualization -->

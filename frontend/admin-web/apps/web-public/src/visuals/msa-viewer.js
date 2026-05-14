@@ -1,85 +1,101 @@
 // visuals/msa-viewer.js — D3 SVG MSA alignment viewer
 import * as d3 from 'd3';
-import { debounce } from './blast-helpers';
 
-const CHAR_W = 10;
-const CHAR_H = 16;
-const LEFT_MARGIN = 150;
-const TOP_MARGIN = 10;
+const CHAR_W = 14;
+const CHAR_H = 20;
+const LABEL_W = 160;
+const TOP_MARGIN = 24;
 const COLORS = {
-  A: '#80a0f0', G: '#80a0f0', I: '#80a0f0', L: '#80a0f0', M: '#80a0f0', V: '#80a0f0', // aliphatic
-  F: '#80f0a0', W: '#80f0a0', Y: '#80f0a0', // aromatic
-  D: '#f08080', E: '#f08080', // acidic
-  R: '#f0a080', K: '#f0a080', // basic
-  S: '#f0e080', T: '#f0e080', N: '#f0e080', Q: '#f0e080', // polar
-  C: '#80f0f0', // cysteine
-  H: '#f080e0', // histidine
-  P: '#c0c0c0', // proline
-  '-': '#ffffff', // gap
+  A:'#a0d0ff', G:'#a0d0ff', I:'#a0d0ff', L:'#a0d0ff', M:'#a0d0ff', V:'#a0d0ff',
+  F:'#a0ffd0', W:'#a0ffd0', Y:'#a0ffd0',
+  D:'#ffa0a0', E:'#ffa0a0',
+  R:'#ffd0a0', K:'#ffd0a0', H:'#ffd0e0',
+  S:'#ffe8a0', T:'#ffe8a0', N:'#ffe8a0', Q:'#ffe8a0',
+  C:'#ffff80',
+  P:'#d0d0d0',
+  '-':'#ffffff',
 };
 
-export function createMsaViewer(container, data, _options) { render(container, data); const onResize = debounce(() => render(container, data), 200); window.addEventListener('resize', onResize); container._msaResize = onResize; }
-export function updateMsaViewer(container, data, _options) { render(container, data); }
-export function destroyMsaViewer(container) { if (container._msaResize) window.removeEventListener('resize', container._msaResize); container.innerHTML = ''; }
+export function createMsaViewer(c, d) { render(c, d); }
+export function updateMsaViewer(c, d) { render(c, d); }
+export function destroyMsaViewer(c) { c.innerHTML = ''; }
 
 function parseFasta(text) {
-  const seqs = [];
-  let current = null;
+  const seqs = []; let cur = null;
   for (const line of text.split('\n')) {
     const t = line.trim();
     if (!t) continue;
-    if (t.startsWith('>')) { current = { header: t.slice(1), sequence: '' }; seqs.push(current); }
-    else if (current) { current.sequence += t.replace(/\s/g, ''); }
+    if (t.startsWith('>')) { cur = { header: t.slice(1).trim(), sequence: '' }; seqs.push(cur); }
+    else if (cur) cur.sequence += t.replace(/\s/g, '').toUpperCase();
   }
   return seqs.filter(s => s.sequence.length > 0);
 }
 
-function colorForChar(c) {
-  const uc = (c || '-').toUpperCase();
-  return COLORS[uc] || '#f0f0f0';
-}
-
 function render(container, data) {
   container.innerHTML = '';
-  const text = typeof data === 'string' ? data : (data.alignment || data.content || '');
+  const text = typeof data === 'string' ? data : (data?.alignment || data?.content || '');
   const seqs = parseFasta(text);
-  if (seqs.length === 0) { container.innerHTML = '<div style="padding:16px;color:#999;text-align:center;">No alignment data</div>'; return; }
+  if (seqs.length === 0) {
+    container.innerHTML = '<div style="padding:24px;color:#999;text-align:center;">No alignment data</div>';
+    return;
+  }
 
   const maxLen = d3.max(seqs, s => s.sequence.length) || 0;
-  const width = LEFT_MARGIN + maxLen * CHAR_W + 20;
-  const height = TOP_MARGIN + seqs.length * CHAR_H + 10;
+  const H = TOP_MARGIN + seqs.length * CHAR_H + 24;
+  const W = LABEL_W + maxLen * CHAR_W + 40;
 
-  const svg = d3.select(container).append('svg')
-    .attr('width', '100%').attr('viewBox', `0 0 ${width} ${height}`)
-    .attr('preserveAspectRatio', 'xMinYMid meet')
-    .style('font-family', 'monospace').style('font-size', '10px');
+  // Wrapper for horizontal scroll
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'overflow-x:auto;max-width:100%;position:relative;';
+  container.appendChild(wrap);
 
-  const g = svg.append('g').attr('transform', `translate(${LEFT_MARGIN},${TOP_MARGIN})`);
+  const svg = d3.select(wrap).append('svg')
+    .attr('width', Math.max(800, W)).attr('height', H).style('display', 'block');
 
-  // Consensus bar (conservation %)
+  const g = svg.append('g').attr('transform', `translate(${LABEL_W},${TOP_MARGIN})`);
+
+  // Column position numbers (every 10)
+  for (let ci = 0; ci < maxLen; ci += 10) {
+    g.append('text').attr('x', ci * CHAR_W + 2).attr('y', -8)
+      .style('font-size', '9px').style('fill', '#999').style('font-family', 'monospace')
+      .text(ci + 1);
+  }
+
+  // Consensus
   const consY = seqs.length * CHAR_H + 4;
   for (let ci = 0; ci < maxLen; ci++) {
     const counts = {};
     for (const s of seqs) { const c = s.sequence[ci] || '-'; counts[c] = (counts[c] || 0) + 1; }
-    const maxCount = d3.max(Object.values(counts)) || 1;
-    const cons = maxCount / seqs.length;
-    g.append('rect').attr('x', ci * CHAR_W).attr('y', consY).attr('width', CHAR_W - 1).attr('height', 6)
-      .attr('fill', d3.interpolateYlOrRd(cons)).attr('opacity', 0.8);
+    const cons = Math.max(...Object.values(counts)) / seqs.length;
+    g.append('rect').attr('x', ci * CHAR_W + 1).attr('y', consY).attr('width', CHAR_W - 2).attr('height', 8)
+      .attr('fill', cons > 0.9 ? '#f5b041' : cons > 0.6 ? '#f0e68c' : '#e0e0e0').attr('rx', 1);
   }
 
-  // Sequence rows
+  // Rows
   for (let ri = 0; ri < seqs.length; ri++) {
     const s = seqs[ri];
-    // Label
-    g.append('text').attr('x', -6).attr('y', ri * CHAR_H + CHAR_H - 4).attr('text-anchor', 'end')
-      .style('font-size', '9px').style('fill', '#333').text(s.header.length > 18 ? s.header.slice(0, 17) + '…' : s.header)
+    const baseY = ri * CHAR_H;
+
+    // Label (fixed, outside scroll)
+    svg.append('text').attr('x', LABEL_W - 8).attr('y', TOP_MARGIN + baseY + CHAR_H - 5)
+      .attr('text-anchor', 'end').style('font-size', '11px').style('fill', '#333').style('font-family', 'monospace')
+      .text(s.header.length > 22 ? s.header.slice(0, 21) + '…' : s.header)
       .append('title').text(s.header);
 
-    // Residue rects
+    // Alternating row background
+    if (ri % 2 === 0) {
+      g.append('rect').attr('x', 0).attr('y', baseY).attr('width', maxLen * CHAR_W).attr('height', CHAR_H)
+        .attr('fill', '#fafafa');
+    }
+
+    // Render residues as text (much faster for large alignments)
     for (let ci = 0; ci < s.sequence.length; ci++) {
-      g.append('rect').attr('x', ci * CHAR_W).attr('y', ri * CHAR_H + 1).attr('width', CHAR_W - 1).attr('height', CHAR_H - 2)
-        .attr('fill', colorForChar(s.sequence[ci])).attr('rx', 1)
-        .append('title').text(`${s.header} pos ${ci + 1}: ${s.sequence[ci]}`);
+      const ch = s.sequence[ci] || '-';
+      g.append('rect').attr('x', ci * CHAR_W + 1).attr('y', baseY + 2)
+        .attr('width', CHAR_W - 2).attr('height', CHAR_H - 4).attr('fill', COLORS[ch.toUpperCase()] || '#f0f0f0').attr('rx', 2);
+      g.append('text').attr('x', ci * CHAR_W + CHAR_W / 2).attr('y', baseY + CHAR_H - 5)
+        .attr('text-anchor', 'middle').style('font-size', '11px').style('fill', '#222').style('font-family', 'monospace')
+        .text(ch);
     }
   }
 }

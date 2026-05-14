@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useDatasetList, useDatasetDetail, useDatasetQuery } from '@/composables/useDatasets';
+import { useRequest } from '@/composables/useRequest';
 import MultiSelectDropdown from '@/components/MultiSelectDropdown.vue';
 import DataVisualization from '@/components/DataVisualization/index.vue';
+import GeneSetPanel from '@/components/GeneSetPanel.vue';
 import type { QueryCapabilities } from '@/types/dataset';
 
 const { items: datasets, load: loadDatasets } = useDatasetList();
@@ -11,12 +13,16 @@ const { queryLoading, queryResult, loadCapabilities, execute } = useDatasetQuery
 
 const selectedDatasetId = ref<number | null>(null);
 const selectedVersionId = ref<number | undefined>();
+const refGenomeId = ref<number | undefined>();
+const refGenomeTitle = ref('');
 const caps = ref<QueryCapabilities | null>(null);
 const selectedGenesText = ref('');
 const selectedSamples = ref<string[]>([]);
 const selectedType = ref('count');
 const exampleLoading = ref(false);
 const sampleOptions = ref<{ label: string; value: string }[]>([]);
+const geneDescriptions = ref<Record<string, string>>({});
+const dataModes = ref(['table']);
 
 loadDatasets({ dataset_type: 'transcriptome' });
 
@@ -42,6 +48,23 @@ async function runQuery() {
     const rows = buildRows(rawMatrix, genes, samples, 'raw');
     (queryResult as any)._raw = { genes, samples, matrix: rawMatrix };
     queryResult.value = { rows, total: rows.length } as any;
+
+    // Set available chart modes based on gene count
+    if (genes.length <= 30) dataModes.value = ['table', 'bar', 'line', 'heatmap'];
+    else if (genes.length <= 200) dataModes.value = ['table', 'heatmap'];
+    else dataModes.value = ['table'];
+
+    // Fetch gene descriptions from reference genome
+    try {
+      const genomeId = refGenomeId.value || 18;  // fallback to known public genome
+      const { post } = useRequest();
+      const descResp: any = await post('/public/dataset/query/execute', {
+        id: genomeId,
+        operation: 'gene_descriptions',
+        params: { gene_ids: genes.slice(0, 200) },
+      });
+      geneDescriptions.value = descResp?.data?.descriptions || descResp?.descriptions || {};
+    } catch { geneDescriptions.value = {}; }
   }
 }
 
@@ -98,6 +121,19 @@ watch(selectedDatasetId, async (id) => {
   if (!id) return;
   caps.value = await loadCapabilities(id, undefined, selectedVersionId.value);
   await loadDetail(id);
+  // Resolve reference genome from lineage (loaded separately)
+  refGenomeId.value = undefined;
+  refGenomeTitle.value = '';
+  try {
+    const { get } = useRequest();
+    const lineage: any = await get(`/public/dataset/${detail.value?.dataset_code}/lineage`);
+    const items = lineage?.items || lineage?.data?.items || [];
+    const genomeLink = items.find((l: any) => l.src_dataset_type === 'genome');
+    if (genomeLink) {
+      refGenomeId.value = genomeLink.src_dataset_id;
+      refGenomeTitle.value = genomeLink.src_dataset_title || genomeLink.src_dataset_code || '';
+    }
+  } catch { /* ignore */ }
   selectedGenesText.value = '';
   selectedSamples.value = [];
   sampleOptions.value = [];
@@ -114,6 +150,10 @@ watch(selectedDatasetId, async (id) => {
         <el-option v-for="ds in datasets" :key="ds.id" :label="ds.title || ds.dataset_code" :value="ds.id" />
       </el-select>
     </div>
+
+    <!-- Gene Sets -->
+    <!-- Gene Sets -->
+    <GeneSetPanel v-if="selectedDatasetId" :current-dataset-id="refGenomeId" :current-dataset-title="refGenomeTitle" @use="(ids: string[], genomeId: number) => { selectedGenesText = ids.join('\n'); refGenomeId = genomeId; }" />
 
     <!-- Query form -->
     <div v-if="selectedDatasetId" style="background:#fafafa;border:1px solid #e5e5e5;border-radius:6px;padding:20px;margin-bottom:16px;">
@@ -153,6 +193,6 @@ watch(selectedDatasetId, async (id) => {
       </div>
     </div>
 
-    <DataVisualization :result="queryResult" :loading="queryLoading" :precision="selectedType === 'fpkm' ? 2 : undefined" show-export @normalize="handleNormalize" />
+    <DataVisualization :result="queryResult" :loading="queryLoading" :precision="selectedType === 'fpkm' ? 2 : undefined" show-export :modes="dataModes" :descriptions="geneDescriptions" :genome-id="refGenomeId" @normalize="handleNormalize" />
   </div>
 </template>

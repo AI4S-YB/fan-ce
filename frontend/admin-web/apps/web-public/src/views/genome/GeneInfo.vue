@@ -267,18 +267,16 @@ function getFamilyLabel(type: string): string {
             <el-descriptions-item label="Strand">({{ gene.strand }})</el-descriptions-item>
           </el-descriptions>
           <h4>Gene Structure</h4>
-          <div v-show="activeName === '1'" style="min-height:200px;">
-            <GeneBrowser
-              v-if="gene && geneFlankSeq"
-              seq-name="ref"
-              :seq="geneFlankSeq"
-              :start="(gene.start as number) || 1"
-              :stop="(gene.stop as number) || 1"
-              :exons="exons"
-              :gene-id="geneId"
-            />
-            <div v-else-if="!gene || !geneFlankSeq" style="color:#999;font-size:12px;padding:12px;text-align:center;">Loading gene structure...</div>
-          </div>
+          <GeneBrowser
+            v-if="gene && geneFlankSeq"
+            seq-name="ref"
+            :seq="geneFlankSeq"
+            :start="(gene.start as number) || 1"
+            :stop="(gene.stop as number) || 1"
+            :exons="exons"
+            :gene-id="geneId"
+          />
+          <div v-else-if="!gene || !geneFlankSeq" style="color:#999;font-size:12px;padding:12px;text-align:center;">Loading gene structure...</div>
         </el-tab-pane>
 
         <el-tab-pane label="Sequence" name="2">
@@ -323,7 +321,7 @@ function getFamilyLabel(type: string): string {
             <el-table v-if="hits.length > 0" :data="hits" stripe size="small">
               <el-table-column prop="Hit_accession" label="Accession" width="150">
                 <template #default="{ row: r }">
-                  <el-link :href="getBlastLink(r.Hit_accession, db)" target="_blank" type="primary" :underline="false">
+                  <el-link :href="getBlastLink(r.Hit_accession, db)" target="_blank" type="primary" underline="never">
                     {{ r.Hit_accession }}
                   </el-link>
                 </template>
@@ -337,7 +335,7 @@ function getFamilyLabel(type: string): string {
               </el-table-column>
               <el-table-column label="Alignment" width="100">
                 <template #default="{ row: r }">
-                  <el-link type="primary" :underline="false" @click="openAlignment(db, r)">Show</el-link>
+                  <el-link type="primary" underline="never" @click="openAlignment(db, r)">Show</el-link>
                 </template>
               </el-table-column>
             </el-table>
@@ -348,7 +346,7 @@ function getFamilyLabel(type: string): string {
           <el-table v-if="interpro.length > 0" :data="interpro" stripe size="small">
             <el-table-column label="IPR Term" width="120">
               <template #default="{ row: r }">
-                <el-link v-if="r.ipr_term && r.ipr_term !== 'None' && r.ipr_term !== 'none'" :href="'https://www.ebi.ac.uk/interpro/entry/InterPro/' + r.ipr_term" target="_blank" type="primary" :underline="false">
+                <el-link v-if="r.ipr_term && r.ipr_term !== 'None' && r.ipr_term !== 'none'" :href="'https://www.ebi.ac.uk/interpro/entry/InterPro/' + r.ipr_term" target="_blank" type="primary" underline="never">
                   {{ r.ipr_term }}
                 </el-link>
                 <span v-else>{{ r.ipr_term || '-' }}</span>
@@ -358,7 +356,7 @@ function getFamilyLabel(type: string): string {
             <el-table-column prop="source_lib" label="Source" width="100" />
             <el-table-column label="Source Term" width="120">
               <template #default="{ row: r }">
-                <el-link v-if="r.source_term" :href="'https://www.ebi.ac.uk/interpro/entry/' + r.source_lib?.toLowerCase() + '/' + r.source_term" target="_blank" type="primary" :underline="false">
+                <el-link v-if="r.source_term" :href="'https://www.ebi.ac.uk/interpro/entry/' + r.source_lib?.toLowerCase() + '/' + r.source_term" target="_blank" type="primary" underline="never">
                   {{ r.source_term }}
                 </el-link>
                 <span v-else>-</span>
@@ -378,7 +376,7 @@ function getFamilyLabel(type: string): string {
             <el-table :data="goTerms" stripe size="small">
               <el-table-column label="Term" width="180">
                 <template #default="{ row: r }">
-                  <el-link :href="'http://amigo.geneontology.org/amigo/term/' + r.term" target="_blank" type="primary" :underline="false">
+                  <el-link :href="'http://amigo.geneontology.org/amigo/term/' + r.term" target="_blank" type="primary" underline="never">
                     {{ r.term }}
                   </el-link>
                 </template>
@@ -396,7 +394,7 @@ function getFamilyLabel(type: string): string {
             <el-table :data="keggPathways" stripe size="small">
               <el-table-column label="Pathway ID" width="120">
                 <template #default="{ row: r }">
-                  <el-link :href="'https://www.kegg.jp/entry/' + r.pathway" target="_blank" type="primary" :underline="false">
+                  <el-link :href="'https://www.kegg.jp/entry/' + r.pathway" target="_blank" type="primary" underline="never">
                     {{ r.pathway }}
                   </el-link>
                 </template>

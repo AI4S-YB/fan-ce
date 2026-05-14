@@ -381,8 +381,15 @@ def view_output(job_id: int, file_name: str, db: Session = Depends(get_db)):
                 raise HTTPException(status_code=404, detail="File not found on disk")
             fmt = file_name.split(".")[-1] if "." in file_name else f.get("format", "txt")
             if fmt in ("tsv", "csv", "txt"):
+                with open(path) as fh:
+                    first_line = fh.readline().strip()
+                # Detect FASTA format — treat as text, not table
+                if first_line.startswith(">") or first_line.startswith("("):
+                    with open(path) as fh:
+                        return response_2000(data={"type": "text", "content": fh.read()[:500000]})
                 rows = []
                 with open(path) as fh:
+                    fh.seek(0)
                     lines = fh.read().strip().split("\n")
                     if lines:
                         cols = lines[0].split("\t")

@@ -354,7 +354,7 @@ const tabStyle = (t: string) => ({
       <el-empty v-else-if="!queryLoading" description="No genes found" />
 
       <div v-if="geneTotal > 20" style="margin-top:12px;text-align:right;">
-        <el-pagination v-model:current-page="genePage" :page-size="20" :total="geneTotal" layout="prev, pager, next" small @current-change="onGenePageChange" />
+        <el-pagination v-model:current-page="genePage" :page-size="20" :total="geneTotal" layout="prev, pager, next" size="small" @current-change="onGenePageChange" />
       </div>
     </template>
 

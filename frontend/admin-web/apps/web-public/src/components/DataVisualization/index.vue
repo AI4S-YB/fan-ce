@@ -9,6 +9,8 @@ const props = defineProps<{
   precision?: number;
   showExport?: boolean;
   modes?: string[];
+  descriptions?: Record<string, string>;
+  genomeId?: number;
 }>();
 
 const emit = defineEmits<{ normalize: [method: string] }>();
@@ -18,6 +20,14 @@ const mode = ref(allowedModes.value[0] as 'table' | 'bar' | 'line' | 'heatmap');
 const chartRef = ref<HTMLElement>();
 let chartInst: echarts.ECharts | null = null;
 const normalizeMethod = ref('raw');
+const tablePage = ref(1);
+const tableSize = ref(50);
+const tableRows = computed(() => {
+  const all = rows.value;
+  if (all.length <= tableSize.value) return all;
+  const start = (tablePage.value - 1) * tableSize.value;
+  return all.slice(start, start + tableSize.value);
+});
 
 const rows = computed(() => {
   const raw = props.result?.rows || props.result?.items || [];
@@ -156,9 +166,23 @@ function exportCSV() {
     </div>
 
     <div v-if="mode === 'table'">
-      <el-table :data="rows" border size="small" v-loading="loading" max-height="500" stripe>
-        <el-table-column v-for="col in columns" :key="col.prop" :prop="col.prop" :label="col.label" min-width="120" show-overflow-tooltip />
+      <el-table :data="tableRows" border size="small" v-loading="loading" max-height="500" stripe>
+        <el-table-column v-for="col in columns" :key="col.prop" :label="col.label" min-width="120" show-overflow-tooltip>
+          <template #default="{ row }">
+            <template v-if="(col.prop === 'gene' || col.prop === 'gene_id') && props.genomeId">
+              <el-tooltip :content="props.descriptions?.[row[col.prop]] || ''" :disabled="!props.descriptions?.[row[col.prop]]" placement="top">
+                <el-link type="primary" underline="never" :href="'/genome/' + props.genomeId + '/geneinfo?gene_id=' + row[col.prop]" target="_blank">
+                  {{ row[col.prop] }}
+                </el-link>
+              </el-tooltip>
+            </template>
+            <span v-else>{{ row[col.prop] }}</span>
+          </template>
+        </el-table-column>
       </el-table>
+      <div v-if="rows.length > 50" style="margin-top:8px;text-align:right;">
+        <el-pagination v-model:current-page="tablePage" :page-size="tableSize" :total="rows.length" layout="prev, pager, next" size="small" />
+      </div>
       <div v-if="result?.total" style="margin-top:8px;color:#888;font-size:13px;">{{ result.total }} rows</div>
     </div>
 

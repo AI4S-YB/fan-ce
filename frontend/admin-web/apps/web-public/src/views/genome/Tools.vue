@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import type { PublicDatasetDetail } from '@/types/dataset';
 import { useDatasetList, useDownloads } from '@/composables/useDatasets';
 import { useRequest } from '@/composables/useRequest';
+import GeneSetPanel from '@/components/GeneSetPanel.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -27,61 +28,13 @@ watch([tool, detail], ([t, d]) => {
 const { items: genomeList, load: loadGenomeList } = useDatasetList();
 const selectedGenomeId = ref<number | null>(null);
 const batchDatasetId = computed(() => detail?.value?.id ?? selectedGenomeId.value);
-onMounted(() => { if (!hasGenome.value) loadGenomeList({ dataset_type: 'genome', page: 1, size: 50 }); loadGeneSets(); });
-
-// ── Gene sets (shared with ToolRunner) ──
-const GENE_SETS_KEY = 'fan_gene_sets';
-const geneSets = ref<any[]>([]);
-
-function loadGeneSets() {
-  try {
-    const raw = JSON.parse(localStorage.getItem(GENE_SETS_KEY) || '[]');
-    const cutoff = Math.floor(Date.now() / 1000) - 30 * 24 * 3600;
-    geneSets.value = raw.filter((s: any) => s.createdAt > cutoff);
-  } catch { geneSets.value = []; }
-}
-
-function useGeneSet(gs: any) {
-  const items = gs.genes || [];
-  // For gene mode: use gene_id
-  const geneIdsArr = typeof items[0] === 'string'
-    ? items
-    : items.map((g: any) => g.gene_id || '');
-  // Store transcripts for mRNA/protein mode
-  const transcripts = typeof items[0] === 'string'
-    ? items
-    : items.map((g: any) => g.canonical_transcript || g.gene_id || '');
-
-  if (seqType.value === 'mrna' || seqType.value === 'protein' || seqType.value === 'cds') {
-    geneIds.value = transcripts.join('\n');
-  } else {
-    geneIds.value = geneIdsArr.join('\n');
-  }
-
-  lastGeneSet.value = { geneIds: geneIdsArr, transcripts };
-}
-
-function deleteGeneSet(id: string) {
-  geneSets.value = geneSets.value.filter((s: any) => s.id !== id);
-  localStorage.setItem(GENE_SETS_KEY, JSON.stringify(geneSets.value));
-}
+onMounted(() => { if (!hasGenome.value) loadGenomeList({ dataset_type: 'genome', page: 1, size: 50 }); });
 
 // Batch sequence retrieval
 const geneIds = ref('');
 const seqType = ref('gene');
 
-// Track last used gene set for auto-switching IDs when seqType changes
-const lastGeneSet = ref<any>(null);
-
-watch(seqType, () => {
-  if (lastGeneSet.value) {
-    if (seqType.value === 'mrna' || seqType.value === 'protein' || seqType.value === 'cds') {
-      geneIds.value = lastGeneSet.value.transcripts.join('\n');
-    } else {
-      geneIds.value = lastGeneSet.value.geneIds.join('\n');
-    }
-  }
-});
+// Batch sequence retrieval helpers
 const enableUpstream = ref(false);
 const enableDownstream = ref(false);
 const upstream = ref(2000);
@@ -92,6 +45,23 @@ const seqTruncated = ref(false);
 const seqDownloadUrl = ref('');
 const seqError = ref('');
 const exampleLoading = ref(false);
+
+function onUseGeneSet(ids: string[], genomeId: number) {
+  if (seqType.value === 'mrna' || seqType.value === 'protein' || seqType.value === 'cds') {
+    // For mRNA/protein, we need transcripts. Find them from the gene set data.
+    const raw = JSON.parse(localStorage.getItem('fan_gene_sets') || '[]');
+    const gs = raw.find((s: any) => s.genomeId === batchDatasetId.value);
+    if (gs) {
+      const isOld = typeof gs.genes[0] === 'string';
+      const transcripts = isOld ? ids : gs.genes.map((g: any) => g.canonical_transcript || g.gene_id);
+      geneIds.value = transcripts.join('\n');
+    } else {
+      geneIds.value = ids.join('\n');
+    }
+  } else {
+    geneIds.value = ids.join('\n');
+  }
+}
 
 function buildSequenceType(): string {
   if (seqType.value === 'gene') {
@@ -272,17 +242,7 @@ function siteDownloadUrl(datasetCode: string, fileId: number) {
         </div>
 
         <!-- Gene Sets -->
-        <div v-if="geneSets.length > 0 && tool === 'batch'" style="margin-bottom:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:8px 12px;">
-          <div style="font-size:12px;font-weight:600;color:#166534;margin-bottom:6px;">Gene Sets</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <div v-for="gs in geneSets" :key="gs.id"
-              style="cursor:pointer;padding:3px 8px;border-radius:3px;font-size:11px;border:1px solid #ddd;background:#fff;display:flex;align-items:center;gap:4px;">
-              <span @click="useGeneSet(gs)" style="font-weight:500;">{{ gs.name }}</span>
-              <span @click="useGeneSet(gs)" style="color:#888;">({{ gs.genes.length }})</span>
-              <span @click.stop="deleteGeneSet(gs.id)" style="color:#ccc;cursor:pointer;font-size:12px;">×</span>
-            </div>
-          </div>
-        </div>
+        <GeneSetPanel v-if="tool === 'batch'" :current-dataset-id="batchDatasetId" @use="onUseGeneSet" />
 
         <!-- Input -->
         <div style="margin-bottom:12px;">

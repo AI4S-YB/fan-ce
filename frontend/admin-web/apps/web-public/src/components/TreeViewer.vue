@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import * as d3 from 'd3';
 import { getCollapsed, setCollapsed } from '@/visuals/blast-helpers';
 
 const props = defineProps<{ data: any }>();
@@ -10,39 +11,72 @@ let rendered = false;
 
 function toggle() { collapsed.value = !collapsed.value; setCollapsed('tree-viewer', collapsed.value); }
 
-async function render() {
+function parseNewick(s: string): any {
+  let i = 0;
+  const text = s.trim().replace(/\s/g, '');
+  function parse(): any {
+    const children: any[] = [];
+    let name = '';
+    let length: number | null = null;
+    if (text[i] === '(') {
+      i++;
+      while (text[i] !== ')') { children.push(parse()); if (text[i] === ',') i++; }
+      i++;
+    }
+    while (i < text.length && !':,);'.includes(text[i])) { name += text[i]; i++; }
+    if (text[i] === ':') { i++; let s = ''; while (i < text.length && !',);'.includes(text[i])) { s += text[i]; i++; } length = parseFloat(s) || null; }
+    if (text[i] === ';') i++;
+    return { name: name || null, length, children: children.length ? children : null };
+  }
+  return text.startsWith('(') ? parse() : null;
+}
+
+function render() {
   if (!container.value || rendered) return;
   const text = props.data?.content || (typeof props.data === 'string' ? props.data : '');
-  if (!text || !text.trim().startsWith('(')) return;
+  if (!text?.trim().startsWith('(')) return;
   rendered = true;
-
-  // Wait for DOM to settle (container is visible via v-show)
-  await new Promise(r => requestAnimationFrame(r));
 
   const el = container.value;
   el.innerHTML = '';
+  const rootData = parseNewick(text);
+  if (!rootData) { el.innerHTML = '<div style="padding:20px;color:#999;text-align:center;">Invalid Newick format</div>'; rendered = false; return; }
 
-  try {
-    const { phylotree } = await import('phylotree');
-    const tree = new phylotree(text.trim());
-    const renderOptions: Record<string, any> = {
-      container: '#' + (el.id || (el.id = 'tree-' + Date.now())),
-      width: (el.clientWidth || 700) - 20,
-      height: Math.max(200, (text.match(/,/g) || []).length * 18 + 60),
-      'left-offset': 10,
-    };
-    tree.render(renderOptions);
-  } catch (e) {
-    console.warn('TreeViewer render failed:', e);
-    el.innerHTML = '<div style="padding:20px;color:#999;text-align:center;">Tree visualization unavailable.</div>';
-    rendered = false;
-  }
+  const root = d3.hierarchy(rootData, d => d.children || null);
+  const leaves = root.leaves();
+  const leafH = 22;
+  const labelMaxLen = d3.max(leaves, (d: any) => (d.data.name || '').length) || 10;
+  const labelArea = labelMaxLen * 8 + 40;
+  const h = Math.max(200, leaves.length * leafH + 40);
+  const w = Math.max(el.clientWidth || 600, h + labelArea);
+
+  const svg = d3.select(el).append('svg').attr('width', w).attr('height', h).style('font-family', 'sans-serif');
+  const g = svg.append('g').attr('transform', 'translate(20,20)');
+
+  const treeLayout = d3.cluster().size([h - 40, w - labelArea - 20]);
+  treeLayout(root);
+
+  // Links
+  g.selectAll('path').data(root.links()).enter().append('path')
+    .attr('d', (d: any) => `M${d.source.y},${d.source.x}C${d.source.y + 50},${d.source.x} ${d.target.y - 50},${d.target.x} ${d.target.y},${d.target.x}`)
+    .attr('fill', 'none').attr('stroke', '#bbb').attr('stroke-width', 1.5);
+
+  // Internal nodes
+  g.selectAll('.inode').data(root.descendants().filter((d: any) => d.children)).enter()
+    .append('circle').attr('cx', (d: any) => d.y).attr('cy', (d: any) => d.x).attr('r', 2.5).attr('fill', '#888');
+
+  // Leaf nodes + labels
+  const leafG = g.selectAll('.leaf').data(leaves).enter().append('g');
+  leafG.append('circle').attr('cx', (d: any) => d.y).attr('cy', (d: any) => d.x).attr('r', 3.5).attr('fill', '#409eff');
+  leafG.append('text').attr('x', (d: any) => d.y + 8).attr('y', (d: any) => d.x + 4)
+    .style('font-size', '11px').style('fill', '#333')
+    .text((d: any) => d.data.name || '');
 }
 
-onMounted(() => { if (!collapsed.value) render(); });
-onUnmounted(() => { container.value && (container.value.innerHTML = ''); });
-watch(() => props.data, () => { rendered = false; if (!collapsed.value) render(); });
-watch(collapsed, (c) => { if (!c && container.value) { rendered = false; render(); } });
+onMounted(() => { if (!collapsed.value) nextTick(render); });
+onUnmounted(() => { rendered = false; });
+watch(() => props.data, () => { rendered = false; if (!collapsed.value) nextTick(render); });
+watch(collapsed, (c) => { if (!c && container.value) { rendered = false; nextTick(render); } });
 </script>
 
 <template>
