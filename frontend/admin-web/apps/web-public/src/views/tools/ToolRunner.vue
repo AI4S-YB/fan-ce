@@ -12,6 +12,9 @@ import BlastKablammo from '@/components/BlastKablammo.vue';
 import BlastLengthDistribution from '@/components/BlastLengthDistribution.vue';
 import PrimerMap from '@/components/PrimerMap.vue';
 import GrnaTrack from '@/components/GrnaTrack.vue';
+import GeneSetPanel from '@/components/GeneSetPanel.vue';
+import MsaViewer from '@/components/MsaViewer.vue';
+import TreeViewer from '@/components/TreeViewer.vue';
 
 // ── Tool identification ──
 const toolId = computed(() => {
@@ -97,53 +100,27 @@ const recentJobs = ref<{ id: number; tool_id: string; status: string; created_at
 const filteredRecentJobs = computed(() => recentJobs.value.filter(j => j.tool_id === toolId.value));
 const recentLoading = ref(false);
 
-// ── Gene sets (localStorage) ──
-const GENE_SETS_KEY = 'fan_gene_sets';
-const MAX_GENE_SETS = 20;
-const geneSets = ref<any[]>([]);
-
-function loadGeneSets() {
-  try {
-    const raw = JSON.parse(localStorage.getItem(GENE_SETS_KEY) || '[]');
-    // Filter out expired (>30 days)
-    const cutoff = Math.floor(Date.now() / 1000) - 30 * 24 * 3600;
-    geneSets.value = raw.filter((s: any) => s.createdAt > cutoff);
-    if (geneSets.value.length < raw.length) {
-      localStorage.setItem(GENE_SETS_KEY, JSON.stringify(geneSets.value));
-    }
-  } catch { geneSets.value = []; }
-}
-
-function deleteGeneSet(id: string) {
-  geneSets.value = geneSets.value.filter((s: any) => s.id !== id);
-  localStorage.setItem(GENE_SETS_KEY, JSON.stringify(geneSets.value));
-}
-
-function useGeneSet(gs: any) {
-  const items = gs.genes || [];
-  const plainGenes = typeof items[0] === 'string'
-    ? items
-    : items.map((g: any) => g.gene_id || '');
-  const transcripts = typeof items[0] === 'string'
-    ? items
-    : items.map((g: any) => g.canonical_transcript || g.gene_id || '');
-
-  const geneList = plainGenes.join('\n');
-  const transcriptList = transcripts.join('\n');
-
-  // For GO/KEGG Enrich: use gene IDs
-  if (hasFileInput.value && paramValues.value.gene_list !== undefined) {
+// ── Gene sets (shared component handles localStorage) ──
+async function onUseGeneSetForTool(ids: string[], genomeId: number) {
+  const isSeqTool = toolId.value === 'blast' || toolId.value === 'msa';
+  if (isSeqTool && genomeId) {
+    // Fetch sequences and build FASTA
+    try {
+      const r: any = await post('/public/dataset/sequence/batch', {
+        dataset_id: genomeId,
+        sequence_type: toolId.value === 'blast' ? seqType.value : 'gene',
+        inputs: ids,
+      });
+      const seqs = r?.sequences || [];
+      const fasta = seqs.map((s: any) => `>${s.input}\n${s.sequence || ''}`).join('\n');
+      if (fasta) inputSeq.value = fasta;
+    } catch { /* ignore */ }
+    return;
+  }
+  const geneList = (ids || []).join('\n');
+  if (hasFileInput.value) {
     paramValues.value.gene_list = geneList;
   }
-  // For text-input tools, check the parameter name
-  for (const p of (tool.value?.parameter_schema || [])) {
-    if (p.name === 'gene_list' && p.type === 'TextParam') {
-      paramValues.value.gene_list = geneList;
-    }
-  }
-  // For tools that need transcript IDs: store both
-  (gs as any)._transcriptList = transcriptList;
-  (gs as any)._geneList = geneList;
 }
 
 function loadRecentJobs() {
@@ -233,7 +210,7 @@ async function loadCurrentTool() {
   }
 }
 
-onMounted(() => { loadCurrentTool(); loadRecentJobs(); loadGeneSets(); });
+onMounted(() => { loadCurrentTool(); loadRecentJobs(); });
 onUnmounted(() => { if (polling.value) clearInterval(polling.value); });
 
 // Watch route change for tool switching
@@ -392,6 +369,9 @@ function startPolling() {
                 const seq = inputSeq.value.replace(/^>[^\n]*\n/g, '').replace(/\s/g, '');
                 grnaData.value = { targetLength: seq.length, sites: v.rows };
               }
+              if (f.name === 'alignment' || f.name === 'tree') {
+                // MSA output - keep as text for display + download
+              }
             } catch { /* ignore */ }
           }
         }
@@ -458,19 +438,7 @@ function formatAlignment(qseq: string, midline: string, sseq: string): string {
     </div>
 
     <!-- Gene Sets -->
-    <div v-if="geneSets.length > 0" style="margin-bottom:20px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <span style="font-weight:600;font-size:13px;">Gene Sets</span>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <div v-for="gs in geneSets" :key="gs.id"
-          style="cursor:pointer;padding:4px 10px;border-radius:4px;font-size:12px;border:1px solid #ddd;background:#fff;display:flex;align-items:center;gap:6px;">
-          <span @click="useGeneSet(gs)" style="font-weight:500;">{{ gs.name }}</span>
-          <span @click="useGeneSet(gs)" style="color:#888;">({{ gs.genes.length }} genes)</span>
-          <span @click.stop="deleteGeneSet(gs.id)" style="color:#ccc;cursor:pointer;font-size:14px;">×</span>
-        </div>
-      </div>
-    </div>
+    <GeneSetPanel @use="(ids: string[], genomeId: number) => onUseGeneSetForTool(ids, genomeId)" />
 
     <!-- Loading -->
     <div v-if="toolLoading" style="text-align:center;padding:60px;color:#999;">Loading tool...</div>
@@ -629,6 +597,10 @@ function formatAlignment(qseq: string, midline: string, sseq: string): string {
         <img v-else-if="view.type === 'image'" :src="view.url" style="max-width:100%;border-radius:4px;" />
         <pre v-else-if="view.type === 'text' && name !== 'blast_report'" style="font-size:12px;max-height:400px;overflow:auto;white-space:pre-wrap;">{{ view.content }}</pre>
       </div>
+
+      <!-- MSA Visualization -->
+      <MsaViewer v-if="outputViews['alignment']?.type === 'text'" :data="outputViews['alignment']" style="margin-top:12px;" />
+      <TreeViewer v-if="outputViews['tree']?.type === 'text'" :data="outputViews['tree']" style="margin-top:8px;" />
 
       <!-- Primer Map Visualization -->
       <PrimerMap v-if="primerData" :data="primerData" />
