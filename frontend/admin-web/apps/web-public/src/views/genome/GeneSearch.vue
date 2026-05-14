@@ -3,6 +3,7 @@ import { computed, inject, ref, watch, type Ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDatasetQuery } from '@/composables/useDatasets';
 import type { PublicDatasetDetail } from '@/types/dataset';
+import { ElMessage } from 'element-plus';
 
 const detail = inject<Ref<PublicDatasetDetail | null>>('genomeDetail');
 const router = useRouter();
@@ -63,6 +64,40 @@ async function onPageChange(p: number) {
 function goToGene(geneId: string) {
   router.push({ path: router.currentRoute.value.path.replace(/\/search$/, '/geneinfo'), query: { gene_id: geneId } });
 }
+
+const selectedGenes = ref<any[]>([]);
+const showGeneSetDialog = ref(false);
+const geneSetName = ref('');
+
+function handleSelectionChange(rows: any[]) {
+  selectedGenes.value = rows;
+}
+
+function openGeneSetDialog() {
+  geneSetName.value = '';
+  showGeneSetDialog.value = true;
+}
+
+function saveGeneSet() {
+  if (!geneSetName.value.trim() || selectedGenes.value.length === 0) return;
+  try {
+    const sets = JSON.parse(localStorage.getItem('fan_gene_sets') || '[]');
+    const genes = selectedGenes.value.map((r: any) => r.gene_id || '');
+    const detailData = detail?.value;
+    sets.unshift({
+      id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2),
+      name: geneSetName.value.trim(),
+      genes,
+      genomeId: detailData?.id || 0,
+      genomeTitle: detailData?.title || detailData?.dataset_code || '',
+      createdAt: Math.floor(Date.now() / 1000),
+    });
+    if (sets.length > 20) sets.length = 20;
+    localStorage.setItem('fan_gene_sets', JSON.stringify(sets));
+    showGeneSetDialog.value = false;
+    ElMessage.success(`Gene set "${geneSetName.value}" saved (${genes.length} genes)`);
+  } catch { /* ignore */ }
+}
 </script>
 
 <template>
@@ -80,12 +115,19 @@ function goToGene(geneId: string) {
       <el-button type="primary" :loading="queryLoading" @click="onSearch">Search</el-button>
     </div>
 
+    <div v-if="selectedGenes.length > 0" style="margin-bottom:8px;">
+      <el-button type="success" size="small" @click="openGeneSetDialog">
+        Save as Gene Set ({{ selectedGenes.length }} genes)
+      </el-button>
+    </div>
+
     <!-- Results Table -->
     <div v-loading="queryLoading">
       <el-empty v-if="!queryLoading && rows.length === 0" description="No results found" />
 
       <template v-if="rows.length > 0">
-        <el-table :data="rows" size="small" border stripe>
+        <el-table :data="rows" size="small" border stripe @selection-change="handleSelectionChange">
+          <el-table-column type="selection" width="40" />
           <el-table-column prop="gene_id" label="Gene ID" width="160">
             <template #default="{ row }">
               <el-button link type="primary" size="small" @click="goToGene(row.gene_id)">
@@ -118,5 +160,14 @@ function goToGene(geneId: string) {
         </div>
       </template>
     </div>
+
+    <el-dialog v-model="showGeneSetDialog" title="Save Gene Set" width="400px">
+      <el-input v-model="geneSetName" placeholder="Gene set name..." maxlength="100" />
+      <p style="color:#888;font-size:12px;margin-top:4px;">{{ selectedGenes.length }} genes will be saved</p>
+      <template #footer>
+        <el-button @click="showGeneSetDialog = false">Cancel</el-button>
+        <el-button type="primary" @click="saveGeneSet" :disabled="!geneSetName.trim()">Save</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
