@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { createViewState, JBrowseLinearGenomeView } from '@jbrowse/react-linear-genome-view';
-import { createRoot, type Root } from 'react-dom/client';
 import { createElement } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 
 const props = defineProps<{
   seqName: string;
@@ -15,163 +15,110 @@ const props = defineProps<{
 
 const container = ref<HTMLElement>();
 let root: Root | null = null;
-let blobUrls: string[] = [];
+let mounted = false;
 
-function buildGff3(): string {
-  const lines = ['##gff-version 3'];
+function buildFeatures(): any[] {
   const ref = props.seqName || 'ref';
-  const strand = props.exons[0]?.strand || '+';
+  const strand = props.exons[0]?.strand === '-' ? -1 : 1;
+  const pad = 150;
+  const seqStart = props.start - pad;
+
+  const geneId = `${props.geneId}-gene`;
+  const subfeatures: any[] = [];
 
   props.exons
     .filter((e: any) => e.feature_type === 'exon' || e.feature_type === 'CDS')
     .forEach((e: any, i: number) => {
-      const ftype = e.feature_type === 'CDS' ? 'CDS' : 'exon';
-      const s = e.start as number;
-      const epos = e.stop as number;
-      lines.push(`${ref}\t.\t${ftype}\t${s}\t${epos}\t.\t${strand}\t.\tID=${ftype}-${i}`);
+      subfeatures.push({
+        refName: ref,
+        uniqueId: `${props.geneId}-${e.feature_type}-${i}`,
+        start: e.start - seqStart,
+        end: e.stop - seqStart,
+        type: e.feature_type,
+      });
     });
 
-  lines.push(`${ref}\t.\tgene\t${props.start}\t${props.stop}\t.\t${strand}\t.\tID=${props.geneId}`);
-  return lines.join('\n');
+  return [{
+    refName: ref,
+    uniqueId: geneId,
+    start: props.start - seqStart,
+    end: props.stop - seqStart,
+    type: 'gene',
+    name: props.geneId,
+    strand,
+    subfeatures,
+  }];
 }
 
-// Parse GFF3 into JBrowse's inline feature format
-function parseGff3Inline(gff3: string): any[] {
-  return gff3
-    .split('\n')
-    .filter(l => l && !l.startsWith('#'))
-    .map((line, i) => {
-      const parts = line.split('\t');
-      if (parts.length < 9) return null;
-      const attrs: Record<string, string> = {};
-      parts[8].split(';').forEach(p => {
-        const [k, v] = p.split('=');
-        if (k && v) attrs[k] = v;
-      });
-      return {
-        refName: parts[0],
-        start: parseInt(parts[3]),
-        end: parseInt(parts[4]),
-        type: parts[2],
-        name: attrs['ID'] || `feature-${i}`,
-        strand: parts[6] === '-' ? -1 : 1,
-      };
-    })
-    .filter(Boolean);
-}
+onMounted(() => {
+  if (!container.value || !props.seq || !props.exons.length || mounted) return;
+  mounted = true;
 
-function createBlobUrl(content: string): string {
-  const blob = new Blob([content], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  blobUrls.push(url);
-  return url;
-}
-
-function revokeBlobUrls() {
-  blobUrls.forEach(url => URL.revokeObjectURL(url));
-  blobUrls = [];
-}
-
-function buildConfig() {
-  // Clean up any existing blob URLs
-  revokeBlobUrls();
-
-  const gff3 = buildGff3();
-  const seqLen = props.seq.length;
   const ref = props.seqName || 'ref';
-  const fastaContent = `>${ref}\n${props.seq}\n`;
+  const seqLen = props.seq.length;
+  const features = buildFeatures();
 
-  // Create FASTA blob URL
-  const fastaUrl = createBlobUrl(fastaContent);
-
-  // Create .fai index: seqName\tlength\toffset\tlineBases\tlineWidth
-  // For a single-line FASTA: header is ">ref\n" (length ref.length+2), then sequence on one line
-  const headerLen = ref.length + 2; // ">ref\n"
-  const faiContent = `${ref}\t${seqLen}\t${headerLen}\t${seqLen}\t${seqLen + 1}\n`;
-  const faiUrl = createBlobUrl(faiContent);
-
-  return {
+  const config = {
     assembly: {
       name: props.geneId,
       sequence: {
         type: 'ReferenceSequenceTrack',
         trackId: `${props.geneId}-ref`,
         adapter: {
-          type: 'IndexedFastaAdapter',
-          fastaLocation: { uri: fastaUrl },
-          faiLocation: { uri: faiUrl },
+          type: 'FromConfigSequenceAdapter',
+          features: [{
+            refName: ref,
+            uniqueId: ref,
+            start: 0,
+            end: seqLen,
+            seq: props.seq,
+          }],
         },
       },
     },
-    tracks: [
-      {
-        type: 'FeatureTrack',
-        trackId: `${props.geneId}-features`,
-        name: 'Gene Features',
-        assemblyNames: [props.geneId],
-        adapter: {
-          type: 'FromConfigAdapter',
-          features: parseGff3Inline(gff3),
-        },
+    tracks: [{
+      type: 'FeatureTrack',
+      trackId: `${props.geneId}-features`,
+      name: 'Gene Features',
+      rendererType: 'SvgFeatureRenderer',
+      assemblyNames: [props.geneId],
+      adapter: {
+        type: 'FromConfigAdapter',
+        features,
       },
-    ],
+    }],
     defaultSession: {
       name: props.geneId,
       view: {
         id: 'linearGenomeView',
         type: 'LinearGenomeView',
-        displayedRegions: [
-          {
-            assemblyName: props.geneId,
-            refName: ref,
-            start: 0,
-            end: seqLen,
-          },
+        tracks: [
+          { type: 'ReferenceSequenceTrack', configuration: `${props.geneId}-ref`, displays: [{ type: 'LinearReferenceSequenceDisplay', configuration: `${props.geneId}-ref-LinearReferenceSequenceDisplay` }] },
+          { type: 'FeatureTrack', configuration: `${props.geneId}-features`, displays: [{ type: 'LinearBasicDisplay', configuration: `${props.geneId}-features-LinearBasicDisplay` }] },
         ],
+        displayedRegions: [{
+          assemblyName: props.geneId,
+          refName: ref,
+          start: 0,
+          end: seqLen,
+        }],
       },
     },
   };
-}
-
-function render() {
-  if (!container.value || !props.seq) return;
-
-  // Clean up previous React root
-  if (root) {
-    root.unmount();
-    root = null;
-  }
 
   try {
-    const config = buildConfig();
     const state = createViewState(config);
-    const reactEl = createElement(JBrowseLinearGenomeView, { viewState: state });
     root = createRoot(container.value);
-    root.render(reactEl);
+    root.render(createElement(JBrowseLinearGenomeView, { viewState: state }));
   } catch (e) {
     console.warn('JBrowse render failed:', e);
+    container.value.innerHTML = '<div style="padding:20px;color:#999;text-align:center;">Genome browser unavailable — please check browser console for details.</div>';
   }
-}
-
-onMounted(() => {
-  if (props.seq) render();
 });
 
 onUnmounted(() => {
-  if (root) {
-    root.unmount();
-    root = null;
-  }
-  revokeBlobUrls();
+  if (root) { root.unmount(); root = null; }
 });
-
-watch(
-  () => [props.seq, props.exons],
-  () => {
-    if (props.seq) render();
-  },
-  { deep: true },
-);
 </script>
 
 <template>

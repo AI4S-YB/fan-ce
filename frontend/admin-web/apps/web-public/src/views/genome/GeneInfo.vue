@@ -267,17 +267,18 @@ function getFamilyLabel(type: string): string {
             <el-descriptions-item label="Strand">({{ gene.strand }})</el-descriptions-item>
           </el-descriptions>
           <h4>Gene Structure</h4>
-          <GeneBrowser
-            v-if="gene && geneFlankSeq"
-            seq-name="ref"
-            :seq="geneFlankSeq"
-            :start="(gene.start as number) || 1"
-            :stop="(gene.stop as number) || 1"
-            :exons="exons"
-            :gene-id="geneId"
-          />
-          <div v-else-if="exons.length === 0" style="color:#999;font-size:12px;padding:12px;">No structural annotation available</div>
-          <div v-else style="color:#999;font-size:12px;padding:12px;text-align:center;">Loading gene structure...</div>
+          <div v-show="activeName === '1'" style="min-height:200px;">
+            <GeneBrowser
+              v-if="gene && geneFlankSeq"
+              seq-name="ref"
+              :seq="geneFlankSeq"
+              :start="(gene.start as number) || 1"
+              :stop="(gene.stop as number) || 1"
+              :exons="exons"
+              :gene-id="geneId"
+            />
+            <div v-else-if="!gene || !geneFlankSeq" style="color:#999;font-size:12px;padding:12px;text-align:center;">Loading gene structure...</div>
+          </div>
         </el-tab-pane>
 
         <el-tab-pane label="Sequence" name="2">
