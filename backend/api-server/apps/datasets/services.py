@@ -2834,8 +2834,12 @@ class DatasetDomainService:
         )
 
     def _get_public_version_obj_by_id(self, db, dataset_id, version_id):
+        registry = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
+        if not registry:
+            raise HTTPException(status_code=404, detail=f"Public dataset not found: {dataset_id}")
+        database_id = registry.database_id
         version_obj = dataset_version_db.get(db=db, id=version_id)
-        if version_obj.database_id != dataset_id or not self._is_version_publicly_released(version_obj):
+        if version_obj.database_id != database_id or not self._is_version_publicly_released(version_obj):
             raise HTTPException(status_code=404, detail=f"public dataset version not found: dataset={dataset_id}, version={version_id}")
         return version_obj
 
@@ -2902,7 +2906,7 @@ class DatasetDomainService:
         """
         # 1. Registry row
         registry = db.query(DatasetRegistry).filter(
-            DatasetRegistry.database_id == dataset_id,
+            DatasetRegistry.id == dataset_id,
             DatasetRegistry.visibility == "public",
         ).first()
         if not registry:
@@ -2910,7 +2914,7 @@ class DatasetDomainService:
 
         # 2. Current version
         current_version = db.query(DatasetVersion).filter(
-            DatasetVersion.database_id == dataset_id,
+            DatasetVersion.database_id == registry.database_id,
             DatasetVersion.is_current == 1,
         ).first()
 
@@ -2991,13 +2995,17 @@ class DatasetDomainService:
         }
 
     def _build_public_dataset_payload(self, db, dataset_id, version_obj=None):
-        database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=dataset_id)
+        registry = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
+        if not registry:
+            raise HTTPException(status_code=404, detail=f"Public dataset not found: {dataset_id}")
+        database_id = registry.database_id
+        database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=database_id)
         dataset_payload = self.build_dataset_payload(db=db, database_obj=database_obj)
         current_version = self.ensure_current_version(db=db, dataset_payload=dataset_payload)
         dataset_payload["current_version"] = self._build_dataset_version_payload(current_version, db=db)
-        dataset_payload["version_count"] = len(dataset_version_db.get_data(db=db, filters={"database_id": dataset_id}))
+        dataset_payload["version_count"] = len(dataset_version_db.get_data(db=db, filters={"database_id": database_id}))
 
-        public_version = version_obj or self._get_public_version_obj(db=db, dataset_id=dataset_id, dataset_payload=dataset_payload)
+        public_version = version_obj or self._get_public_version_obj(db=db, dataset_id=database_id, dataset_payload=dataset_payload)
         if not public_version:
             raise HTTPException(status_code=404, detail=f"public dataset version not found: {dataset_id}")
         if version_obj and not self._is_version_publicly_released(public_version):
@@ -3006,12 +3014,12 @@ class DatasetDomainService:
         dataset_payload = self._apply_version_to_dataset_payload(db=db, dataset_payload=dataset_payload, version_obj=public_version)
         dataset_payload = self._apply_assets_to_dataset_payload(db=db, dataset_payload=dataset_payload, version_obj=public_version)
         dataset_payload["visibility"] = "public"
-        default_public_version = self._get_public_version_obj(db=db, dataset_id=dataset_id, dataset_payload=dataset_payload)
+        default_public_version = self._get_public_version_obj(db=db, dataset_id=database_id, dataset_payload=dataset_payload)
         dataset_payload["default_public_version"] = self._build_dataset_version_payload(default_public_version, db=db) if default_public_version else None
         dataset_payload["selected_version"] = self._build_dataset_version_payload(public_version, db=db)
         dataset_payload["published_version"] = self._build_dataset_version_payload(public_version, db=db)
         dataset_payload["released_versions"] = [
-            self._build_dataset_version_payload(item, db=db) for item in self._list_public_version_objs(db=db, dataset_id=dataset_id)
+            self._build_dataset_version_payload(item, db=db) for item in self._list_public_version_objs(db=db, dataset_id=database_id)
         ]
         dataset_payload["lineage"] = self._list_public_lineage(db=db, version_id=public_version.id, limit=50)
         dataset_payload["query_adapter"] = dataset_adapter_registry.describe(dataset_payload)
@@ -6431,7 +6439,11 @@ class DatasetDomainService:
             db.close()
 
     def get_public_query_capabilities(self, dataset_id, asset_code=None):
-        dataset_payload = self.get_public_dataset(dataset_id=dataset_id)
+        db = mydb.get_dbs()
+        try:
+            dataset_payload = self._build_public_dataset_payload(db=db, dataset_id=dataset_id)
+        finally:
+            db.close()
         dataset_payload = self._select_asset_for_query(dataset_payload, asset_code=asset_code)
         file_path = self._resolve_dataset_primary_file_path(dataset_payload)
         return {
@@ -6627,15 +6639,16 @@ class DatasetDomainService:
                         seq = ""
                     else:
                         try:
+                            import shutil as _shutil
+                            samtools_bin = _shutil.which("samtools") or "samtools"
                             result = subprocess.run(
-                                ["samtools", "faidx", fp, reg],
+                                [samtools_bin, "faidx", fp, reg],
                                 capture_output=True, text=True, timeout=30,
                             )
                             seq_lines = result.stdout.strip().split("\n")
                             seq = "".join(seq_lines[1:]) if len(seq_lines) > 1 else ""
                         except Exception:
                             seq = ""
-                    total_len += len(seq)
                     total_len += len(seq)
                     results.append({
                         "input": inp,

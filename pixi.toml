@@ -10,7 +10,7 @@ backend-dev = "scripts/dev/start-backend-inner.sh"
 bio-tools = "scripts/dev/check-bio-tools-inner.sh"
 
 [dependencies]
-# ── Bioinformatics tools ──
+# ── Bioinformatics tools (bioconda/conda-forge) ──
 samtools = "*"
 bcftools = "*"
 htslib = "*"
@@ -20,21 +20,3 @@ primer3 = "*"
 mafft = ">=7"
 fasttree = "*"
 muscle = ">=5"
-
-# ── Python runtime ──
-python = ">=3.11,<3.13"
-pip = "*"
-uvicorn = "*"
-fastapi = "*"
-sqlalchemy = ">=2.0"
-psycopg2-binary = "*"
-pyyaml = "*"
-pydantic = ">=2.0"
-pydantic-settings = "*"
-python-jose = "*"
-passlib = "*"
-python-multipart = "*"
-aiofiles = "*"
-matplotlib = "*"
-openpyxl = "*"
-goatools = "*"

@@ -18,6 +18,7 @@ const exampleLoading = ref(false);
 
 const traitOptions = ref<{ label: string; value: string }[]>([]);
 const plotOptions = ref<{ label: string; value: string; _block: number }[]>([]);
+const blockOptions = ref<{ label: string; value: string }[]>([]);
 
 loadDatasets({ dataset_type: 'phenome' });
 
@@ -63,6 +64,10 @@ async function loadExampleData() {
 
 async function tryExample() {
   if (!selectedId.value) return;
+  if (!traitOptions.value.length || !plotOptions.value.length) {
+    console.warn('Form options not loaded yet — dataset may not be configured for query');
+    return;
+  }
   await loadExampleData();
 }
 
@@ -80,6 +85,10 @@ watch(selectedId, async (id) => {
 
 async function loadFormOptions(datasetId: number) {
   const assetCode = getAssetCode();
+  if (!assetCode) {
+    console.warn('No query_entry_asset configured for this dataset');
+    return;
+  }
   const traitData: any = await execute(datasetId, 'trait_list', { limit: 50 }, assetCode);
   traitOptions.value = (traitData?.data?.items || traitData?.items || []).map((t: any) => ({
     label: t.trait_name || t.name,
@@ -89,9 +98,19 @@ async function loadFormOptions(datasetId: number) {
   const plotData: any = await execute(datasetId, 'plot_list', { limit: 100 }, assetCode);
   const rawPlots = plotData?.data?.items || plotData?.items || [];
   plotOptions.value = rawPlots.map((p: any) => ({
-    label: `${p.subject_name_cn || p.subject_name} (${p.plot_code})`,
+    label: `${p.subject_name_cn || p.subject_name || p.plot_code} (${p.plot_code})`,
     value: String(p.id),
     _block: p.block,
+  }));
+
+  // Extract unique block numbers from plot data
+  const blockSet = new Set<number>();
+  for (const p of rawPlots) {
+    if (p.block != null) blockSet.add(Number(p.block));
+  }
+  blockOptions.value = [...blockSet].sort((a, b) => a - b).map(b => ({
+    label: `Block ${b}`,
+    value: String(b),
   }));
 }
 </script>
@@ -107,7 +126,10 @@ async function loadFormOptions(datasetId: number) {
     </div>
 
     <div v-if="selectedId" style="background:#fafafa;border:1px solid #e5e5e5;border-radius:6px;padding:20px;margin-bottom:16px;">
-      <div style="display:flex;gap:24px;flex-wrap:wrap;">
+      <div v-if="!getAssetCode()" style="padding:16px;background:#fef0f0;border-radius:4px;color:#f56c6c;margin-bottom:16px;">
+        This dataset is not configured for query. Please ask an administrator to set up the query entry asset.
+      </div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;" v-else>
         <div style="display:flex;flex-direction:column;gap:16px;min-width:220px;">
           <div>
             <div style="font-size:13px;font-weight:500;color:#606266;margin-bottom:6px;">Trait</div>
@@ -115,7 +137,7 @@ async function loadFormOptions(datasetId: number) {
           </div>
           <div>
             <div style="font-size:13px;font-weight:500;color:#606266;margin-bottom:6px;">Block</div>
-            <MultiSelectDropdown v-model="selectedBlocks" :options="[{label:'Block 1',value:'1'},{label:'Block 2',value:'2'}]" placeholder="All blocks" />
+            <MultiSelectDropdown v-model="selectedBlocks" :options="blockOptions" placeholder="All blocks" />
           </div>
         </div>
 
