@@ -190,7 +190,7 @@ const dsCode = computed(() => detail?.value?.dataset_code || '');
 // Genome-scoped downloads
 watch([tool, dsCode], ([t, code]) => {
   if (t === 'download' && code && hasGenome.value) loadDownloads(code);
-});
+}, { immediate: true });
 
 // ── Site-wide downloads (standalone /tools/download) ──
 const { items: allDatasets, load: loadAllDatasets } = useDatasetList();
