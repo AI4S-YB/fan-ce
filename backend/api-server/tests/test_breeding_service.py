@@ -24,10 +24,8 @@ from apps.breeding.models import (
     BreedingPhenotypeSubjectMap,
     BreedingPlot,
     BreedingProgram,
-    BreedingTaxonomyCache,
     BreedingTaxonomyName,
     BreedingTaxonomyNode,
-    BreedingTaxonomySourceSnapshot,
     BreedingTrial,
     BreedingVariantSampleMap,
 )
@@ -42,7 +40,6 @@ BREEDING_CORE_TABLES = [
     Dataset.__table__,
     BreedingProgram.__table__,
     BreedingMaterial.__table__,
-    BreedingTaxonomySourceSnapshot.__table__,
     BreedingTaxonomyNode.__table__,
     BreedingTaxonomyName.__table__,
     BreedingTrial.__table__,
@@ -53,7 +50,6 @@ BREEDING_CORE_TABLES = [
     BreedingDataFile.__table__,
     BreedingDatasetSubjectLink.__table__,
     BreedingDatasetAssayLink.__table__,
-    BreedingTaxonomyCache.__table__,
     BreedingGermplasmImportBatch.__table__,
     BreedingGermplasm.__table__,
     BreedingGermplasmLineage.__table__,
@@ -762,7 +758,7 @@ def test_breeding_service_link_tables_flow(db_session):
 def test_breeding_service_germplasm_validate_and_commit_flow(db_session, tmp_path):
     user = make_user(1006)
     db_session.add(
-        BreedingTaxonomyCache(
+        BreedingTaxonomyNode(
             tax_id=74636,
             scientific_name="Rosa chinensis",
             common_name="rose",
@@ -1014,12 +1010,12 @@ def test_breeding_service_taxonomy_sync_and_local_only_search(db_session, monkey
     assert sync_result["total"] == 1
     assert sync_result["items"][0]["tax_id"] == 74649
 
-    cached = db_session.query(BreedingTaxonomyCache).filter(BreedingTaxonomyCache.tax_id == 74649).first()
+    cached = db_session.query(BreedingTaxonomyNode).filter(BreedingTaxonomyNode.tax_id == 74649).first()
     assert cached is not None
     assert cached.scientific_name == "Rosa chinensis"
     assert cached.source == "ncbi_sync"
 
-    db_session.query(BreedingTaxonomyCache).filter(BreedingTaxonomyCache.tax_id == 74649).delete()
+    db_session.query(BreedingTaxonomyNode).filter(BreedingTaxonomyNode.tax_id == 74649).delete()
     db_session.commit()
 
     search_result = breeding_domain_service.list_germplasm_taxonomy_options(
@@ -1037,7 +1033,7 @@ def test_breeding_service_taxonomy_sync_and_local_only_search(db_session, monkey
 def test_breeding_service_germplasm_template_supports_comment_rows_and_legacy_alias(db_session, tmp_path):
     user = make_user(1007)
     db_session.add(
-        BreedingTaxonomyCache(
+        BreedingTaxonomyNode(
             tax_id=74649,
             scientific_name="Rosa chinensis",
             common_name="China rose",
@@ -1071,7 +1067,7 @@ def test_breeding_service_germplasm_template_supports_comment_rows_and_legacy_al
 def test_breeding_service_germplasm_template_accepts_arbitrary_dynamic_headers(db_session, tmp_path):
     user = make_user(1008)
     db_session.add(
-        BreedingTaxonomyCache(
+        BreedingTaxonomyNode(
             tax_id=3702,
             scientific_name="Arabidopsis thaliana",
             common_name="thale cress",
@@ -1125,7 +1121,7 @@ def test_breeding_service_germplasm_template_accepts_arbitrary_dynamic_headers(d
 def test_breeding_service_germplasm_template_rejects_blank_header_columns_with_data(db_session, tmp_path):
     user = make_user(1009)
     db_session.add(
-        BreedingTaxonomyCache(
+        BreedingTaxonomyNode(
             tax_id=3885,
             scientific_name="Pisum sativum",
             common_name="pea",
@@ -1161,7 +1157,7 @@ def test_breeding_service_germplasm_template_rejects_blank_header_columns_with_d
 def test_breeding_service_delete_germplasm_import_batch_removes_related_records(db_session, tmp_path):
     user = make_user(1010)
     db_session.add(
-        BreedingTaxonomyCache(
+        BreedingTaxonomyNode(
             tax_id=4530,
             scientific_name="Oryza sativa",
             common_name="rice",
@@ -1219,7 +1215,7 @@ def test_breeding_service_delete_germplasm_import_batch_removes_related_records(
 
 def test_breeding_service_taxonomy_audit(db_session, monkeypatch):
     cache_rows = [
-        BreedingTaxonomyCache(
+        BreedingTaxonomyNode(
             tax_id=74636,
             scientific_name="Rosa chinensis",
             common_name="China rose",
@@ -1229,7 +1225,7 @@ def test_breeding_service_taxonomy_audit(db_session, monkeypatch):
             source="manual",
             is_active=1,
         ),
-        BreedingTaxonomyCache(
+        BreedingTaxonomyNode(
             tax_id=74649,
             scientific_name="Rosa chinensis",
             common_name="China rose",
@@ -1239,7 +1235,7 @@ def test_breeding_service_taxonomy_audit(db_session, monkeypatch):
             source="ncbi_sync",
             is_active=1,
         ),
-        BreedingTaxonomyCache(
+        BreedingTaxonomyNode(
             tax_id=999999,
             scientific_name="Unknown rose",
             common_name=None,
@@ -1249,7 +1245,7 @@ def test_breeding_service_taxonomy_audit(db_session, monkeypatch):
             source="manual",
             is_active=1,
         ),
-        BreedingTaxonomyCache(
+        BreedingTaxonomyNode(
             tax_id=888888,
             scientific_name="Broken taxonomy",
             common_name=None,
@@ -1394,7 +1390,7 @@ def test_breeding_service_local_taxonomy_dump_search_and_projection(db_session, 
     assert options["items"][0]["scientific_name"] == "Rosa chinensis"
     assert "Viridiplantae" in (options["items"][0]["lineage"] or "")
 
-    projected_cache = db_session.query(BreedingTaxonomyCache).filter(BreedingTaxonomyCache.tax_id == 74649).first()
+    projected_cache = db_session.query(BreedingTaxonomyNode).filter(BreedingTaxonomyNode.tax_id == 74649).first()
     assert projected_cache is not None
     assert projected_cache.source == "local_dump"
 

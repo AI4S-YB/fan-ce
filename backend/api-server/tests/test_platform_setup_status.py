@@ -8,8 +8,7 @@ from sqlalchemy.pool import StaticPool
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from apps.breeding.models import BreedingTaxonomySourceSnapshot
-from apps.breeding.models import BreedingTaxonomyCache, BreedingTaxonomyName, BreedingTaxonomyNode
+from apps.breeding.models import BreedingTaxonomyName, BreedingTaxonomyNode
 from apps.platform.setup_jobs import get_taxonomy_import_job, run_taxonomy_import_job, submit_taxonomy_import_job
 from apps.platform.setup_state import (
     is_taxonomy_ready,
@@ -22,10 +21,8 @@ from db.database import Base
 
 
 TEST_TABLES = [
-    BreedingTaxonomySourceSnapshot.__table__,
     BreedingTaxonomyNode.__table__,
     BreedingTaxonomyName.__table__,
-    BreedingTaxonomyCache.__table__,
     SystemInstallPackage.__table__,
     SystemInstallJob.__table__,
     SystemInstallLock.__table__,
@@ -113,11 +110,15 @@ def test_init_system_tables_creates_locked_taxonomy_guard_without_snapshot(db_se
 def test_init_system_tables_unlocks_when_taxonomy_snapshot_exists(db_session, monkeypatch):
     session, engine, testing_session = db_session
     session.add(
-        BreedingTaxonomySourceSnapshot(
-            source_name="ncbi_new_taxdump",
-            source_version="2026-04-05",
-            node_count=10,
-            name_count=20,
+        BreedingTaxonomyNode(
+            tax_id=1,
+            parent_tax_id=1,
+            rank="no rank",
+            scientific_name="root",
+            lineage_ids=[],
+            lineage="root",
+            source="plant_dump",
+            is_active=1,
         )
     )
     session.commit()
@@ -142,11 +143,15 @@ def test_init_system_tables_unlocks_when_taxonomy_snapshot_exists(db_session, mo
 def test_platform_setup_state_payload(db_session):
     session, _engine, _testing_session = db_session
     session.add(
-        BreedingTaxonomySourceSnapshot(
-            source_name="ncbi_new_taxdump",
-            source_version="2026-04-05",
-            node_count=2735827,
-            name_count=3212928,
+        BreedingTaxonomyNode(
+            tax_id=1,
+            parent_tax_id=1,
+            rank="no rank",
+            scientific_name="root",
+            lineage_ids=[],
+            lineage="root",
+            source="plant_dump",
+            is_active=1,
         )
     )
     session.add(
@@ -186,9 +191,8 @@ def test_platform_setup_state_payload(db_session):
     assert state["ready"] is True
     assert state["status"] == "ready"
     assert state["lock"]["is_locked"] == 0
-    assert state["package"]["package_code"] == "builtin-taxonomy-2026-04-05"
-    assert state["snapshot"]["source_version"] == "2026-04-05"
-    assert state["job"]["status"] == "success"
+    assert state["node_count"] == 1
+    assert state["latest_job"]["status"] == "success"
 
 
 def test_register_and_list_taxonomy_packages(db_session, tmp_path):
@@ -241,18 +245,14 @@ def test_submit_and_run_taxonomy_import_job(db_session, tmp_path, monkeypatch):
     try:
         job_payload = get_taxonomy_import_job(verify_session, job_id=job["id"])
         lock_obj = verify_session.query(SystemInstallLock).filter(SystemInstallLock.lock_code == "taxonomy_required").first()
-        snapshot = verify_session.query(BreedingTaxonomySourceSnapshot).order_by(BreedingTaxonomySourceSnapshot.id.desc()).first()
         node_count = verify_session.query(BreedingTaxonomyNode).count()
         name_count = verify_session.query(BreedingTaxonomyName).count()
-        cache_count = verify_session.query(BreedingTaxonomyCache).count()
 
         assert job_payload["status"] == "success"
         assert job_payload["stage"] == "completed"
         assert job_payload["setup_state"]["ready"] is True
         assert lock_obj.is_locked == 0
-        assert snapshot.source_version == "2026-04-05"
         assert node_count == 2
         assert name_count == 3
-        assert cache_count == 2
     finally:
         verify_session.close()

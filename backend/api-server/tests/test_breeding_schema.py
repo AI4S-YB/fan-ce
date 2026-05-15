@@ -25,10 +25,8 @@ from apps.breeding.models import (
     BreedingPhenotypeSubjectMap,
     BreedingPlot,
     BreedingProgram,
-    BreedingTaxonomyCache,
     BreedingTaxonomyName,
     BreedingTaxonomyNode,
-    BreedingTaxonomySourceSnapshot,
     BreedingTrial,
     BreedingVariantSampleMap,
 )
@@ -46,10 +44,8 @@ DATASET_CORE_TABLES = [
 BREEDING_TABLES = [
     BreedingProgram.__table__,
     BreedingMaterial.__table__,
-    BreedingTaxonomySourceSnapshot.__table__,
     BreedingTaxonomyNode.__table__,
     BreedingTaxonomyName.__table__,
-    BreedingTaxonomyCache.__table__,
     BreedingGermplasmImportBatch.__table__,
     BreedingGermplasm.__table__,
     BreedingGermplasmLineage.__table__,
@@ -312,12 +308,13 @@ def test_breeding_init_creates_all_tables_and_supports_minimal_chain(db_engine, 
 
 
 def test_germplasm_phase1_tables_support_basic_records_and_uniqueness(db_session):
-    taxonomy = BreedingTaxonomyCache(
+    taxonomy = BreedingTaxonomyNode(
         tax_id=74636,
         scientific_name="Rosa chinensis",
         common_name="rose",
         rank="species",
         lineage="Eukaryota; Plantae; Rosaceae; Rosa",
+        lineage_ids=[],
         source="manual",
         is_active=1,
     )
@@ -373,7 +370,7 @@ def test_germplasm_phase1_tables_support_basic_records_and_uniqueness(db_session
     db_session.add(lineage)
     db_session.commit()
 
-    assert db_session.query(BreedingTaxonomyCache).count() == 1
+    assert db_session.query(BreedingTaxonomyNode).count() == 1
     assert db_session.query(BreedingGermplasmImportBatch).count() == 1
     assert db_session.query(BreedingGermplasm).count() == 1
     assert db_session.query(BreedingGermplasmLineage).count() == 1
