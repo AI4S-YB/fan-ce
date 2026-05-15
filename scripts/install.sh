@@ -99,9 +99,15 @@ TAXONOMY_DATA="$ROOT_DIR/backend/api-server/data/taxonomy-plants.tar.gz"
 if [ -f "$TAXONOMY_DATA" ]; then
     pixi run uv run --directory backend/api-server python -c "
 import sys
+from apps.breeding.init import init_breeding_tables
+from apps.system.init import init_system_tables
 from db.database import MyDBManager
 from apps.breeding.models import BreedingTaxonomyNode
 from apps.breeding.taxonomy_loader import load_taxonomy_dump
+
+# Ensure breeding + system tables exist before import
+init_breeding_tables()
+init_system_tables()
 
 with MyDBManager() as db:
     existing = db.query(BreedingTaxonomyNode).count()
@@ -116,6 +122,16 @@ with MyDBManager() as db:
             reset_existing=False,
         )
         print(f'  Imported {result[\"node_count\"]} nodes, {result[\"name_count\"]} names')
+        # Update install lock to mark taxonomy as ready
+        from apps.system.base.models import SystemInstallLock
+        lock = db.query(SystemInstallLock).filter(
+            SystemInstallLock.lock_code == 'taxonomy_required'
+        ).first()
+        if lock:
+            lock.is_locked = 0
+            lock.reason = 'taxonomy 已安装'
+            db.add(lock)
+            db.commit()
 "
     echo -e "  ${GREEN}Done.${NC}"
 else
