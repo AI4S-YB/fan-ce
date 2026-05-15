@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import json
-import os
 import shutil
 import tarfile
 import tempfile
@@ -9,10 +7,8 @@ from pathlib import Path
 from io import StringIO
 
 from .models import (
-    BreedingTaxonomyCache,
     BreedingTaxonomyName,
     BreedingTaxonomyNode,
-    BreedingTaxonomySourceSnapshot,
 )
 
 
@@ -98,28 +94,33 @@ def parse_taxonomy_names(names_path: str | Path, *, allowed_name_classes: set[st
 
 
 def build_taxonomy_lineages(nodes: dict[int, dict], scientific_names: dict[int, str]):
-    lineage_cache: dict[int, tuple[str | None, list[str]]] = {}
+    """Build lineage text and lineage_ids array for each node.
+
+    Returns: {tax_id: (lineage_text: str | None, lineage_ids: list[int], lineage_names: list[str])}
+    """
+    lineage_cache: dict[int, tuple[str | None, list[int], list[str]]] = {}
 
     def resolve_lineage(tax_id: int):
         if tax_id in lineage_cache:
             return lineage_cache[tax_id]
         node = nodes.get(tax_id)
         if node is None:
-            lineage_cache[tax_id] = (None, [])
+            lineage_cache[tax_id] = (None, [], [])
             return lineage_cache[tax_id]
 
         parent_tax_id = node.get("parent_tax_id")
         if not parent_tax_id or parent_tax_id == tax_id or parent_tax_id not in nodes:
-            lineage_cache[tax_id] = (None, [])
+            lineage_cache[tax_id] = (None, [], [])
             return lineage_cache[tax_id]
 
-        parent_lineage, parent_names = resolve_lineage(parent_tax_id)
+        parent_lineage, parent_ids, parent_names = resolve_lineage(parent_tax_id)
         parent_name = scientific_names.get(parent_tax_id)
+        lineage_ids = list(parent_ids) + [parent_tax_id]
         lineage_names = list(parent_names)
         if parent_name:
             lineage_names.append(parent_name)
         lineage_text = "; ".join(lineage_names) if lineage_names else None
-        lineage_cache[tax_id] = (lineage_text, lineage_names)
+        lineage_cache[tax_id] = (lineage_text, lineage_ids, lineage_names)
         return lineage_cache[tax_id]
 
     for tax_id in nodes:
@@ -136,6 +137,10 @@ def _copy_rows_to_postgres(raw_conn, *, table_name: str, columns: list[str], row
         for value in row:
             if value is None:
                 serialized.append("\\N")
+            elif isinstance(value, list):
+                # PostgreSQL array literal: {item1,item2,...}
+                array_str = "{" + ",".join(str(v) for v in value) + "}"
+                serialized.append(array_str)
             else:
                 text = str(value)
                 text = text.replace("\\", "\\\\").replace("\t", " ").replace("\n", " ").replace("\r", " ")
@@ -176,34 +181,14 @@ def _load_taxonomy_dump_postgres(
     engine = db.get_bind()
     raw_conn = engine.raw_connection()
     try:
-        with raw_conn.cursor() as cur:
-            if reset_existing:
+        if reset_existing:
+            with raw_conn.cursor() as cur:
                 cur.execute("DELETE FROM brd_taxonomy_name")
                 cur.execute("DELETE FROM brd_taxonomy_node")
-                cur.execute("DELETE FROM brd_taxonomy_source_snapshot")
-            cur.execute(
-                """
-                INSERT INTO brd_taxonomy_source_snapshot
-                (source_name, source_version, archive_path, extracted_path, node_count, name_count)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                RETURNING id
-                """,
-                (
-                    source_name,
-                    source_version,
-                    os.path.abspath(dump_path),
-                    str(dump_dir),
-                    len(nodes),
-                    len(names),
-                ),
-            )
-            snapshot_id = cur.fetchone()[0]
 
         node_rows = []
-        cache_rows = []
         for tax_id, node in nodes.items():
-            lineage_text, lineage_names = lineages.get(tax_id, (None, []))
-            lineage_names_json = json.dumps(lineage_names, ensure_ascii=False) if lineage_names else None
+            lineage_text, lineage_ids, _lineage_names = lineages.get(tax_id, (None, [], []))
             node_rows.append(
                 (
                     tax_id,
@@ -211,22 +196,9 @@ def _load_taxonomy_dump_postgres(
                     node.get("rank"),
                     scientific_names.get(tax_id) or str(tax_id),
                     common_names.get(tax_id),
+                    lineage_ids,
                     lineage_text,
-                    lineage_names_json,
-                    1,
-                    snapshot_id,
-                )
-            )
-            cache_rows.append(
-                (
-                    tax_id,
-                    scientific_names.get(tax_id) or str(tax_id),
-                    common_names.get(tax_id),
-                    node.get("rank"),
-                    node.get("parent_tax_id"),
-                    lineage_text,
-                    lineage_names_json,
-                    "local_dump",
+                    "plant_dump",
                     1,
                 )
             )
@@ -240,10 +212,10 @@ def _load_taxonomy_dump_postgres(
                 "rank",
                 "scientific_name",
                 "common_name",
+                "lineage_ids",
                 "lineage",
-                "lineage_names_json",
+                "source",
                 "is_active",
-                "source_snapshot_id",
             ],
             rows=node_rows,
         )
@@ -259,54 +231,8 @@ def _load_taxonomy_dump_postgres(
             rows=name_rows,
         )
 
-        with raw_conn.cursor() as cur:
-            cur.execute(
-                """
-                CREATE TEMP TABLE tmp_brd_taxonomy_cache AS
-                SELECT tax_id, scientific_name, common_name, rank, parent_tax_id, lineage, lineage_names_json, source, is_active
-                FROM brd_taxonomy_cache
-                WITH NO DATA
-                """
-            )
-        _copy_rows_to_postgres(
-            raw_conn,
-            table_name="tmp_brd_taxonomy_cache",
-            columns=[
-                "tax_id",
-                "scientific_name",
-                "common_name",
-                "rank",
-                "parent_tax_id",
-                "lineage",
-                "lineage_names_json",
-                "source",
-                "is_active",
-            ],
-            rows=cache_rows,
-        )
-        with raw_conn.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO brd_taxonomy_cache
-                (tax_id, scientific_name, common_name, rank, parent_tax_id, lineage, lineage_names_json, source, is_active)
-                SELECT
-                    tax_id, scientific_name, common_name, rank, parent_tax_id, lineage, lineage_names_json, source, is_active
-                FROM tmp_brd_taxonomy_cache
-                ON CONFLICT (tax_id) DO UPDATE SET
-                    scientific_name = EXCLUDED.scientific_name,
-                    common_name = EXCLUDED.common_name,
-                    rank = EXCLUDED.rank,
-                    parent_tax_id = EXCLUDED.parent_tax_id,
-                    lineage = EXCLUDED.lineage,
-                    lineage_names_json = EXCLUDED.lineage_names_json,
-                    source = EXCLUDED.source,
-                    is_active = EXCLUDED.is_active
-                """
-            )
-
         raw_conn.commit()
         return {
-            "snapshot_id": snapshot_id,
             "source_name": source_name,
             "source_version": source_version,
             "node_count": len(nodes),
@@ -353,34 +279,22 @@ def load_taxonomy_dump(
         )
         lineages = build_taxonomy_lineages(nodes=nodes, scientific_names=scientific_names)
 
-        snapshot = BreedingTaxonomySourceSnapshot(
-            source_name=source_name,
-            source_version=source_version,
-            archive_path=os.path.abspath(dump_path),
-            extracted_path=str(dump_dir),
-            node_count=len(nodes),
-            name_count=len(names),
-        )
-        db.add(snapshot)
-        db.flush()
-
         if reset_existing:
             db.query(BreedingTaxonomyName).delete()
             db.query(BreedingTaxonomyNode).delete()
-            db.query(BreedingTaxonomyCache).filter(BreedingTaxonomyCache.source == "local_dump").delete()
             db.flush()
 
         for tax_id, node in nodes.items():
-            lineage_text, lineage_names = lineages.get(tax_id, (None, []))
+            lineage_text, lineage_ids, _lineage_names = lineages.get(tax_id, (None, [], []))
             payload = {
                 "parent_tax_id": node.get("parent_tax_id"),
                 "rank": node.get("rank"),
                 "scientific_name": scientific_names.get(tax_id) or str(tax_id),
                 "common_name": common_names.get(tax_id),
+                "lineage_ids": lineage_ids,
                 "lineage": lineage_text,
-                "lineage_names_json": json.dumps(lineage_names, ensure_ascii=False) if lineage_names else None,
+                "source": "plant_dump",
                 "is_active": 1,
-                "source_snapshot_id": snapshot.id,
             }
             row = db.query(BreedingTaxonomyNode).filter(BreedingTaxonomyNode.tax_id == tax_id).first()
             if row is None:
@@ -389,24 +303,6 @@ def load_taxonomy_dump(
                 for field, value in payload.items():
                     setattr(row, field, value)
                 db.add(row)
-
-            cache_row = db.query(BreedingTaxonomyCache).filter(BreedingTaxonomyCache.tax_id == tax_id).first()
-            cache_payload = {
-                "scientific_name": payload["scientific_name"],
-                "common_name": payload["common_name"],
-                "rank": payload["rank"],
-                "parent_tax_id": payload["parent_tax_id"],
-                "lineage": payload["lineage"],
-                "lineage_names_json": payload["lineage_names_json"],
-                "source": "local_dump",
-                "is_active": 1,
-            }
-            if cache_row is None:
-                db.add(BreedingTaxonomyCache(tax_id=tax_id, **cache_payload))
-            else:
-                for field, value in cache_payload.items():
-                    setattr(cache_row, field, value)
-                db.add(cache_row)
 
         seen_name_keys = set()
         for name in names:
@@ -418,7 +314,6 @@ def load_taxonomy_dump(
 
         db.commit()
         return {
-            "snapshot_id": snapshot.id,
             "source_name": source_name,
             "source_version": source_version,
             "node_count": len(nodes),
