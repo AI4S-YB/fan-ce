@@ -84,12 +84,15 @@ echo ""
 # ── 3. PostgreSQL + Database setup ──
 echo "[3/6] Setting up PostgreSQL..."
 
-# Read DB config from yaml (simple grep approach, no yq dependency)
-DB_HOST=$(grep -E '^\s+host:' "$CONF_FILE" | head -1 | sed 's/.*host:\s*//' | xargs)
-DB_PORT=$(grep -E '^\s+port:' "$CONF_FILE" | head -1 | sed 's/.*port:\s*//' | xargs)
-DB_NAME=$(grep -E '^\s+database:' "$CONF_FILE" | head -1 | sed 's/.*database:\s*//' | xargs)
-DB_USER=$(grep -E '^\s+user:' "$CONF_FILE" | head -1 | sed 's/.*user:\s*//' | xargs)
-DB_PASS=$(grep -E '^\s+password:' "$CONF_FILE" | head -1 | sed 's/.*password:\s*//' | xargs)
+# Read DB config from yaml under pgsql_options section
+_parse_pgsql_opt() {
+    awk "/^pgsql_options:/{found=1; next} found && /^[a-z]/{exit} found && /  $1:/{gsub(/.*:\s*/,\"\"); print; exit}" "$CONF_FILE" | xargs
+}
+DB_HOST=$(_parse_pgsql_opt host)
+DB_PORT=$(_parse_pgsql_opt port)
+DB_NAME=$(_parse_pgsql_opt database)
+DB_USER=$(_parse_pgsql_opt user)
+DB_PASS=$(_parse_pgsql_opt password)
 
 DB_HOST="${DB_HOST:-127.0.0.1}"
 DB_PORT="${DB_PORT:-5433}"
