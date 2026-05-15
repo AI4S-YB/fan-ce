@@ -24,7 +24,7 @@ class GeneSearchRequest(BaseModel):
         json_schema_extra={
             "example": {
                 "genome_id": "96",
-                "genome_path": "/data/biodata/example/genomes/dataset01",
+                "genome_path": "",
                 "keyword": "ethylene",
                 "gene_id": "AT1G14685",
                 "chrom": "chr1",
@@ -47,7 +47,7 @@ class GeneListRequest(BaseModel):
         json_schema_extra={
             "example": {
                 "genome_id": "82",
-                "genome_path": "/data/biodata/example/genomes/dataset01",
+                "genome_path": "",
                 "page": 1,
                 "page_size": 20
             }
@@ -64,7 +64,7 @@ class GeneInfoRequest(BaseModel):
         json_schema_extra={
             "example": {
                 "genome_id": "82",
-                "genome_path": "/data/biodata/example/genomes/dataset01",
+                "genome_path": "",
                 "gene_id": "AT1G14685"
             }
         }
@@ -105,7 +105,7 @@ class TranscriptInfoRequest(BaseModel):
         json_schema_extra={
             "example": {
                 "genome_id": "82",
-                "genome_path": "/data/biodata/example/genomes/dataset01",
+                "genome_path": "",
                 "transcript_id": "AT1G14685.1"
             }
         }

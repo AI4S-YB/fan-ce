@@ -34,7 +34,7 @@ class FeatureRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "file_path": "/data/biodata/example/epigenomics/WT_1.methy.CG.txt.gz",
+                "file_path": "",
                 "chrom": "Chr1A",
                 "start": 100000,
                 "end": 1000000,

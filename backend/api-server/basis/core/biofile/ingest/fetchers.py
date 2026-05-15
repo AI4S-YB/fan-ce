@@ -115,12 +115,9 @@ def fetch_to_local(file_spec: Dict[str, Any]) -> str:
                     f"/data/{bucket}/{key}",  # 标准路径
                     f"/data/{key}",           # 简化路径
                     f"/tmp/{key}",            # 临时目录路径
-                    # 新增：处理修改后的kafka监听目录路径
                     key,                      # 直接使用key作为绝对路径
-                    f"/data/biodata{key}",    # biodata目录 + key路径
                     f"/data{key}",            # data目录 + key路径
                     key.lstrip('/'),          # 去掉开头的斜杠，作为相对路径
-                    f"/data/biodata/{key.lstrip('/')}", # biodata目录 + 相对key路径
                 ]
                 
                 for alt_path in alternative_paths:

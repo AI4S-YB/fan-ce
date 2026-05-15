@@ -9,8 +9,8 @@ class ExpressionProcessRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "input_file": "/data/biodata/example/transcriptome/01.phytohormones_RNAseq_count.txt",
-                "output_h5_file": "/data/biodata/example/transcriptome/01.phytohormones_RNAseq.h5"
+                "input_file": "",
+                "output_h5_file": ""
             }
         }
         
@@ -25,7 +25,7 @@ class ExpressionQueryRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "file_path": "/data/biodata/example/transcriptome/01.phytohormones_RNAseq.h5",
+                "file_path": "",
                 "genes": ["SAM1A000100", "SAM1A000200", "SAM1A000300", "SAM1A000400", "SAM1A000500"],
                 "samples": ["H2O_1","H2O_2","H2O_3","AgNO3_1","AgNO3_2","AgNO3_3"],
                 "data_type": "fpkm"

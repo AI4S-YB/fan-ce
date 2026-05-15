@@ -27,7 +27,7 @@ class GenomicFeatureRequest(BaseModel):
         json_schema_extra={
             "example": {
                 "genome_id": "96",
-                "genome_path": "/data/biodata/example/genomes/dataset01",
+                "genome_path": "",
                 "chrom": "Chr1",
                 "start": 10000,
                 "end": 20000,

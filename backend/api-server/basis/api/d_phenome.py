@@ -14,7 +14,7 @@ phenome_router = APIRouter(
 
 @phenome_router.post("/file/process", 
     summary="Process phenotype file and store in SQLite database")
-async def process_phenome_data_file(file_path: str = Query(default="/data/biodata/example/phenotype/rose_phenotype_test.xlsx", description="Path to phenotype data file")):
+async def process_phenome_data_file(file_path: str = Query(default="", description="Path to phenotype data file")):
     
     # Check input file and Get SQLite file path
     sqlite_file = get_sqlite_path(file_path)
@@ -38,7 +38,7 @@ async def process_phenome_data_file(file_path: str = Query(default="/data/biodat
 
 @phenome_router.get("/names/list",
     summary="Get list of traits from phenotype data file")
-async def get_traits_list(file_path: str = Query(default="/data/biodata/example/phenotype/rose_phenotype_test.xlsx", description="Path to phenotype data file")):
+async def get_traits_list(file_path: str = Query(default="", description="Path to phenotype data file")):
     
     # Get SQLite file path from the original file path
     sqlite_file = get_sqlite_path(file_path)
@@ -62,7 +62,7 @@ async def get_traits_list(file_path: str = Query(default="/data/biodata/example/
 
 @phenome_router.get("/samples/list",
     summary="Get list of samples from phenotype data file")
-async def get_samples_list(file_path: str = Query(default="/data/biodata/example/phenotype/rose_phenotype_test.xlsx", description="Path to phenotype data file")):
+async def get_samples_list(file_path: str = Query(default="", description="Path to phenotype data file")):
     
     # Get SQLite file path from the original file path
     sqlite_file = get_sqlite_path(file_path)

@@ -18,7 +18,7 @@ class NGSFileFilterRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "directory": "/data/biodata/example/fastq",
+                "directory": "",
                 "recursive": True,
                 "min_size_bytes": 1000,
                 "max_size_bytes": 10000000000,

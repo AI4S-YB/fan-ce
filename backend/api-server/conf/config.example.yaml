@@ -11,7 +11,7 @@ database:
 
 apps:
   databases:
-    fileDir: /data/biodata
+    fileDir: /data/fance  # 用户数据存放根目录，根据实际环境修改
 
 pgsql_options:
   user: postgres

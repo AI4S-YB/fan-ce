@@ -64,8 +64,8 @@ echo -e "  ${GREEN}Done.${NC}"
 echo ""
 
 # ── 2. Data directories ──
-echo "[2/5] Creating data directories..."
-mkdir -p /data/biodata 2>/dev/null || echo -e "  ${YELLOW}Warning: Could not create /data/biodata. Create it manually or update the path in config.${NC}"
+echo "[2/5] Checking data directory..."
+echo -e "  ${YELLOW}Configure apps.databases.fileDir in $CONF_FILE to point to your data storage location.${NC}"
 echo -e "  ${GREEN}Done.${NC}"
 echo ""
 

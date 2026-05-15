@@ -11,7 +11,7 @@ class GenomicSequenceExampleRequest(BaseModel):
         json_schema_extra={
             "example": {
                 "genome_id": "82",
-                "genome_path": "/data/biodata/example/genomes/dataset01",
+                "genome_path": "",
                 "seq_type": "genome",
             }
         }
@@ -29,7 +29,7 @@ class GenomicSequenceRequest(BaseModel):
         json_schema_extra={
             "example": {
                 "genome_id": "82",
-                "genome_path": "/data/biodata/example/genomes/dataset01",
+                "genome_path": "",
                 "seq_type": "genome",
                 "seq_id": "Chr1",
                 "start": 1000,
@@ -65,7 +65,7 @@ class GenomicBatchSequenceRequest(BaseModel):
         json_schema_extra={
             "example": {
                 "genome_id": "82",
-                "genome_path": "/data/biodata/example/genomes/dataset01",
+                "genome_path": "",
                 "seq_type": "genome",
                 "regions": [
                     {

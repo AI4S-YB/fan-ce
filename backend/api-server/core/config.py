@@ -37,7 +37,6 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[AnyHttpUrl] = (
         "http://localhost:4000",
     )
-    DATABASE_PATH: str = "/data/bio_data/"
     # token
 
     SECRET_KEY: str = os.environ.get("FANCE_SECRET_KEY", "dev-secret-change-in-production")

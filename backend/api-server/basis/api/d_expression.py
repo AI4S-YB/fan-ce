@@ -73,7 +73,7 @@ async def process_expression_file(req: ExpressionProcessRequest, db=Depends(get_
 
 @rnaseq_router.get("/genes/list", 
     summary="List genes in the expression file")
-async def list_genes(file_path: str = "/data/biodata/example/transcriptome/01.phytohormones_RNAseq.h5", max_records: int = 100):
+async def list_genes(file_path: str = "", max_records: int = 100):
     try:
         genes, _ = load_gene_sample_names(file_path)
         # Limit the number of returned genes based on max_records
@@ -94,7 +94,7 @@ async def list_genes(file_path: str = "/data/biodata/example/transcriptome/01.ph
 
 @rnaseq_router.get("/samples/list",
     summary="List samples in the expression file")
-async def list_samples(file_path: str = "/data/biodata/example/transcriptome/01.phytohormones_RNAseq.h5", max_records: int = 1000):
+async def list_samples(file_path: str = "", max_records: int = 1000):
     try:
         _, samples = load_gene_sample_names(file_path)
         # Limit the number of returned samples based on max_records
@@ -115,7 +115,7 @@ async def list_samples(file_path: str = "/data/biodata/example/transcriptome/01.
 @rnaseq_router.get("/filepath/fetch",
     summary="Get the path of expression matrix file")
 async def get_expression_file_path(
-    file_name: str = "/data/biodata/example/transcriptome/01.phytohormones_RNAseq.h5",
+    file_name: str = "",
 ):
     """
     Get the file path of expression matrix from HDF5 file
@@ -185,7 +185,7 @@ async def get_expression_file_path(
 
 @rnaseq_router.get("/types/list",
     summary="list expression type names from HDF5 file")
-async def list_types(file_path: str = "/data/biodata/example/transcriptome/01.phytohormones_RNAseq.h5"):
+async def list_types(file_path: str = ""):
     """
     list all matrix group names from HDF5 file
     

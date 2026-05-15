@@ -12,7 +12,7 @@ class VariantProcessRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "file_path": " /data/biodata/example/variome/test.vcf"
+                "file_path": ""
             }
         }
         
@@ -27,7 +27,7 @@ class VariantPathRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "file_path": "/data/biodata/example/variome/test.bcf"
+                "file_path": ""
             }
         }
         
@@ -95,7 +95,7 @@ class VariantRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "vcf_path": "/data/biodata/example/variome/test.bcf",
+                "vcf_path": "",
                 "regions": ["Chr1A:80000-100000", "Chr1A:450000-500000"],
                 "gene_id": "SAM1A000600",
                 "gene_ids": ["SAM1A002100", "SAM1A002300"],

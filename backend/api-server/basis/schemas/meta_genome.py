@@ -11,7 +11,7 @@ class GenomeProcessRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "genome_path": "/data/biodata/example/genomes/dataset01",
+                "genome_path": "",
                 "operation": "insert"
             }
         }

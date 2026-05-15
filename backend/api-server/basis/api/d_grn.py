@@ -16,7 +16,7 @@ grn_router = APIRouter(
 
 
 @grn_router.post("/file/process", response_model=dict, summary="Process gene regulatory network Excel file")
-async def process_grn_file(file_path: str = Query(default="/data/biodata/example/grn/41477_2025_2047_MOESM3_ESM.xlsx", description="Path to the Excel file")):
+async def process_grn_file(file_path: str = Query(default="", description="Path to the Excel file")):
     """
     Process gene regulatory network Excel file and return graph statistics
     
@@ -68,7 +68,7 @@ async def list_gene_relationships(
     page_size: int = Query(default=10, description="Items per page", gt=0),
     keyword: str = Query(default=None, description="Search keyword (optional)"),
     exact_match: bool = Query(default=False, description="Whether to perform exact match search"),
-    file_path: str = Query(default="/data/biodata/example/grn/41477_2025_2047_MOESM3_ESM.xlsx", description="Path to the Excel file")
+    file_path: str = Query(default="", description="Path to the Excel file")
 ):
     """
     获取基因调控关系列表，支持可选的搜索功能
@@ -114,7 +114,7 @@ async def list_gene_relationships(
 
 
 @grn_router.post("/info", response_model=dict, summary="Get gene details")
-async def get_gene_detail(gene_id: str="AT1G01030.1", file_path: str = Query(default="/data/biodata/example/grn/41477_2025_2047_MOESM3_ESM.xlsx", description="Path to the Excel file")):
+async def get_gene_detail(gene_id: str="AT1G01030.1", file_path: str = Query(default="", description="Path to the Excel file")):
     """
     Get detailed information of a gene by ID from the gene regulatory network
     """
@@ -157,7 +157,7 @@ async def get_gene_relationship(
     target: str = Query(default="AT2G22430", description="ID of target gene"),
     max_paths: int = Query(default=10, description="Maximum number of paths to find", ge=1, le=50),
     max_path_length: int = Query(default=5, description="Maximum path length (number of edges)", ge=1, le=10),
-    file_path: str = Query(default="/data/biodata/example/grn/41477_2025_2047_MOESM3_ESM.xlsx", description="Path to the Excel file")
+    file_path: str = Query(default="", description="Path to the Excel file")
 ):
     """
     获取两个基因之间的所有调控路径信息
@@ -222,7 +222,7 @@ async def get_gene_relationships_batch(request: dict):
         include_external = request.get("include_external", False)
         max_connections_per_node = request.get("max_connections_per_node", 50)
         max_path_length = request.get("max_path_length", 3)
-        file_path = request.get("file_path", "/data/biodata/example/grn/41477_2025_2047_MOESM3_ESM.xlsx")
+        file_path = request.get("file_path", "")
         
         # 验证输入参数
         if not selected_nodes or len(selected_nodes) == 0:
@@ -262,7 +262,7 @@ async def get_gene_relationships_batch(request: dict):
 
 @grn_router.post("/statistics", response_model=dict, summary="Get statistics of gene regulatory network")
 async def get_grn_statistics(
-    file_path: str = Query(default="/data/biodata/example/grn/41477_2025_2047_MOESM3_ESM.xlsx", description="Path to the Excel file")
+    file_path: str = Query(default="", description="Path to the Excel file")
 ):
     """
     Get statistics of gene regulatory network including gene count, regulation count, connectivity info etc.

@@ -21,7 +21,7 @@ class TraitsQueryModel(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "file_path": "/data/biodata/example/phenotype/rose_phenotype_test.xlsx",
+                "file_path": "",
                 "traits": ["瓶插寿命", "乙烯敏感衰老", "2021年花瓣数量", "2022年花瓣数量", "2023年花瓣数量"],
                 "samples": [ "RH00004", "RH00010", "RH00011", "RH00012", "RH00013", "RH00018", "RH00023"]
             }

@@ -58,7 +58,7 @@ def get_example_info(genome_path: str, seq_type: str) -> list:
 
 
 
-@g_sequence_router.post("/example", description="Example genome_path: /data/biodata/example/genomes/dataset01")
+@g_sequence_router.post("/example", description="Example genome_path: ")
 async def get_genome_sequence_example(request: GenomicSequenceExampleRequest ):
 
     try:

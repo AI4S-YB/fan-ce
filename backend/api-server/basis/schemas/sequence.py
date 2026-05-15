@@ -8,7 +8,7 @@ class SequenceProcessRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "file_path": "/data/biodata/example/genomes/smt2024_seq/SMT2024.final.ChrA.fa"
+                "file_path": ""
             }
         }
     )
@@ -28,7 +28,7 @@ class SequenceRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "file_path": "/data/biodata/example/genomes/smt2024_seq/SMT2024.final.ChrA.fa",
+                "file_path": "",
                 "seq_id": "Chr1A",
                 "start": 1000,
                 "end": 2000
@@ -59,7 +59,7 @@ class BatchSequenceRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "file_path": "/data/biodata/example/genomes/smt2024_seq/SMT2024.final.ChrA.fa",
+                "file_path": "",
                 "regions": [
                     {
                         "seq_id": "Chr1A",
