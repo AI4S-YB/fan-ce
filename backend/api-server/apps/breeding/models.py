@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, CheckConstraint, Column, Date, DateTime, Index, Integer, Numeric, String, Text, ForeignKey, func
+from sqlalchemy import ARRAY, BigInteger, CheckConstraint, Column, Date, DateTime, Index, Integer, Numeric, String, Text, ForeignKey, func
 
 from db.database import Base
 
@@ -58,32 +58,12 @@ class BreedingMaterial(Base):
     updated_by = Column(_brd_bigint(), comment="更新人")
 
 
-class BreedingTaxonomySourceSnapshot(Base):
-    __tablename__ = "brd_taxonomy_source_snapshot"
-    __table_args__ = (
-        Index("ix_brd_taxonomy_source_snapshot_source_name", "source_name"),
-        Index("ix_brd_taxonomy_source_snapshot_loaded_at", "loaded_at"),
-    )
-
-    id = Column(_brd_bigint(), primary_key=True, index=True)
-    source_name = Column(String(64), nullable=False, comment="来源名称")
-    source_version = Column(String(128), comment="来源版本")
-    archive_path = Column(Text, comment="导入归档路径")
-    extracted_path = Column(Text, comment="解压目录")
-    node_count = Column(Integer, nullable=False, default=0, comment="taxonomy 节点数")
-    name_count = Column(Integer, nullable=False, default=0, comment="taxonomy 名称数")
-    notes = Column(Text, comment="备注")
-    loaded_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="装载时间")
-
 
 class BreedingTaxonomyNode(Base):
     __tablename__ = "brd_taxonomy_node"
     __table_args__ = (
         Index("ix_brd_taxonomy_node_parent_tax_id", "parent_tax_id"),
         Index("ix_brd_taxonomy_node_rank", "rank"),
-        Index("ix_brd_taxonomy_node_scientific_name", "scientific_name"),
-        Index("ix_brd_taxonomy_node_common_name", "common_name"),
-        Index("ix_brd_taxonomy_node_source_snapshot_id", "source_snapshot_id"),
     )
 
     tax_id = Column(_brd_bigint(), primary_key=True, index=True, comment="NCBI taxonomy ID")
@@ -91,14 +71,11 @@ class BreedingTaxonomyNode(Base):
     rank = Column(String(64), comment="分类等级")
     scientific_name = Column(String(256), nullable=False, comment="学名")
     common_name = Column(String(256), comment="常用名")
-    lineage = Column(Text, comment="lineage 文本")
-    lineage_names_json = Column(Text, comment="lineage 名称列表 JSON")
+    lineage_ids = Column(ARRAY(Integer), nullable=False, default=[], comment="祖先 tax_id 数组")
+    lineage = Column(Text, comment="lineage 展示文本")
+    source = Column(String(32), nullable=False, default="plant_dump", comment="来源")
     is_active = Column(Integer, nullable=False, default=1, comment="是否启用")
-    source_snapshot_id = Column(
-        _brd_bigint(),
-        ForeignKey("brd_taxonomy_source_snapshot.id", ondelete="SET NULL"),
-        comment="来源快照",
-    )
+    ncbi_sync_time = Column(DateTime(timezone=True), comment="NCBI 同步时间")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="创建时间")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="更新时间")
 
@@ -120,27 +97,6 @@ class BreedingTaxonomyName(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="创建时间")
 
 
-class BreedingTaxonomyCache(Base):
-    __tablename__ = "brd_taxonomy_cache"
-    __table_args__ = (
-        Index("ix_brd_taxonomy_cache_scientific_name", "scientific_name"),
-        Index("ix_brd_taxonomy_cache_common_name", "common_name"),
-        Index("ix_brd_taxonomy_cache_rank", "rank"),
-    )
-
-    tax_id = Column(_brd_bigint(), primary_key=True, index=True, comment="NCBI taxonomy ID")
-    scientific_name = Column(String(256), nullable=False, comment="学名")
-    common_name = Column(String(256), comment="常用名")
-    rank = Column(String(64), comment="分类等级")
-    parent_tax_id = Column(_brd_bigint(), comment="父 taxonomy ID")
-    lineage = Column(Text, comment="lineage 文本")
-    lineage_names_json = Column(Text, comment="lineage 名称列表 JSON")
-    source = Column(String(32), nullable=False, default="manual", comment="来源")
-    is_active = Column(Integer, nullable=False, default=1, comment="是否启用")
-    last_sync_time = Column(DateTime(timezone=True), comment="最近同步时间")
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="创建时间")
-    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="更新时间")
-
 
 class BreedingGermplasmImportBatch(Base):
     __tablename__ = "brd_germplasm_import_batch"
@@ -153,7 +109,7 @@ class BreedingGermplasmImportBatch(Base):
     id = Column(_brd_bigint(), primary_key=True, index=True)
     batch_code = Column(String(64), nullable=False, comment="导入批次号")
     template_profile = Column(String(64), nullable=False, comment="模板 profile")
-    taxonomy_tax_id = Column(_brd_bigint(), ForeignKey("brd_taxonomy_cache.tax_id", ondelete="RESTRICT"), nullable=False, index=True, comment="taxonomy 锚点")
+    taxonomy_tax_id = Column(_brd_bigint(), ForeignKey("brd_taxonomy_node.tax_id", ondelete="RESTRICT"), nullable=False, index=True, comment="taxonomy 锚点")
     taxonomy_name_snapshot = Column(String(256), comment="导入时学名快照")
     source_filename = Column(String(512), nullable=False, comment="原始文件名")
     source_file_path = Column(Text, comment="服务器存储路径")
@@ -183,7 +139,7 @@ class BreedingGermplasm(Base):
 
     id = Column(_brd_bigint(), primary_key=True, index=True)
     batch_id = Column(_brd_bigint(), ForeignKey("brd_germplasm_import_batch.id", ondelete="RESTRICT"), nullable=False, index=True, comment="来源批次")
-    taxonomy_tax_id = Column(_brd_bigint(), ForeignKey("brd_taxonomy_cache.tax_id", ondelete="RESTRICT"), nullable=False, index=True, comment="taxonomy 锚点")
+    taxonomy_tax_id = Column(_brd_bigint(), ForeignKey("brd_taxonomy_node.tax_id", ondelete="RESTRICT"), nullable=False, index=True, comment="taxonomy 锚点")
     accession_id = Column(String(128), nullable=False, comment="种质编号")
     display_name = Column(String(256), nullable=False, comment="显示名称")
     scientific_name_snapshot = Column(String(256), comment="学名快照")
@@ -218,7 +174,7 @@ class BreedingGermplasmLineage(Base):
     )
 
     id = Column(_brd_bigint(), primary_key=True, index=True)
-    taxonomy_tax_id = Column(_brd_bigint(), ForeignKey("brd_taxonomy_cache.tax_id", ondelete="RESTRICT"), nullable=False, index=True, comment="taxonomy 锚点")
+    taxonomy_tax_id = Column(_brd_bigint(), ForeignKey("brd_taxonomy_node.tax_id", ondelete="RESTRICT"), nullable=False, index=True, comment="taxonomy 锚点")
     child_accession = Column(String(128), nullable=False, comment="子代 accession")
     parent_accession = Column(String(128), nullable=False, comment="亲本 accession")
     parent_role = Column(String(16), nullable=False, comment="亲本角色")
