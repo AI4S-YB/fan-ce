@@ -122,3 +122,6 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 
 [tool.uv]
+# When run via `pixi run`, CONDA_PREFIX and PATH include htslib/bedtools etc.
+# These env vars help pysam and similar packages find system libraries.
+# `uv sync` works without them — pysam bundles its own htslib statically.
