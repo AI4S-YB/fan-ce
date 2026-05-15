@@ -42,7 +42,6 @@ from .models import (
     BreedingPhenotypeSubjectMap,
     BreedingPlot,
     BreedingProgram,
-    BreedingTaxonomyCache,
     BreedingTaxonomyName,
     BreedingTaxonomyNode,
     BreedingTrial,
@@ -113,7 +112,6 @@ class BreedingDomainService:
     def _normalize_taxonomy_record(record):
         if not record:
             return None
-        lineage_names = record.get("lineage_names") or []
         return {
             "tax_id": int(record["tax_id"]),
             "scientific_name": record.get("scientific_name"),
@@ -121,24 +119,26 @@ class BreedingDomainService:
             "rank": record.get("rank"),
             "parent_tax_id": record.get("parent_tax_id"),
             "lineage": record.get("lineage"),
-            "lineage_names_json": json.dumps(lineage_names, ensure_ascii=False) if lineage_names else None,
+            "lineage_ids": [],  # NCBI sync cannot provide full lineage_ids
             "source": record.get("source") or "ncbi_sync",
             "is_active": int(record.get("is_active", 1) or 0),
-            "last_sync_time": record.get("last_sync_time") or datetime.utcnow(),
+            "ncbi_sync_time": record.get("last_sync_time") or datetime.utcnow(),
         }
 
-    def _upsert_taxonomy_cache_records(self, db, records):
+    def _upsert_taxonomy_node_records(self, db, records):
         synced_items = []
         for record in records:
             normalized = self._normalize_taxonomy_record(record)
             if not normalized:
                 continue
-            row = db.query(BreedingTaxonomyCache).filter(BreedingTaxonomyCache.tax_id == normalized["tax_id"]).first()
+            row = db.query(BreedingTaxonomyNode).filter(BreedingTaxonomyNode.tax_id == normalized["tax_id"]).first()
             if row is None:
-                row = BreedingTaxonomyCache(**normalized)
+                row = BreedingTaxonomyNode(**normalized)
                 db.add(row)
             else:
                 for field, value in normalized.items():
+                    if field == "lineage_ids" and not value:
+                        continue
                     setattr(row, field, value)
                 row.updated_at = datetime.utcnow()
                 db.add(row)
@@ -156,19 +156,19 @@ class BreedingDomainService:
             db.commit()
         return synced_items
 
-    def _build_taxonomy_cache_query(self, db, request_data):
-        query = db.query(BreedingTaxonomyCache)
+    def _build_taxonomy_node_query(self, db, request_data):
+        query = db.query(BreedingTaxonomyNode)
         if getattr(request_data, "active_only", 1):
-            query = query.filter(BreedingTaxonomyCache.is_active == 1)
+            query = query.filter(BreedingTaxonomyNode.is_active == 1)
         if getattr(request_data, "tax_id", None):
-            query = query.filter(BreedingTaxonomyCache.tax_id == int(request_data.tax_id))
+            query = query.filter(BreedingTaxonomyNode.tax_id == int(request_data.tax_id))
         if getattr(request_data, "keyword", None):
             keyword = f"%{request_data.keyword}%"
             query = query.filter(
                 or_(
-                    BreedingTaxonomyCache.scientific_name.ilike(keyword),
-                    BreedingTaxonomyCache.common_name.ilike(keyword),
-                    cast(BreedingTaxonomyCache.tax_id, String).ilike(keyword),
+                    BreedingTaxonomyNode.scientific_name.ilike(keyword),
+                    BreedingTaxonomyNode.common_name.ilike(keyword),
+                    cast(BreedingTaxonomyNode.tax_id, String).ilike(keyword),
                 )
             )
         return query
@@ -187,42 +187,42 @@ class BreedingDomainService:
     def _list_existing_germplasm_taxonomy_options(self, db, request_data, limit):
         query = (
             db.query(
-                BreedingTaxonomyCache.tax_id,
-                BreedingTaxonomyCache.scientific_name,
-                BreedingTaxonomyCache.common_name,
-                BreedingTaxonomyCache.rank,
-                BreedingTaxonomyCache.lineage,
-                BreedingTaxonomyCache.source,
-                BreedingTaxonomyCache.last_sync_time,
+                BreedingTaxonomyNode.tax_id,
+                BreedingTaxonomyNode.scientific_name,
+                BreedingTaxonomyNode.common_name,
+                BreedingTaxonomyNode.rank,
+                BreedingTaxonomyNode.lineage,
+                BreedingTaxonomyNode.source,
+                BreedingTaxonomyNode.ncbi_sync_time,
                 func.count(BreedingGermplasm.id).label("germplasm_count"),
             )
-            .join(BreedingGermplasm, BreedingGermplasm.taxonomy_tax_id == BreedingTaxonomyCache.tax_id)
+            .join(BreedingGermplasm, BreedingGermplasm.taxonomy_tax_id == BreedingTaxonomyNode.tax_id)
             .filter(BreedingGermplasm.status == "active")
         )
         if getattr(request_data, "active_only", 1):
-            query = query.filter(BreedingTaxonomyCache.is_active == 1)
+            query = query.filter(BreedingTaxonomyNode.is_active == 1)
         if getattr(request_data, "tax_id", None):
-            query = query.filter(BreedingTaxonomyCache.tax_id == int(request_data.tax_id))
+            query = query.filter(BreedingTaxonomyNode.tax_id == int(request_data.tax_id))
         if getattr(request_data, "keyword", None):
             keyword = f"%{request_data.keyword}%"
             query = query.filter(
                 or_(
-                    BreedingTaxonomyCache.scientific_name.ilike(keyword),
-                    BreedingTaxonomyCache.common_name.ilike(keyword),
-                    cast(BreedingTaxonomyCache.tax_id, String).ilike(keyword),
+                    BreedingTaxonomyNode.scientific_name.ilike(keyword),
+                    BreedingTaxonomyNode.common_name.ilike(keyword),
+                    cast(BreedingTaxonomyNode.tax_id, String).ilike(keyword),
                 )
             )
         rows = (
             query.group_by(
-                BreedingTaxonomyCache.tax_id,
-                BreedingTaxonomyCache.scientific_name,
-                BreedingTaxonomyCache.common_name,
-                BreedingTaxonomyCache.rank,
-                BreedingTaxonomyCache.lineage,
-                BreedingTaxonomyCache.source,
-                BreedingTaxonomyCache.last_sync_time,
+                BreedingTaxonomyNode.tax_id,
+                BreedingTaxonomyNode.scientific_name,
+                BreedingTaxonomyNode.common_name,
+                BreedingTaxonomyNode.rank,
+                BreedingTaxonomyNode.lineage,
+                BreedingTaxonomyNode.source,
+                BreedingTaxonomyNode.ncbi_sync_time,
             )
-            .order_by(BreedingTaxonomyCache.scientific_name.asc())
+            .order_by(BreedingTaxonomyNode.scientific_name.asc())
             .limit(limit)
             .all()
         )
@@ -236,14 +236,14 @@ class BreedingDomainService:
                     "rank": row.rank,
                     "lineage": row.lineage,
                     "source": row.source,
-                    "last_sync_time": row.last_sync_time,
+                    "ncbi_sync_time": row.ncbi_sync_time,
                     "germplasm_count": int(row.germplasm_count or 0),
                 }
             )
         return {"items": items, "total": len(items), "source_mode": "germplasm"}
 
     @staticmethod
-    def _compare_taxonomy_cache_row(local_row, remote_record):
+    def _compare_taxonomy_node_row(local_row, remote_record):
         compare_fields = [
             ("scientific_name", "scientific_name"),
             ("common_name", "common_name"),
@@ -394,34 +394,20 @@ class BreedingDomainService:
             "rank": row.rank,
             "parent_tax_id": row.parent_tax_id,
             "lineage": row.lineage,
-            "lineage_names": json.loads(row.lineage_names_json) if row.lineage_names_json else [],
-            "source": "local_dump",
+            "lineage_ids": row.lineage_ids or [],
+            "source": row.source or "plant_dump",
             "is_active": row.is_active,
-            "last_sync_time": getattr(row, "updated_at", None),
+            "last_sync_time": getattr(row, "ncbi_sync_time", None),
         }
 
-    def _ensure_taxonomy_cache_from_local_row(self, db, row):
-        record = self._serialize_local_taxonomy_row(row)
-        self._upsert_taxonomy_cache_records(db=db, records=[record])
-        return db.query(BreedingTaxonomyCache).filter(BreedingTaxonomyCache.tax_id == row.tax_id).first()
+    def _ensure_taxonomy_node_from_local_row(self, db, row):
+        return row
 
-    def _ensure_taxonomy_cache_from_local_rows(self, db, rows):
-        records = [self._serialize_local_taxonomy_row(row) for row in rows]
-        if records:
-            self._upsert_taxonomy_cache_records(db=db, records=records)
-        return {
-            row.tax_id: db.query(BreedingTaxonomyCache).filter(BreedingTaxonomyCache.tax_id == row.tax_id).first()
-            for row in rows
-        }
+    def _ensure_taxonomy_node_from_local_rows(self, db, rows):
+        return {row.tax_id: row for row in rows}
 
-    def _resolve_taxonomy_cache_row(self, db, tax_id):
-        row = db.query(BreedingTaxonomyCache).filter(BreedingTaxonomyCache.tax_id == tax_id).first()
-        if row is not None:
-            return row
-        local_row = db.query(BreedingTaxonomyNode).filter(BreedingTaxonomyNode.tax_id == tax_id).first()
-        if local_row is None:
-            return None
-        return self._ensure_taxonomy_cache_from_local_row(db=db, row=local_row)
+    def _resolve_taxonomy_node_row(self, db, tax_id):
+        return db.query(BreedingTaxonomyNode).filter(BreedingTaxonomyNode.tax_id == tax_id).first()
 
     def sync_germplasm_taxonomy_cache(self, db, request_data):
         records = []
@@ -433,7 +419,7 @@ class BreedingDomainService:
         if tax_id:
             local_row = db.query(BreedingTaxonomyNode).filter(BreedingTaxonomyNode.tax_id == int(tax_id)).first()
             if local_row is not None:
-                cache_row = self._ensure_taxonomy_cache_from_local_row(db=db, row=local_row)
+                cache_row = self._ensure_taxonomy_node_from_local_row(db=db, row=local_row)
                 return {
                     "items": [
                         {
@@ -456,7 +442,7 @@ class BreedingDomainService:
                 active_only=getattr(request_data, "active_only", 1),
             )
             if local_rows:
-                cache_rows = self._ensure_taxonomy_cache_from_local_rows(db=db, rows=local_rows)
+                cache_rows = self._ensure_taxonomy_node_from_local_rows(db=db, rows=local_rows)
                 synced_items = []
                 for local_row in local_rows:
                     cache_row = cache_rows[local_row.tax_id]
@@ -477,7 +463,7 @@ class BreedingDomainService:
                 }
 
         if tax_id:
-            existing = db.query(BreedingTaxonomyCache).filter(BreedingTaxonomyCache.tax_id == tax_id).first()
+            existing = db.query(BreedingTaxonomyNode).filter(BreedingTaxonomyNode.tax_id == tax_id).first()
             if existing is not None and not force_refresh:
                 return {
                     "items": [
@@ -501,7 +487,7 @@ class BreedingDomainService:
         else:
             raise ValueError("tax_id or keyword is required for taxonomy sync")
 
-        synced_items = self._upsert_taxonomy_cache_records(db=db, records=records)
+        synced_items = self._upsert_taxonomy_node_records(db=db, records=records)
         return {
             "items": synced_items,
             "total": len(synced_items),
@@ -511,8 +497,8 @@ class BreedingDomainService:
     def audit_germplasm_taxonomy_cache(self, db, request_data):
         limit = max(1, min(int(getattr(request_data, "limit", 20) or 20), 100))
         rows = (
-            self._build_taxonomy_cache_query(db=db, request_data=request_data)
-            .order_by(BreedingTaxonomyCache.scientific_name.asc())
+            self._build_taxonomy_node_query(db=db, request_data=request_data)
+            .order_by(BreedingTaxonomyNode.scientific_name.asc())
             .limit(limit)
             .all()
         )
@@ -543,7 +529,7 @@ class BreedingDomainService:
                             "parent_tax_id": row.parent_tax_id,
                             "lineage": row.lineage,
                             "source": row.source,
-                            "last_sync_time": row.last_sync_time,
+                            "ncbi_sync_time": row.ncbi_sync_time,
                         },
                         "remote": None,
                         "mismatches": [],
@@ -566,7 +552,7 @@ class BreedingDomainService:
                             "parent_tax_id": row.parent_tax_id,
                             "lineage": row.lineage,
                             "source": row.source,
-                            "last_sync_time": row.last_sync_time,
+                            "ncbi_sync_time": row.ncbi_sync_time,
                         },
                         "remote": None,
                         "mismatches": [],
@@ -575,7 +561,7 @@ class BreedingDomainService:
                 )
                 continue
 
-            mismatches = self._compare_taxonomy_cache_row(local_row=row, remote_record=remote_record)
+            mismatches = self._compare_taxonomy_node_row(local_row=row, remote_record=remote_record)
             status = "matched" if not mismatches else "mismatch"
             summary[status] += 1
             items.append(
@@ -590,7 +576,7 @@ class BreedingDomainService:
                         "parent_tax_id": row.parent_tax_id,
                         "lineage": row.lineage,
                         "source": row.source,
-                        "last_sync_time": row.last_sync_time,
+                        "ncbi_sync_time": row.ncbi_sync_time,
                     },
                     "remote": {
                         "scientific_name": remote_record.get("scientific_name"),
@@ -599,7 +585,7 @@ class BreedingDomainService:
                         "parent_tax_id": remote_record.get("parent_tax_id"),
                         "lineage": remote_record.get("lineage"),
                         "source": remote_record.get("source"),
-                        "last_sync_time": remote_record.get("last_sync_time"),
+                        "ncbi_sync_time": remote_record.get("ncbi_sync_time"),
                     },
                     "mismatches": mismatches,
                     "message": None if not mismatches else f"{len(mismatches)} fields differ from NCBI",
@@ -1323,9 +1309,9 @@ class BreedingDomainService:
         validation_token=None,
     ):
         template_profile = normalize_template_profile(template_profile)
-        taxonomy = self._resolve_taxonomy_cache_row(db=db, tax_id=taxonomy_tax_id)
+        taxonomy = self._resolve_taxonomy_node_row(db=db, tax_id=taxonomy_tax_id)
         if taxonomy is None:
-            raise ValueError(f"taxonomy_tax_id {taxonomy_tax_id} not found in local taxonomy reference or brd_taxonomy_cache")
+            raise ValueError(f"taxonomy_tax_id {taxonomy_tax_id} not found in local taxonomy reference or brd_taxonomy_node")
 
         existing_accessions = {
             row[0]
@@ -1400,7 +1386,7 @@ class BreedingDomainService:
             )
         if local_rows:
             counts = self._build_taxonomy_germplasm_count_map(db=db, tax_ids=[row.tax_id for row in local_rows])
-            cache_rows = self._ensure_taxonomy_cache_from_local_rows(db=db, rows=local_rows)
+            cache_rows = self._ensure_taxonomy_node_from_local_rows(db=db, rows=local_rows)
             items = []
             for row in local_rows:
                 cache_row = cache_rows[row.tax_id]
@@ -1412,15 +1398,15 @@ class BreedingDomainService:
                         "rank": row.rank,
                         "lineage": row.lineage,
                         "source": cache_row.source,
-                        "last_sync_time": cache_row.last_sync_time,
+                        "ncbi_sync_time": cache_row.ncbi_sync_time,
                         "germplasm_count": counts.get(row.tax_id, 0),
                     }
                 )
             return {"items": items, "total": len(items), "source_mode": "local_dump"}
 
         rows = (
-            self._build_taxonomy_cache_query(db=db, request_data=request_data)
-            .order_by(BreedingTaxonomyCache.scientific_name.asc())
+            self._build_taxonomy_node_query(db=db, request_data=request_data)
+            .order_by(BreedingTaxonomyNode.scientific_name.asc())
             .limit(limit)
             .all()
         )
@@ -1436,7 +1422,7 @@ class BreedingDomainService:
                     "rank": row.rank,
                     "lineage": row.lineage,
                     "source": row.source,
-                    "last_sync_time": row.last_sync_time,
+                    "ncbi_sync_time": row.ncbi_sync_time,
                     "germplasm_count": counts.get(row.tax_id, 0),
                 }
             )
@@ -1446,11 +1432,11 @@ class BreedingDomainService:
         query = (
             db.query(
                 BreedingGermplasmImportBatch,
-                BreedingTaxonomyCache.scientific_name,
-                BreedingTaxonomyCache.common_name,
-                BreedingTaxonomyCache.rank,
+                BreedingTaxonomyNode.scientific_name,
+                BreedingTaxonomyNode.common_name,
+                BreedingTaxonomyNode.rank,
             )
-            .join(BreedingTaxonomyCache, BreedingGermplasmImportBatch.taxonomy_tax_id == BreedingTaxonomyCache.tax_id)
+            .join(BreedingTaxonomyNode, BreedingGermplasmImportBatch.taxonomy_tax_id == BreedingTaxonomyNode.tax_id)
         )
         if request_data.taxonomy_tax_id is not None:
             query = query.filter(BreedingGermplasmImportBatch.taxonomy_tax_id == request_data.taxonomy_tax_id)
@@ -1463,8 +1449,8 @@ class BreedingDomainService:
                     BreedingGermplasmImportBatch.batch_code.ilike(keyword),
                     BreedingGermplasmImportBatch.source_filename.ilike(keyword),
                     BreedingGermplasmImportBatch.template_profile.ilike(keyword),
-                    BreedingTaxonomyCache.scientific_name.ilike(keyword),
-                    BreedingTaxonomyCache.common_name.ilike(keyword),
+                    BreedingTaxonomyNode.scientific_name.ilike(keyword),
+                    BreedingTaxonomyNode.common_name.ilike(keyword),
                 )
             )
 
@@ -1634,12 +1620,12 @@ class BreedingDomainService:
         row = (
             db.query(
                 BreedingGermplasmImportBatch,
-                BreedingTaxonomyCache.scientific_name,
-                BreedingTaxonomyCache.common_name,
-                BreedingTaxonomyCache.rank,
-                BreedingTaxonomyCache.lineage,
+                BreedingTaxonomyNode.scientific_name,
+                BreedingTaxonomyNode.common_name,
+                BreedingTaxonomyNode.rank,
+                BreedingTaxonomyNode.lineage,
             )
-            .join(BreedingTaxonomyCache, BreedingGermplasmImportBatch.taxonomy_tax_id == BreedingTaxonomyCache.tax_id)
+            .join(BreedingTaxonomyNode, BreedingGermplasmImportBatch.taxonomy_tax_id == BreedingTaxonomyNode.tax_id)
             .filter(BreedingGermplasmImportBatch.id == batch_id)
             .first()
         )
@@ -1732,12 +1718,12 @@ class BreedingDomainService:
                 BreedingGermplasmImportBatch.batch_code,
                 BreedingGermplasmImportBatch.source_filename,
                 BreedingGermplasmImportBatch.field_schema_json,
-                BreedingTaxonomyCache.scientific_name,
-                BreedingTaxonomyCache.common_name,
-                BreedingTaxonomyCache.rank,
+                BreedingTaxonomyNode.scientific_name,
+                BreedingTaxonomyNode.common_name,
+                BreedingTaxonomyNode.rank,
             )
             .join(BreedingGermplasmImportBatch, BreedingGermplasm.batch_id == BreedingGermplasmImportBatch.id)
-            .join(BreedingTaxonomyCache, BreedingGermplasm.taxonomy_tax_id == BreedingTaxonomyCache.tax_id)
+            .join(BreedingTaxonomyNode, BreedingGermplasm.taxonomy_tax_id == BreedingTaxonomyNode.tax_id)
         )
         if public_only:
             query = query.filter(BreedingGermplasmImportBatch.is_public == 1)
@@ -1815,7 +1801,7 @@ class BreedingDomainService:
         }
 
     def get_germplasm_statistics(self, db, request_data):
-        taxonomy = db.query(BreedingTaxonomyCache).filter(BreedingTaxonomyCache.tax_id == request_data.taxonomy_tax_id).first()
+        taxonomy = db.query(BreedingTaxonomyNode).filter(BreedingTaxonomyNode.tax_id == request_data.taxonomy_tax_id).first()
         scope_accessions = self._get_germplasm_scope_accessions(
             db=db,
             taxonomy_tax_id=request_data.taxonomy_tax_id,
@@ -2164,13 +2150,13 @@ class BreedingDomainService:
                 BreedingGermplasmImportBatch.source_filename,
                 BreedingGermplasmImportBatch.source_file_path,
                 BreedingGermplasmImportBatch.field_schema_json,
-                BreedingTaxonomyCache.scientific_name,
-                BreedingTaxonomyCache.common_name,
-                BreedingTaxonomyCache.rank,
-                BreedingTaxonomyCache.lineage,
+                BreedingTaxonomyNode.scientific_name,
+                BreedingTaxonomyNode.common_name,
+                BreedingTaxonomyNode.rank,
+                BreedingTaxonomyNode.lineage,
             )
             .join(BreedingGermplasmImportBatch, BreedingGermplasm.batch_id == BreedingGermplasmImportBatch.id)
-            .join(BreedingTaxonomyCache, BreedingGermplasm.taxonomy_tax_id == BreedingTaxonomyCache.tax_id)
+            .join(BreedingTaxonomyNode, BreedingGermplasm.taxonomy_tax_id == BreedingTaxonomyNode.tax_id)
             .filter(
                 BreedingGermplasm.accession_id == accession_id,
                 BreedingGermplasm.taxonomy_tax_id == taxonomy_tax_id,
@@ -2283,9 +2269,9 @@ class BreedingDomainService:
             raise ValueError("validation has errors, cannot commit import")
 
         taxonomy_tax_id = int(bundle["taxonomy_tax_id"])
-        taxonomy = self._resolve_taxonomy_cache_row(db=db, tax_id=taxonomy_tax_id)
+        taxonomy = self._resolve_taxonomy_node_row(db=db, tax_id=taxonomy_tax_id)
         if taxonomy is None:
-            raise ValueError(f"taxonomy_tax_id {taxonomy_tax_id} not found in local taxonomy reference or brd_taxonomy_cache")
+            raise ValueError(f"taxonomy_tax_id {taxonomy_tax_id} not found in local taxonomy reference or brd_taxonomy_node")
 
         normalized_rows = bundle.get("normalized_rows") or []
         if not normalized_rows:
