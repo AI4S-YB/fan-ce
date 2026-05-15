@@ -80,6 +80,54 @@ def _ensure_breeding_schema_columns():
             for statement in ddl_statements:
                 conn.execute(text(statement))
 
+    _ensure_breeding_foreign_keys()
+
+
+def _ensure_breeding_foreign_keys():
+    """Recreate FK constraints that may have been dropped by CASCADE."""
+    if engine.dialect.name != "postgresql":
+        return
+
+    fk_checks = [
+        (
+            "brd_germplasm",
+            "brd_taxonomy_node",
+            "brd_germplasm_taxonomy_tax_id_fkey",
+            "FOREIGN KEY (taxonomy_tax_id) REFERENCES brd_taxonomy_node(tax_id) ON DELETE RESTRICT",
+        ),
+        (
+            "brd_germplasm_import_batch",
+            "brd_taxonomy_node",
+            "brd_germplasm_import_batch_taxonomy_tax_id_fkey",
+            "FOREIGN KEY (taxonomy_tax_id) REFERENCES brd_taxonomy_node(tax_id) ON DELETE RESTRICT",
+        ),
+        (
+            "brd_germplasm_lineage",
+            "brd_taxonomy_node",
+            "brd_germplasm_lineage_taxonomy_tax_id_fkey",
+            "FOREIGN KEY (taxonomy_tax_id) REFERENCES brd_taxonomy_node(tax_id) ON DELETE RESTRICT",
+        ),
+    ]
+
+    with engine.begin() as conn:
+        for table_name, ref_table, fk_name, fk_def in fk_checks:
+            result = conn.execute(
+                text(
+                    "SELECT 1 FROM pg_catalog.pg_constraint co "
+                    "JOIN pg_catalog.pg_class tbl ON co.conrelid = tbl.oid "
+                    "JOIN pg_catalog.pg_class ref ON co.confrelid = ref.oid "
+                    "WHERE tbl.relname = :tbl AND ref.relname = :ref AND co.contype = 'f'"
+                ),
+                {"tbl": table_name, "ref": ref_table},
+            ).fetchone()
+            if result is None:
+                conn.execute(
+                    text(
+                        f"ALTER TABLE {table_name} "
+                        f"ADD CONSTRAINT {fk_name} {fk_def}"
+                    )
+                )
+
 
 def _ensure_breeding_search_indexes():
     if engine.dialect.name != "postgresql":
