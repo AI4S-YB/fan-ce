@@ -45,6 +45,7 @@ const setupStatus = ref<null | PlatformSetupStatusResponse>(null);
 const taxonomyCurrent = ref<null | PlatformSetupCurrentResponse>(null);
 const latestJob = ref<null | PlatformSetupJobStatusResponse>(null);
 const forceReinstall = ref(false);
+const customDumpPath = ref('');
 const pollTimer = ref<null | ReturnType<typeof setTimeout>>(null);
 const redirecting = ref(false);
 
@@ -164,6 +165,7 @@ async function handleStartImport(force: boolean) {
   try {
     const job = await startPlatformTaxonomyImportApi({
       force_reinstall: force,
+      dump_path: customDumpPath.value || null,
     });
     latestJob.value = {
       ...job,
@@ -361,6 +363,15 @@ onBeforeUnmount(() => {
               {{ forceReinstall ? $t('dataset.staging.startReinstall') : $t('dataset.staging.startImport') }}
             </Button>
           </div>
+          <div class="start-panel__path">
+            <span class="path-label">{{ $t('platform.taxonomy.customPath') }}</span>
+            <input
+              v-model="customDumpPath"
+              type="text"
+              :placeholder="$t('platform.taxonomy.customPathPlaceholder')"
+              class="path-input"
+            />
+          </div>
         </div>
       </Card>
     </div>
@@ -455,9 +466,10 @@ onBeforeUnmount(() => {
 
 .start-panel {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 0 16px;
 }
 
 .start-panel__text {
@@ -476,6 +488,42 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 10px;
   color: #4f5f58;
+}
+
+.start-panel__path {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e8edea;
+}
+
+.path-label {
+  color: #5c6e67;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.path-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #d0d9d3;
+  border-radius: 6px;
+  color: #2c4439;
+  font-size: 13px;
+  background: #fafbfa;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.path-input:focus {
+  border-color: #0f8a56;
+}
+
+.path-input::placeholder {
+  color: #a0b0a8;
 }
 
 @media (max-width: 960px) {

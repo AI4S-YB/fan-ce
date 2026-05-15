@@ -75,7 +75,7 @@ def _serialize_job(job_obj):
     return data
 
 
-def submit_taxonomy_import_job(db, *, force_reinstall: bool = False, operator_id: int | None = None):
+def submit_taxonomy_import_job(db, *, force_reinstall: bool = False, dump_path: str | None = None, operator_id: int | None = None):
     running_job = (
         db.query(SystemInstallJob)
         .filter(SystemInstallJob.job_type == "taxonomy_import", SystemInstallJob.status.in_(["pending", "running"]))
@@ -95,7 +95,7 @@ def submit_taxonomy_import_job(db, *, force_reinstall: bool = False, operator_id
         stage="queued",
         progress_percent=0,
         message="taxonomy 导入任务已提交",
-        result_json=_encode_json_text({"force_reinstall": bool(force_reinstall)}),
+        result_json=_encode_json_text({"force_reinstall": bool(force_reinstall), "dump_path": dump_path}),
         created_by=operator_id,
         created_at=_now(),
         updated_at=_now(),
@@ -120,9 +120,6 @@ def get_taxonomy_import_job(db, *, job_id: int | None = None):
 
 
 def run_taxonomy_import_job(job_id: int):
-    if not BUILTIN_TAXONOMY_DUMP.exists():
-        raise FileNotFoundError(f"内置 taxonomy 数据文件不存在: {BUILTIN_TAXONOMY_DUMP}")
-
     with MyDBManager() as db:
         job_obj = db.query(SystemInstallJob).filter(SystemInstallJob.id == job_id).first()
         if not job_obj or job_obj.job_type != "taxonomy_import":
@@ -131,6 +128,11 @@ def run_taxonomy_import_job(job_id: int):
         try:
             request_payload = _decode_json_text(job_obj.result_json)
             force_reinstall = bool(request_payload.get("force_reinstall"))
+            custom_dump_path = request_payload.get("dump_path")
+
+            dump_path = custom_dump_path or str(BUILTIN_TAXONOMY_DUMP)
+            if not Path(dump_path).exists():
+                raise FileNotFoundError(f"taxonomy 数据文件不存在: {dump_path}")
 
             _apply_taxonomy_lock_state(db, stage="running")
             job_obj.status = "running"
@@ -138,13 +140,13 @@ def run_taxonomy_import_job(job_id: int):
             job_obj.progress_percent = 10
             job_obj.started_at = _now()
             job_obj.updated_at = _now()
-            job_obj.message = "正在导入植物 taxonomy 数据"
+            job_obj.message = f"正在导入 taxonomy 数据: {dump_path}"
             db.add(job_obj)
             db.commit()
 
             result = load_taxonomy_dump(
                 db=db,
-                dump_path=str(BUILTIN_TAXONOMY_DUMP),
+                dump_path=dump_path,
                 source_name="ncbi_plant_taxdump",
                 source_version=None,
                 reset_existing=bool(force_reinstall),

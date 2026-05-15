@@ -87,6 +87,7 @@ class PlatformModelApiSetPrimaryRequest(BaseModel):
 
 class PlatformSetupTaxonomyImportStartRequest(BaseModel):
     force_reinstall: Optional[bool] = False
+    dump_path: Optional[str] = None  # 可选：自定义数据文件路径，为空则使用内置数据
 
 
 class ChatMessage(BaseModel):

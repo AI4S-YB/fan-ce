@@ -62,6 +62,7 @@ async def start_taxonomy_import(
         job_data = submit_taxonomy_import_job(
             db,
             force_reinstall=bool(request_data.force_reinstall),
+            dump_path=request_data.dump_path or None,
             operator_id=getattr(_user, "id", None),
         )
     except ValueError as exc:

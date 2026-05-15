@@ -74,6 +74,7 @@ export async function getPlatformTaxonomyCurrentApi() {
 
 export async function startPlatformTaxonomyImportApi(data: {
   force_reinstall?: boolean;
+  dump_path?: string | null;
 }) {
   return requestClient.post<PlatformSetupJob>(
     '/platform/setup/taxonomy/import/start',

@@ -70,13 +70,63 @@ echo -e "  ${GREEN}Done.${NC}"
 echo ""
 
 # ── 3. Database migration ──
-echo "[3/5] Running database migrations..."
+echo "[3/6] Checking PostgreSQL connection..."
+if command -v pg_isready &>/dev/null; then
+    if pg_isready -q 2>/dev/null; then
+        echo -e "  ${GREEN}PostgreSQL is running.${NC}"
+    else
+        echo -e "  ${YELLOW}PostgreSQL is not running. Attempting to start via Docker...${NC}"
+        if command -v docker &>/dev/null; then
+            docker compose -f docker-compose.yml up -d postgres 2>/dev/null || \
+            docker run -d --name fance-postgres -p 5433:5432 -e POSTGRES_PASSWORD=postgres postgres:16 2>/dev/null || \
+            echo -e "  ${YELLOW}Could not start PostgreSQL. Please start it manually.${NC}"
+            sleep 3
+        else
+            echo -e "  ${YELLOW}Docker not found. Please start PostgreSQL manually.${NC}"
+        fi
+    fi
+else
+    echo -e "  ${YELLOW}pg_isready not found. Please ensure PostgreSQL is running on the configured port.${NC}"
+fi
+
+echo "[3/6] Running database migrations..."
 pixi run uv run --directory backend/api-server alembic upgrade head || echo -e "  ${YELLOW}Warning: alembic upgrade failed. Check database connection in $CONF_FILE${NC}"
 echo -e "  ${GREEN}Done.${NC}"
+
+# ── 3.5. Import taxonomy data ──
+echo "[4/6] Importing plant taxonomy data..."
+TAXONOMY_DATA="$ROOT_DIR/backend/api-server/data/taxonomy-plants.tar.gz"
+if [ -f "$TAXONOMY_DATA" ]; then
+    pixi run uv run --directory backend/api-server python -c "
+import sys
+from db.database import MyDBManager
+from apps.breeding.models import BreedingTaxonomyNode
+from apps.breeding.taxonomy_loader import load_taxonomy_dump
+
+with MyDBManager() as db:
+    existing = db.query(BreedingTaxonomyNode).count()
+    if existing > 0:
+        print(f'  Taxonomy already installed ({existing} nodes). Skipping import.')
+    else:
+        print('  Importing plant taxonomy data...')
+        result = load_taxonomy_dump(
+            db=db,
+            dump_path='$TAXONOMY_DATA',
+            source_name='ncbi_plant_taxdump',
+            reset_existing=False,
+        )
+        print(f'  Imported {result[\"node_count\"]} nodes, {result[\"name_count\"]} names')
+"
+    echo -e "  ${GREEN}Done.${NC}"
+else
+    echo -e "  ${YELLOW}Taxonomy data file not found at $TAXONOMY_DATA${NC}"
+    echo -e "  ${YELLOW}Run: python scripts/build/filter_plants.py <ncbi_dump> backend/api-server/data/${NC}"
+    echo -e "  ${YELLOW}Then re-run this install script or import via admin panel.${NC}"
+fi
 echo ""
 
 # ── 4. Frontend ──
-echo "[4/5] Building frontends..."
+echo "[5/6] Building frontends..."
 cd frontend/admin-web
 pnpm install --frozen-lockfile
 pnpm build
@@ -85,7 +135,7 @@ echo -e "  ${GREEN}Done.${NC}"
 echo ""
 
 # ── 5. Verify ──
-echo "[5/5] Verifying installation..."
+echo "[6/6] Verifying installation..."
 echo ""
 echo "  Bio-tools:"
 for tool in samtools bcftools blastn primer3_core mafft FastTree; do
@@ -107,4 +157,8 @@ echo ""
 echo " Log in at http://localhost:5666"
 echo "   Username: admin"
 echo "   Password: Admin123456"
+echo ""
+echo " Plant taxonomy data is pre-loaded and ready."
+echo " To update taxonomy data, use the admin panel:"
+echo "   Platform Setup → Update Taxonomy"
 echo "========================================"
