@@ -2,7 +2,6 @@
 import type {
   PlatformSetupCurrentResponse,
   PlatformSetupJobStatusResponse,
-  PlatformSetupPackage,
   PlatformSetupStatusResponse,
 } from '#/api/platform/setup';
 
@@ -20,7 +19,6 @@ import {
   Space,
   Statistic,
   Switch,
-  Table,
   Tag,
 } from 'ant-design-vue';
 
@@ -28,7 +26,6 @@ import {
   getPlatformSetupStatusApi,
   getPlatformTaxonomyCurrentApi,
   getPlatformTaxonomyImportStatusApi,
-  getPlatformTaxonomyPackagesApi,
   startPlatformTaxonomyImportApi,
 } from '#/api/platform/setup';
 import { useMessage } from '#/hooks/web/useMessage';
@@ -46,50 +43,10 @@ const pageLoading = ref(false);
 const importSubmitting = ref(false);
 const setupStatus = ref<null | PlatformSetupStatusResponse>(null);
 const taxonomyCurrent = ref<null | PlatformSetupCurrentResponse>(null);
-const packageRows = ref<PlatformSetupPackage[]>([]);
-const recommendedPackageId = ref<null | number>(null);
 const latestJob = ref<null | PlatformSetupJobStatusResponse>(null);
 const forceReinstall = ref(false);
 const pollTimer = ref<null | ReturnType<typeof setTimeout>>(null);
 const redirecting = ref(false);
-
-const packageColumns = [
-  {
-    title: $t('dataset.staging.packageName'),
-    dataIndex: 'package_name',
-    key: 'package_name',
-  },
-  {
-    title: $t('system.menu.type'),
-    dataIndex: 'package_type',
-    key: 'package_type',
-  },
-  {
-    title: $t('phenome.query.source'),
-    dataIndex: 'source',
-    key: 'source',
-  },
-  {
-    title: $t('phenome.query.version'),
-    dataIndex: 'source_version',
-    key: 'source_version',
-  },
-  {
-    title: $t('platform.setting.status'),
-    dataIndex: 'status',
-    key: 'status',
-  },
-  {
-    title: $t('component.upload.fileSize'),
-    dataIndex: 'file_size',
-    key: 'file_size',
-  },
-  {
-    title: $t('platform.setting.action'),
-    key: 'action',
-    width: 220,
-  },
-];
 
 const statusMeta = computed(() => {
   const status =
@@ -115,9 +72,7 @@ const activeJob = computed(() => {
 });
 
 const canStartImport = computed(() => {
-  return (
-    !importSubmitting.value && !activeJob.value && packageRows.value.length > 0
-  );
+  return !importSubmitting.value && !activeJob.value;
 });
 
 const redirectTarget = computed(() => {
@@ -132,20 +87,6 @@ const redirectTarget = computed(() => {
     return rawValue;
   }
 });
-
-function formatFileSize(size?: null | number) {
-  if (!size || size <= 0) {
-    return '-';
-  }
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  let value = size;
-  let unitIndex = 0;
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024;
-    unitIndex += 1;
-  }
-  return `${value.toFixed(unitIndex === 0 ? 0 : 2)} ${units[unitIndex]}`;
-}
 
 function formatDateTime(value?: null | string) {
   if (!value) {
@@ -198,18 +139,14 @@ function scheduleStatusPolling(jobId?: number) {
 async function loadPageData() {
   pageLoading.value = true;
   try {
-    const [status, current, packages, job] = await Promise.all([
+    const [status, current, job] = await Promise.all([
       getPlatformSetupStatusApi(),
       getPlatformTaxonomyCurrentApi(),
-      getPlatformTaxonomyPackagesApi(),
       getPlatformTaxonomyImportStatusApi().catch(() => null),
     ]);
     setupStatus.value = status;
     platformSetupStore.setTaxonomyStatus(status);
     taxonomyCurrent.value = current;
-    packageRows.value = packages.items || [];
-    recommendedPackageId.value =
-      packages.recommended_package?.id || current.current_package?.id || null;
     latestJob.value = job;
     if (job?.status && ['pending', 'running'].includes(job.status)) {
       scheduleStatusPolling(job.id);
@@ -222,29 +159,23 @@ async function loadPageData() {
   }
 }
 
-async function handleStartImport(packageId: number, force: boolean) {
+async function handleStartImport(force: boolean) {
   importSubmitting.value = true;
   try {
     const job = await startPlatformTaxonomyImportApi({
-      package_id: packageId,
       force_reinstall: force,
     });
     latestJob.value = {
       ...job,
       setup_state: {
-        job,
         lock: taxonomyCurrent.value?.lock || {
           is_locked: 1,
           lock_code: 'taxonomy_required',
           reason: $t('dataset.staging.taxonomyImporting'),
           required_action: 'install_taxonomy',
         },
-        package:
-          packageRows.value.find((item) => item.id === job.package_id) ||
-          taxonomyCurrent.value?.current_package ||
-          null,
         ready: false,
-        snapshot: taxonomyCurrent.value?.current_snapshot || null,
+        node_count: taxonomyCurrent.value?.node_count || 0,
         status: 'importing',
       },
     };
@@ -259,13 +190,7 @@ async function handleStartImport(packageId: number, force: boolean) {
 }
 
 async function handleStartRecommended() {
-  const targetPackageId =
-    recommendedPackageId.value || packageRows.value[0]?.id;
-  if (!targetPackageId) {
-    createMessage.warning($t('dataset.staging.noAvailablePackage'));
-    return;
-  }
-  await handleStartImport(targetPackageId, forceReinstall.value);
+  await handleStartImport(forceReinstall.value);
 }
 
 function goToPlatformSetting() {
@@ -361,25 +286,13 @@ onBeforeUnmount(() => {
 
         <Card :bordered="false">
           <Statistic
-            :title="$t('dataset.staging.currentSnapshotVersion')"
-            :value="
-              taxonomyCurrent?.current_snapshot?.source_version || $t('dataset.staging.notInstalled')
-            "
+            :title="$t('dataset.staging.taxonomyNodeCount')"
+            :value="taxonomyCurrent?.node_count || 0"
           />
           <div class="summary-help">
             {{ $t('platform.taxonomy.lastLoadTime') }}{{
-              formatDateTime(taxonomyCurrent?.current_snapshot?.loaded_at)
+              formatDateTime(taxonomyCurrent?.latest_job?.finished_at)
             }}
-          </div>
-        </Card>
-
-        <Card :bordered="false">
-          <Statistic
-            :title="$t('dataset.staging.taxonomyNodeCount')"
-            :value="taxonomyCurrent?.current_snapshot?.node_count || 0"
-          />
-          <div class="summary-help">
-            {{ $t('platform.taxonomy.nameCount') }}{{ taxonomyCurrent?.current_snapshot?.name_count || 0 }}
           </div>
         </Card>
       </div>
@@ -432,13 +345,7 @@ onBeforeUnmount(() => {
       <Card :title="$t('dataset.staging.startImport')" :bordered="false" :loading="pageLoading">
         <div class="start-panel">
           <div class="start-panel__text">
-            {{ $t('platform.taxonomy.recommendedPackage') }}
-            <strong>
-              {{
-                packageRows.find((item) => item.id === recommendedPackageId)
-                  ?.package_name || $t('dataset.staging.noRecommendedPackage')
-              }}
-            </strong>
+            {{ forceReinstall ? $t('dataset.staging.taxonomyReinstallStarted') : $t('dataset.staging.taxonomyImportStarted') }}
           </div>
           <div class="start-panel__actions">
             <div class="force-switch">
@@ -455,54 +362,6 @@ onBeforeUnmount(() => {
             </Button>
           </div>
         </div>
-      </Card>
-
-      <Card :title="$t('dataset.staging.availablePackages')" :bordered="false" :loading="pageLoading">
-        <Table
-          :columns="packageColumns"
-          :data-source="packageRows"
-          :pagination="false"
-          :scroll="{ x: 1080 }"
-          row-key="id"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'package_type'">
-              <Tag color="blue">{{ record.package_type }}</Tag>
-            </template>
-            <template v-else-if="column.key === 'status'">
-              <Tag :color="record.status === 'ready' ? 'green' : 'default'">
-                {{ record.status }}
-              </Tag>
-            </template>
-            <template v-else-if="column.key === 'file_size'">
-              {{ formatFileSize(record.file_size) }}
-            </template>
-            <template v-else-if="column.key === 'action'">
-              <Space wrap>
-                <Button
-                  size="small"
-                  type="primary"
-                  :disabled="!!activeJob"
-                  @click="handleStartImport(record.id, false)"
-                >
-                  {{ $t('platform.taxonomy.importAction') }}
-                </Button>
-                <Button
-                  size="small"
-                  danger
-                  ghost
-                  :disabled="!!activeJob"
-                  @click="handleStartImport(record.id, true)"
-                >
-                  {{ $t('platform.taxonomy.reinstallAction') }}
-                </Button>
-              </Space>
-            </template>
-          </template>
-          <template #emptyText>
-            <Empty :description="$t('dataset.staging.noAvailablePackage')" />
-          </template>
-        </Table>
       </Card>
     </div>
   </Page>
@@ -565,7 +424,7 @@ onBeforeUnmount(() => {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 

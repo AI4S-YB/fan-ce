@@ -9,35 +9,6 @@ export interface PlatformSetupLock {
   updated_at?: null | string;
 }
 
-export interface PlatformSetupPackage {
-  id: number;
-  package_code: string;
-  package_type: string;
-  package_name: string;
-  source: string;
-  source_version?: null | string;
-  storage_path: string;
-  file_size?: null | number;
-  sha256?: null | string;
-  manifest_json?: null | string;
-  status: string;
-  created_by?: null | number;
-  created_at?: null | string;
-  updated_at?: null | string;
-}
-
-export interface PlatformSetupSnapshot {
-  id: number;
-  source_name: string;
-  source_version?: null | string;
-  archive_path?: null | string;
-  extracted_path?: null | string;
-  node_count?: number;
-  name_count?: number;
-  notes?: null | string;
-  loaded_at?: null | string;
-}
-
 export interface PlatformSetupJob {
   id: number;
   job_type: string;
@@ -66,15 +37,9 @@ export interface PlatformSetupStatusResponse {
 export interface PlatformSetupCurrentResponse {
   ready: boolean;
   status: string;
-  current_package: null | PlatformSetupPackage;
-  current_snapshot: null | PlatformSetupSnapshot;
+  node_count: number;
   latest_job: null | PlatformSetupJob;
   lock: PlatformSetupLock;
-}
-
-export interface PlatformSetupPackagesResponse {
-  items: PlatformSetupPackage[];
-  recommended_package: null | PlatformSetupPackage;
 }
 
 export interface PlatformSetupJobStatusResponse extends PlatformSetupJob {
@@ -82,9 +47,7 @@ export interface PlatformSetupJobStatusResponse extends PlatformSetupJob {
     lock: PlatformSetupLock;
     status: string;
     ready: boolean;
-    package: null | PlatformSetupPackage;
-    job: null | PlatformSetupJob;
-    snapshot: null | PlatformSetupSnapshot;
+    node_count: number;
   };
 }
 
@@ -109,32 +72,7 @@ export async function getPlatformTaxonomyCurrentApi() {
   );
 }
 
-export async function getPlatformTaxonomyPackagesApi() {
-  return requestClient.get<PlatformSetupPackagesResponse>(
-    '/platform/setup/taxonomy/packages',
-  );
-}
-
-export async function registerPlatformTaxonomyBuiltinPackageApi(data: {
-  package_code: string;
-  package_name: string;
-  package_type: string;
-  storage_path: string;
-  source?: string;
-  source_version?: string;
-  sha256?: string;
-  manifest_json?: string;
-  file_size?: number;
-  status?: string;
-}) {
-  return requestClient.post<PlatformSetupPackage>(
-    '/platform/setup/taxonomy/package/register-builtin',
-    data,
-  );
-}
-
 export async function startPlatformTaxonomyImportApi(data: {
-  package_id: number;
   force_reinstall?: boolean;
 }) {
   return requestClient.post<PlatformSetupJob>(
