@@ -1,6 +1,6 @@
 app:
   host: 0.0.0.0
-  port: 8001
+  port: 8002
   debug: true
   alembic: false
   db_init: true
@@ -17,7 +17,7 @@ pgsql_options:
   user: postgres
   password: your_password_here
   host: 127.0.0.1
-  port: 5432
+  port: 5433
   database: fan_ce_dev
   connect_timeout: 5
 

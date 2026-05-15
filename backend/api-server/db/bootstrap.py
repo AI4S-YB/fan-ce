@@ -511,12 +511,18 @@ def init_dev_seed_data(db):
         ),
     ]
 
+    # Clean up stale menus from removed features
+    _delete_menu_if_exists(db, pid=system.id, path="/system/team")
+    _delete_menu_if_exists(db, pid=system.id, path="/system/project")
+    _delete_menu_if_exists(db, pid=analysis_root.id, path="/analysis/blast-db")
+
     for menu in [
         dashboard,
         workspace,
         apps_root,
         dataset_registry_menu,
         dataset_scan_menu,
+        dataset_candidate_menu,
         dataset_menu,
         database_menu,
         germplasm_root,
