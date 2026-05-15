@@ -76,6 +76,7 @@ config.prod.yaml
 *.zip
 *.bak
 build/
+!scripts/build/
 dist/
 .turbo/
 
