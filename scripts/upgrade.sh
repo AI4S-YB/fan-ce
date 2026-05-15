@@ -25,6 +25,14 @@ pkill -f uvicorn 2>/dev/null || true
 sleep 1
 echo "  Done."
 
+# Ensure PostgreSQL container is running
+PG_CONTAINER="fance-postgres"
+if ! docker exec "$PG_CONTAINER" pg_isready -q 2>/dev/null; then
+    echo -e "  ${YELLOW}PostgreSQL container ($PG_CONTAINER) is not running.${NC}"
+    echo -e "  ${YELLOW}Please start it: docker start $PG_CONTAINER${NC}"
+    exit 1
+fi
+
 # ── 1. Pull latest code ──
 echo "[1/6] Pulling latest code..."
 git pull
