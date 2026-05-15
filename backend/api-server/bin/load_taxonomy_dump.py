@@ -1,22 +1,21 @@
-#!/usr/bin/env python3
-
+#!/usr/bin/env python
+"""CLI 工具：导入 taxonomy dump 到数据库"""
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(BASE_DIR))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from apps.breeding.taxonomy_loader import load_taxonomy_dump
 from db.database import MyDBManager
+from apps.breeding.taxonomy_loader import load_taxonomy_dump
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Load NCBI taxonomy dump into FAN-CE breeding taxonomy tables.")
-    parser.add_argument("dump_path", help="Path to extracted taxdump directory or .tar.gz archive")
-    parser.add_argument("--source-name", default="ncbi_taxdump", help="Source name label")
-    parser.add_argument("--source-version", default=None, help="Source version label")
-    parser.add_argument("--reset-existing", action="store_true", help="Delete existing taxonomy master rows before load")
+    parser = argparse.ArgumentParser(description="Load taxonomy dump into database")
+    parser.add_argument("dump_path", help="Path to taxonomy dump directory or tar.gz")
+    parser.add_argument("--source-name", default="ncbi_plant_taxdump")
+    parser.add_argument("--source-version", default=None)
+    parser.add_argument("--reset-existing", action="store_true")
     args = parser.parse_args()
 
     with MyDBManager() as db:
@@ -27,7 +26,7 @@ def main():
             source_version=args.source_version,
             reset_existing=args.reset_existing,
         )
-    print(result)
+        print(f"Imported: {result['node_count']} nodes, {result['name_count']} names")
 
 
 if __name__ == "__main__":
