@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # ── FAN-CE Install Script ──
 # Fresh installation from source.
+# Supports macOS and Linux (x86_64 / arm64).
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -9,6 +10,8 @@ cd "$ROOT_DIR"
 CONF_DIR="backend/api-server/conf"
 CONF_FILE="${CONF_DIR}/config.dev.yaml"
 CONF_EXAMPLE="${CONF_DIR}/config.example.yaml"
+TAXONOMY_DATA="$ROOT_DIR/backend/api-server/data/taxonomy-plants.tar.gz"
+INIT_SCRIPT="$ROOT_DIR/scripts/init_taxonomy.py"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -21,12 +24,21 @@ echo "========================================"
 echo ""
 
 # ── 0. Prerequisites ──
-echo "[0/5] Checking prerequisites..."
+echo "[0/6] Checking prerequisites..."
 MISSING=""
 
 command -v pixi &>/dev/null || MISSING="$MISSING  pixi (https://pixi.sh)\n"
 command -v pnpm &>/dev/null || MISSING="$MISSING  pnpm (https://pnpm.io)\n"
-command -v psql &>/dev/null || command -v pg_isready &>/dev/null || MISSING="$MISSING  PostgreSQL client\n"
+
+# PostgreSQL client check (need either psql or pg_isready)
+command -v psql &>/dev/null || command -v pg_isready &>/dev/null || {
+    # On Linux, try common install paths
+    if [ -f /usr/bin/psql ] || [ -f /usr/local/bin/psql ]; then
+        :
+    else
+        MISSING="$MISSING  PostgreSQL client (psql or pg_isready)\n"
+    fi
+}
 
 if command -v node &>/dev/null; then
     NODE_VER=$(node -v 2>/dev/null | sed 's/v//' | cut -d. -f1)
@@ -57,102 +69,103 @@ fi
 echo ""
 
 # ── 1. Pixi + Python environment ──
-echo "[1/5] Installing bioinformatics tools + Python environment..."
+echo "[1/6] Installing bioinformatics tools + Python environment..."
 pixi install
 pixi run uv sync --directory backend/api-server
 echo -e "  ${GREEN}Done.${NC}"
 echo ""
 
 # ── 2. Data directories ──
-echo "[2/5] Checking data directory..."
+echo "[2/6] Checking data directory..."
 echo -e "  ${YELLOW}Configure apps.databases.fileDir in $CONF_FILE to point to your data storage location.${NC}"
 echo -e "  ${GREEN}Done.${NC}"
 echo ""
 
-# ── 3. Database migration ──
-echo "[3/6] Checking PostgreSQL connection..."
+# ── 3. PostgreSQL + Database setup ──
+echo "[3/6] Setting up PostgreSQL..."
+
+# Read DB config from yaml (simple grep approach, no yq dependency)
+DB_HOST=$(grep -E '^\s+host:' "$CONF_FILE" | head -1 | sed 's/.*host:\s*//' | xargs)
+DB_PORT=$(grep -E '^\s+port:' "$CONF_FILE" | head -1 | sed 's/.*port:\s*//' | xargs)
+DB_NAME=$(grep -E '^\s+database:' "$CONF_FILE" | head -1 | sed 's/.*database:\s*//' | xargs)
+DB_USER=$(grep -E '^\s+user:' "$CONF_FILE" | head -1 | sed 's/.*user:\s*//' | xargs)
+DB_PASS=$(grep -E '^\s+password:' "$CONF_FILE" | head -1 | sed 's/.*password:\s*//' | xargs)
+
+DB_HOST="${DB_HOST:-127.0.0.1}"
+DB_PORT="${DB_PORT:-5433}"
+DB_NAME="${DB_NAME:-fan_ce_dev}"
+DB_USER="${DB_USER:-fan_api}"
+DB_PASS="${DB_PASS:-fan_api_dev}"
+
 if command -v pg_isready &>/dev/null; then
-    if pg_isready -q 2>/dev/null; then
-        echo -e "  ${GREEN}PostgreSQL is running.${NC}"
+    if pg_isready -h "$DB_HOST" -p "$DB_PORT" -q 2>/dev/null; then
+        echo -e "  ${GREEN}PostgreSQL is running at $DB_HOST:$DB_PORT${NC}"
     else
-        echo -e "  ${YELLOW}PostgreSQL is not running. Attempting to start via Docker...${NC}"
+        echo -e "  ${YELLOW}PostgreSQL not reachable. Attempting to start via Docker...${NC}"
         if command -v docker &>/dev/null; then
-            docker compose -f docker-compose.yml up -d postgres 2>/dev/null || \
-            docker run -d --name fance-postgres -p 5433:5432 -e POSTGRES_PASSWORD=postgres postgres:16 2>/dev/null || \
-            echo -e "  ${YELLOW}Could not start PostgreSQL. Please start it manually.${NC}"
+            # Remove stale container if exists
+            docker rm -f fance-postgres 2>/dev/null || true
+            # Try docker compose then docker-compose (Linux compat)
+            if docker compose version &>/dev/null 2>&1; then
+                docker compose -f docker-compose.yml up -d postgres 2>/dev/null || true
+            elif command -v docker-compose &>/dev/null; then
+                docker-compose -f docker-compose.yml up -d postgres 2>/dev/null || true
+            fi
+            # Fallback: run postgres directly
+            if ! pg_isready -h "$DB_HOST" -p "$DB_PORT" -q 2>/dev/null; then
+                echo -e "  ${YELLOW}Starting PostgreSQL container...${NC}"
+                docker run -d --name fance-postgres \
+                    -p "$DB_PORT:5432" \
+                    -e "POSTGRES_USER=$DB_USER" \
+                    -e "POSTGRES_PASSWORD=$DB_PASS" \
+                    -e "POSTGRES_DB=$DB_NAME" \
+                    postgres:16 2>/dev/null || echo -e "  ${YELLOW}Could not start PostgreSQL. Please start it manually.${NC}"
+            fi
             sleep 3
         else
             echo -e "  ${YELLOW}Docker not found. Please start PostgreSQL manually.${NC}"
         fi
     fi
-else
-    echo -e "  ${YELLOW}pg_isready not found. Please ensure PostgreSQL is running on the configured port.${NC}"
 fi
 
-echo "[3/6] Running database migrations..."
-pixi run uv run --directory backend/api-server alembic upgrade head || echo -e "  ${YELLOW}Warning: alembic upgrade failed. Check database connection in $CONF_FILE${NC}"
+# Create database if it doesn't exist
+if command -v psql &>/dev/null && pg_isready -h "$DB_HOST" -p "$DB_PORT" -q 2>/dev/null; then
+    PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres -tc \
+        "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" 2>/dev/null | grep -q 1 || {
+        echo -e "  ${YELLOW}Database '$DB_NAME' not found. Creating...${NC}"
+        PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres -c \
+            "CREATE DATABASE $DB_NAME OWNER $DB_USER;" 2>/dev/null || true
+    }
+fi
+
+# Skip alembic for fresh installs (tables created by init_*_tables functions).
+# Only run migrations if tables already exist (upgrade scenario).
+TABLE_COUNT=$(PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -tc \
+    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public';" 2>/dev/null | xargs || echo "0")
+if [ "${TABLE_COUNT:-0}" -gt 10 ]; then
+    echo "  Detected existing database ($TABLE_COUNT tables). Running migrations..."
+    pixi run uv run --directory backend/api-server alembic upgrade head || \
+        echo -e "  ${YELLOW}Warning: alembic upgrade had errors (may be harmless).${NC}"
+else
+    echo "  Fresh database detected. Tables will be created in next step."
+fi
 echo -e "  ${GREEN}Done.${NC}"
+echo ""
 
-# ── 3.5. Import taxonomy data ──
-echo "[4/6] Importing plant taxonomy data..."
-TAXONOMY_DATA="$ROOT_DIR/backend/api-server/data/taxonomy-plants.tar.gz"
+# ── 4. Create tables + Import taxonomy ──
+echo "[4/6] Initializing database tables and plant taxonomy..."
 if [ -f "$TAXONOMY_DATA" ]; then
-    pixi run uv run --directory backend/api-server python -c "
-import sys
-from sqlalchemy import text
-from db.database import engine
-from apps.datasets.init import init_dataset_tables
-from apps.breeding.init import init_breeding_tables
-from apps.platform.init import init_platform_tables
-from apps.system.init import init_system_tables
-from db.database import MyDBManager
-from apps.breeding.models import BreedingTaxonomyNode
-from apps.breeding.taxonomy_loader import load_taxonomy_dump
-
-# Ensure PostgreSQL extensions
-if engine.dialect.name == 'postgresql':
-    with engine.begin() as conn:
-        conn.execute(text('CREATE EXTENSION IF NOT EXISTS pg_trgm'))
-
-# Ensure all tables exist before import (must match register/app_init.py order)
-init_dataset_tables()
-init_breeding_tables()
-init_platform_tables()
-init_system_tables()
-
-with MyDBManager() as db:
-    existing = db.query(BreedingTaxonomyNode).count()
-    if existing > 0:
-        print(f'  Taxonomy already installed ({existing} nodes). Skipping import.')
-    else:
-        print('  Importing plant taxonomy data...')
-        result = load_taxonomy_dump(
-            db=db,
-            dump_path='$TAXONOMY_DATA',
-            source_name='ncbi_plant_taxdump',
-            reset_existing=False,
-        )
-        print(f'  Imported {result[\"node_count\"]} nodes, {result[\"name_count\"]} names')
-        # Update install lock to mark taxonomy as ready
-        from apps.system.base.models import SystemInstallLock
-        lock = db.query(SystemInstallLock).filter(
-            SystemInstallLock.lock_code == 'taxonomy_required'
-        ).first()
-        if lock:
-            lock.is_locked = 0
-            lock.reason = 'taxonomy 已安装'
-            db.add(lock)
-            db.commit()
-"
+    pixi run uv run --directory backend/api-server python "$INIT_SCRIPT" "$TAXONOMY_DATA"
     echo -e "  ${GREEN}Done.${NC}"
 else
-    echo -e "  ${YELLOW}Taxonomy data file not found at $TAXONOMY_DATA${NC}"
+    echo -e "  ${RED}Error: Taxonomy data file not found at $TAXONOMY_DATA${NC}"
     echo -e "  ${YELLOW}Run: python scripts/build/filter_plants.py <ncbi_dump> backend/api-server/data/${NC}"
-    echo -e "  ${YELLOW}Then re-run this install script or import via admin panel.${NC}"
+    echo -e "  ${YELLOW}Then re-run this install script.${NC}"
+    exit 1
 fi
 echo ""
 
-# ── 4. Frontend ──
+# ── 5. Frontend ──
 echo "[5/6] Building frontends..."
 cd frontend/admin-web
 pnpm install --frozen-lockfile
@@ -161,7 +174,7 @@ cd "$ROOT_DIR"
 echo -e "  ${GREEN}Done.${NC}"
 echo ""
 
-# ── 5. Verify ──
+# ── 6. Verify ──
 echo "[6/6] Verifying installation..."
 echo ""
 echo "  Bio-tools:"

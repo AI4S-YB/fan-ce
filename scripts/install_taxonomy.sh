@@ -1,9 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# ── Manual Taxonomy Import ──
+# Re-import plant taxonomy data. Use this for manual updates.
+# For fresh install, use install.sh instead.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 DATA_FILE="$PROJECT_ROOT/backend/api-server/data/taxonomy-plants.tar.gz"
+INIT_SCRIPT="$PROJECT_ROOT/scripts/init_taxonomy.py"
 
 if [ ! -f "$DATA_FILE" ]; then
     echo "Error: taxonomy data file not found: $DATA_FILE"
@@ -14,18 +18,6 @@ fi
 echo "Importing plant taxonomy data..."
 
 cd "$PROJECT_ROOT"
-python -c "
-from db.database import MyDBManager
-from apps.breeding.taxonomy_loader import load_taxonomy_dump
-
-with MyDBManager() as db:
-    result = load_taxonomy_dump(
-        db=db,
-        dump_path='$DATA_FILE',
-        source_name='ncbi_plant_taxdump',
-        reset_existing=False,
-    )
-    print(f'Imported {result[\"node_count\"]} nodes, {result[\"name_count\"]} names')
-"
+pixi run uv run --directory backend/api-server python "$INIT_SCRIPT" "$DATA_FILE"
 
 echo "Taxonomy import complete."
