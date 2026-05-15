@@ -3,9 +3,9 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from apps.common.depends import get_active_user
 from db.database import get_db
 from libs.responses.response import response_200
-from ..schemas import PlatformSetupTaxonomyImportStartRequest, PlatformSetupTaxonomyPackageRegisterBuiltinRequest
+from ..schemas import PlatformSetupTaxonomyImportStartRequest
 from ..setup_jobs import get_taxonomy_import_job, run_taxonomy_import_job, submit_taxonomy_import_job
-from ..setup_state import list_taxonomy_packages, query_taxonomy_setup_state, register_taxonomy_package
+from ..setup_state import query_taxonomy_setup_state
 
 setup_router = APIRouter(tags=["app:platform:平台初始化"])
 
@@ -51,33 +51,6 @@ async def get_taxonomy_current(
     )
 
 
-@setup_router.get("/setup/taxonomy/packages", summary="taxonomy 安装包列表")
-async def get_taxonomy_packages(
-    db=Depends(get_db),
-    _user=Depends(get_active_user),
-):
-    _require_platform_admin(_user)
-    return response_200(data=list_taxonomy_packages(db))
-
-
-@setup_router.post("/setup/taxonomy/package/register-builtin", summary="注册内置 taxonomy 安装包")
-async def register_taxonomy_builtin_package(
-    request_data: PlatformSetupTaxonomyPackageRegisterBuiltinRequest,
-    db=Depends(get_db),
-    _user=Depends(get_active_user),
-):
-    _require_platform_admin(_user)
-    try:
-        package_data = register_taxonomy_package(
-            db,
-            payload=request_data.model_dump(),
-            created_by=getattr(_user, "id", None),
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=4000, detail=str(exc)) from exc
-    return response_200(data=package_data)
-
-
 @setup_router.post("/setup/taxonomy/import/start", summary="启动 taxonomy 导入任务")
 async def start_taxonomy_import(
     request_data: PlatformSetupTaxonomyImportStartRequest,
@@ -89,7 +62,6 @@ async def start_taxonomy_import(
     try:
         job_data = submit_taxonomy_import_job(
             db,
-            package_id=request_data.package_id,
             force_reinstall=bool(request_data.force_reinstall),
             operator_id=getattr(_user, "id", None),
         )

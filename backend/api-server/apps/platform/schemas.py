@@ -85,21 +85,7 @@ class PlatformModelApiSetPrimaryRequest(BaseModel):
     id: int
 
 
-class PlatformSetupTaxonomyPackageRegisterBuiltinRequest(BaseModel):
-    package_code: str
-    package_name: str
-    package_type: str
-    storage_path: str
-    source: Optional[str] = "builtin"
-    source_version: Optional[str] = ""
-    sha256: Optional[str] = ""
-    manifest_json: Optional[str] = "{}"
-    file_size: Optional[int] = None
-    status: Optional[str] = "ready"
-
-
 class PlatformSetupTaxonomyImportStartRequest(BaseModel):
-    package_id: int
     force_reinstall: Optional[bool] = False
 
 
