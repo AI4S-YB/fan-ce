@@ -2,7 +2,7 @@ import time
 
 from sqlalchemy.exc import OperationalError
 
-from apps.breeding.models import BreedingTaxonomySourceSnapshot
+from apps.breeding.models import BreedingTaxonomyNode
 from db.database import MyDBManager, engine
 
 from .base.models import SysLog, SystemDictData, SystemDictField, SystemInstallJob, SystemInstallLock, SystemInstallPackage
@@ -31,12 +31,12 @@ def init_system_tables():
 
 def _ensure_install_defaults():
     with MyDBManager() as db:
-        taxonomy_snapshot = (
-            db.query(BreedingTaxonomySourceSnapshot)
-            .order_by(BreedingTaxonomySourceSnapshot.id.desc())
-            .first()
-        )
-        lock_obj = db.query(SystemInstallLock).filter(SystemInstallLock.lock_code == "taxonomy_required").first()
+        taxonomy_node_count = db.query(BreedingTaxonomyNode).count()
+        has_taxonomy = taxonomy_node_count > 0
+
+        lock_obj = db.query(SystemInstallLock).filter(
+            SystemInstallLock.lock_code == "taxonomy_required"
+        ).first()
         if not lock_obj:
             lock_obj = SystemInstallLock(
                 lock_code="taxonomy_required",
@@ -44,7 +44,7 @@ def _ensure_install_defaults():
             )
             db.add(lock_obj)
 
-        if taxonomy_snapshot:
+        if has_taxonomy:
             lock_obj.is_locked = 0
             lock_obj.reason = "taxonomy 已安装"
         else:
