@@ -29,7 +29,7 @@ function defineApplicationConfig(userConfigPromise?: DefineApplicationOptions) {
       archiverPluginOptions: {},
       compress: false,
       compressTypes: ['brotli', 'gzip'],
-      devtools: true,
+      devtools: !isBuild,
       env,
       extraAppConfig: true,
       html: true,
@@ -40,8 +40,6 @@ function defineApplicationConfig(userConfigPromise?: DefineApplicationOptions) {
       isBuild,
       license: true,
       mode,
-      nitroMock: false,
-      nitroMockOptions: {},
       print: !isBuild,
       printInfoMap: {
         'Vben Admin Docs': 'https://doc.vben.pro',

@@ -15,7 +15,6 @@ import viteCompressPlugin from 'vite-plugin-compression';
 import viteDtsPlugin from 'vite-plugin-dts';
 import { createHtmlPlugin as viteHtmlPlugin } from 'vite-plugin-html';
 import { VitePWA } from 'vite-plugin-pwa';
-import viteVueDevTools from 'vite-plugin-vue-devtools';
 
 import { viteArchiverPlugin } from './archiver';
 import { viteExtraAppConfigPlugin } from './extra-app-config';
@@ -23,7 +22,6 @@ import { viteImportMapPlugin } from './importmap';
 import { viteInjectAppLoadingPlugin } from './inject-app-loading';
 import { viteMetadataPlugin } from './inject-metadata';
 import { viteLicensePlugin } from './license';
-import { viteNitroMockPlugin } from './nitro-mock';
 import { vitePrintPlugin } from './print';
 import { viteVxeTableImportsPlugin } from './vxe-table';
 
@@ -65,7 +63,10 @@ async function loadCommonPlugins(
 
     {
       condition: !isBuild && devtools,
-      plugins: () => [viteVueDevTools()],
+      plugins: async () => {
+        const { default: viteVueDevTools } = await import('vite-plugin-vue-devtools');
+        return [viteVueDevTools()];
+      },
     },
     {
       condition: injectMetadata,
@@ -104,8 +105,6 @@ async function loadApplicationPlugins(
     importmapOptions,
     injectAppLoading,
     license,
-    nitroMock,
-    nitroMockOptions,
     print,
     printInfoMap,
     pwa,
@@ -142,13 +141,6 @@ async function loadApplicationPlugins(
         return [await viteVxeTableImportsPlugin()];
       },
     },
-    {
-      condition: nitroMock,
-      plugins: async () => {
-        return [await viteNitroMockPlugin(nitroMockOptions)];
-      },
-    },
-
     {
       condition: injectAppLoading,
       plugins: async () => [await viteInjectAppLoadingPlugin(!!isBuild, env)],
