@@ -1,6 +1,9 @@
 [workspace]
 authors = ["kentnf, llq, kasper1995 <kentnf@gmail.com>"]
-channels = ["conda-forge", "bioconda"]
+channels = [
+    "https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge",
+    "https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/bioconda",
+]
 name = "fan-ce"
 platforms = ["osx-arm64", "osx-64", "linux-64", "linux-aarch64"]
 version = "0.1.0"

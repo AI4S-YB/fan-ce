@@ -48,6 +48,8 @@ echo -e "  ${GREEN}All prerequisites met.${NC}"
 # PostgreSQL runs in Docker container — always use docker exec
 PG_CONTAINER="fance-postgres"
 PG_IMAGE="postgres:16"
+# Docker Hub mirror (DaoCloud, for China access)
+PG_IMAGE_MIRROR="docker.m.daocloud.io/library/postgres:16"
 _pg_isready() { docker exec "$PG_CONTAINER" pg_isready -q 2>/dev/null; }
 _psql()     { docker exec -e PGPASSWORD="$DB_PASS" "$PG_CONTAINER" psql -U "$DB_USER" "$@"; }
 
@@ -102,6 +104,8 @@ if _pg_isready; then
     else
         echo -e "  ${YELLOW}Starting PostgreSQL container ($PG_IMAGE)...${NC}"
         docker rm -f "$PG_CONTAINER" 2>/dev/null || true
+        # Pull from DaoCloud mirror first, fall back to Docker Hub
+        docker pull "$PG_IMAGE_MIRROR" 2>/dev/null && docker tag "$PG_IMAGE_MIRROR" "$PG_IMAGE" 2>/dev/null
         docker run -d --name "$PG_CONTAINER" \
             -p "$DB_PORT:5432" \
             -e "POSTGRES_USER=$DB_USER" \
