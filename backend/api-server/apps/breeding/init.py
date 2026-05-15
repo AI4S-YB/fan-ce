@@ -19,10 +19,8 @@ from .models import (
     BreedingPhenotypeSubjectMap,
     BreedingPlot,
     BreedingProgram,
-    BreedingTaxonomyCache,
     BreedingTaxonomyName,
     BreedingTaxonomyNode,
-    BreedingTaxonomySourceSnapshot,
     BreedingTrial,
     BreedingVariantSampleMap,
 )
@@ -32,10 +30,8 @@ def init_breeding_tables():
     tables = [
         BreedingProgram.__table__,
         BreedingMaterial.__table__,
-        BreedingTaxonomySourceSnapshot.__table__,
         BreedingTaxonomyNode.__table__,
         BreedingTaxonomyName.__table__,
-        BreedingTaxonomyCache.__table__,
         BreedingGermplasmImportBatch.__table__,
         BreedingGermplasm.__table__,
         BreedingGermplasmLineage.__table__,
@@ -90,18 +86,17 @@ def _ensure_breeding_search_indexes():
         return
 
     statements = [
-        "CREATE EXTENSION IF NOT EXISTS pg_trgm",
         (
-            "CREATE INDEX IF NOT EXISTS ix_brd_taxonomy_node_scientific_name_trgm "
-            "ON brd_taxonomy_node USING gin (scientific_name gin_trgm_ops)"
+            "CREATE INDEX IF NOT EXISTS ix_brd_taxonomy_node_scientific_name_vpo "
+            "ON brd_taxonomy_node (scientific_name varchar_pattern_ops)"
         ),
         (
-            "CREATE INDEX IF NOT EXISTS ix_brd_taxonomy_node_common_name_trgm "
-            "ON brd_taxonomy_node USING gin (common_name gin_trgm_ops)"
+            "CREATE INDEX IF NOT EXISTS ix_brd_taxonomy_node_lineage_ids_gin "
+            "ON brd_taxonomy_node USING gin (lineage_ids)"
         ),
         (
-            "CREATE INDEX IF NOT EXISTS ix_brd_taxonomy_name_name_txt_trgm "
-            "ON brd_taxonomy_name USING gin (name_txt gin_trgm_ops)"
+            "CREATE INDEX IF NOT EXISTS ix_brd_taxonomy_name_name_txt_vpo "
+            "ON brd_taxonomy_name (name_txt varchar_pattern_ops)"
         ),
     ]
     with engine.begin() as conn:
