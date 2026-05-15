@@ -80,6 +80,9 @@ build/
 dist/
 .turbo/
 
+# Database backups
+backups/
+
 # Documentation (NEVER commit — separate repo)
 docs/
 CLAUDE.md
