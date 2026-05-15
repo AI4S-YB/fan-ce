@@ -29,16 +29,7 @@ MISSING=""
 
 command -v pixi &>/dev/null || MISSING="$MISSING  pixi (https://pixi.sh)\n"
 command -v pnpm &>/dev/null || MISSING="$MISSING  pnpm (https://pnpm.io)\n"
-
-# PostgreSQL client check (need either psql or pg_isready)
-command -v psql &>/dev/null || command -v pg_isready &>/dev/null || {
-    # On Linux, try common install paths
-    if [ -f /usr/bin/psql ] || [ -f /usr/local/bin/psql ]; then
-        :
-    else
-        MISSING="$MISSING  PostgreSQL client (psql or pg_isready)\n"
-    fi
-}
+command -v docker &>/dev/null || MISSING="$MISSING  Docker (PostgreSQL runs in container)\n"
 
 if command -v node &>/dev/null; then
     NODE_VER=$(node -v 2>/dev/null | sed 's/v//' | cut -d. -f1)
@@ -53,6 +44,12 @@ if [ -n "$MISSING" ]; then
     exit 1
 fi
 echo -e "  ${GREEN}All prerequisites met.${NC}"
+
+# PostgreSQL runs in Docker container — always use docker exec
+PG_CONTAINER="fance-postgres"
+PG_IMAGE="postgres:16"
+_pg_isready() { docker exec "$PG_CONTAINER" pg_isready -q 2>/dev/null; }
+_psql()     { docker exec -e PGPASSWORD="$DB_PASS" "$PG_CONTAINER" psql -U "$DB_USER" "$@"; }
 
 # Check config file exists
 if [ ! -f "$CONF_FILE" ]; then
@@ -100,50 +97,41 @@ DB_NAME="${DB_NAME:-fan_ce_dev}"
 DB_USER="${DB_USER:-fan_api}"
 DB_PASS="${DB_PASS:-fan_api_dev}"
 
-if command -v pg_isready &>/dev/null; then
-    if pg_isready -h "$DB_HOST" -p "$DB_PORT" -q 2>/dev/null; then
-        echo -e "  ${GREEN}PostgreSQL is running at $DB_HOST:$DB_PORT${NC}"
+if _pg_isready; then
+        echo -e "  ${GREEN}PostgreSQL container is running${NC}"
     else
-        echo -e "  ${YELLOW}PostgreSQL not reachable. Attempting to start via Docker...${NC}"
-        if command -v docker &>/dev/null; then
-            # Remove stale container if exists
-            docker rm -f fance-postgres 2>/dev/null || true
-            # Try docker compose then docker-compose (Linux compat)
-            if docker compose version &>/dev/null 2>&1; then
-                docker compose -f docker-compose.yml up -d postgres 2>/dev/null || true
-            elif command -v docker-compose &>/dev/null; then
-                docker-compose -f docker-compose.yml up -d postgres 2>/dev/null || true
+        echo -e "  ${YELLOW}Starting PostgreSQL container ($PG_IMAGE)...${NC}"
+        docker rm -f "$PG_CONTAINER" 2>/dev/null || true
+        docker run -d --name "$PG_CONTAINER" \
+            -p "$DB_PORT:5432" \
+            -e "POSTGRES_USER=$DB_USER" \
+            -e "POSTGRES_PASSWORD=$DB_PASS" \
+            -e "POSTGRES_DB=$DB_NAME" \
+            "$PG_IMAGE" 2>/dev/null
+
+        # Wait for PostgreSQL to be ready (up to 30s)
+        for i in $(seq 1 30); do
+            if _pg_isready; then
+                echo -e "  ${GREEN}PostgreSQL ready after ${i}s${NC}"
+                break
             fi
-            # Fallback: run postgres directly
-            if ! pg_isready -h "$DB_HOST" -p "$DB_PORT" -q 2>/dev/null; then
-                echo -e "  ${YELLOW}Starting PostgreSQL container...${NC}"
-                docker run -d --name fance-postgres \
-                    -p "$DB_PORT:5432" \
-                    -e "POSTGRES_USER=$DB_USER" \
-                    -e "POSTGRES_PASSWORD=$DB_PASS" \
-                    -e "POSTGRES_DB=$DB_NAME" \
-                    postgres:16 2>/dev/null || echo -e "  ${YELLOW}Could not start PostgreSQL. Please start it manually.${NC}"
-            fi
-            sleep 3
-        else
-            echo -e "  ${YELLOW}Docker not found. Please start PostgreSQL manually.${NC}"
-        fi
+            sleep 1
+        done
     fi
+
+if ! _pg_isready; then
+    echo -e "${RED}PostgreSQL failed to start. Check Docker.${NC}"
+    exit 1
 fi
 
 # Create database if it doesn't exist
-if command -v psql &>/dev/null && pg_isready -h "$DB_HOST" -p "$DB_PORT" -q 2>/dev/null; then
-    PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres -tc \
-        "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" 2>/dev/null | grep -q 1 || {
-        echo -e "  ${YELLOW}Database '$DB_NAME' not found. Creating...${NC}"
-        PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres -c \
-            "CREATE DATABASE $DB_NAME OWNER $DB_USER;" 2>/dev/null || true
-    }
-fi
+_psql -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" 2>/dev/null | grep -q 1 || {
+    echo -e "  ${YELLOW}Database '$DB_NAME' not found. Creating...${NC}"
+    _psql -d postgres -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;" 2>/dev/null
+}
 
 # Skip alembic for fresh installs (tables created by init_*_tables functions).
-# Only run migrations if tables already exist (upgrade scenario).
-TABLE_COUNT=$(PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -tc \
+TABLE_COUNT=$(_psql -d "$DB_NAME" -tc \
     "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public';" 2>/dev/null | xargs || echo "0")
 if [ "${TABLE_COUNT:-0}" -gt 10 ]; then
     echo "  Detected existing database ($TABLE_COUNT tables). Running migrations..."
