@@ -1,7 +1,19 @@
 from apps.breeding.models import BreedingTaxonomyNode
-from apps.system.base.models import SystemInstallLock
+from apps.system.base.models import SystemInstallJob, SystemInstallLock
 
 TAXONOMY_LOCK_CODE = "taxonomy_required"
+
+
+def _serialize_job(job_obj):
+    from decimal import Decimal
+
+    data = job_obj.to_dict()
+    if isinstance(data.get("progress_percent"), Decimal):
+        data["progress_percent"] = float(data["progress_percent"])
+    for field in ("started_at", "finished_at", "created_at", "updated_at"):
+        if data.get(field) is not None:
+            data[field] = data[field].isoformat()
+    return data
 
 
 def serialize_lock(lock_obj: SystemInstallLock | None):
@@ -33,11 +45,19 @@ def query_taxonomy_setup_state(db):
     )
     status = "ready" if ready else ("not_installed" if not has_taxonomy else "importing")
 
+    latest_job = (
+        db.query(SystemInstallJob)
+        .filter(SystemInstallJob.job_type == "taxonomy_import")
+        .order_by(SystemInstallJob.id.desc())
+        .first()
+    )
+
     return {
         "lock": lock_data,
         "status": status,
         "ready": ready,
         "node_count": node_count,
+        "latest_job": _serialize_job(latest_job) if latest_job else None,
     }
 
 

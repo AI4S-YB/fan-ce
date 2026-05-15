@@ -86,6 +86,10 @@ def _ensure_breeding_search_indexes():
         return
 
     statements = [
+        # Drop legacy pg_trgm indexes (no longer used, save 5-9 GB)
+        "DROP INDEX IF EXISTS ix_brd_taxonomy_node_scientific_name_trgm",
+        "DROP INDEX IF EXISTS ix_brd_taxonomy_node_common_name_trgm",
+        "DROP INDEX IF EXISTS ix_brd_taxonomy_name_name_txt_trgm",
         (
             "CREATE INDEX IF NOT EXISTS ix_brd_taxonomy_node_scientific_name_vpo "
             "ON brd_taxonomy_node (scientific_name varchar_pattern_ops)"

@@ -71,7 +71,7 @@ class BreedingTaxonomyNode(Base):
     rank = Column(String(64), comment="分类等级")
     scientific_name = Column(String(256), nullable=False, comment="学名")
     common_name = Column(String(256), comment="常用名")
-    lineage_ids = Column(ARRAY(Integer), nullable=False, default=[], comment="祖先 tax_id 数组")
+    lineage_ids = Column(ARRAY(Integer), nullable=False, default=list, comment="祖先 tax_id 数组")
     lineage = Column(Text, comment="lineage 展示文本")
     source = Column(String(32), nullable=False, default="plant_dump", comment="来源")
     is_active = Column(Integer, nullable=False, default=1, comment="是否启用")

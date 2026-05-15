@@ -43,9 +43,8 @@ async def get_taxonomy_current(
         data={
             "ready": state["ready"],
             "status": state["status"],
-            "current_package": state["package"],
-            "current_snapshot": state["snapshot"],
-            "latest_job": state["job"],
+            "node_count": state["node_count"],
+            "latest_job": state["latest_job"],
             "lock": state["lock"],
         }
     )
