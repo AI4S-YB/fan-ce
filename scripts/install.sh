@@ -99,14 +99,25 @@ TAXONOMY_DATA="$ROOT_DIR/backend/api-server/data/taxonomy-plants.tar.gz"
 if [ -f "$TAXONOMY_DATA" ]; then
     pixi run uv run --directory backend/api-server python -c "
 import sys
+from sqlalchemy import text
+from db.database import engine
+from apps.datasets.init import init_dataset_tables
 from apps.breeding.init import init_breeding_tables
+from apps.platform.init import init_platform_tables
 from apps.system.init import init_system_tables
 from db.database import MyDBManager
 from apps.breeding.models import BreedingTaxonomyNode
 from apps.breeding.taxonomy_loader import load_taxonomy_dump
 
-# Ensure breeding + system tables exist before import
+# Ensure PostgreSQL extensions
+if engine.dialect.name == 'postgresql':
+    with engine.begin() as conn:
+        conn.execute(text('CREATE EXTENSION IF NOT EXISTS pg_trgm'))
+
+# Ensure all tables exist before import (must match register/app_init.py order)
+init_dataset_tables()
 init_breeding_tables()
+init_platform_tables()
 init_system_tables()
 
 with MyDBManager() as db:

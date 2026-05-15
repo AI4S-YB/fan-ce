@@ -13,6 +13,13 @@ from utils.fileaction import file_update
 
 
 def register_init(app):
+    # Ensure PostgreSQL extensions exist before creating tables
+    from db.database import engine
+    if engine.dialect.name == "postgresql":
+        from sqlalchemy import text
+        with engine.begin() as conn:
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
+
     init_dataset_tables()
     init_breeding_tables()
     init_platform_tables()

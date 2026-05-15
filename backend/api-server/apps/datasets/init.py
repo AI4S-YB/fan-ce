@@ -12,6 +12,7 @@ from .constants import (
     DEFAULT_DATASET_KIND_REGISTRY_ITEMS,
 )
 from .crud import asset_file_type_registry_db, asset_type_registry_db, dataset_kind_registry_db
+from .dataset_model import Dataset
 from .models import (
     AssetFile,
     AssetFileTypeRegistry,
@@ -51,6 +52,7 @@ def init_dataset_tables():
         DatasetRegistrationCandidate.__table__,
         DatasetRegistrationCandidateFile.__table__,
         DatasetRegistry.__table__,
+        Dataset.__table__,
         DatasetWorkflowTask.__table__,
         DatasetPublishRecord.__table__,
         DatasetVersion.__table__,
