@@ -764,6 +764,7 @@ def test_breeding_service_germplasm_validate_and_commit_flow(db_session, tmp_pat
             common_name="rose",
             rank="species",
             lineage="Eukaryota; Plantae; Rosaceae; Rosa",
+            lineage_ids=[],
             source="manual",
             is_active=1,
         )
@@ -1039,6 +1040,7 @@ def test_breeding_service_germplasm_template_supports_comment_rows_and_legacy_al
             common_name="China rose",
             rank="species",
             lineage="Eukaryota; Plantae; Rosaceae; Rosa",
+            lineage_ids=[],
             source="manual",
             is_active=1,
         )
@@ -1073,6 +1075,7 @@ def test_breeding_service_germplasm_template_accepts_arbitrary_dynamic_headers(d
             common_name="thale cress",
             rank="species",
             lineage="Eukaryota; Plantae; Brassicaceae; Arabidopsis",
+            lineage_ids=[],
             source="manual",
             is_active=1,
         )
@@ -1127,6 +1130,7 @@ def test_breeding_service_germplasm_template_rejects_blank_header_columns_with_d
             common_name="pea",
             rank="species",
             lineage="Eukaryota; Plantae; Fabaceae; Pisum",
+            lineage_ids=[],
             source="manual",
             is_active=1,
         )
@@ -1163,6 +1167,7 @@ def test_breeding_service_delete_germplasm_import_batch_removes_related_records(
             common_name="rice",
             rank="species",
             lineage="Eukaryota; Plantae; Poaceae; Oryza",
+            lineage_ids=[],
             source="manual",
             is_active=1,
         )
@@ -1222,6 +1227,7 @@ def test_breeding_service_taxonomy_audit(db_session, monkeypatch):
             rank="species",
             parent_tax_id=3764,
             lineage="cellular organisms; Eukaryota; Viridiplantae; Rosaceae; Rosa",
+            lineage_ids=[],
             source="manual",
             is_active=1,
         ),
@@ -1232,6 +1238,7 @@ def test_breeding_service_taxonomy_audit(db_session, monkeypatch):
             rank="species",
             parent_tax_id=3764,
             lineage="cellular organisms; Eukaryota; Viridiplantae; Rosaceae; Rosa",
+            lineage_ids=[],
             source="ncbi_sync",
             is_active=1,
         ),
@@ -1242,6 +1249,7 @@ def test_breeding_service_taxonomy_audit(db_session, monkeypatch):
             rank="species",
             parent_tax_id=3764,
             lineage="cellular organisms; Eukaryota",
+            lineage_ids=[],
             source="manual",
             is_active=1,
         ),
@@ -1252,6 +1260,7 @@ def test_breeding_service_taxonomy_audit(db_session, monkeypatch):
             rank="species",
             parent_tax_id=3764,
             lineage="cellular organisms; Eukaryota",
+            lineage_ids=[],
             source="manual",
             is_active=1,
         ),
