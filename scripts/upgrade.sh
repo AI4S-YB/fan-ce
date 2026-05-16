@@ -81,7 +81,7 @@ echo "  Done."
 echo "[6/6] Rebuilding frontends..."
 cd frontend/admin-web
 pnpm install --frozen-lockfile
-pnpm build
+pnpm -F @fan-ce/admin-web-antd -F @fan-ce/web-public build
 cd "$ROOT_DIR"
 echo "  Done."
 

@@ -176,7 +176,8 @@ echo ""
 echo "[5/6] Building frontends..."
 cd frontend/admin-web
 pnpm install --frozen-lockfile
-pnpm build
+# Only build the two apps actually used (skip web-naive, web-ele, playground, docs)
+pnpm -F @fan-ce/admin-web-antd -F @fan-ce/web-public build
 cd "$ROOT_DIR"
 echo -e "  ${GREEN}Done.${NC}"
 echo ""
