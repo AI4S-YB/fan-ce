@@ -13,6 +13,17 @@ export default defineConfig(async () => {
     },
     vite: {
       plugins: [
+        // Shm jiti — Node.js runtime pulled into browser bundle transitively.
+        // Must intercept at resolution time to prevent Rollup bundling failure.
+        {
+          name: 'fance:shim-jiti',
+          enforce: 'pre',
+          resolveId(id) {
+            if (id === 'jiti' || id.startsWith('jiti/') || id.includes('/jiti/')) {
+              return path.resolve(import.meta.dirname, 'stubs/jiti-stub.mjs');
+            }
+          },
+        },
         createSvgIconsPlugin({
           // 指定需要缓存的图标文件夹
           // eslint-disable-next-line n/prefer-global/process
