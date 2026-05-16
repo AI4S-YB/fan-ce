@@ -46,8 +46,8 @@ openspec/
 
 # Environment files
 .env
+!.env
 .env.*
-!.env.example
 
 # Database files
 *.db
