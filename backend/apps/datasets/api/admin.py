@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from apps.common.depends import get_db, require_superadmin
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 
 router = APIRouter()
 
@@ -41,7 +41,7 @@ def admin_force_delete_dataset(
 
     db.delete(ds)
     db.commit()
-    return response_2000(data={"deleted_dataset_id": dataset_id})
+    return response_200(data={"deleted_dataset_id": dataset_id})
 
 
 @router.post("/{dataset_id}/rollback-lifecycle", dependencies=[Depends(require_superadmin)])
@@ -65,7 +65,7 @@ def admin_rollback_lifecycle_state(
     ds.lifecycle_state = target_state
     db.commit()
 
-    return response_2000(data={
+    return response_200(data={
         "dataset_id": dataset_id,
         "previous_state": old_state,
         "current_state": target_state,

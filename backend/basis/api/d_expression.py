@@ -7,7 +7,7 @@ from db.database import get_db
 from apps.datasets.models import AssetFile
 from basis.core.expression_utils import process_rnaseq_file, extract_expression_matrix, load_gene_sample_names
 from basis.schemas.expression import ExpressionProcessRequest, ExpressionQueryRequest, ExpressionResult
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 from sqlalchemy import desc
 import h5py
 
@@ -56,7 +56,7 @@ async def process_expression_file(req: ExpressionProcessRequest, db=Depends(get_
         rnaseq_file_obj.local_path = output_h5_file
         db.flush()
 
-        return response_2000(
+        return response_200(
             code=2000,
             msg="File processed successfully",
             data={
@@ -79,7 +79,7 @@ async def list_genes(file_path: str = "", max_records: int = 100):
         # Limit the number of returned genes based on max_records
         total_count = len(genes)
         genes = genes[:max_records]
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Genes listed successfully",
             data={
@@ -99,7 +99,7 @@ async def list_samples(file_path: str = "", max_records: int = 1000):
         _, samples = load_gene_sample_names(file_path)
         # Limit the number of returned samples based on max_records
         samples = samples[:max_records]
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Samples listed successfully",
             data={
@@ -166,7 +166,7 @@ async def get_expression_file_path(
                     detail="No expression file paths found in meta group"
                 )
 
-        return response_2000(
+        return response_200(
             code=2000,
             msg="File paths retrieved successfully",
             data={
@@ -228,7 +228,7 @@ async def list_types(file_path: str = ""):
                     detail="No matrix groups found in HDF5 file"
                 )
 
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Matrix types retrieved successfully",
             data={
@@ -263,7 +263,7 @@ async def query_expression(req: ExpressionQueryRequest):
             filename = os.path.basename(download_path)
             download_url = f"/download/{filename}"
         
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Expression data queried successfully",
             data={

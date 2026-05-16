@@ -18,7 +18,7 @@ from apps.services.rbd import menu_service
 from db.database import get_db
 from libs.dataes import get_menu_tree
 from libs.exceptions.exception import exceptions
-from libs.responses.response import response_2000, response_200
+from libs.responses.response import response_200, response_200
 from ..rbac.crud import menu_db, menu_permission_db, permission_db
 from ..rbac.models import Menu
 from ..rbac.schemas import PageList, MenuCreate, MenuUpdate, MenuDelete, MenuInfo
@@ -29,19 +29,19 @@ menu_router = APIRouter()
 @menu_router.post("/field", summary="菜单字段")
 async def user_list():
     data = Menu.get_field()
-    return response_2000(data=data)
+    return response_200(data=data)
 
 
 @menu_router.post("/list",dependencies=[Depends(check_permission(["sys:menu:list"]))], summary="菜单列表==sys:menu:list")
 async def menu_list(request_data: PageList, db=Depends(get_db), _user=Depends(get_active_user)):
     menu_obj = menu_db.get_list(db=db, page=request_data.page, size=request_data.size)
-    return response_2000(data=jsonable_encoder(menu_obj))
+    return response_200(data=jsonable_encoder(menu_obj))
 
 
 @menu_router.post("/option",dependencies=[Depends(check_permission(["sys:menu:list"]))],  summary="菜单列表==sys:menu:list")
 async def menu_list(db=Depends(get_db), _user=Depends(get_active_user)):
     menu_obj = menu_db.get_list(db=db, page=0)
-    return response_2000(data=jsonable_encoder(menu_obj['dataList']))
+    return response_200(data=jsonable_encoder(menu_obj['dataList']))
 
 
 @menu_router.post("/info",dependencies=[Depends(check_permission(["sys:menu:info"]))],  summary="菜单列表==sys:menu:info")
@@ -69,7 +69,7 @@ async def menu_tree(db=Depends(get_db), _user=Depends(get_active_user)):
                 permission_list.append(p_obj)
         i.permission_list = permission_list
     data = get_menu_tree(jsonable_encoder(menu_obj['dataList']))
-    return response_2000(data=data)
+    return response_200(data=data)
 
 
 @menu_router.post("/permission", summary="授权选择==sys:menu:tree")
@@ -83,13 +83,13 @@ async def menu_tree(db=Depends(get_db), _user=Depends(get_active_user)):
         else:
             i.meta = {'title': i.title, 'icon': i.icon, 'hideInMenu': is_hide}
     data = get_menu_tree(jsonable_encoder(menu_obj['dataList']))
-    return response_2000(data=data)
+    return response_200(data=data)
 
 
 @menu_router.post("/add",dependencies=[Depends(check_permission(["sys:menu:add"]))],  summary="菜单添加==sys:menu:add")
 async def menu_add(request_data: MenuCreate, db=Depends(get_db), _user=Depends(get_active_user)):
     if menu_db.get_filter(db=db, filters={'name': request_data.name}):
-        return response_2000(msg=f"菜单名称{exceptions.CODE_4025['msg']}", code=exceptions.CODE_4025['code'])
+        return response_200(msg=f"菜单名称{exceptions.CODE_4025['msg']}", code=exceptions.CODE_4025['code'])
     if request_data.pid == 0:
         request_data.path = os.path.join('/', request_data.path)
     request_data.create_time = int(time.time())
@@ -116,11 +116,11 @@ async def menu_add(request_data: MenuUpdate, db=Depends(get_db)):
     menu_data = jsonable_encoder(menu_obj)
     menu_service.update_menu_permissions(db=db, menu_id=menu_obj.id, request_data=request_data)
     menu_db.update_one(db=db, db_obj=menu_data, obj_in=request_data)
-    return response_2000(data=jsonable_encoder(menu_obj))
+    return response_200(data=jsonable_encoder(menu_obj))
 
 
 @menu_router.post("/treeData",dependencies=[Depends(check_permission(["sys:menu:treeData"]))],  include_in_schema=False, summary="菜单树结构==sys:menu:tree")
 async def tree_list(db=Depends(get_db), _user=Depends(get_active_user)):
     menu_obj = menu_db.get_list(db=db, page=0, size=0)
     data = get_menu_tree(jsonable_encoder(menu_obj['dataList']))
-    return response_2000(data=data)
+    return response_200(data=data)

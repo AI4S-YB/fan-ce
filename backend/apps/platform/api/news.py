@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends
 
 from apps.common.depends import get_active_user, check_permission
 from db.database import get_db
-from libs.responses.response import response_200, response_2000
+from libs.responses.response import response_200, response_200
 from ..crud import news_db
 from ..schemas import PageList, News, CreateModel, UpdateModel, DataDelete
 from sqlalchemy import and_, or_
@@ -96,7 +96,7 @@ def public_news_list(type: str = None, db=Depends(get_db)):
     # Filter out deleted and non-public in Python
     rows = [r for r in rows if r.is_public and not r.is_delete]
     rows = sorted(rows, key=lambda r: r.create_time or 0, reverse=True)
-    return response_2000(data=[
+    return response_200(data=[
         {
             "id": r.id,
             "title": r.title,

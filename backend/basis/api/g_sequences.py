@@ -4,7 +4,7 @@ from basis.schemas.genomic_sequence import *
 from basis.core.path_utils import get_fasta_path, get_genome_base_dir
 from basis.core.samtools_utils import extract_sequence, extract_batch_sequences
 from basis.core.file_utils import compress_file_to_gzip, generate_download_url
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 import os
 import uuid
 
@@ -71,7 +71,7 @@ async def get_genome_sequence_example(request: GenomicSequenceExampleRequest ):
             genome_base_dir = get_genome_base_dir(request.genome_id)
             example_info = get_example_info(genome_base_dir, request.seq_type)
             
-        return response_2000(
+        return response_200(
             code=2000,
             msg="success",
             data={
@@ -116,7 +116,7 @@ async def get_single_sequence(request: GenomicSequenceRequest):
                 "end": request.end,
                 "download_url": generate_download_url(gzip_path)
             }
-            return response_2000(
+            return response_200(
                 code=2000,
                 msg="success",
                 data=response_data)
@@ -131,7 +131,7 @@ async def get_single_sequence(request: GenomicSequenceRequest):
                 "start": request.start,
                 "end": request.end
             }
-            return response_2000(
+            return response_200(
                 code=2000,
                 msg="success",
                 data=response_data)

@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends
 
 from apps.common.depends import get_active_user
 from db.database import get_db
-from libs.responses.response import response_200,response_2000
+from libs.responses.response import response_200,response_200
 from ..crud import gene_set_db, gene_set_link_db
 from ..schemas import PageList, DataInfo, DataDelete, GeneSetCrate, GeneSetUpdate, GeneSetCreate, GeneSetListByGenome, GeneSetDetail, GeneSetOptionsQuery
 from ..models import GeneSet, GeneSetLink
@@ -50,7 +50,7 @@ async def get_geneset_options(request_data: GeneSetOptionsQuery, db=Depends(get_
             project_id=project_id
         )
         
-        return response_2000(data=result)
+        return response_200(data=result)
         
     except Exception as e:
         # 如果新方法失败，回退到原有逻辑（向后兼容）
@@ -66,7 +66,7 @@ async def get_geneset_options(request_data: GeneSetOptionsQuery, db=Depends(get_
                 new_data.append({'id': i.name, 'name': i.name})
             # 所有数据都添加到list中，用于获取关联的样本ID
             list_data.append({'gene_id': i.gene_id, 'name': i.name})
-        return response_2000(data={'list': list_data, 'options': new_data})
+        return response_200(data={'list': list_data, 'options': new_data})
 
 
 @gene_set_router.post("/genome/list", summary="按基因组文件路径获取基因集列表（一级表格）==app:gene:genome_list")

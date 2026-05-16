@@ -3,7 +3,7 @@ from fastapi.encoders import jsonable_encoder
 
 from apps.common.depends import check_permission, get_active_user
 from db.database import get_db
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 
 from ..schemas import (
     DatasetScanBrowseRequest,
@@ -31,7 +31,7 @@ async def dataset_scan_root_list(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.list_scan_roots(db=db, request_data=request_data)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_staging_router.post("/scan-root/info", dependencies=[Depends(check_permission(["app:database:info"]))], summary="扫描目录详情")
@@ -41,7 +41,7 @@ async def dataset_scan_root_info(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.get_scan_root(db=db, root_id=request_data.id)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_staging_router.post("/scan-root/create", dependencies=[Depends(check_permission(["app:database:add"]))], summary="创建扫描目录")
@@ -51,7 +51,7 @@ async def dataset_scan_root_create(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.create_scan_root(db=db, request_data=request_data, user=_user)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_staging_router.post("/scan-root/update", dependencies=[Depends(check_permission(["app:database:update"]))], summary="更新扫描目录")
@@ -66,7 +66,7 @@ async def dataset_scan_root_update(
         request_data=request_data,
         user=_user,
     )
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_staging_router.post("/scan-root/delete", dependencies=[Depends(check_permission(["app:database:delete"]))], summary="删除扫描目录")
@@ -76,7 +76,7 @@ async def dataset_scan_root_delete(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.delete_scan_root(db=db, root_id=request_data.id, user=_user)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_staging_router.post("/scan-root/browse", dependencies=[Depends(check_permission(["app:database:info"]))], summary="浏览服务器目录供扫描目录选择")
@@ -90,7 +90,7 @@ async def dataset_scan_root_browse(
         request_data=request_data,
         user=_user,
     )
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_staging_router.post("/scan-job/list", dependencies=[Depends(check_permission(["app:database:info"]))], summary="扫描任务列表")
@@ -100,7 +100,7 @@ async def dataset_scan_job_list(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.list_scan_jobs(db=db, request_data=request_data)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_staging_router.post("/scan/run", dependencies=[Depends(check_permission(["app:database:add"]))], summary="执行目录扫描写入暂存区")
@@ -110,7 +110,7 @@ async def dataset_scan_run(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.run_scan_root(db=db, root_id=request_data.root_id, user=_user)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_staging_router.post("/upload", dependencies=[Depends(check_permission(["app:database:add"]))], summary="上传文件到 dataset 暂存区")
@@ -128,7 +128,7 @@ async def dataset_staging_upload(
         dataset_type=dataset_type,
         meta_json=meta_json,
     )
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_staging_router.post("/list", dependencies=[Depends(check_permission(["app:database:info"]))], summary="dataset 暂存文件列表")
@@ -138,7 +138,7 @@ async def dataset_staging_list(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.list_staging_files(db=db, request_data=request_data)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_staging_router.post("/info", dependencies=[Depends(check_permission(["app:database:info"]))], summary="dataset 暂存文件详情")
@@ -148,7 +148,7 @@ async def dataset_staging_info(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.get_staging_file(db=db, staging_id=request_data.id)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_staging_router.post("/register", dependencies=[Depends(check_permission(["app:database:add"]))], summary="从暂存文件注册 dataset")
@@ -163,7 +163,7 @@ async def dataset_staging_register(
         request_data=request_data,
         user=_user,
     )
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_staging_router.post("/delete", dependencies=[Depends(check_permission(["app:database:delete"]))], summary="删除 dataset 暂存文件")
@@ -173,4 +173,4 @@ async def dataset_staging_delete(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.delete_staging_file(db=db, staging_id=request_data.id, user=_user)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))

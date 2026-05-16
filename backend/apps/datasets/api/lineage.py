@@ -3,7 +3,7 @@ from fastapi.encoders import jsonable_encoder
 
 from apps.common.depends import check_permission, get_active_user
 from db.database import get_db
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 
 from ..schemas import DatasetLineageCreateRequest, DatasetLineageDeleteRequest, DatasetLineageListRequest
 from ..services import dataset_domain_service
@@ -24,7 +24,7 @@ async def dataset_lineage_list(
         limit=request_data.limit or 50,
         user=_user,
     )
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_lineage_router.post("/create", dependencies=[Depends(check_permission(["app:database:update"]))], summary="创建数据集血缘")
@@ -34,7 +34,7 @@ async def dataset_lineage_create(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.create_dataset_lineage(db=db, request_data=request_data, user=_user)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_lineage_router.post("/delete", dependencies=[Depends(check_permission(["app:database:update"]))], summary="删除数据集血缘")
@@ -44,4 +44,4 @@ async def dataset_lineage_delete(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.delete_dataset_lineage(db=db, lineage_id=request_data.id, user=_user)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))

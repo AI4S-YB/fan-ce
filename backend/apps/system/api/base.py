@@ -10,12 +10,12 @@ import os
 from fastapi import APIRouter, Depends, Request
 from starlette.responses import FileResponse
 from fastapi import APIRouter, Depends, UploadFile, File, Query
-from libs.responses.response import response_2000, response_200
+from libs.responses.response import response_200, response_200
 from starlette.background import BackgroundTask
 from fastapi.encoders import jsonable_encoder
-from core.security import check_token
+from apps.common.security import check_token
 from db.database import get_db
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 
 base_router = APIRouter()
 
@@ -78,7 +78,7 @@ async def get_pdf(request: Request):
     #     return FileResponse(file_path, media_type='application/msword', headers=headers)
     # else:
     #     return FileResponse(file_path, media_type='application/msword', filename="3.docx")
-    return response_2000(data={})
+    return response_200(data={})
 
 @base_router.post("/file/")
 async def get_pdf():
@@ -125,4 +125,4 @@ async def get_pdf():
 @base_router.get("/version", summary='版本')
 async def version_get(db=Depends(get_db)):
     """版本显示"""
-    return response_2000(data="versions")
+    return response_200(data="versions")

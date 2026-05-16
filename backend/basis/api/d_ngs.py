@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from basis.schemas.ngs import NGSFileFilterRequest, NGSFileListResponse
 from basis.core.file_utils import list_ngs_files
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 
 
 # 创建 APIRouter 实例
@@ -47,7 +47,7 @@ async def filter_ngs_files(req: NGSFileFilterRequest):
             files=[file.dict() for file in page_files]  # Convert each file object to dictionary
         )
         
-        return response_2000(
+        return response_200(
             code=2000,
             msg="NGS files listed successfully",
             data=result.dict()  # Convert NGSFileListResponse to dictionary

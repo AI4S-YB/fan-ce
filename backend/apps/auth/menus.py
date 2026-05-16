@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from apps.common.depends import get_db, get_active_user,get_rbd_user
 from apps.system.rbac.crud import menu_db
 from libs.dataes import get_menu_tree
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 from .schemas import TreeData,TeamUserInfo
 from apps.services.rbd import rbd_service,menu_service
 
@@ -89,11 +89,11 @@ async def auth_menus(request_data: TreeData,db=Depends(get_db), _user=Depends(ge
         else:
             i.meta = meta
     data = get_menu_tree(jsonable_encoder(filtered_menu_list))
-    return response_2000(data=data)
+    return response_200(data=data)
 
 
 @menu_router.post("/auth/user/info", summary="用户认证信息")
 async def login_get_user(request_data: TeamUserInfo | None = None, db: Session = Depends(get_db), user=Depends(get_rbd_user)) -> Any:
     request_data = request_data or TeamUserInfo()
     user_info = rbd_service.get_user_role_info(db=db,user=user,team_id=request_data.team_id)
-    return response_2000(data=user_info)
+    return response_200(data=user_info)

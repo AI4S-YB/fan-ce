@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from basis.schemas.feature import *
 from basis.core.feature_utils import process_tabix_file
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 import gzip
 
 
@@ -51,7 +51,7 @@ async def process_feature_file(file_path: str = None, file_type: str = "other"):
 
         # update database
 
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Feature file processed successfully",
             data={
@@ -109,7 +109,7 @@ async def get_file_fields(file_path: str = None, file_type: str = "other"):
             # Generate numbered fields based on column position
             fields = [f"[{i}]{value}" for i, value in enumerate(fields)]
         
-        return response_2000(
+        return response_200(
             code=2000,
             msg="File fields retrieved successfully",
             data={
@@ -178,7 +178,7 @@ async def get_features(request: FeatureRequest):
             fields = line.split('\t')
             features.append(fields)
                 
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Features retrieved successfully",
             data={

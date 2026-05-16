@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException
 
 from basis.core.variant_utils import process_variant_file as process_vcf_file, check_vcf_file, extract_variants, get_gene_region
 from basis.schemas.variant import *
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 import subprocess
 
 # 创建 APIRouter 实例
@@ -36,7 +36,7 @@ async def process_variant_file_endpoint(request: VariantProcessRequest):
             1. get file id according file_path from database
             2. update file_path to processed_vcf_path in database
         '''
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Variant file processed successfully",
             data={
@@ -97,7 +97,7 @@ async def get_region_example(request: VariantPathRequest):
             "example_regions": [region1, region2]
         }
         
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Region example data retrieved successfully",
             data=example_data
@@ -135,7 +135,7 @@ async def list_samples(request: VariantPathRequest):
         # Split the output into a list of sample names
         samples = result.stdout.strip().split('\n')
         
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Samples retrieved successfully",
             data={
@@ -225,7 +225,7 @@ async def get_variants(request: VariantRequest):
             "download_url": f"{DOWNLOAD_BASE_URL}/{file_id}"
         }
         
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Variants extracted successfully",
             data=response)

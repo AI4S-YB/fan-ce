@@ -19,13 +19,6 @@ def response_200(code: int = 2000, data: Union[Type[SchemasType], List[Type[Sche
     return {'code': code, 'data': data, 'msg': msg}
 
 
-def response_2000(code: int = 2000, data: Any = None, msg: str = "Success"):
-    return ORJSONResponse(
-        status_code=status.HTTP_200_OK,
-        content={'code': code, 'msg': msg, 'data': data}
-    )
-
-
 def response_400(code: int = 4000, data: str = None, msg: str = "BAD REQUEST") -> Response:
     return ORJSONResponse(
         status_code=status.HTTP_200_OK,

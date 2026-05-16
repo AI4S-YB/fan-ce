@@ -9,4 +9,4 @@
 from .result import *
 from .response import *
 
-__all__ = ['response_200', 'response_2000', 'ResultModel', 'ResultPlusModel']
+__all__ = ['response_200', 'ResultModel', 'ResultPlusModel']

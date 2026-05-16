@@ -13,7 +13,7 @@ from fastapi.encoders import jsonable_encoder
 
 from apps.common.depends import get_active_user,check_permission
 from db.database import get_db
-from libs.responses.response import response_200, response_2000
+from libs.responses.response import response_200, response_200
 from ..rbac.crud import role_db, role_menu_db
 from ..rbac.schemas import RoleUpdate, RoleCreate, RoleMenuUpdate
 from ..schemas import PageList, DataInfo, DataDelete
@@ -39,7 +39,7 @@ async def role_list(request_data: PageList, db=Depends(get_db), _user=Depends(ge
     obj = role_db.get_list(db=db, page=0, size=request_data.size)
     for i in obj['dataList']:
         new_data.append({'value': i.id, 'label': i.name})
-    return response_2000(data=new_data)
+    return response_200(data=new_data)
 
 
 @role_router.post("/add",dependencies=[Depends(check_permission(["sys:role:add"]))], summary="角色添加")
@@ -49,7 +49,7 @@ async def role_add(request_data: RoleCreate, db=Depends(get_db)):
     request_data.is_delete = 0
     obj = role_db.create_one(db=db, obj_in=request_data)
     rbd_service.create_role_menus(db=db,role=obj,request_data=request_data)
-    return response_2000(data=jsonable_encoder(obj))
+    return response_200(data=jsonable_encoder(obj))
 
 
 @role_router.post("/delete",dependencies=[Depends(check_permission(["sys:role:delete"]))], summary="角色删除")

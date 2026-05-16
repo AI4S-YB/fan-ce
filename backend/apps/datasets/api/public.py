@@ -4,7 +4,7 @@ from fastapi.responses import FileResponse
 import os
 
 from db.database import get_db
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 
 from ..dataset_model import Dataset
 from ..models import AssetFile, DatasetAsset, DatasetRegistry, DatasetVersion
@@ -27,13 +27,13 @@ public_dataset_router = APIRouter(tags=["public:dataset:公开数据集"])
 @public_dataset_router.post("/list", summary="公开数据集列表")
 async def public_dataset_list(request_data: PublicDatasetListRequest):
     data = dataset_domain_service.list_public_datasets(request_data=request_data)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @public_dataset_router.post("/info", summary="公开数据集详情")
 async def public_dataset_info(request_data: PublicDatasetInfoRequest):
     data = dataset_domain_service.get_public_dataset(dataset_id=request_data.id)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @public_dataset_router.post("/version/list", summary="公开数据集版本列表")
@@ -45,13 +45,13 @@ async def public_dataset_version_list(request_data: PublicDatasetVersionListRequ
         is_current=request_data.is_current,
         release_state=request_data.release_state,
     )
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @public_dataset_router.post("/version/info", summary="公开数据集指定版本详情")
 async def public_dataset_version_info(request_data: PublicDatasetVersionInfoRequest):
     data = dataset_domain_service.get_public_dataset_version(dataset_id=request_data.id, version_id=request_data.version_id)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @public_dataset_router.post("/query/capabilities", summary="查看公开数据集查询能力")
@@ -60,7 +60,7 @@ async def public_dataset_query_capabilities(request_data: PublicDatasetQueryCapa
         dataset_id=request_data.id,
         asset_code=request_data.asset_code,
     )
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @public_dataset_router.post("/query/execute", summary="执行公开数据集查询")
@@ -71,7 +71,7 @@ async def public_dataset_query_execute(request_data: PublicDatasetQueryRequest):
         asset_code=request_data.asset_code,
         params=request_data.params or {},
     )
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @public_dataset_router.post("/version/query/capabilities", summary="查看公开数据集指定版本查询能力")
@@ -81,7 +81,7 @@ async def public_dataset_version_query_capabilities(request_data: PublicDatasetV
         version_id=request_data.version_id,
         asset_code=request_data.asset_code,
     )
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @public_dataset_router.post("/version/query/execute", summary="执行公开数据集指定版本查询")
@@ -93,14 +93,14 @@ async def public_dataset_version_query_execute(request_data: PublicDatasetVersio
         asset_code=request_data.asset_code,
         params=request_data.params or {},
     )
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @public_dataset_router.post("/sequence/batch", summary="批量提取序列")
 def public_sequence_batch(request_data: BatchSequenceRequest):
     """Batch sequence retrieval supporting coordinate (genome) and gene-ID modes."""
     data = dataset_domain_service.batch_sequence_retrieval(request_data=request_data)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @public_dataset_router.get("/sequence/download", summary="下载批量提取的序列")
@@ -131,7 +131,7 @@ def public_dataset_lineage(
 
     svc = dataset_domain_service
     edges = svc._list_public_lineage(db=db, dataset_id=ds.database_id)
-    return response_2000(data=jsonable_encoder(
+    return response_200(data=jsonable_encoder(
         {"dataset_id": ds.database_id, "dataset_code": ds.dataset_code, "lineage_edges": edges}
     ))
 
@@ -150,7 +150,7 @@ def public_dataset_downloads(
         database_id=ds.database_id, is_current=1,
     ).first()
     if not version:
-        return response_2000(data=jsonable_encoder({"dataset_code": dataset_code, "files": []}))
+        return response_200(data=jsonable_encoder({"dataset_code": dataset_code, "files": []}))
 
     # Get assets for this version
     assets = db.query(DatasetAsset).filter_by(
@@ -163,7 +163,7 @@ def public_dataset_downloads(
         AssetFile.is_downloadable == True,
     ).all()
 
-    return response_2000(data=jsonable_encoder({
+    return response_200(data=jsonable_encoder({
         "dataset_code": dataset_code,
         "files": [
             {

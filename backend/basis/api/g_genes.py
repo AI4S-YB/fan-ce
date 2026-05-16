@@ -4,7 +4,7 @@ from basis.schemas.gene_model import *
 from basis.core.gene_utils import extract_genomic_sequences
 from basis.core.sqlite_utils import query_sqlite
 from basis.core.path_utils import get_genome_db_path, get_genome_base_dir
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 
 # 创建 APIRouter 实例
 g_gene_router = APIRouter(
@@ -127,7 +127,7 @@ async def search_genes(request: GeneSearchRequest):
             # 多字段查询
             msg = f"Found {total_genes} genes matching query criteria" if results else "No genes found matching the specified criteria"
 
-        return response_2000(
+        return response_200(
             code=2000,
             msg=msg,
             data={
@@ -191,7 +191,7 @@ async def get_gene_list(request: GeneListRequest):
         params = (page_size, offset)
         results = query_sqlite(db_path, query, params)
 
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Data found" if results else "No genes found",
             data={
@@ -250,7 +250,7 @@ async def get_transcript_list(request: GeneListRequest):
         params = (page_size, offset)
         results = query_sqlite(db_path, query, params)
 
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Data found" if results else "No transcripts found",
             data={
@@ -312,7 +312,7 @@ async def get_gene(request: GeneInfoRequest):
         sequences = extract_genomic_sequences(genome_path, transcript_id, gene_data['chrom'], gene_data['start'], gene_data['stop'])
 
         # Prepare response
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Data found",
             data={
@@ -362,7 +362,7 @@ async def get_transcript(request: TranscriptInfoRequest):
         sequences = extract_genomic_sequences(genome_path, transcript_id)
 
         # Prepare response
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Data found",
             data={

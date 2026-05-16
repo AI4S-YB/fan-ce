@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends
 
 from apps.common.depends import get_active_user, check_permission
 from db.database import get_db
-from libs.responses.response import response_200, response_2000
+from libs.responses.response import response_200, response_200
 from ..crud import sample_db, sample_meta_db
 from ..schemas import PageList, SampleCreateModel, SampleUpdateModel, DataInfo, DataDelete, SampleMetaJsonRequest, ProjectIdRequest
 from sqlalchemy import and_, or_
@@ -47,7 +47,7 @@ async def databases_list(request_data: PageList, db=Depends(get_db), _user=Depen
     db_obj = sample_db.get_list(db=db, page=0, filters=filters)
     for i in db_obj['dataList']:
         new_data.append({'id': i.id, 'name': i.sample_name})
-    return response_2000(data=new_data)
+    return response_200(data=new_data)
 
 
 @sample_router.post("/add", dependencies=[Depends(check_permission(["app:sample:add"]))], summary="样本添加==app:sample:add")
@@ -148,7 +148,7 @@ async def get_sample_ids_by_project_id(request_data: ProjectIdRequest, db=Depend
     """
     try:
         if not request_data.project_id:
-            return response_2000(data={'sample_ids': []}, message="project_id参数不能为空")
+            return response_200(data={'sample_ids': []}, message="project_id参数不能为空")
         
         # 处理单个或多个项目ID
         project_ids = request_data.project_id if isinstance(request_data.project_id, list) else [request_data.project_id]
@@ -161,6 +161,6 @@ async def get_sample_ids_by_project_id(request_data: ProjectIdRequest, db=Depend
         
         # 去重并排序
         unique_sample_ids = sorted(list(set(all_sample_ids)))
-        return response_2000(data={'sample_ids': unique_sample_ids})
+        return response_200(data={'sample_ids': unique_sample_ids})
     except Exception as e:
-        return response_2000(data={'sample_ids': []}, message=f"查询失败: {str(e)}")
+        return response_200(data={'sample_ids': []}, message=f"查询失败: {str(e)}")

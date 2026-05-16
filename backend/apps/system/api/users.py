@@ -20,7 +20,7 @@ from apps.auth.schemas import (
 )
 from db.database import get_db
 from libs.exceptions.exception import exceptions
-from libs.responses.response import response_2000, response_200
+from libs.responses.response import response_200, response_200
 from libs.responses.result import ResultModel, ResultPlusModel
 from ..user.crud import users_db
 from ..user.models import User
@@ -33,7 +33,7 @@ user_router = APIRouter()
 @user_router.get("/field", summary="用户字段")
 async def user_list():
     data = User.get_field()
-    return response_2000(data=data)
+    return response_200(data=data)
 
 
 @user_router.post("/list", dependencies=[Depends(check_permission(["sys:user:list"]))], response_model=ResultPlusModel[List[UserOut]],
@@ -55,17 +55,17 @@ async def user_list(request_data: UserList, db=Depends(get_db), _user=Depends(ge
     new_data = []
     for user in user_data['dataList']:
         new_data.append({'label': user.user_name, 'value': user.id})
-    return response_2000(data=new_data)
+    return response_200(data=new_data)
 
 
 @user_router.post("/add", dependencies=[Depends(check_permission(["sys:user:add"]))], summary="用户添加")
 async def user_add(request_data: UserCreate, db=Depends(get_db)):
     if users_db.get_user_by_username(db=db, user_name=request_data.user_name):
-        return response_2000(data={}, msg=f"{request_data.user_name}{exceptions.CODE_4009['msg']}", code=exceptions.CODE_4009['code'])
+        return response_200(data={}, msg=f"{request_data.user_name}{exceptions.CODE_4009['msg']}", code=exceptions.CODE_4009['code'])
     user_data = users_db.create(db=db, user_data=request_data)
     #
     user_service.add_user_role(db=db, user_id=user_data.id, request_data=request_data)
-    return response_2000(data=jsonable_encoder(user_data))
+    return response_200(data=jsonable_encoder(user_data))
 
 
 @user_router.post("/delete", dependencies=[Depends(check_permission(["sys:user:delete"]))], summary="用户删除")
@@ -142,11 +142,11 @@ async def get_user_auth_key(
         # 获取用户
         user = users_db.get_one(db=db, id=user_id)
         if not user:
-            return response_2000(code=404, msg="用户不存在")
+            return response_200(code=404, msg="用户不存在")
         
         # 检查用户是否有密钥
         if not user.auth_key:
-            return response_2000(code=404, msg="用户尚未配置认证密钥", data={
+            return response_200(code=404, msg="用户尚未配置认证密钥", data={
                 "has_key": False,
                 "user_id": user_id
             })
@@ -165,7 +165,7 @@ async def get_user_auth_key(
         return response_200(data=auth_key_info)
         
     except Exception as e:
-        return response_2000(code=500, msg=f"获取认证密钥信息失败: {str(e)}")
+        return response_200(code=500, msg=f"获取认证密钥信息失败: {str(e)}")
 
 
 @user_router.post("/{user_id}/auth-key", 
@@ -190,7 +190,7 @@ async def generate_user_auth_key(
             }
             
             error_msg = error_messages.get(result['error'], f"生成失败: {result['error']}")
-            return response_2000(code=400, msg=error_msg)
+            return response_200(code=400, msg=error_msg)
         
         # 获取用户团队ID用于响应
         user = users_db.get_one(db=db, id=user_id)
@@ -206,7 +206,7 @@ async def generate_user_auth_key(
         return response_200(data=response_data, msg="认证密钥生成成功")
         
     except Exception as e:
-        return response_2000(code=500, msg=f"生成认证密钥失败: {str(e)}")
+        return response_200(code=500, msg=f"生成认证密钥失败: {str(e)}")
 
 
 @user_router.post("/{user_id}/auth-key/regenerate", 
@@ -229,7 +229,7 @@ async def regenerate_user_auth_key(
             }
             
             error_msg = error_messages.get(result['error'], f"重新生成失败: {result['error']}")
-            return response_2000(code=400, msg=error_msg)
+            return response_200(code=400, msg=error_msg)
         
         # 获取用户团队ID用于响应
         user = users_db.get_one(db=db, id=user_id)
@@ -245,7 +245,7 @@ async def regenerate_user_auth_key(
         return response_200(data=response_data, msg="认证密钥重新生成成功")
         
     except Exception as e:
-        return response_2000(code=500, msg=f"重新生成认证密钥失败: {str(e)}")
+        return response_200(code=500, msg=f"重新生成认证密钥失败: {str(e)}")
 
 
 @user_router.post("/{user_id}/auth-key/status", 
@@ -270,7 +270,7 @@ async def update_user_auth_key_status(
             }
             
             error_msg = error_messages.get(result['error'], f"状态更新失败: {result['error']}")
-            return response_2000(code=400, msg=error_msg)
+            return response_200(code=400, msg=error_msg)
         
         # 获取更新后的用户信息
         user = users_db.get_one(db=db, id=user_id)
@@ -284,7 +284,7 @@ async def update_user_auth_key_status(
         return response_200(data=response_data, msg=f"认证密钥已{request_data.status}")
         
     except Exception as e:
-        return response_2000(code=500, msg=f"更新认证密钥状态失败: {str(e)}")
+        return response_200(code=500, msg=f"更新认证密钥状态失败: {str(e)}")
 
 
 @user_router.delete("/{user_id}/auth-key", 
@@ -306,7 +306,7 @@ async def delete_user_auth_key(
             }
             
             error_msg = error_messages.get(result['error'], f"删除失败: {result['error']}")
-            return response_2000(code=400, msg=error_msg)
+            return response_200(code=400, msg=error_msg)
         
         response_data = AuthKeyDeleteResponse(
             deleted=True,
@@ -316,7 +316,7 @@ async def delete_user_auth_key(
         return response_200(data=response_data, msg="认证密钥删除成功")
         
     except Exception as e:
-        return response_2000(code=500, msg=f"删除认证密钥失败: {str(e)}")
+        return response_200(code=500, msg=f"删除认证密钥失败: {str(e)}")
 
 
 @user_router.post("/auth-keys/batch", 
@@ -373,4 +373,4 @@ async def batch_query_auth_keys(
         return response_200(data=response_data)
         
     except Exception as e:
-        return response_2000(code=500, msg=f"批量查询认证密钥失败: {str(e)}")
+        return response_200(code=500, msg=f"批量查询认证密钥失败: {str(e)}")

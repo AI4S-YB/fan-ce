@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Query, Depends
 from fastapi.responses import FileResponse
 from basis.core.grn_utils import GeneRegulatoryNetworkGraph, get_graph_path
 from datetime import datetime
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 from db.database import get_db
 
 
@@ -47,7 +47,7 @@ async def process_grn_file(file_path: str = Query(default="", description="Path 
         # print(graph_file_path)
         # graph.print_graph_info(detailed=True)
         
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Gene regulatory network file processed successfully",
             data={
@@ -97,7 +97,7 @@ async def list_gene_relationships(
         # Get relationships with optional search
         result = graph.get_nodes_with_relationships(page, page_size, keyword, exact_match)
                 
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Successfully retrieved gene relationships" + (f" for keyword '{keyword}'" if keyword else ""),
             data={
@@ -136,7 +136,7 @@ async def get_gene_detail(gene_id: str="AT1G01030.1", file_path: str = Query(def
         # Add id to node_info and return all key-value pairs directly
         node_info["id"] = gene_id
         
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Successfully retrieved gene details",
             data=node_info
@@ -187,7 +187,7 @@ async def get_gene_relationship(
         if relationship is None:
             raise HTTPException(status_code=500, detail="Failed to get regulatory relationship information")
             
-        return response_2000(
+        return response_200(
             code=2000,
             msg=f"Successfully found {relationship.get('total_paths_found', 0)} paths between genes",
             data=relationship
@@ -248,7 +248,7 @@ async def get_gene_relationships_batch(request: dict):
         if result is None:
             raise HTTPException(status_code=500, detail="Failed to get batch gene regulatory relationships")
             
-        return response_2000(
+        return response_200(
             code=2000,
             msg=f"Successfully retrieved regulatory relationships for {len(selected_nodes)} selected genes",
             data=result
@@ -288,7 +288,7 @@ async def get_grn_statistics(
         if not statistics:
             raise HTTPException(status_code=500, detail="Failed to get network statistics")
             
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Successfully retrieved gene regulatory network statistics",
             data=statistics

@@ -129,4 +129,4 @@ async def permission_list(request_data: PageList, db=Depends(get_db)):
 # @permission_router.post("/treeData", summary="权限列表==rbac:user:list")
 # async def permission_list(request_data: PageList, db=Depends(get_db), _user=Depends(get_active_user)):
 #     permission_obj = permission_db.get_list(db=db, page=request_data.page, size=request_data.size)
-#     return response_2000(data=jsonable_encoder(permission_obj))
+#     return response_200(data=jsonable_encoder(permission_obj))

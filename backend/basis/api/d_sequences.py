@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from basis.schemas.sequence import *
 from basis.core.samtools_utils import process_sequence, extract_sequence, extract_batch_sequences
 from basis.core.file_utils import compress_file_to_gzip, generate_download_url
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 
 
 MAX_INLINE_SIZE = 1_000_000  # 1MB limit size for front-end display, if > 1MB, return a download link
@@ -24,7 +24,7 @@ async def process_sequence_file(request: SequenceProcessRequest):
         # Process the sequence file using process_sequence function
         processed_path = process_sequence(request.file_path)
 
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Sequence file processed successfully",
             data={
@@ -50,7 +50,7 @@ async def get_single_sequence(request: SequenceRequest):
                 f.write(sequence_text)
             gzip_path = compress_file_to_gzip(temp_fasta)
 
-            return response_2000(
+            return response_200(
                 code=2000,
                 msg="Sequence fetched successfully, please download the sequence file through the download link",
                 data={
@@ -65,7 +65,7 @@ async def get_single_sequence(request: SequenceRequest):
             )
         else:
             # for sequence < 1MB, return the sequence directly
-            return response_2000(
+            return response_200(
                 code=2000,
                 msg="Sequence fetched successfully",
                 data={
@@ -134,7 +134,7 @@ async def get_batch_sequences(request: BatchSequenceRequest):
             gzip_path = compress_file_to_gzip(output_path)
             download_url = generate_download_url(gzip_path)
 
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Batch sequences fetched successfully",
             data={

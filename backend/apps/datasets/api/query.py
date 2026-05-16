@@ -3,7 +3,7 @@ from fastapi.encoders import jsonable_encoder
 
 from apps.common.depends import check_permission, get_active_user
 from db.database import get_db
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 
 from ..schemas import DatasetQueryCapabilitiesRequest, DatasetQueryRequest
 from ..services import dataset_domain_service
@@ -18,7 +18,7 @@ async def query_dataset_capabilities(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.get_query_capabilities(db=db, dataset_id=request_data.id, user=_user)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_query_router.post("/execute", dependencies=[Depends(check_permission(["app:database:info"]))], summary="执行受控数据集查询")
@@ -34,4 +34,4 @@ async def query_dataset_execute(
         params=request_data.params or {},
         user=_user,
     )
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))

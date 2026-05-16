@@ -22,7 +22,7 @@ from apps.services.rbd import rbd_service
 from apps.services.auth_key_service import auth_key_service
 from core.config import settings
 from libs.exceptions.exception import exceptions
-from libs.responses.response import response_200, response_2000
+from libs.responses.response import response_200
 from libs.responses.result import ResultModel
 from .schemas import UserGetToken, AuthKeyLoginRequest, AuthKeyLoginResponse, AuthKeyVerifyRequest, AuthKeyVerifyResponse, UserInfo
 
@@ -39,7 +39,7 @@ async def login_access_token(db: Session = Depends(get_db), form_data: OAuth2Pas
         raise HTTPException(status_code=exceptions.CODE_4003['code'], detail=exceptions.CODE_4003['msg'])
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     token = create_access_token(user.id, expires_delta=access_token_expires)
-    return {"access_token": token, "token_type": "Bearer"}
+    return response_200(data={"access_token": token, "token_type": "Bearer"})
 
 
 # 前端登录
@@ -193,7 +193,7 @@ async def verify_api_key(
         return response_200(data=response_data)
         
     except Exception as e:
-        return response_2000(
+        return response_200(
             code=500, 
             message=f"验证认证密钥失败: {str(e)}"
         )

@@ -3,7 +3,7 @@ from fastapi.encoders import jsonable_encoder
 
 from apps.common.depends import check_permission, get_active_user
 from db.database import get_db
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 
 from ..schemas import (
     DatasetVersionActivateRequest,
@@ -29,7 +29,7 @@ async def dataset_version_list(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.list_dataset_versions(db=db, dataset_id=request_data.dataset_id, user=_user)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_version_router.post("/info", dependencies=[Depends(check_permission(["app:database:info"]))], summary="数据集版本详情")
@@ -39,7 +39,7 @@ async def dataset_version_info(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.get_dataset_version(db=db, version_id=request_data.id, user=_user)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_version_router.post("/query/capabilities", dependencies=[Depends(check_permission(["app:database:info"]))], summary="查看指定版本查询能力")
@@ -54,7 +54,7 @@ async def dataset_version_query_capabilities(
         asset_code=request_data.asset_code,
         user=_user,
     )
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_version_router.post("/query/execute", dependencies=[Depends(check_permission(["app:database:info"]))], summary="执行指定版本查询")
@@ -71,7 +71,7 @@ async def dataset_version_query_execute(
         params=request_data.params or {},
         user=_user,
     )
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_version_router.post("/create", dependencies=[Depends(check_permission(["app:database:update"]))], summary="创建数据集草稿版本")
@@ -81,7 +81,7 @@ async def dataset_version_create(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.create_dataset_version(db=db, request_data=request_data, user=_user)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_version_router.post("/activate", dependencies=[Depends(check_permission(["app:database:update"]))], summary="切换当前数据集版本")
@@ -91,7 +91,7 @@ async def dataset_version_activate(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.activate_dataset_version(db=db, version_id=request_data.id, request_data=request_data, user=_user)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_version_router.post("/release", dependencies=[Depends(check_permission(["app:database:update"]))], summary="发布数据集版本")
@@ -101,7 +101,7 @@ async def dataset_version_release(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.release_dataset_version(db=db, version_id=request_data.id, request_data=request_data, user=_user)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_version_router.post("/withdraw", dependencies=[Depends(check_permission(["app:database:update"]))], summary="撤回数据集版本公开")
@@ -111,7 +111,7 @@ async def dataset_version_withdraw(
     _user=Depends(get_active_user),
 ):
     data = dataset_domain_service.withdraw_dataset_version(db=db, version_id=request_data.id, request_data=request_data, user=_user)
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_version_router.post("/set-default-public", dependencies=[Depends(check_permission(["app:database:update"]))], summary="设置默认公开版本")
@@ -126,7 +126,7 @@ async def dataset_version_set_default_public(
         request_data=request_data,
         user=_user,
     )
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))
 
 
 @dataset_version_router.post("/publish/records", dependencies=[Depends(check_permission(["app:database:info"]))], summary="数据集版本发布记录")
@@ -142,4 +142,4 @@ async def dataset_version_publish_records(
         limit=request_data.limit or 20,
         user=_user,
     )
-    return response_2000(data=jsonable_encoder(data))
+    return response_200(data=jsonable_encoder(data))

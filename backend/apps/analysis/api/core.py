@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from apps.common.depends import get_active_user
 
 from db.database import get_db
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 from apps.analysis.models import BrdAnalysisJob
 from apps.analysis.worker import get_tools, register_tool, _get_tool
 
@@ -50,7 +50,7 @@ class JobResponse(BaseModel):
 @analysis_router.get("/tools", summary="列出可用的分析工具")
 def list_tools():
     tools = get_tools()
-    return response_2000(data=[
+    return response_200(data=[
         {
             "tool_id": t.tool_id, "display_name": t.display_name,
             "description": t.description, "category": t.category,
@@ -88,7 +88,7 @@ def submit_job(req: SubmitJobRequest, db: Session = Depends(get_db)):
     db.add(job)
     db.commit()
     db.refresh(job)
-    return response_2000(data={"id": job.id, "status": job.status})
+    return response_200(data={"id": job.id, "status": job.status})
 
 
 @analysis_router.get("/jobs/{job_id}", summary="查询任务状态")
@@ -96,7 +96,7 @@ def get_job(job_id: int, db: Session = Depends(get_db)):
     job = db.query(BrdAnalysisJob).filter_by(id=job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    return response_2000(data={
+    return response_200(data={
         "id": job.id, "tool_id": job.tool_id, "status": job.status,
         "input_bindings": json.loads(job.input_bindings) if isinstance(job.input_bindings, str) else job.input_bindings,
         "param_overrides": json.loads(job.param_overrides) if isinstance(job.param_overrides, str) else job.param_overrides,
@@ -118,7 +118,7 @@ def list_jobs(page: int = 1, size: int = 20, status: str = None, db: Session = D
     total = query.count()
     jobs = query.order_by(BrdAnalysisJob.id.desc()) \
         .offset((page - 1) * size).limit(size).all()
-    return response_2000(data={
+    return response_200(data={
         "items": [
             {
                 "id": j.id, "tool_id": j.tool_id, "status": j.status,
@@ -138,7 +138,7 @@ def cancel_job(job_id: int, db: Session = Depends(get_db)):
     if job.status in ("pending", "running"):
         job.status = "cancelled"
         db.commit()
-    return response_2000(data={"id": job.id, "status": job.status})
+    return response_200(data={"id": job.id, "status": job.status})
 
 
 @analysis_router.post("/files/search", summary="搜索可用于分析的 asset_files")
@@ -159,7 +159,7 @@ def search_files(req: FileSearchRequest, db: Session = Depends(get_db)):
               "asset_type": at, "dataset_code": dc, "dataset_title": dt,
               "label": f"{dt or dc} / {af.file_name}"}
              for af, at, dc, dt in rows]
-    return response_2000(data={"items": items, "total": len(items)})
+    return response_200(data={"items": items, "total": len(items)})
 
 
 @analysis_router.post("/tools/go_enrich/example-genes", summary="从GAF文件中提取示例基因ID")
@@ -173,11 +173,11 @@ def go_enrich_example_genes(db: Session = Depends(get_db)):
         AssetFile.file_role == "go_annotation",
     ).first()
     if not af:
-        return response_2000(data={"gene_ids": [], "message": "No GAF file found"})
+        return response_200(data={"gene_ids": [], "message": "No GAF file found"})
 
     path = getattr(af, "local_path", None) or getattr(af, "storage_uri", None) or ""
     if not path or not os.path.exists(path):
-        return response_2000(data={"gene_ids": [], "message": f"File not found: {path}"})
+        return response_200(data={"gene_ids": [], "message": f"File not found: {path}"})
 
     gene_ids = set()
     try:
@@ -191,9 +191,9 @@ def go_enrich_example_genes(db: Session = Depends(get_db)):
                 if len(gene_ids) >= 300:
                     break
     except Exception as e:
-        return response_2000(data={"gene_ids": [], "message": str(e)})
+        return response_200(data={"gene_ids": [], "message": str(e)})
 
-    return response_2000(data={"gene_ids": list(gene_ids)})
+    return response_200(data={"gene_ids": list(gene_ids)})
 
 
 @analysis_router.post("/tools/kegg_enrich/example-genes", summary="从kegg_gene.txt中提取示例基因ID")
@@ -206,11 +206,11 @@ def kegg_enrich_example_genes(db: Session = Depends(get_db)):
         AssetFile.file_role == "kegg_pathway_annotation",
     ).first()
     if not af:
-        return response_2000(data={"gene_ids": [], "message": "No kegg_gene.txt file found"})
+        return response_200(data={"gene_ids": [], "message": "No kegg_gene.txt file found"})
 
     path = getattr(af, "local_path", None) or getattr(af, "storage_uri", None) or ""
     if not path or not os.path.exists(path):
-        return response_2000(data={"gene_ids": [], "message": f"File not found: {path}"})
+        return response_200(data={"gene_ids": [], "message": f"File not found: {path}"})
 
     gene_ids = set()
     try:
@@ -225,9 +225,9 @@ def kegg_enrich_example_genes(db: Session = Depends(get_db)):
                 if len(gene_ids) >= 300:
                     break
     except Exception as e:
-        return response_2000(data={"gene_ids": [], "message": str(e)})
+        return response_200(data={"gene_ids": [], "message": str(e)})
 
-    return response_2000(data={"gene_ids": list(gene_ids)})
+    return response_200(data={"gene_ids": list(gene_ids)})
 
 
 # ── Admin endpoints ──
@@ -236,7 +236,7 @@ def kegg_enrich_example_genes(db: Session = Depends(get_db)):
 def admin_list_tools(_user=Depends(get_active_user)):
     from apps.analysis.worker import get_all_tools
     tools = get_all_tools()
-    return response_2000(data=[
+    return response_200(data=[
         {
             "tool_id": t.tool_id, "display_name": t.display_name,
             "description": t.description, "category": t.category,
@@ -258,7 +258,7 @@ def admin_get_tool(tool_id: str, _user=Depends(get_active_user)):
     t = _get_tool(tool_id)
     if not t:
         raise HTTPException(status_code=404, detail="Tool not found")
-    return response_2000(data={
+    return response_200(data={
         "tool_id": t.tool_id, "display_name": t.display_name,
         "description": t.description, "category": t.category,
         "version": t.tool_version, "timeout_seconds": t.timeout_seconds,
@@ -288,7 +288,7 @@ async def admin_install_plugin(file: UploadFile = FastAPIFile(...), _user=Depend
     try:
         new_tools = install_whl(tmp_path)
         os.remove(tmp_path)
-        return response_2000(data={"installed": new_tools})
+        return response_200(data={"installed": new_tools})
     except Exception as e:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
@@ -305,7 +305,7 @@ def admin_scan_plugins(_user=Depends(get_active_user)):
     from apps.analysis.worker import scan_plugin_dir
     try:
         new_tools = scan_plugin_dir(plugin_dir)
-        return response_2000(data={"new_tools": new_tools})
+        return response_200(data={"new_tools": new_tools})
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -315,7 +315,7 @@ def admin_enable_tool(tool_id: str, _user=Depends(get_active_user)):
     from apps.analysis.worker import set_tool_status
     if not set_tool_status(tool_id, "active"):
         raise HTTPException(status_code=404, detail="Tool not found")
-    return response_2000(data={"tool_id": tool_id, "status": "active"})
+    return response_200(data={"tool_id": tool_id, "status": "active"})
 
 
 @analysis_router.post("/admin/tools/{tool_id}/disable", summary="禁用工具")
@@ -323,7 +323,7 @@ def admin_disable_tool(tool_id: str, _user=Depends(get_active_user)):
     from apps.analysis.worker import set_tool_status
     if not set_tool_status(tool_id, "disabled"):
         raise HTTPException(status_code=404, detail="Tool not found")
-    return response_2000(data={"tool_id": tool_id, "status": "disabled"})
+    return response_200(data={"tool_id": tool_id, "status": "disabled"})
 
 
 @analysis_router.post("/admin/tools/{tool_id}/uninstall", summary="卸载工具")
@@ -333,7 +333,7 @@ def admin_uninstall_tool(tool_id: str, _user=Depends(get_active_user)):
     if not tool:
         raise HTTPException(status_code=404, detail="Tool not found")
     unregister_tool(tool_id)
-    return response_2000(data={"tool_id": tool_id, "status": "uninstalled"})
+    return response_200(data={"tool_id": tool_id, "status": "uninstalled"})
 
 
 @analysis_router.post("/jobs/{job_id}/retry", summary="重试失败任务")
@@ -349,7 +349,7 @@ def retry_job(job_id: int, db: Session = Depends(get_db)):
     db.add(new_job)
     db.commit()
     db.refresh(new_job)
-    return response_2000(data={"id": new_job.id, "status": "pending"})
+    return response_200(data={"id": new_job.id, "status": "pending"})
 
 
 @analysis_router.get("/jobs/{job_id}/output/{file_name}", summary="下载输出文件")
@@ -386,7 +386,7 @@ def view_output(job_id: int, file_name: str, db: Session = Depends(get_db)):
                 # Detect FASTA format — treat as text, not table
                 if first_line.startswith(">") or first_line.startswith("("):
                     with open(path) as fh:
-                        return response_2000(data={"type": "text", "content": fh.read()[:500000]})
+                        return response_200(data={"type": "text", "content": fh.read()[:500000]})
                 rows = []
                 with open(path) as fh:
                     fh.seek(0)
@@ -396,11 +396,11 @@ def view_output(job_id: int, file_name: str, db: Session = Depends(get_db)):
                         for line in lines[1:]:
                             vals = line.split("\t")
                             rows.append({cols[i]: vals[i] if i < len(vals) else "" for i in range(len(cols))})
-                return response_2000(data={"type": "table", "columns": cols, "rows": rows})
+                return response_200(data={"type": "table", "columns": cols, "rows": rows})
             elif fmt in ("png", "jpg", "jpeg", "gif", "svg"):
-                return response_2000(data={"type": "image", "url": f"/api/v1/analysis/jobs/{job_id}/output/{file_name}"})
+                return response_200(data={"type": "image", "url": f"/api/v1/analysis/jobs/{job_id}/output/{file_name}"})
             else:
-                return response_2000(data={"type": "text", "content": open(path).read()[:5000]})
+                return response_200(data={"type": "text", "content": open(path).read()[:5000]})
     raise HTTPException(status_code=404, detail="Output not found")
 
 @analysis_router.post("/jobs/batch-delete", summary="批量删除任务")
@@ -414,7 +414,7 @@ def batch_delete_jobs(req: BatchDeleteRequest, db: Session = Depends(get_db)):
             db.delete(job)
             deleted += 1
     db.commit()
-    return response_2000(data={"deleted": deleted})
+    return response_200(data={"deleted": deleted})
 
 
 @analysis_router.get("/stats", summary="工具使用统计")
@@ -430,4 +430,4 @@ def analysis_stats(db: Session = Depends(get_db)):
         if j.status == "success": s["success"] += 1
         elif j.status in ("failed", "timeout"): s["failed"] += 1
     stats = list(tool_stats.values())
-    return response_2000(data={"stats": stats, "total_jobs": len(all_jobs)})
+    return response_200(data={"stats": stats, "total_jobs": len(all_jobs)})

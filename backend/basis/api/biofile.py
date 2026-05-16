@@ -6,7 +6,7 @@ import tempfile, shutil, os
 from basis.schemas.biofile import PathRequest, AnalyzeResponse, BatchAnalyzeResponse
 from basis.core.biofile.detector import detect_path
 from basis.core.biofile.analyze import analyze_file
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 
 biofile_router = APIRouter(prefix="/omics/biofile", tags=["omics:biofile"])
 
@@ -23,7 +23,7 @@ def analyze_local_file(request: PathRequest):
         标准响应格式包装的文件分析结果，包含检测信息和元数据
     """
     result = analyze_file(request.path)
-    return response_2000(data=AnalyzeResponse(**result).dict())
+    return response_200(data=AnalyzeResponse(**result).dict())
 
 @biofile_router.post("/analyze-local-directory")
 def analyze_local_directory(request: PathRequest):
@@ -64,7 +64,7 @@ def analyze_local_directory(request: PathRequest):
         directory_path=request.path
     )
     
-    return response_2000(data=batch_result.dict())
+    return response_200(data=batch_result.dict())
 
 def _persist_upload_to_temp(upload: UploadFile) -> str:
     """
@@ -135,7 +135,7 @@ def analyze_single_file(file: UploadFile = File(...),):
     tmp_path = _persist_upload_to_temp(file)
     try:
         result = analyze_file(tmp_path)
-        return response_2000(data=AnalyzeResponse(**result).dict())
+        return response_200(data=AnalyzeResponse(**result).dict())
     finally:
         try:
             os.remove(tmp_path)
@@ -175,7 +175,7 @@ def analyze_batch_file(files: List[UploadFile] = File(...),):
             directory_path="uploaded_files"  # 对于上传文件，使用固定标识
         )
         
-        return response_2000(data=batch_result.dict())
+        return response_200(data=batch_result.dict())
     finally:
         # 清理所有临时文件
         for tmp_path in tmps:

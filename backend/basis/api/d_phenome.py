@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 import os
 from basis.core.phenome_utils import process_phenome_file, get_sqlite_path, get_table_columns, get_first_column_data, get_phenome_data
-from libs.responses.response import response_2000
+from libs.responses.response import response_200
 from basis.schemas.traits import TraitsQueryModel
 
 
@@ -23,7 +23,7 @@ async def process_phenome_data_file(file_path: str = Query(default="", descripti
         # Process the file directly from the provided path
         process_phenome_file(file_path, sqlite_file)
         
-        return response_2000(
+        return response_200(
             code=2000,
             msg="File processed successfully",
             data={
@@ -47,7 +47,7 @@ async def get_traits_list(file_path: str = Query(default="", description="Path t
         # Get all column names from the SQLite table
         columns = get_table_columns(sqlite_file)
         
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Traits list retrieved successfully",
             data={
@@ -71,7 +71,7 @@ async def get_samples_list(file_path: str = Query(default="", description="Path 
         # Get sample IDs from the first column
         samples = get_first_column_data(sqlite_file)
         
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Samples list retrieved successfully",
             data={
@@ -94,7 +94,7 @@ async def query_phenome_data(query_params: TraitsQueryModel):
         # Get phenome data for specified traits and samples
         phenome_data, samples = get_phenome_data(sqlite_file, query_params.traits, query_params.samples)
         
-        return response_2000(
+        return response_200(
             code=2000,
             msg="Phenotype data retrieved successfully",
             data={
