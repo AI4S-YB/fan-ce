@@ -1,5 +1,0 @@
-FROM hyt/pythonv2:v3.10
-USER root
-ADD  ../../ /
-RUN ls -l /
-WORKDIR /
