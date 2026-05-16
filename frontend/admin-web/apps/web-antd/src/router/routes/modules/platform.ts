@@ -50,6 +50,23 @@ const routes: RouteRecordRaw[] = [
           auth: 'platform:news:list',
         },
       },
+      {
+        name: 'PlatformSites',
+        path: '/platform/sites',
+        component: () => import('#/views/platform/sites.vue'),
+        meta: {
+          icon: 'lucide:globe',
+          title: '站点管理',
+        },
+      },
+      {
+        name: 'PlatformSiteDatasets',
+        path: '/platform/sites/:siteCode/datasets',
+        component: () => import('#/views/platform/site-datasets.vue'),
+        meta: {
+          title: '数据集分配',
+        },
+      },
     ],
   },
 ];
