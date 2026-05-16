@@ -39,13 +39,14 @@ class Settings(BaseSettings):
     )
     # token
 
-    SECRET_KEY: str = os.environ.get("FANCE_SECRET_KEY", "dev-secret-change-in-production")
+    SECRET_KEY: str = os.environ.get("FANCE_SECRET_KEY", "")
+
     # 过期时间: 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     TOKEN_TYPE: str = 'Bearer'
     # cookie
     COOKIE_KEY: str = "sessionId"
-    MD5_SALT: str = os.environ.get("FANCE_MD5_SALT", "dev-salt-change-in-production")
+    MD5_SALT: str = os.environ.get("FANCE_MD5_SALT", "")
     COOKIE_MAX_AGE: int = 24 * 60 * 60
     # logs日志
     LOGGER_DIR: str = "logs"

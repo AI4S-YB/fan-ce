@@ -180,7 +180,12 @@ def _ensure_dataset_schema_column_types():
                 continue
             if "BIGINT" in str(column["type"]).upper():
                 continue
-            conn.execute(text(f"ALTER TABLE {table_name} ALTER COLUMN {column_name} TYPE BIGINT"))
+            # Validate identifiers before DDL (PostgreSQL does not parameterize DDL)
+            if not table_name.replace("_", "").isalnum():
+                raise ValueError(f"Unsafe table name: {table_name}")
+            if not column_name.replace("_", "").isalnum():
+                raise ValueError(f"Unsafe column name: {column_name}")
+            conn.execute(text(f"ALTER TABLE \"{table_name}\" ALTER COLUMN \"{column_name}\" TYPE BIGINT"))
         conn.execute(
             text(
                 """

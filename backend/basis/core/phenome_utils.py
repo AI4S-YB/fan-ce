@@ -180,8 +180,11 @@ def get_first_column_data(sqlite_file: str) -> List[str]:
         cursor.execute("PRAGMA table_info(phenotype)")
         first_col = cursor.fetchone()[1]
         
-        # Get data from first column
-        cursor.execute(f"SELECT {first_col} FROM phenotype")
+        # Get data from first column (identifier from DB schema, validate before DML)
+        col_name = first_col.replace("_", "")
+        if not col_name.isalnum():
+            raise ValueError(f"Unsafe column name: {first_col}")
+        cursor.execute(f"SELECT \"{first_col}\" FROM phenotype")
         data = [row[0] for row in cursor.fetchall()]
         
         conn.close()
