@@ -26,6 +26,13 @@ def register_init(app):
     init_system_tables()
     seed_dataset_registry_defaults()
 
+    # Ensure analysis tables exist (worker requires brd_analysis_job)
+    try:
+        from apps.analysis.models import BrdAnalysisJob
+        BrdAnalysisJob.__table__.create(bind=engine, checkfirst=True)
+    except Exception:
+        pass
+
     # Start analysis worker (registers tools + launches worker threads)
     try:
         from apps.analysis.routers import on_startup
