@@ -105,25 +105,36 @@ if _pg_isready; then
         docker rm -f "$PG_CONTAINER" 2>/dev/null || true
         # Pull from DaoCloud mirror first, fall back to Docker Hub
         docker pull "$PG_IMAGE_MIRROR" 2>/dev/null && docker tag "$PG_IMAGE_MIRROR" "$PG_IMAGE" 2>/dev/null
-        docker run -d --name "$PG_CONTAINER" \
+        if ! docker run -d --name "$PG_CONTAINER" \
             -p "$DB_PORT:5432" \
             -e "POSTGRES_USER=$DB_USER" \
             -e "POSTGRES_PASSWORD=$DB_PASS" \
             -e "POSTGRES_DB=$DB_NAME" \
-            "$PG_IMAGE" 2>/dev/null
+            "$PG_IMAGE"; then
+            echo -e "${RED}Failed to start PostgreSQL container. Check Docker and port $DB_PORT.${NC}"
+            exit 1
+        fi
 
-        # Wait for PostgreSQL to be ready (up to 30s)
-        for i in $(seq 1 30); do
+        # Wait for PostgreSQL to be ready: check every 3s, max 5 minutes
+        WAIT_MAX=100     # 100 × 3s = 300s = 5 min
+        WAIT_CHECK=3     # check interval
+        WAIT_LOG=10      # report every 10 checks (30s)
+        for i in $(seq 1 $WAIT_MAX); do
             if _pg_isready; then
-                echo -e "  ${GREEN}PostgreSQL ready after ${i}s${NC}"
+                echo -e "  ${GREEN}PostgreSQL ready after $((i * WAIT_CHECK))s${NC}"
                 break
             fi
-            sleep 1
+            if [ $((i % WAIT_LOG)) -eq 0 ]; then
+                echo "  Waiting for PostgreSQL... $((i * WAIT_CHECK))s elapsed"
+            fi
+            sleep $WAIT_CHECK
         done
     fi
 
 if ! _pg_isready; then
-    echo -e "${RED}PostgreSQL failed to start. Check Docker.${NC}"
+    echo -e "${RED}PostgreSQL still not ready after 5 minutes.${NC}"
+    echo "  Check: docker logs $PG_CONTAINER"
+    echo "  Check: ss -tlnp | grep $DB_PORT"
     exit 1
 fi
 
