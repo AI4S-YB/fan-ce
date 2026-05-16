@@ -211,6 +211,11 @@ class DatasetRegistry(Base):
     create_time = Column(Integer, comment="创建时间")
     update_time = Column(Integer, comment="更新时间")
 
+    def to_dict(self):
+        model_dict = dict(self.__dict__)
+        del model_dict["_sa_instance_state"]
+        return model_dict
+
 
 class DatasetWorkflowTask(Base):
     __tablename__ = "dataset_workflow_task"
