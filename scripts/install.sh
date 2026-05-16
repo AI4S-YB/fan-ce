@@ -11,7 +11,6 @@ CONF_DIR="backend/api-server/conf"
 CONF_FILE="${CONF_DIR}/config.dev.yaml"
 CONF_EXAMPLE="${CONF_DIR}/config.example.yaml"
 TAXONOMY_DATA="$ROOT_DIR/backend/api-server/data/taxonomy-plants.tar.gz"
-INIT_SCRIPT="$ROOT_DIR/scripts/init_taxonomy.py"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -149,9 +148,10 @@ echo ""
 
 # ── 4. Create tables + Import taxonomy ──
 echo "[4/6] Initializing database tables and plant taxonomy..."
-if [ -f "$TAXONOMY_DATA" ]; then
-    # Use relative path — pixi sandboxes absolute paths on some platforms
-    pixi run uv run --directory backend/api-server python "$INIT_SCRIPT" data/taxonomy-plants.tar.gz
+if [ -f "$TAXONOMY_DATA" ] && [ -f "scripts/init_taxonomy.py" ]; then
+    # Paths relative to pixi CWD (backend/api-server/): ../../scripts/init_taxonomy.py, data/taxonomy-plants.tar.gz
+    pixi run uv run --directory backend/api-server python \
+        ../../scripts/init_taxonomy.py data/taxonomy-plants.tar.gz
     echo -e "  ${GREEN}Done.${NC}"
 else
     echo -e "  ${RED}Error: Taxonomy data file not found at $TAXONOMY_DATA${NC}"
