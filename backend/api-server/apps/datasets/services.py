@@ -2877,6 +2877,14 @@ class DatasetDomainService:
             obj_in={"is_public": bool(default_public_version_id)},
         )
 
+        # Cascade: if dataset becomes private, remove all site bindings
+        if not bool(default_public_version_id):
+            from apps.platform.models import PlatformSiteDatasetLink
+
+            db.query(PlatformSiteDatasetLink).filter(
+                PlatformSiteDatasetLink.dataset_id == dataset_id
+            ).delete()
+
     def _set_default_public_version(self, db, dataset_id, version_obj, note, operator_id):
         self._normalize_version_public_flags(db=db, dataset_id=dataset_id, default_version_id=version_obj.id)
         selected_version = dataset_version_db.get(db=db, id=version_obj.id)
