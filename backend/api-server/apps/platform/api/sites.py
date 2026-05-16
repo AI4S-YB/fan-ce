@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from apps.common.depends import get_active_user
@@ -6,7 +7,7 @@ from db.database import get_db
 from libs.responses.response import response_200
 
 from ..models import PlatformSiteDatasetLink, PlatformSiteSetting
-from ..multi_site import bind_dataset_to_site, get_site_dataset_ids, unbind_dataset_from_site
+from ..multi_site import bind_dataset_to_site, get_site_dataset_ids
 from ..schemas import PlatformSiteCreateRequest, PlatformSiteDatasetBindRequest, PlatformSiteUpdateRequest
 
 sites_router = APIRouter(tags=["app:platform:站点管理"])
@@ -55,12 +56,22 @@ async def list_sites(
 ):
     _require_admin(user)
     sites = db.query(PlatformSiteSetting).order_by(PlatformSiteSetting.id.asc()).all()
+
+    # Single aggregation query instead of N+1
+    count_rows = (
+        db.query(
+            PlatformSiteDatasetLink.site_code,
+            func.count(PlatformSiteDatasetLink.id).label("cnt"),
+        )
+        .group_by(PlatformSiteDatasetLink.site_code)
+        .all()
+    )
+    counts = {row.site_code: row.cnt for row in count_rows}
+
     items = []
     for site in sites:
         d = site.to_dict()
-        d["dataset_count"] = db.query(PlatformSiteDatasetLink).filter(
-            PlatformSiteDatasetLink.site_code == site.site_code
-        ).count()
+        d["dataset_count"] = counts.get(site.site_code, 0)
         items.append(d)
     return response_200(data={"items": items})
 
@@ -137,7 +148,14 @@ async def unbind_dataset(
     user=Depends(get_active_user),
 ):
     _require_admin(user)
-    unbind_dataset_from_site(db, site_code, dataset_id)
+    link = db.query(PlatformSiteDatasetLink).filter(
+        PlatformSiteDatasetLink.site_code == site_code,
+        PlatformSiteDatasetLink.dataset_id == dataset_id,
+    ).first()
+    if not link:
+        raise HTTPException(status_code=404, detail="Binding not found")
+    db.delete(link)
+    db.commit()
     return response_200(data={"unbound": True})
 
 

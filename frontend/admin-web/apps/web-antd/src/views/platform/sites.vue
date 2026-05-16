@@ -2,6 +2,7 @@
 import type { SiteItem } from '#/api/platform/sites';
 
 import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 
@@ -33,6 +34,7 @@ const modalVisible = ref(false);
 const modalSubmitting = ref(false);
 const editingSite = ref<SiteItem | null>(null);
 const formRef = ref();
+const router = useRouter();
 
 const formState = ref<Partial<SiteItem>>({
   site_code: '',
@@ -130,7 +132,7 @@ async function handleDelete(siteCode: string) {
 }
 
 function handleManageDatasets(record: SiteItem) {
-  window.open(`/platform/sites/${record.site_code}/datasets`, '_self');
+  router.push(`/platform/sites/${record.site_code}/datasets`);
 }
 
 function handleCancel() {
