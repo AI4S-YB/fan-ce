@@ -134,3 +134,34 @@ class FrpStatusResponse(BaseModel):
     api_url: Optional[str] = None
     last_error: Optional[str] = None
     uptime_seconds: Optional[int] = None
+
+
+class PlatformSiteCreateRequest(BaseModel):
+    site_code: str
+    site_name: Optional[str] = ""
+    site_title: Optional[str] = ""
+    domain: Optional[str] = ""
+    test_port: Optional[str] = ""
+    logo_text: Optional[str] = ""
+    contact_email: Optional[str] = ""
+    footer_copyright: Optional[str] = ""
+    extra_json: Optional[str] = "{}"
+
+
+class PlatformSiteUpdateRequest(BaseModel):
+    site_name: Optional[str] = None
+    site_title: Optional[str] = None
+    domain: Optional[str] = None
+    test_port: Optional[str] = None
+    logo_text: Optional[str] = None
+    contact_email: Optional[str] = None
+    footer_copyright: Optional[str] = None
+    extra_json: Optional[str] = None
+
+
+class PlatformSiteDatasetBindRequest(BaseModel):
+    dataset_id: int
+
+
+class PlatformSiteDatasetUnbindRequest(BaseModel):
+    dataset_id: int
