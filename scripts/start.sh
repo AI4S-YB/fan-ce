@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # ── FAN-CE Service Startup ──
-# Supports development (localhost) and production (public-facing) modes.
+#   [1] Development — 127.0.0.1, hot reload, default ports
+#   [2] Debug       — 0.0.0.0,   hot reload, default ports (remote debugging)
+#   [3] Production  — 0.0.0.0,   no reload,  custom ports  (public deployment)
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -17,125 +19,121 @@ BACKEND_PORT=8002
 ADMIN_PORT=5666
 PUBLIC_PORT=5677
 
+# ── Detect pixi (not always in PATH when called via nohup) ──
+PIXI_BIN=""
+for candidate in "$HOME/.pixi/bin/pixi" "/usr/local/bin/pixi" "/opt/pixi/bin/pixi"; do
+    [ -x "$candidate" ] && { PIXI_BIN="$candidate"; break; }
+done
+if [ -z "$PIXI_BIN" ]; then
+    PIXI_BIN="$(command -v pixi 2>/dev/null)" || {
+        echo -e "${RED}pixi not found. Install: https://pixi.sh${NC}"
+        exit 1
+    }
+fi
+
 # ── Helpers ──
 _validate_port() {
     local port="$1"
-    if [[ ! "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
-        echo -e "${RED}Invalid port: $port${NC}"
-        return 1
-    fi
-    return 0
+    [[ "$port" =~ ^[0-9]+$ ]] && [ "$port" -ge 1 ] && [ "$port" -le 65535 ] && return 0
+    echo -e "${RED}Invalid port: $port${NC}"
+    return 1
 }
 
-_check_low_port() {
-    local port="$1"
-    if [ "$port" -lt 1024 ]; then
-        return 0  # is a low port
-    fi
-    return 1  # is a high port
-}
+_check_low_port() { [ "$1" -lt 1024 ]; }
 
 _show_nginx_help() {
-    local public_port="$1"
     echo ""
     echo -e "${YELLOW}═══════════════════════════════════════════════════${NC}"
-    echo -e "${YELLOW}  Port $public_port (<1024) requires root or nginx${NC}"
+    echo -e "${YELLOW}  Port $1 (<1024) requires root or nginx${NC}"
     echo -e "${YELLOW}═══════════════════════════════════════════════════${NC}"
     echo ""
-    echo -e "  ${CYAN}Recommended: nginx reverse proxy${NC}"
-    echo -e "  Template: ${CYAN}$ROOT_DIR/templates/nginx-fance.conf${NC}"
+    echo -e "  ${CYAN}Template: ${ROOT_DIR}/templates/nginx-fance.conf${NC}"
     echo ""
-    echo -e "  ${GREEN}Quick setup:${NC}"
-    echo "    # 1. Copy & edit the template"
+    echo "  Quick setup:"
     echo "    sudo cp templates/nginx-fance.conf /etc/nginx/sites-available/fan-ce"
-    echo "    sudo nano /etc/nginx/sites-available/fan-ce  # change domain/paths"
-    echo ""
-    echo "    # 2. Enable the site"
+    echo "    sudo nano /etc/nginx/sites-available/fan-ce  # edit domain/paths"
     echo "    sudo ln -s /etc/nginx/sites-available/fan-ce /etc/nginx/sites-enabled/"
     echo "    sudo nginx -t && sudo systemctl reload nginx"
     echo ""
-    echo "    # 3. Start FAN-CE on high ports instead:"
-    echo -e "    ${CYAN}bash scripts/start.sh${NC}  → choose production → use ports >1024"
+    echo -e "  Then run FAN-CE on high ports (>1024) and let nginx proxy to them."
     echo ""
-    echo "  Then nginx handles port 80, forwarding to FAN-CE internally."
-    echo ""
-    echo -e "${YELLOW}═══════════════════════════════════════════════════${NC}"
-    echo ""
-    echo "  Continue with port $public_port anyway? [y/N]"
+    echo "  Use port $1 anyway? [y/N]"
     read -r confirm
-    if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
-        echo "  Aborted."
-        exit 1
-    fi
+    [ "$confirm" = "y" ] || [ "$confirm" = "Y" ] || { echo "  Aborted."; exit 1; }
 }
 
 # ── Mode selection ──
 echo "========================================"
-echo " FAN-CE Service Startup"
+echo " FAN-CE  —  Service Startup"
 echo "========================================"
 echo ""
-echo " Choose run mode:"
-echo "   [1] Development  — 127.0.0.1, hot reload, default ports"
-echo "   [2] Production   — 0.0.0.0, no reload, customizable ports"
-echo "   [3] Custom       — configure host and ports per service"
+echo "  Choose run mode:"
+echo "    [1] Development — 127.0.0.1 , hot reload, default ports"
+echo "        (localhost only, changes apply instantly)"
 echo ""
-read -rp " Enter 1, 2, or 3 [1]: " mode
+echo "    [2] Debug       — 0.0.0.0   , hot reload, default ports"
+echo "        (remote access enabled, changes apply instantly)"
+echo ""
+echo "    [3] Production  — 0.0.0.0   , no reload,  custom ports"
+echo "        (public deployment, requires pre-built frontend)"
+echo ""
+read -rp "  Enter 1, 2, or 3 [1]: " mode
 mode="${mode:-1}"
 
 case "$mode" in
     1)
         HOST="127.0.0.1"
         RELOAD="--reload"
-        echo -e "  ${GREEN}Development mode — http://$HOST${NC}"
+        USE_PREVIEW=false
+        echo -e "  ${GREEN}Development mode${NC}"
         ;;
     2)
         HOST="0.0.0.0"
+        RELOAD="--reload"
+        USE_PREVIEW=false
+        echo -e "  ${CYAN}Debug mode — hot reload on $HOST${NC}"
+        ;;
+    3)
+        HOST="0.0.0.0"
         RELOAD=""
-        echo -e "  ${YELLOW}Production mode — binding to $HOST${NC}"
+        USE_PREVIEW=true
+        echo -e "  ${YELLOW}Production mode${NC}"
         echo ""
         echo "  Configure ports (press Enter for defaults):"
-        read -rp "    Backend API [$BACKEND_PORT]: " p
+        read -rp "    Backend API   [$BACKEND_PORT]: " p
         BACKEND_PORT="${p:-$BACKEND_PORT}"
-        read -rp "    Admin panel [$ADMIN_PORT]: " p
+        read -rp "    Admin panel   [$ADMIN_PORT]: " p
         ADMIN_PORT="${p:-$ADMIN_PORT}"
         read -rp "    Public portal [$PUBLIC_PORT]: " p
         PUBLIC_PORT="${p:-$PUBLIC_PORT}"
-
-        # Validate
-        for port in "$BACKEND_PORT" "$ADMIN_PORT" "$PUBLIC_PORT"; do
-            _validate_port "$port" || exit 1
-        done
-
-        # Check low ports
-        for port in "$PUBLIC_PORT" "$ADMIN_PORT" "$BACKEND_PORT"; do
-            if _check_low_port "$port"; then
-                _show_nginx_help "$port"
-                break
-            fi
-        done
-        ;;
-    3)
-        echo ""
-        echo "  Configure each service:"
-        read -rp "    Bind host [0.0.0.0]: " HOST
-        HOST="${HOST:-0.0.0.0}"
-        read -rp "    Hot reload? [y/N]: " r
-        if [ "$r" = "y" ] || [ "$r" = "Y" ]; then RELOAD="--reload"; else RELOAD=""; fi
-        read -rp "    Backend API port [$BACKEND_PORT]: " p
-        BACKEND_PORT="${p:-$BACKEND_PORT}"
-        read -rp "    Admin panel port [$ADMIN_PORT]: " p
-        ADMIN_PORT="${p:-$ADMIN_PORT}"
-        read -rp "    Public portal port [$PUBLIC_PORT]: " p
-        PUBLIC_PORT="${p:-$PUBLIC_PORT}"
         for port in "$BACKEND_PORT" "$ADMIN_PORT" "$PUBLIC_PORT"; do
             _validate_port "$port" || exit 1
         done
         for port in "$PUBLIC_PORT" "$ADMIN_PORT" "$BACKEND_PORT"; do
-            if _check_low_port "$port"; then
-                _show_nginx_help "$port"
-                break
-            fi
+            _check_low_port "$port" && _show_nginx_help "$port" && break
         done
+
+        # Production mode: check frontend dist exists
+        if [ ! -f "$ROOT_DIR/frontend/admin-web/apps/web-antd/dist/index.html" ]; then
+            echo ""
+            echo -e "${RED}  Production mode requires pre-built frontend.${NC}"
+            echo -e "  ${YELLOW}  Build it first:${NC}"
+            echo "    cd frontend/admin-web"
+            echo "    pnpm -F @fan-ce/admin-web-antd build"
+            echo "    pnpm -F @fan-ce/web-public build"
+            echo ""
+            read -rp "  Build now? [Y/n] " build_now
+            build_now="${build_now:-y}"
+            if [ "$build_now" = "y" ] || [ "$build_now" = "Y" ]; then
+                echo "  Building frontends..."
+                cd "$ROOT_DIR/frontend/admin-web"
+                pnpm -F @fan-ce/admin-web-antd build
+                pnpm -F @fan-ce/web-public build
+                cd "$ROOT_DIR"
+            else
+                exit 1
+            fi
+        fi
         ;;
     *)
         echo -e "${RED}Invalid choice.${NC}"
@@ -148,6 +146,11 @@ echo "────────────────────────�
 echo "  Backend API:    http://$HOST:$BACKEND_PORT"
 echo "  Admin panel:    http://$HOST:$ADMIN_PORT"
 echo "  Public portal:  http://$HOST:$PUBLIC_PORT"
+if [ "$RELOAD" = "--reload" ]; then
+    echo "  Mode:           hot reload enabled"
+else
+    echo "  Mode:           production (static serve)"
+fi
 echo "──────────────────────────────────────────"
 echo ""
 
@@ -159,7 +162,7 @@ bash "$ROOT_DIR/scripts/stop.sh" 2>/dev/null || true
 echo ""
 echo "Starting backend API (port $BACKEND_PORT)..."
 cd "$ROOT_DIR"
-nohup pixi run uv run --directory backend/api-server uvicorn main:app \
+nohup "$PIXI_BIN" run uv run --directory backend/api-server uvicorn main:app \
     --host "$HOST" --port "$BACKEND_PORT" $RELOAD \
     > /tmp/fance-backend.log 2>&1 &
 BACKEND_PID=$!
@@ -168,12 +171,11 @@ echo "  Backend PID: $BACKEND_PID"
 # ── Start admin frontend ──
 echo "Starting admin panel (port $ADMIN_PORT)..."
 cd "$ROOT_DIR/frontend/admin-web"
-if [ "$RELOAD" = "--reload" ]; then
-    nohup pnpm -F @fan-ce/admin-web-antd run dev -- --host "$HOST" --port "$ADMIN_PORT" \
+if [ "$USE_PREVIEW" = true ]; then
+    nohup pnpm -F @fan-ce/admin-web-antd exec vite preview --host "$HOST" --port "$ADMIN_PORT" \
         > /tmp/fance-admin.log 2>&1 &
 else
-    # Production: use vite preview (serve built dist)
-    nohup pnpm -F @fan-ce/admin-web-antd exec vite preview --host "$HOST" --port "$ADMIN_PORT" \
+    nohup pnpm -F @fan-ce/admin-web-antd run dev -- --host "$HOST" --port "$ADMIN_PORT" \
         > /tmp/fance-admin.log 2>&1 &
 fi
 ADMIN_PID=$!
@@ -187,7 +189,7 @@ nohup pnpm -F @fan-ce/web-public exec vite --host "$HOST" --port "$PUBLIC_PORT" 
 PUBLIC_PID=$!
 echo "  Public PID: $PUBLIC_PID"
 
-# Save PID info
+# Save PID info for stop.sh
 cat > /tmp/fance-services.env <<EOF
 BACKEND_PID=$BACKEND_PID
 ADMIN_PID=$ADMIN_PID
