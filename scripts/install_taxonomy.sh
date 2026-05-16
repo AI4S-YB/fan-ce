@@ -18,6 +18,6 @@ fi
 echo "Importing plant taxonomy data..."
 
 cd "$PROJECT_ROOT"
-pixi run uv run --directory backend/api-server python "$INIT_SCRIPT" "$DATA_FILE"
+pixi run uv run --directory backend/api-server python "$INIT_SCRIPT" data/taxonomy-plants.tar.gz
 
 echo "Taxonomy import complete."

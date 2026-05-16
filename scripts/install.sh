@@ -150,7 +150,8 @@ echo ""
 # ── 4. Create tables + Import taxonomy ──
 echo "[4/6] Initializing database tables and plant taxonomy..."
 if [ -f "$TAXONOMY_DATA" ]; then
-    pixi run uv run --directory backend/api-server python "$INIT_SCRIPT" "$TAXONOMY_DATA"
+    # Use relative path — pixi sandboxes absolute paths on some platforms
+    pixi run uv run --directory backend/api-server python "$INIT_SCRIPT" data/taxonomy-plants.tar.gz
     echo -e "  ${GREEN}Done.${NC}"
 else
     echo -e "  ${RED}Error: Taxonomy data file not found at $TAXONOMY_DATA${NC}"
