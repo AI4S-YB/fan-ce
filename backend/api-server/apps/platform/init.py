@@ -4,12 +4,13 @@ from sqlalchemy.exc import OperationalError
 
 from db.database import engine
 
-from .models import PlatformModelApiSetting, PlatformSiteSetting
+from .models import PlatformModelApiSetting, PlatformSiteDatasetLink, PlatformSiteSetting
 
 
 def init_platform_tables():
     tables = [
         PlatformSiteSetting.__table__,
+        PlatformSiteDatasetLink.__table__,
         PlatformModelApiSetting.__table__,
     ]
     for table in tables:

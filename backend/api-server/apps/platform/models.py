@@ -1,6 +1,6 @@
 import time
 
-from sqlalchemy import Boolean, Column, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import relationship
 
 from db.database import Base
@@ -32,8 +32,11 @@ class PlatformSiteSetting(Base):
     __tablename__ = "pf_site_setting"
 
     id = Column(Integer, primary_key=True, index=True)
+    site_code = Column(String(64), unique=True, nullable=False, comment="站点编码")
     site_name = Column(String(255), default="", comment="网站名称")
     site_title = Column(String(255), default="", comment="网站标题")
+    domain = Column(String(255), default="", comment="正式域名")
+    test_port = Column(String(8), default="", comment="测试端口")
     logo_text = Column(String(255), default="", comment="Logo 文字")
     filing_no = Column(String(255), default="", comment="备案信息")
     contact_email = Column(String(255), default="", comment="联系邮箱")
@@ -50,6 +53,24 @@ class PlatformSiteSetting(Base):
     create_time = Column(Integer, default=lambda: int(time.time()), comment="创建时间")
     update_time = Column(Integer, default=lambda: int(time.time()), comment="更新时间")
     user_id = Column(Integer, default=0, comment="操作用户ID")
+
+    def to_dict(self):
+        model_dict = dict(self.__dict__)
+        del model_dict["_sa_instance_state"]
+        return model_dict
+
+
+class PlatformSiteDatasetLink(Base):
+    __tablename__ = "pf_site_dataset_link"
+
+    id = Column(Integer, primary_key=True, index=True)
+    site_code = Column(String(64), ForeignKey("pf_site_setting.site_code", ondelete="CASCADE"), nullable=False, comment="站点编码")
+    dataset_id = Column(Integer, ForeignKey("dataset_registry.id", ondelete="CASCADE"), nullable=False, comment="数据集ID")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), comment="创建时间")
+
+    __table_args__ = (
+        UniqueConstraint("site_code", "dataset_id", name="uq_site_dataset_link"),
+    )
 
     def to_dict(self):
         model_dict = dict(self.__dict__)
