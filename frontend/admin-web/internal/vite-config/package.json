@@ -34,8 +34,7 @@
     "get-port": "catalog:",
     "html-minifier-terser": "catalog:",
     "resolve.exports": "catalog:",
-    "vite-plugin-pwa": "catalog:",
-    "vite-plugin-vue-devtools": "catalog:"
+    "vite-plugin-pwa": "catalog:"
   },
   "devDependencies": {
     "@pnpm/workspace.read-manifest": "catalog:",

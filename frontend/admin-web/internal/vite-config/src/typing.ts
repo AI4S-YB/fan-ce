@@ -118,11 +118,6 @@ interface ConditionPlugin {
  */
 interface CommonPluginOptions {
   /**
-   * 是否开启开发工具
-   * @default false
-   */
-  devtools?: boolean;
-  /**
    * 环境变量
    * @description 自定义环境变量
    */

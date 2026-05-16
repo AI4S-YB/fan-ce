@@ -46,7 +46,7 @@ async function loadConditionPlugins(conditionPlugins: ConditionPlugin[]) {
 async function loadCommonPlugins(
   options: CommonPluginOptions,
 ): Promise<ConditionPlugin[]> {
-  const { devtools, injectMetadata, isBuild, visualizer } = options;
+  const { injectMetadata, isBuild, visualizer } = options;
   return [
     {
       condition: true,
@@ -61,13 +61,6 @@ async function loadCommonPlugins(
       ],
     },
 
-    {
-      condition: !isBuild && devtools,
-      plugins: async () => {
-        const { default: viteVueDevTools } = await import('vite-plugin-vue-devtools');
-        return [viteVueDevTools()];
-      },
-    },
     {
       condition: injectMetadata,
       plugins: async () => [await viteMetadataPlugin()],
