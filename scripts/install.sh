@@ -7,10 +7,10 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-CONF_DIR="backend/api-server/conf"
+CONF_DIR="backend/conf"
 CONF_FILE="${CONF_DIR}/config.dev.yaml"
 CONF_EXAMPLE="${CONF_DIR}/config.example.yaml"
-TAXONOMY_DATA="$ROOT_DIR/backend/api-server/data/taxonomy-plants.tar.gz"
+TAXONOMY_DATA="$ROOT_DIR/backend/data/taxonomy-plants.tar.gz"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -69,7 +69,7 @@ echo ""
 # ── 1. Pixi + Python environment ──
 echo "[1/6] Installing bioinformatics tools + Python environment..."
 pixi install
-pixi run uv sync --directory backend/api-server
+pixi run uv sync --directory backend
 echo -e "  ${GREEN}Done.${NC}"
 echo ""
 
@@ -149,7 +149,7 @@ TABLE_COUNT=$(_psql -d "$DB_NAME" -tc \
     "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public';" 2>/dev/null | xargs || echo "0")
 if [ "${TABLE_COUNT:-0}" -gt 10 ]; then
     echo "  Detected existing database ($TABLE_COUNT tables). Running migrations..."
-    pixi run uv run --directory backend/api-server alembic upgrade head || \
+    pixi run uv run --directory backend alembic upgrade head || \
         echo -e "  ${YELLOW}Warning: alembic upgrade had errors (may be harmless).${NC}"
 else
     echo "  Fresh database detected. Tables will be created in next step."
@@ -160,13 +160,13 @@ echo ""
 # ── 4. Create tables + Import taxonomy ──
 echo "[4/6] Initializing database tables and plant taxonomy..."
 if [ -f "$TAXONOMY_DATA" ] && [ -f "scripts/init_taxonomy.py" ]; then
-    # Paths relative to pixi CWD (backend/api-server/): ../../scripts/init_taxonomy.py, data/taxonomy-plants.tar.gz
-    pixi run uv run --directory backend/api-server python \
+    # Paths relative to pixi CWD (backend/): ../../scripts/init_taxonomy.py, data/taxonomy-plants.tar.gz
+    pixi run uv run --directory backend python \
         ../../scripts/init_taxonomy.py data/taxonomy-plants.tar.gz
     echo -e "  ${GREEN}Done.${NC}"
 else
     echo -e "  ${RED}Error: Taxonomy data file not found at $TAXONOMY_DATA${NC}"
-    echo -e "  ${YELLOW}Run: python scripts/build/filter_plants.py <ncbi_dump> backend/api-server/data/${NC}"
+    echo -e "  ${YELLOW}Run: python scripts/build/filter_plants.py <ncbi_dump> backend/data/${NC}"
     echo -e "  ${YELLOW}Then re-run this install script.${NC}"
     exit 1
 fi

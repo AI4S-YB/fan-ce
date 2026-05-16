@@ -7,7 +7,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-CONF_FILE="backend/api-server/conf/config.dev.yaml"
+CONF_FILE="backend/conf/config.dev.yaml"
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -41,20 +41,20 @@ echo "  Done."
 # ── 2. Update dependencies ──
 echo "[2/6] Updating dependencies..."
 pixi install --frozen
-pixi run uv sync --directory backend/api-server
+pixi run uv sync --directory backend
 echo "  Done."
 
 # ── 3. Database migrations ──
 echo "[3/6] Applying database migrations..."
-pixi run uv run --directory backend/api-server alembic upgrade head || \
+pixi run uv run --directory backend alembic upgrade head || \
     echo -e "  ${YELLOW}Warning: alembic upgrade had errors (may be harmless).${NC}"
 echo "  Done."
 
 # ── 4. Check / import taxonomy ──
 echo "[4/6] Checking plant taxonomy data..."
-TAXONOMY_DATA="$ROOT_DIR/backend/api-server/data/taxonomy-plants.tar.gz"
+TAXONOMY_DATA="$ROOT_DIR/backend/data/taxonomy-plants.tar.gz"
 if [ -f "$TAXONOMY_DATA" ]; then
-    pixi run uv run --directory backend/api-server python -c "
+    pixi run uv run --directory backend python -c "
 from db.database import MyDBManager
 from apps.breeding.models import BreedingTaxonomyNode
 with MyDBManager() as db:
@@ -73,7 +73,7 @@ echo ""
 # ── 5. Update analysis plugins ──
 echo "[5/6] Updating analysis plugins..."
 if ls plugin/*.whl &>/dev/null 2>&1; then
-    pixi run uv run --directory backend/api-server pip install --force-reinstall plugin/*.whl --no-deps
+    pixi run uv run --directory backend pip install --force-reinstall plugin/*.whl --no-deps
 fi
 echo "  Done."
 

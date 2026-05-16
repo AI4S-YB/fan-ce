@@ -162,7 +162,7 @@ bash "$ROOT_DIR/scripts/stop.sh" 2>/dev/null || true
 echo ""
 echo "Starting backend API (port $BACKEND_PORT)..."
 cd "$ROOT_DIR"
-nohup "$PIXI_BIN" run uv run --directory backend/api-server uvicorn main:app \
+nohup "$PIXI_BIN" run uv run --directory backend uvicorn main:app \
     --host "$HOST" --port "$BACKEND_PORT" $RELOAD \
     > /tmp/fance-backend.log 2>&1 &
 BACKEND_PID=$!

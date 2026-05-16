@@ -9,8 +9,7 @@ FAN-CE 是一个面向组学数据管理、查询与展示的开源平台。
 
 | 目录 | 说明 |
 |------|------|
-| `backend/api-server` | 后台 API 服务（FastAPI + PostgreSQL） |
-| `backend/sdk` | Python SDK |
+| `backend` | 后台 API 服务（FastAPI + PostgreSQL） |
 | `frontend/admin-web` | 管理端前端（monorepo：Antd + Element + Naive） |
 | `frontend/admin-web/apps/web-antd` | 管理后台（Ant Design Vue，端口 5666） |
 | `frontend/admin-web/apps/web-public` | 公开门户（Element Plus，端口 5677） |
@@ -45,7 +44,7 @@ FAN-CE 是一个面向组学数据管理、查询与展示的开源平台。
 git clone <repo-url> && cd fan-ce
 
 # 2. 创建配置文件（修改数据库连接等）
-cp backend/api-server/conf/config.example.yaml backend/api-server/conf/config.dev.yaml
+cp backend/conf/config.example.yaml backend/conf/config.dev.yaml
 
 # 3. 运行安装脚本
 bash scripts/install.sh

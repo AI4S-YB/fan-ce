@@ -9,9 +9,9 @@ platforms = ["osx-arm64", "osx-64", "linux-64", "linux-aarch64"]
 version = "0.1.0"
 
 [tasks]
-backend = "uv run --directory backend/api-server uvicorn main:app --host 127.0.0.1 --port 8002 --reload"
-db-migrate = "uv run --directory backend/api-server alembic upgrade head"
-install-plugins = "uv run --directory backend/api-server pip install plugin/*.whl --no-deps"
+backend = "uv run --directory backend uvicorn main:app --host 127.0.0.1 --port 8002 --reload"
+db-migrate = "uv run --directory backend alembic upgrade head"
+install-plugins = "uv run --directory backend pip install plugin/*.whl --no-deps"
 check-tools = "bash scripts/dev/check-bio-tools.sh"
 
 [dependencies]

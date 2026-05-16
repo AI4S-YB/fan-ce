@@ -86,4 +86,4 @@ backups/
 # Documentation (NEVER commit — separate repo)
 docs/
 CLAUDE.md
-backend/api-server/apps/analysis/tools/go-basic.obo
+backend/apps/analysis/tools/go-basic.obo
