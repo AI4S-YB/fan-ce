@@ -153,7 +153,7 @@ echo ""
 
 # ── Stop existing services ──
 echo "Stopping existing services..."
-bash "$ROOT_DIR/scripts/dev/stop-dev.sh" 2>/dev/null || true
+bash "$ROOT_DIR/scripts/stop.sh" 2>/dev/null || true
 
 # ── Start backend ──
 echo ""
@@ -187,6 +187,16 @@ nohup pnpm -F @fan-ce/web-public exec vite --host "$HOST" --port "$PUBLIC_PORT" 
 PUBLIC_PID=$!
 echo "  Public PID: $PUBLIC_PID"
 
+# Save PID info
+cat > /tmp/fance-services.env <<EOF
+BACKEND_PID=$BACKEND_PID
+ADMIN_PID=$ADMIN_PID
+PUBLIC_PID=$PUBLIC_PID
+BACKEND_PORT=$BACKEND_PORT
+ADMIN_PORT=$ADMIN_PORT
+PUBLIC_PORT=$PUBLIC_PORT
+EOF
+
 echo ""
 echo -e "${GREEN}All services started.${NC}"
 echo ""
@@ -195,4 +205,4 @@ echo "    Backend:  tail -f /tmp/fance-backend.log"
 echo "    Admin:    tail -f /tmp/fance-admin.log"
 echo "    Public:   tail -f /tmp/fance-public.log"
 echo ""
-echo "  Stop all:  bash scripts/dev/stop-dev.sh"
+echo "  Stop all:  bash scripts/stop.sh"
