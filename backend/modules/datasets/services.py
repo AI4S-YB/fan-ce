@@ -842,12 +842,12 @@ class DatasetDomainService:
         meta_items = dataset_legacy_bridge.list_meta(db=db, dataset_id=database_id)
         return [
             {
-                "id": item.id,
-                "key": item.key,
-                "value": item.value,
-                "code": item.code,
-                "type": item.type,
-                "description": item.description,
+                "id": getattr(item, 'id', None),
+                "key": getattr(item, 'key', ''),
+                "value": getattr(item, 'value', ''),
+                "code": getattr(item, 'code', ''),
+                "type": getattr(item, 'type', ''),
+                "description": getattr(item, 'description', ''),
             }
             for item in meta_items
         ]
