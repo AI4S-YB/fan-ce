@@ -1,6 +1,6 @@
 import time
 
-from modules.common.security import get_password_hash
+from shared.security import get_password_hash
 from modules.system.rbac.models import Menu, RoleMenuLink, UserRoleLink
 from modules.system.user.models import Role, User
 from config.settings import settings

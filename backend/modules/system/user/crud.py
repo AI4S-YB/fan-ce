@@ -13,7 +13,7 @@ import os
 from shared.crud_base import CRUDBase
 from .models import User
 from .schemas import UserCreate, UserUpdate, UserRegister
-from modules.common.security import get_password_hash, verify_password
+from shared.security import get_password_hash, verify_password
 from shared.string_utils import random_str
 from shared.database import Base
 from config.settings import settings

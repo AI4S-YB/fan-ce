@@ -19,7 +19,7 @@ from starlette.requests import Request
 from typing_extensions import Annotated
 
 from modules.common.schemas import TokenPayload, UserInfo
-from modules.common.security import ALGORITHM
+from shared.security import ALGORITHM
 from modules.system.rbac.crud import user_role_db, role_menu_db, menu_permission_db, permission_db
 from modules.platform.setup_state import is_taxonomy_ready
 from core import settings

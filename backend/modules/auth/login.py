@@ -17,7 +17,7 @@ from starlette.requests import Request
 from modules.common.depends import get_db
 from modules.common.depends import users_db
 from modules.common.schemas import Token, TokenDoc
-from modules.common.security import create_access_token
+from shared.security import create_access_token
 from modules.services.rbd import rbd_service
 from modules.services.auth_key_service import auth_key_service
 from config.settings import settings

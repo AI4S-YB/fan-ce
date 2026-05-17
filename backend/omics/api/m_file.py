@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from omics.db import SessionLocal
 from models.meta_file import FileMetadata, FileMetadataEnhancement
 from schemas.meta_file import FilePathInput, EnhancementCreate, FileMetadataOut, EnhancementOut
-from core.meta_utils import extract_basic_metadata
+from omics.core.meta_utils import extract_basic_metadata
 
 # 创建 APIRouter 实例
 router = APIRouter(

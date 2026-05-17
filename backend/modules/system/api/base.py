@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Query
 from shared.responses import response_200, response_200
 from starlette.background import BackgroundTask
 from fastapi.encoders import jsonable_encoder
-from modules.common.security import check_token
+from shared.security import check_token
 from shared.database import get_db
 from shared.responses import response_200
 
