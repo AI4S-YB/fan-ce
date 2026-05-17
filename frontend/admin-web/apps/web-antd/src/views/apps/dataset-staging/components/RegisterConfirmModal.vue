@@ -10,7 +10,6 @@ import {
   Tag,
 } from 'ant-design-vue';
 import type { DirectoryTreeNode } from '#/api/apps/dataset';
-import { registerCandidateApi, createRegistrationCandidateApi } from '#/api/apps/dataset';
 import { useMessage } from '#/hooks/web/useMessage';
 import { $t } from '@vben/locales';
 
@@ -119,6 +118,10 @@ watch(() => props.visible, (val) => {
 });
 
 async function handleSubmit() {
+  // TODO: use registerDatasetFromStagingApi when the backend endpoint is ready
+  createMessage.warning($t('dataset.staging.registrationNotAvailable'));
+  return;
+  /*
   if (!form.candidateName.trim()) {
     createMessage.error($t('dataset.staging.fillCandidateName'));
     return;
@@ -152,6 +155,7 @@ async function handleSubmit() {
   } finally {
     loading.value = false;
   }
+  */
 }
 
 function handleCancel() {
