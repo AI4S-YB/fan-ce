@@ -1,4 +1,5 @@
 from sqlalchemy import ARRAY, BigInteger, CheckConstraint, Column, Date, DateTime, Index, Integer, Numeric, String, Text, ForeignKey, func
+from sqlalchemy.dialects.postgresql import JSONB
 
 from shared.database import Base
 
@@ -15,7 +16,7 @@ class BreedingProgram(Base):
         CheckConstraint("start_year is null or start_year between 1900 and 3000", name="ck_brd_program_start_year"),
     )
 
-    id = Column(_brd_bigint(), primary_key=True, index=True)
+    id = Column(_brd_bigint(), primary_key=True)
     code = Column(String(64), unique=True, nullable=False, comment="项目编码")
     name = Column(String(256), nullable=False, comment="项目名称")
     species_name = Column(String(128), comment="物种名称")
@@ -23,7 +24,7 @@ class BreedingProgram(Base):
     start_year = Column(Integer, comment="启动年份")
     status = Column(String(32), nullable=False, default="active", comment="状态")
     owner_name = Column(String(128), comment="负责人名称")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="创建时间")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="更新时间")
     created_by = Column(_brd_bigint(), comment="创建人")
@@ -38,7 +39,7 @@ class BreedingMaterial(Base):
         Index("ix_brd_material_germplasm_accession", "germplasm_accession"),
     )
 
-    id = Column(_brd_bigint(), primary_key=True, index=True)
+    id = Column(_brd_bigint(), primary_key=True)
     program_id = Column(_brd_bigint(), ForeignKey("brd_program.id", ondelete="RESTRICT"), nullable=False, index=True, comment="所属项目")
     material_code = Column(String(64), unique=True, nullable=False, comment="材料编码")
     material_name = Column(String(256), nullable=False, comment="材料名称")
@@ -50,7 +51,7 @@ class BreedingMaterial(Base):
     germplasm_source_file = Column(Text, comment="关联种质来源文件")
     status = Column(String(32), nullable=False, default="active", comment="状态")
     is_check = Column(Integer, nullable=False, default=0, comment="是否对照")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     remarks = Column(Text, comment="备注")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="创建时间")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="更新时间")
@@ -66,7 +67,7 @@ class BreedingTaxonomyNode(Base):
         Index("ix_brd_taxonomy_node_rank", "rank"),
     )
 
-    tax_id = Column(_brd_bigint(), primary_key=True, index=True, comment="NCBI taxonomy ID")
+    tax_id = Column(_brd_bigint(), primary_key=True, comment="NCBI taxonomy ID")
     parent_tax_id = Column(_brd_bigint(), comment="父 taxonomy ID")
     rank = Column(String(64), comment="分类等级")
     scientific_name = Column(String(256), nullable=False, comment="学名")
@@ -89,7 +90,7 @@ class BreedingTaxonomyName(Base):
         Index("ix_brd_taxonomy_name_tax_id_class", "tax_id", "name_class"),
     )
 
-    id = Column(_brd_bigint(), primary_key=True, index=True)
+    id = Column(_brd_bigint(), primary_key=True)
     tax_id = Column(_brd_bigint(), ForeignKey("brd_taxonomy_node.tax_id", ondelete="CASCADE"), nullable=False, comment="NCBI taxonomy ID")
     name_txt = Column(String(512), nullable=False, comment="名称")
     unique_name = Column(String(512), comment="唯一名称")
@@ -106,7 +107,7 @@ class BreedingGermplasmImportBatch(Base):
         Index("ix_brd_germplasm_import_batch_status_time", "status", "created_at"),
     )
 
-    id = Column(_brd_bigint(), primary_key=True, index=True)
+    id = Column(_brd_bigint(), primary_key=True)
     batch_code = Column(String(64), nullable=False, comment="导入批次号")
     template_profile = Column(String(64), nullable=False, comment="模板 profile")
     taxonomy_tax_id = Column(_brd_bigint(), ForeignKey("brd_taxonomy_node.tax_id", ondelete="RESTRICT"), nullable=False, index=True, comment="taxonomy 锚点")
@@ -137,7 +138,7 @@ class BreedingGermplasm(Base):
         Index("ix_brd_germplasm_mother_accession", "mother_accession"),
     )
 
-    id = Column(_brd_bigint(), primary_key=True, index=True)
+    id = Column(_brd_bigint(), primary_key=True)
     batch_id = Column(_brd_bigint(), ForeignKey("brd_germplasm_import_batch.id", ondelete="RESTRICT"), nullable=False, index=True, comment="来源批次")
     taxonomy_tax_id = Column(_brd_bigint(), ForeignKey("brd_taxonomy_node.tax_id", ondelete="RESTRICT"), nullable=False, index=True, comment="taxonomy 锚点")
     accession_id = Column(String(128), nullable=False, comment="种质编号")
@@ -173,7 +174,7 @@ class BreedingGermplasmLineage(Base):
         Index("ix_brd_germplasm_lineage_parent", "taxonomy_tax_id", "parent_accession"),
     )
 
-    id = Column(_brd_bigint(), primary_key=True, index=True)
+    id = Column(_brd_bigint(), primary_key=True)
     taxonomy_tax_id = Column(_brd_bigint(), ForeignKey("brd_taxonomy_node.tax_id", ondelete="RESTRICT"), nullable=False, index=True, comment="taxonomy 锚点")
     child_accession = Column(String(128), nullable=False, comment="子代 accession")
     parent_accession = Column(String(128), nullable=False, comment="亲本 accession")
@@ -195,7 +196,7 @@ class BreedingTrial(Base):
         ),
     )
 
-    id = Column(_brd_bigint(), primary_key=True, index=True)
+    id = Column(_brd_bigint(), primary_key=True)
     program_id = Column(_brd_bigint(), ForeignKey("brd_program.id", ondelete="RESTRICT"), nullable=False, index=True, comment="所属项目")
     trial_code = Column(String(64), unique=True, nullable=False, comment="试验编号")
     trial_name = Column(String(256), nullable=False, comment="试验名称")
@@ -208,7 +209,7 @@ class BreedingTrial(Base):
     status = Column(String(32), nullable=False, default="active", comment="状态")
     sowing_date = Column(Date, comment="播种日期")
     harvest_date = Column(Date, comment="收获日期")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     remarks = Column(Text, comment="备注")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="创建时间")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="更新时间")
@@ -236,7 +237,7 @@ class BreedingPlot(Base):
         ),
     )
 
-    id = Column(_brd_bigint(), primary_key=True, index=True)
+    id = Column(_brd_bigint(), primary_key=True)
     trial_id = Column(_brd_bigint(), ForeignKey("brd_trial.id", ondelete="RESTRICT"), nullable=False, index=True, comment="试验ID")
     material_id = Column(_brd_bigint(), ForeignKey("brd_material.id", ondelete="RESTRICT"), nullable=False, index=True, comment="材料ID")
     plot_code = Column(String(64), unique=True, nullable=False, comment="Plot 编码")
@@ -249,7 +250,7 @@ class BreedingPlot(Base):
     plant_count_planned = Column(Integer, comment="计划株数")
     plant_count_actual = Column(Integer, comment="实际株数")
     status = Column(String(32), nullable=False, default="active", comment="状态")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     remarks = Column(Text, comment="备注")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="创建时间")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="更新时间")
@@ -282,7 +283,7 @@ class BreedingObservation(Base):
         ),
     )
 
-    id = Column(_brd_bigint(), primary_key=True, index=True)
+    id = Column(_brd_bigint(), primary_key=True)
     trial_id = Column(_brd_bigint(), ForeignKey("brd_trial.id", ondelete="RESTRICT"), nullable=False, index=True, comment="试验ID")
     plot_id = Column(_brd_bigint(), ForeignKey("brd_plot.id", ondelete="SET NULL"), index=True, comment="Plot ID")
     material_id = Column(_brd_bigint(), ForeignKey("brd_material.id", ondelete="SET NULL"), index=True, comment="材料ID")
@@ -300,7 +301,7 @@ class BreedingObservation(Base):
     source_version_id = Column(Integer, ForeignKey("dataset_version.id", ondelete="RESTRICT"), index=True, comment="来源 version")
     source_asset_id = Column(Integer, ForeignKey("dataset_asset.id", ondelete="RESTRICT"), index=True, comment="来源 asset")
     source_row_key = Column(String(128), comment="来源行标识")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     remarks = Column(Text, comment="备注")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="创建时间")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="更新时间")
@@ -316,7 +317,7 @@ class BreedingBioSample(Base):
         Index("ix_brd_biosample_status", "status"),
     )
 
-    id = Column(_brd_bigint(), primary_key=True, index=True)
+    id = Column(_brd_bigint(), primary_key=True)
     sample_code = Column(String(64), unique=True, nullable=False, comment="样本编号")
     material_id = Column(_brd_bigint(), ForeignKey("brd_material.id", ondelete="RESTRICT"), nullable=False, index=True, comment="材料ID")
     plot_id = Column(_brd_bigint(), ForeignKey("brd_plot.id", ondelete="SET NULL"), index=True, comment="Plot ID")
@@ -329,7 +330,7 @@ class BreedingBioSample(Base):
     collector = Column(String(128), comment="采样人")
     storage_location = Column(String(128), comment="保存位置")
     status = Column(String(32), nullable=False, default="active", comment="状态")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     remarks = Column(Text, comment="备注")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="创建时间")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="更新时间")
@@ -344,7 +345,7 @@ class BreedingAssay(Base):
         Index("ix_brd_assay_status_run_date", "status", "run_date"),
     )
 
-    id = Column(_brd_bigint(), primary_key=True, index=True)
+    id = Column(_brd_bigint(), primary_key=True)
     assay_code = Column(String(64), unique=True, nullable=False, comment="实验编号")
     biosample_id = Column(_brd_bigint(), ForeignKey("brd_biosample.id", ondelete="RESTRICT"), nullable=False, index=True, comment="生物样本ID")
     assay_type = Column(String(32), nullable=False, comment="实验类型")
@@ -358,7 +359,7 @@ class BreedingAssay(Base):
     read_length = Column(Integer, comment="读长 bp")
     run_date = Column(Date, comment="实验日期")
     status = Column(String(32), nullable=False, default="active", comment="状态")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     remarks = Column(Text, comment="备注")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="创建时间")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="更新时间")
@@ -384,7 +385,7 @@ class BreedingDataFile(Base):
         CheckConstraint("file_size is null or file_size >= 0", name="ck_brd_data_file_file_size"),
     )
 
-    id = Column(_brd_bigint(), primary_key=True, index=True)
+    id = Column(_brd_bigint(), primary_key=True)
     assay_id = Column(_brd_bigint(), ForeignKey("brd_assay.id", ondelete="RESTRICT"), nullable=False, index=True, comment="Assay ID")
     source_mode = Column(String(32), nullable=False, comment="来源模式")
     dataset_id = Column(Integer, ForeignKey("dataset_registry.id", ondelete="RESTRICT"), index=True, comment="dataset ID")
@@ -398,7 +399,7 @@ class BreedingDataFile(Base):
     checksum_value = Column(String(128), comment="校验值快照")
     file_size = Column(_brd_bigint(), comment="文件大小")
     status = Column(String(32), nullable=False, default="active", comment="状态")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     remarks = Column(Text, comment="备注")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="创建时间")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="更新时间")
@@ -437,7 +438,7 @@ class BreedingDatasetSubjectLink(Base):
         ),
     )
 
-    id = Column(_brd_bigint(), primary_key=True, index=True)
+    id = Column(_brd_bigint(), primary_key=True)
     dataset_id = Column(Integer, ForeignKey("dataset_registry.id", ondelete="RESTRICT"), nullable=False, index=True, comment="dataset ID")
     version_id = Column(Integer, ForeignKey("dataset_version.id", ondelete="RESTRICT"), nullable=False, index=True, comment="version ID")
     asset_id = Column(Integer, ForeignKey("dataset_asset.id", ondelete="RESTRICT"), index=True, comment="asset ID")
@@ -477,7 +478,7 @@ class BreedingDatasetAssayLink(Base):
         ),
     )
 
-    id = Column(_brd_bigint(), primary_key=True, index=True)
+    id = Column(_brd_bigint(), primary_key=True)
     dataset_id = Column(Integer, ForeignKey("dataset_registry.id", ondelete="RESTRICT"), nullable=False, index=True, comment="dataset ID")
     version_id = Column(Integer, ForeignKey("dataset_version.id", ondelete="RESTRICT"), nullable=False, index=True, comment="version ID")
     asset_id = Column(Integer, ForeignKey("dataset_asset.id", ondelete="RESTRICT"), nullable=False, index=True, comment="asset ID")
@@ -515,7 +516,7 @@ class BreedingVariantSampleMap(Base):
         ),
     )
 
-    id = Column(_brd_bigint(), primary_key=True, index=True)
+    id = Column(_brd_bigint(), primary_key=True)
     dataset_id = Column(Integer, ForeignKey("dataset_registry.id", ondelete="RESTRICT"), nullable=False, index=True, comment="dataset ID")
     version_id = Column(Integer, ForeignKey("dataset_version.id", ondelete="RESTRICT"), nullable=False, index=True, comment="version ID")
     asset_id = Column(Integer, ForeignKey("dataset_asset.id", ondelete="RESTRICT"), nullable=False, index=True, comment="asset ID")
@@ -557,7 +558,7 @@ class BreedingPhenotypeSubjectMap(Base):
         ),
     )
 
-    id = Column(_brd_bigint(), primary_key=True, index=True)
+    id = Column(_brd_bigint(), primary_key=True)
     dataset_id = Column(Integer, ForeignKey("dataset_registry.id", ondelete="RESTRICT"), nullable=False, index=True, comment="dataset ID")
     version_id = Column(Integer, ForeignKey("dataset_version.id", ondelete="RESTRICT"), nullable=False, index=True, comment="version ID")
     asset_id = Column(Integer, ForeignKey("dataset_asset.id", ondelete="RESTRICT"), nullable=False, index=True, comment="asset ID")

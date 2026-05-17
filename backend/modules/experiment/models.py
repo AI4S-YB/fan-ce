@@ -6,13 +6,14 @@
 @Desc    :  None
 """
 from sqlalchemy import Boolean, Column, Integer, String, Text, ForeignKey, Float
+from sqlalchemy.dialects.postgresql import JSONB
 import time
 from shared.database import Base
 
 
 class Experiment(Base):
     __tablename__ = "abd_experiment"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     accession = Column(String(255), unique=True, index=True, comment='# 实验编号，如SRX123456')
     title = Column(String(255), comment=' # 实验标题')
     experiment_type = Column(String(255), comment=' # 实验类型：RNA-Seq, DNA-Seq, ChIP-Seq等')
@@ -48,7 +49,7 @@ class Experiment(Base):
     create_time = Column(Integer,default=int(time.time()), comment='创建时间')
     update_time = Column(Integer, comment='更新时间')
     description = Column(Text, comment="样本描述")
-    meta_json = Column(Text, comment="元数据json")
+    meta_json = Column(JSONB, comment="元数据json")
 
 
     def to_dict(self):
@@ -64,7 +65,7 @@ class Experiment(Base):
 
 class EnhancementMeta(Base):
     __tablename__ = "abd_experiment_meta"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     experiment_id = Column(Integer, comment="样本ID")
     key = Column(String(320), comment='属性键名')
     value = Column(Text, comment='属性值')

@@ -1,4 +1,5 @@
 from sqlalchemy import BigInteger, Boolean, Column, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 
 from shared.database import Base
 
@@ -14,7 +15,7 @@ class DatasetKindRegistry(Base):
     is_system = Column(Boolean, default=False, comment="是否系统内置")
     is_active = Column(Boolean, default=True, comment="是否启用")
     sort_order = Column(Integer, default=0, comment="排序")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     create_time = Column(Integer, comment="创建时间")
     update_time = Column(Integer, comment="更新时间")
 
@@ -31,7 +32,7 @@ class AssetTypeRegistry(Base):
     is_system = Column(Boolean, default=False, comment="是否系统内置")
     is_active = Column(Boolean, default=True, comment="是否启用")
     sort_order = Column(Integer, default=0, comment="排序")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     create_time = Column(Integer, comment="创建时间")
     update_time = Column(Integer, comment="更新时间")
 
@@ -50,7 +51,7 @@ class AssetFileTypeRegistry(Base):
     is_system = Column(Boolean, default=False, comment="是否系统内置")
     is_active = Column(Boolean, default=True, comment="是否启用")
     sort_order = Column(Integer, default=0, comment="排序")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     create_time = Column(Integer, comment="创建时间")
     update_time = Column(Integer, comment="更新时间")
 
@@ -116,7 +117,7 @@ class DatasetStagingFile(Base):
     status = Column(String(64), default="uploaded", comment="暂存状态")
     linked_dataset_id = Column(Integer, index=True, comment="已注册关联的 dataset id")
     create_user_id = Column(Integer, comment="上传人")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     create_time = Column(Integer, comment="创建时间")
     update_time = Column(Integer, comment="更新时间")
 
@@ -143,7 +144,7 @@ class DatasetRegistry(Base):
     validation_summary = Column(Text, comment="校验摘要")
     index_summary = Column(Text, comment="索引摘要")
     description_md = Column(Text, comment="Markdown 格式的数据描述文档")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     default_public_version_id = Column(Integer, index=True, comment="默认公开版本 ID")
     create_time = Column(Integer, comment="创建时间")
     update_time = Column(Integer, comment="更新时间")
@@ -197,7 +198,7 @@ class DatasetVersion(Base):
     query_engine = Column(String(128), comment="查询引擎")
     validation_summary = Column(Text, comment="校验摘要")
     index_summary = Column(Text, comment="索引摘要")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     is_current = Column(Boolean, default=False, comment="是否当前版本")
     is_default_public = Column(Boolean, default=False, comment="是否默认公开版本")
     create_time = Column(Integer, comment="创建时间")
@@ -227,7 +228,7 @@ class DatasetAsset(Base):
     is_required = Column(Boolean, default=True, comment="是否必需资产")
     is_query_entry = Column(Boolean, default=False, comment="是否默认查询入口")
     display_order = Column(Integer, default=0, comment="展示顺序")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     create_time = Column(Integer, comment="创建时间")
     update_time = Column(Integer, comment="更新时间")
 
@@ -250,7 +251,7 @@ class AssetFile(Base):
     compress_type = Column(String(32), comment="压缩类型")
     index_of_file_id = Column(Integer, index=True, comment="索引对应主文件 ID")
     status = Column(String(64), default="active", comment="文件状态")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     is_downloadable = Column(Boolean, default=False, comment="是否允许公开下载")
     create_time = Column(Integer, comment="创建时间")
     update_time = Column(Integer, comment="更新时间")
@@ -418,7 +419,7 @@ class PhenomeSubject(Base):
     subject_type = Column(String(32), comment="subject type")
     source_sheet = Column(String(128), comment="source sheet")
     source_row_key = Column(String(255), comment="source row key")
-    meta_json = Column(Text, comment="extra structured payload")
+    meta_json = Column(JSONB, comment="extra structured payload")
     create_time = Column(Integer, comment="创建时间")
     update_time = Column(Integer, comment="更新时间")
 
@@ -446,7 +447,7 @@ class PhenomeTrait(Base):
     time_axis_type = Column(String(32), comment="time axis type")
     category_group = Column(String(128), comment="category group")
     display_order = Column(Integer, comment="display order")
-    meta_json = Column(Text, comment="extra structured payload")
+    meta_json = Column(JSONB, comment="extra structured payload")
     create_time = Column(Integer, comment="创建时间")
     update_time = Column(Integer, comment="更新时间")
 
@@ -471,7 +472,7 @@ class PhenomeSourceColumn(Base):
     trait_code = Column(String(128), index=True, comment="trait code")
     timepoint = Column(String(64), comment="timepoint")
     parse_rule = Column(String(128), comment="parse rule")
-    meta_json = Column(Text, comment="extra structured payload")
+    meta_json = Column(JSONB, comment="extra structured payload")
     create_time = Column(Integer, comment="创建时间")
 
 
@@ -489,7 +490,7 @@ class PhenomeTrial(Base):
     trial_type = Column(String(64), comment="试验类型")
     design_type = Column(String(64), comment="设计类型")
     program_id = Column(Integer, nullable=True, index=True, comment="关联育种项目 ID")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     create_time = Column(Integer, comment="创建时间")
     update_time = Column(Integer, comment="更新时间")
 
@@ -506,7 +507,7 @@ class PhenomePlot(Base):
     block_no = Column(Integer, comment="区组编号")
     replicate_no = Column(Integer, comment="重复编号")
     subject_id = Column(Integer, ForeignKey("phn_subject.id", ondelete="SET NULL"), nullable=True, index=True, comment="品种 ID")
-    meta_json = Column(Text, comment="扩展元数据")
+    meta_json = Column(JSONB, comment="扩展元数据")
     create_time = Column(Integer, comment="创建时间")
     update_time = Column(Integer, comment="更新时间")
 
@@ -540,5 +541,5 @@ class PhenomeObservation(Base):
     source_row_key = Column(String(255), comment="source row key")
     source_column_name = Column(String(255), comment="source column name")
     qc_status = Column(String(32), comment="qc status")
-    meta_json = Column(Text, comment="extra structured payload")
+    meta_json = Column(JSONB, comment="extra structured payload")
     create_time = Column(Integer, comment="创建时间")

@@ -6,13 +6,14 @@
 @Desc    :  None
 """
 from sqlalchemy import Boolean, Column, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 
 from shared.database import Base
 
 
 class Sample(Base):
     __tablename__ = "abd_sample"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     sample_name = Column(String(320), comment='名称')
     sample_code = Column(String(320), comment='样本编号')
     type = Column(String(320), default='1', comment='类型')
@@ -24,7 +25,7 @@ class Sample(Base):
     create_time = Column(Integer, comment='创建时间')
     update_time = Column(Integer, comment='更新时间')
     description = Column(Text,comment="样本描述")
-    meta_json = Column(Text, comment="元数据json")
+    meta_json = Column(JSONB, comment="元数据json")
 
     def to_dict(self):
         model_dict = dict(self.__dict__)
@@ -38,7 +39,7 @@ class Sample(Base):
 
 class SampleMeta(Base):
     __tablename__ = "abd_sample_meta"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     sample_id = Column(Integer, comment="样本ID")
     key = Column(String(320), comment='属性键名')
     value = Column(Text, comment='属性值')
