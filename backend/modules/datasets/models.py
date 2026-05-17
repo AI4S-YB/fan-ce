@@ -189,7 +189,6 @@ class DatasetVersion(Base):
     id = Column(Integer, primary_key=True)
     version = Column(String(64), index=True, comment="版本号")
     title = Column(String(320), comment="版本标题")
-    dataset_type = Column(String(128), comment="数据集类型")
     lifecycle_state = Column(String(64), default="draft", comment="生命周期状态")
     visibility = Column(String(32), default="private", comment="可见性")
     release_state = Column(String(32), default="unreleased", comment="发布状态")

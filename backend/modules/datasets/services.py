@@ -1335,7 +1335,7 @@ class DatasetDomainService:
             "src_dataset_id": src_version.dataset_id if src_version else None,
             "src_dataset_code": src_registry.dataset_code if src_registry else None,
             "src_dataset_title": src_database.name if src_database else None,
-            "src_dataset_type": (src_registry.dataset_type if src_registry else None) or (src_version.dataset_type if src_version else None),
+            "src_dataset_type": src_registry.dataset_type if src_registry else None,
             "src_version_id": lineage_obj.src_dataset_version_id,
             "src_version": src_version.version if src_version else None,
             "src_asset_id": lineage_obj.src_asset_id,
@@ -1343,7 +1343,7 @@ class DatasetDomainService:
             "dst_dataset_id": dst_version.dataset_id if dst_version else None,
             "dst_dataset_code": dst_registry.dataset_code if dst_registry else None,
             "dst_dataset_title": dst_database.name if dst_database else None,
-            "dst_dataset_type": (dst_registry.dataset_type if dst_registry else None) or (dst_version.dataset_type if dst_version else None),
+            "dst_dataset_type": dst_registry.dataset_type if dst_registry else None,
             "dst_version_id": lineage_obj.dst_dataset_version_id,
             "dst_version": dst_version.version if dst_version else None,
             "dst_asset_id": lineage_obj.dst_asset_id,
@@ -1557,6 +1557,8 @@ class DatasetDomainService:
     def _ensure_assets_for_version(self, db, version_obj):
         if not version_obj:
             return []
+        registry = dataset_registry_db.get(db=db, id=version_obj.dataset_id)
+        dataset_type = registry.dataset_type if registry else "generic"
         asset_rows = dataset_asset_db.get_data(db=db, filters={"dataset_version_id": version_obj.id})
         asset_rows = sorted(asset_rows, key=lambda item: (-int(bool(item.is_query_entry)), item.display_order or 0, item.id))
         if not asset_rows and not version_obj.file_path:
@@ -1565,7 +1567,7 @@ class DatasetDomainService:
         if version_obj.file_path:
             # Legacy compatibility: bootstrap the asset/file rows from version.file_path
             # so query paths can continue reading from asset-first payloads.
-            default_asset_type = self._default_asset_type(version_obj.dataset_type, db=db)
+            default_asset_type = self._default_asset_type(dataset_type, db=db)
             default_asset_code = self._default_asset_code(default_asset_type)
             default_asset = next((item for item in asset_rows if item.asset_code == default_asset_code), None)
             if not default_asset:
@@ -1617,7 +1619,7 @@ class DatasetDomainService:
                     file_format=version_obj.file_format,
                     status="active",
                 )
-                for index_path in self._detect_index_file_paths(version_obj.file_path, version_obj.dataset_type):
+                for index_path in self._detect_index_file_paths(version_obj.file_path, dataset_type):
                     self._ensure_asset_file_record(
                         db=db,
                         asset_obj=default_asset,
@@ -2689,12 +2691,16 @@ class DatasetDomainService:
         file_path = self._normalize_local_path(getattr(version_obj, "file_path", None))
         if db:
             file_path = self._resolve_version_primary_file_path(db=db, version_obj=version_obj) or file_path
+        registry_dataset_type = None
+        if db:
+            reg = dataset_registry_db.get(db=db, id=version_obj.dataset_id)
+            registry_dataset_type = reg.dataset_type if reg else None
         return {
             "id": version_obj.id,
             "dataset_id": version_obj.dataset_id,
             "version": version_obj.version,
             "title": version_obj.title,
-            "dataset_type": version_obj.dataset_type,
+            "dataset_type": registry_dataset_type,
             "lifecycle_state": version_obj.lifecycle_state,
             "visibility": version_obj.visibility,
             "release_state": release_state,
@@ -2897,7 +2903,7 @@ class DatasetDomainService:
         ).first()
 
         version_str = current_version.version if current_version else ""
-        dataset_type = current_version.dataset_type if (current_version and current_version.dataset_type) else (registry.dataset_type or "")
+        dataset_type = registry.dataset_type if registry else ""
         organism = registry.organism or ""
 
         # 3. Query entry asset (needed by GeneSearch, GeneInfo, Genotype, Phenotype, Expression)
@@ -3024,7 +3030,7 @@ class DatasetDomainService:
 
         dataset_payload["version"] = version_obj.version
         dataset_payload["title"] = version_obj.title or dataset_payload["title"]
-        dataset_payload["dataset_type"] = version_obj.dataset_type or dataset_payload["dataset_type"]
+        dataset_payload["dataset_type"] = dataset_payload["dataset_type"]
         dataset_kind_obj = self._get_dataset_kind_registry_by_code(db=db, code=dataset_payload["dataset_type"])
         dataset_payload["dataset_kind"] = self._build_dataset_kind_registry_payload(dataset_kind_obj) if dataset_kind_obj else None
 
@@ -3033,7 +3039,7 @@ class DatasetDomainService:
         if effective_file_path:
             file_payload["path"] = effective_file_path
             file_payload["type"] = self._to_file_type(version_obj.file_format) or file_payload.get("type")
-            file_payload["data_type"] = version_obj.dataset_type or file_payload.get("data_type")
+            file_payload["data_type"] = file_payload.get("data_type")
             file_payload["name"] = file_payload.get("name") or version_obj.title or dataset_payload["title"]
             dataset_payload["file"] = file_payload
 
@@ -3665,10 +3671,12 @@ class DatasetDomainService:
 
     def create_dataset_asset(self, db, request_data, user):
         version_obj = self._ensure_version_write_access(db=db, version_id=request_data.version_id, user=user)
+        registry = dataset_registry_db.get(db=db, id=version_obj.dataset_id)
+        dataset_type = registry.dataset_type if registry else "generic"
         asset_type, _asset_type = self._require_asset_type_code(
             db=db,
             asset_type=request_data.asset_type,
-            dataset_type=version_obj.dataset_type,
+            dataset_type=dataset_type,
         )
         asset_code = request_data.asset_code or self._next_asset_code(
             db=db,
@@ -3751,7 +3759,7 @@ class DatasetDomainService:
                     value, _asset_type = self._require_asset_type_code(
                         db=db,
                         asset_type=value,
-                        dataset_type=version_obj.dataset_type,
+                        dataset_type=dataset_type,
                     )
                     next_asset_type = value
                 update_data[field] = value
@@ -5110,8 +5118,6 @@ class DatasetDomainService:
     def _dataset_kind_in_use(self, db, code):
         if dataset_registry_db.get_filter(db=db, filters={"dataset_type": code}):
             return "dataset_registry"
-        if dataset_version_db.get_filter(db=db, filters={"dataset_type": code}):
-            return "dataset_version"
         for row in asset_type_registry_db.get_data(db=db, filters={}):
             if code in self._canonicalize_dataset_type_list(self._parse_json_list(row.allowed_dataset_types)):
                 return "asset_type_registry"
@@ -5637,7 +5643,6 @@ class DatasetDomainService:
         dataset_id = version_obj.dataset_id
         version_name = version_obj.version
         version_title = version_obj.title
-        version_dataset_type = version_obj.dataset_type
         version_file_format = version_obj.file_format
         version_query_engine = version_obj.query_engine
         version_validation_summary = version_obj.validation_summary
@@ -5661,7 +5666,7 @@ class DatasetDomainService:
             obj_in={
                 "version": version_name,
                 "title": version_title or registry_obj.title,
-                "dataset_type": version_dataset_type or registry_obj.dataset_type,
+                "dataset_type": registry_obj.dataset_type,
                 "file_format": version_file_format or "",
                 "query_engine": version_query_engine or "",
                 "validation_summary": version_validation_summary
