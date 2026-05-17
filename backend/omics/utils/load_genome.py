@@ -108,8 +108,8 @@ def delete_genome_db(conn):
         for table in tables:
             table_name = table[0]
             if not table_name.replace("_", "").isalnum():
-            raise ValueError(f"Unsafe table name: {table_name}")
-        cursor.execute(f"DROP TABLE IF EXISTS \"{table_name}\"")
+                raise ValueError(f"Unsafe table name: {table_name}")
+            cursor.execute(f"DROP TABLE IF EXISTS \"{table_name}\"")
         
         conn.commit()
         print(f"Successfully deleted {len(tables)} HSE tables from database")
@@ -163,8 +163,8 @@ def process_gff_file(genome_path, gff_name, db_path, operation):
                 table_name = table[0]
                 if table_name in ['meta', 'features', 'relations', 'duplicates', 'directives', 'autoincrements']:
                     if not table_name.replace("_", "").isalnum():
-            raise ValueError(f"Unsafe table name: {table_name}")
-        cursor.execute(f"DROP TABLE IF EXISTS \"{table_name}\"")
+                        raise ValueError(f"Unsafe table name: {table_name}")
+                    cursor.execute(f"DROP TABLE IF EXISTS \"{table_name}\"")
             
             conn.commit()
         print(f"Successfully deleted GFF tables from database")

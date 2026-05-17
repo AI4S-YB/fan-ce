@@ -75,7 +75,7 @@ class Settings(BaseSettings):
     def get_config_name(cls):
         """获取配置文件名称"""
         env = os.environ.get("APP_ENV", "dev")
-        config_dir = os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), "conf")
+        config_dir = os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), "config")
         candidate = f"config.{env}"
         if os.path.exists(os.path.join(config_dir, f"{candidate}.yaml")):
             return candidate
@@ -88,5 +88,5 @@ settings = Settings()
 
 # 然后在实例创建后设置 app_options 属性
 # 服务配置，根据环境加载不同的配置文件
-settings.GlobalConfigFile = ConfigFile(os.path.join(settings.BASE_PATH, "conf"))
+settings.GlobalConfigFile = ConfigFile(os.path.join(settings.BASE_PATH, "config"))
 settings.app_options = Registry(settings.GlobalConfigFile.get_app_config(settings.get_config_name()))

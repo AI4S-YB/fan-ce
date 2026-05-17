@@ -14,8 +14,8 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from core import settings
-from register import register_cors, register_exception, register_middleware, register_app, register_router, register_init
+from config.settings import settings
+from app import register_cors, register_exception, register_middleware, register_app, register_router, register_init
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 app = FastAPI(title=settings.PROJECT_TITLE, description=settings.PROJECT_DESCRIPTION)

@@ -3,7 +3,7 @@
 # @desc : 注册路由
 from fastapi import FastAPI, APIRouter
 
-from core import settings
+from config.settings import settings
 from modules.routers import app_routers
 from omics.routers import basis_router
 

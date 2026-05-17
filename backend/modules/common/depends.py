@@ -22,7 +22,7 @@ from modules.common.schemas import TokenPayload, UserInfo
 from shared.security import ALGORITHM
 from modules.system.rbac.crud import user_role_db, role_menu_db, menu_permission_db, permission_db
 from modules.platform.setup_state import is_taxonomy_ready
-from core import settings
+from config.settings import settings
 from shared.database import get_db
 from shared.crypto import read_pem_public_key, verify_license, get_serial_number
 from shared.exceptions import ExceptionStatus

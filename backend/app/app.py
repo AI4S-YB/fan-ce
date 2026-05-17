@@ -4,7 +4,7 @@
 from fastapi import FastAPI, applications
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 
-from core import settings
+from config.settings import settings
 
 
 def swagger_ui_patch(*args, **kwargs):
