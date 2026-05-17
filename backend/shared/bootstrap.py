@@ -511,7 +511,6 @@ def init_dev_seed_data(db):
         apps_root,
         dataset_registry_menu,
         dataset_scan_menu,
-        dataset_candidate_menu,
         dataset_menu,
         database_menu,
         germplasm_root,

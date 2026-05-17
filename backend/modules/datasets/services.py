@@ -650,14 +650,21 @@ class DatasetDomainService:
         self._ensure_dataset_write_access(db=db, dataset_id=version_obj.dataset_id, user=user)
         return version_obj
 
+    def _get_asset_dataset_id(self, db, asset_obj):
+        """Get dataset_id from an asset via its version."""
+        if not asset_obj or not asset_obj.dataset_version_id:
+            return None
+        version = dataset_version_db.get(db=db, id=asset_obj.dataset_version_id)
+        return version.dataset_id if version else None
+
     def _ensure_asset_read_access(self, db, asset_id, user):
         asset_obj = dataset_asset_db.get(db=db, id=asset_id)
-        self._ensure_dataset_read_access(db=db, dataset_id=asset_obj.dataset_id, user=user)
+        self._ensure_dataset_read_access(db=db, dataset_id=self._get_asset_dataset_id(db, asset_obj), user=user)
         return asset_obj
 
     def _ensure_asset_write_access(self, db, asset_id, user):
         asset_obj = dataset_asset_db.get(db=db, id=asset_id)
-        self._ensure_dataset_write_access(db=db, dataset_id=asset_obj.dataset_id, user=user)
+        self._ensure_dataset_write_access(db=db, dataset_id=self._get_asset_dataset_id(db, asset_obj), user=user)
         return asset_obj
 
     def _ensure_asset_file_read_access(self, db, asset_file_id, user):
@@ -753,7 +760,7 @@ class DatasetDomainService:
             return None
         return rebuild_functional_annotation_index(
             db=db,
-            dataset_id=asset_obj.dataset_id,
+            dataset_id=self._get_asset_dataset_id(db, asset_obj),
             version_id=asset_obj.dataset_version_id,
             asset_id=asset_obj.id,
             file_path=primary_file_path,
@@ -764,7 +771,7 @@ class DatasetDomainService:
             return
         clear_functional_annotation_index(
             db=db,
-            dataset_id=asset_obj.dataset_id,
+            dataset_id=self._get_asset_dataset_id(db, asset_obj),
             version_id=asset_obj.dataset_version_id,
             asset_id=asset_obj.id,
         )
@@ -784,7 +791,7 @@ class DatasetDomainService:
             return None
         return rebuild_phenome_index(
             db=db,
-            dataset_id=asset_obj.dataset_id,
+            dataset_id=self._get_asset_dataset_id(db, asset_obj),
             version_id=asset_obj.dataset_version_id,
             asset_id=asset_obj.id,
             file_path=primary_file_path,
@@ -795,7 +802,7 @@ class DatasetDomainService:
             return
         clear_phenome_index(
             db=db,
-            dataset_id=asset_obj.dataset_id,
+            dataset_id=self._get_asset_dataset_id(db, asset_obj),
             version_id=asset_obj.dataset_version_id,
             asset_id=asset_obj.id,
         )
@@ -1301,7 +1308,7 @@ class DatasetDomainService:
     def _build_dataset_asset_payload(self, asset_obj, files=None):
         return {
             "id": asset_obj.id,
-            "dataset_id": asset_obj.dataset_id,
+            "dataset_id": self._get_asset_dataset_id(db, asset_obj),
             "version_id": asset_obj.dataset_version_id,
             "asset_code": asset_obj.asset_code,
             "asset_name": asset_obj.asset_name,
@@ -1535,7 +1542,7 @@ class DatasetDomainService:
             break
         file_name = Path(local_path).name
         payload = {
-            "dataset_id": asset_obj.dataset_id,
+            "dataset_id": self._get_asset_dataset_id(db, asset_obj),
             "dataset_asset_id": asset_obj.id,
             "asset_file_type_code": resolved_asset_file_type_code,
             "file_role": normalized_file_role,
@@ -3815,7 +3822,7 @@ class DatasetDomainService:
         return {
             "asset_id": asset_id,
             "version_id": asset_obj.dataset_version_id,
-            "dataset_id": asset_obj.dataset_id,
+            "dataset_id": self._get_asset_dataset_id(db, asset_obj),
             "items": [self._build_asset_file_payload(item) for item in file_rows],
         }
 
