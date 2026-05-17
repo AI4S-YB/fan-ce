@@ -56,10 +56,9 @@ def make_user(user_id, *, is_superman=False, user_type=0):
     return SimpleNamespace(id=user_id, is_superman=is_superman, user_type=user_type)
 
 
-def create_dataset(db, *, name, owner_id, team_id=0, dataset_type="generic"):
+def create_dataset(db, *, name, team_id=0, dataset_type="generic"):
     row = DatasetRegistry(
         title=name,
-        owner_id=owner_id,
         dataset_type=dataset_type,
         lifecycle_state="ready",
         is_public=False,
@@ -81,7 +80,7 @@ def create_version(
     dataset_id,
     version,
     dataset_type="generic",
-    is_current=0,
+    is_current=False,
     lifecycle_state="draft",
     file_path=None,
     file_format=None,
@@ -99,9 +98,9 @@ def create_version(
         query_engine="file",
         validation_summary=None,
         index_summary=None,
-        extra_json=None,
+        meta_json=None,
         is_current=is_current,
-        is_default_public=0,
+        is_default_public=False,
         create_time=1,
         update_time=1,
     )
@@ -123,8 +122,8 @@ def create_asset(db, *, dataset_id, version_id, asset_code="asset_1", file_forma
         storage_backend="local",
         workflow_state="draft",
         status="active",
-        is_required=1,
-        is_query_entry=1,
+        is_required=True,
+        is_query_entry=True,
         display_order=0,
         meta_json=None,
         create_time=1,
@@ -168,8 +167,8 @@ def create_dataset_kind_registry(db, *, code="generic", base_code="generic", nam
         base_code=base_code,
         name=name,
         description=None,
-        is_system=0,
-        is_active=1,
+        is_system=False,
+        is_active=True,
         sort_order=0,
         meta_json=None,
         create_time=1,
@@ -194,7 +193,7 @@ def db_session():
 
 
 def test_owner_can_get_dataset_and_unrelated_user_is_denied(db_session):
-    dataset = create_dataset(db_session, name="owned-dataset", owner_id=101, team_id=0)
+    dataset = create_dataset(db_session, name="owned-dataset", team_id=0)
 
     owner_payload = dataset_domain_service.get_dataset(db=db_session, dataset_id=dataset.id, user=make_user(101))
     assert owner_payload["id"] == dataset.id
@@ -206,8 +205,8 @@ def test_owner_can_get_dataset_and_unrelated_user_is_denied(db_session):
 
 
 def test_list_datasets_filters_inaccessible_rows(db_session):
-    owned_dataset = create_dataset(db_session, name="visible", owner_id=401, team_id=0)
-    create_dataset(db_session, name="hidden", owner_id=999, team_id=0)
+    owned_dataset = create_dataset(db_session, name="visible", team_id=0)
+    create_dataset(db_session, name="hidden", team_id=0)
 
     request_data = SimpleNamespace(
         page=1,
@@ -227,8 +226,8 @@ def test_list_datasets_filters_inaccessible_rows(db_session):
 
 
 def test_get_options_filters_inaccessible_rows(db_session):
-    visible_dataset = create_dataset(db_session, name="visible-option", owner_id=451, team_id=0)
-    create_dataset(db_session, name="hidden-option", owner_id=999, team_id=0)
+    visible_dataset = create_dataset(db_session, name="visible-option", team_id=0)
+    create_dataset(db_session, name="hidden-option", team_id=0)
 
     request_data = SimpleNamespace(
         page=1,
@@ -253,8 +252,8 @@ def test_get_options_exposes_resolved_file_path_from_current_version_asset(db_se
         code="variant",
         base_code="variant",
         name="Variant",
-        is_system=0,
-        is_active=1,
+        is_system=False,
+        is_active=True,
         sort_order=1,
         create_time=1,
         update_time=1,
@@ -262,7 +261,7 @@ def test_get_options_exposes_resolved_file_path_from_current_version_asset(db_se
     db_session.add(kind)
     db_session.commit()
 
-    dataset = create_dataset(db_session, name="visible-option", owner_id=452, team_id=0, dataset_type="variant")
+    dataset = create_dataset(db_session, name="visible-option", team_id=0, dataset_type="variant")
     version = create_version(
         db_session,
         dataset_id=dataset.id,
@@ -271,7 +270,7 @@ def test_get_options_exposes_resolved_file_path_from_current_version_asset(db_se
         lifecycle_state="ready",
         file_path=None,
         file_format="vcf.gz",
-        is_current=1,
+        is_current=True,
     )
     asset = create_asset(
         db_session,
@@ -312,8 +311,8 @@ def test_get_options_exposes_resolved_file_path_from_current_version_asset(db_se
 
 
 def test_version_asset_file_and_lineage_inherit_dataset_scope(db_session):
-    dataset = create_dataset(db_session, name="versioned", owner_id=501, team_id=0)
-    version_a = create_version(db_session, dataset_id=dataset.id, version="v1", is_current=1)
+    dataset = create_dataset(db_session, name="versioned", team_id=0)
+    version_a = create_version(db_session, dataset_id=dataset.id, version="v1", is_current=True)
     version_b = create_version(db_session, dataset_id=dataset.id, version="v2")
     asset = create_asset(db_session, dataset_id=dataset.id, version_id=version_a.id)
     asset_file = create_asset_file(db_session, dataset_id=dataset.id, asset_id=asset.id)
@@ -360,13 +359,13 @@ def test_version_asset_file_and_lineage_inherit_dataset_scope(db_session):
 
 
 def test_workflow_task_access_uses_dataset_scope_or_operator_scope(db_session):
-    dataset = create_dataset(db_session, name="task-dataset", owner_id=601, team_id=0)
+    dataset = create_dataset(db_session, name="task-dataset", team_id=0)
     dataset_task = DatasetWorkflowTask(
         database_id=dataset.id,
         task_type="validate",
-        task_status="success",
-        from_state="uploaded",
-        to_state="validated",
+        status="success",
+        from_lifecycle_state="uploaded",
+        to_lifecycle_state="validated",
         operator_id=999,
         detail="ok",
         create_time=1,
@@ -375,9 +374,9 @@ def test_workflow_task_access_uses_dataset_scope_or_operator_scope(db_session):
     global_task = DatasetWorkflowTask(
         database_id=None,
         task_type="validate",
-        task_status="pending",
-        from_state=None,
-        to_state=None,
+        status="pending",
+        from_lifecycle_state=None,
+        to_lifecycle_state=None,
         operator_id=602,
         detail="queued",
         create_time=1,
@@ -455,7 +454,7 @@ def test_registry_management_requires_platform_admin(db_session):
 
 
 def test_user_type_admin_has_global_dataset_access_and_registry_access(db_session):
-    dataset = create_dataset(db_session, name="admin-visible", owner_id=901, team_id=0)
+    dataset = create_dataset(db_session, name="admin-visible", team_id=0)
     platform_admin = make_user(902, user_type=1)
 
     dataset_payload = dataset_domain_service.get_dataset(
@@ -483,8 +482,8 @@ def test_global_version_publish_record_list_is_filtered_by_access_scope(db_sessi
     owner_b = make_user(1002)
     admin = make_user(1003, user_type=1)
 
-    dataset_a = create_dataset(db_session, name="publish-visible", owner_id=owner_a.id, team_id=0)
-    dataset_b = create_dataset(db_session, name="publish-hidden", owner_id=owner_b.id, team_id=0)
+    dataset_a = create_dataset(db_session, name="publish-visible"owner_a.id, team_id=0)
+    dataset_b = create_dataset(db_session, name="publish-hidden"owner_b.id, team_id=0)
 
     file_a = tmp_path / "visible.txt"
     file_b = tmp_path / "hidden.txt"
@@ -540,13 +539,13 @@ def test_global_version_publish_record_list_is_filtered_by_access_scope(db_sessi
 # Community Edition: system_project removed. test_project_filter uses Project which is deleted.
 # Rewrite with brd_program when breeding program linkage is available.
 # def test_project_filter_still_respects_row_access_while_admin_sees_all(db_session):
-#     project = Project(name="shared-project", code="shared-project", user_id=1300, type="1", sort=1, status=1, is_public=0, is_active=1, is_delete=0, create_time=1, remark="")
+#     project = Project(name="shared-project", code="shared-project", user_id=1300, type="1", sort=1, status=1, is_public=0, is_active=True, is_delete=0, create_time=1, remark="")
 #     db_session.add(project)
 #     db_session.commit()
 #     db_session.refresh(project)
 #
-#     owned_dataset = create_dataset(db_session, name="owned-filtered", owner_id=1301, team_id=0)
-#     hidden_dataset = create_dataset(db_session, name="hidden-filtered", owner_id=1302, team_id=0)
+#     owned_dataset = create_dataset(db_session, name="owned-filtered", team_id=0)
+#     hidden_dataset = create_dataset(db_session, name="hidden-filtered", team_id=0)
 #     db_session.add_all(
 #         [
 #             ProjectDatabasesLink(database_id=owned_dataset.id, project_id=project.id),
@@ -575,13 +574,13 @@ def test_global_version_publish_record_list_is_filtered_by_access_scope(db_sessi
 
 
 def test_retry_ingest_task_respects_dataset_scope_and_global_operator_scope(db_session):
-    dataset = create_dataset(db_session, name="retry-dataset", owner_id=1401, team_id=0)
+    dataset = create_dataset(db_session, name="retry-dataset", team_id=0)
     dataset_task = DatasetWorkflowTask(
         database_id=dataset.id,
         task_type="validate",
-        task_status="failed",
-        from_state="uploaded",
-        to_state="uploaded",
+        status="failed",
+        from_lifecycle_state="uploaded",
+        to_lifecycle_state="uploaded",
         operator_id=1402,
         detail=json.dumps({"async_task": True, "action": "validate", "request": {"id": dataset.id}, "attempt": 1}, ensure_ascii=False),
         create_time=1,
@@ -590,9 +589,9 @@ def test_retry_ingest_task_respects_dataset_scope_and_global_operator_scope(db_s
     global_task = DatasetWorkflowTask(
         database_id=None,
         task_type="index",
-        task_status="failed",
-        from_state=None,
-        to_state=None,
+        status="failed",
+        from_lifecycle_state=None,
+        to_lifecycle_state=None,
         operator_id=1403,
         detail=json.dumps({"async_task": True, "action": "index", "request": {"file_path": "/tmp/demo.txt"}, "attempt": 1}, ensure_ascii=False),
         create_time=1,
@@ -608,10 +607,10 @@ def test_retry_ingest_task_respects_dataset_scope_and_global_operator_scope(db_s
 
     assert retried_dataset_task["operator_id"] == 1401
     assert retried_dataset_task["dataset_id"] == dataset.id
-    assert retried_dataset_task["task_status"] == "pending"
+    assert retried_dataset_task["status"] == "pending"
     assert retried_global_task["operator_id"] == 1403
     assert retried_global_task["dataset_id"] is None
-    assert retried_global_task["task_status"] == "pending"
+    assert retried_global_task["status"] == "pending"
 
     with pytest.raises(HTTPException) as dataset_retry_exc:
         dataset_domain_service.retry_ingest_task(db=db_session, task_id=dataset_task.id, user=make_user(1402))

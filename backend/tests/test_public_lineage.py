@@ -9,7 +9,7 @@ class TestPublicLineage:
         from modules.datasets.services import DatasetDomainService
 
         ds = Dataset(dataset_code="DS_NO_LINEAGE", dataset_type="genome",
-                     visibility="public", assembly="IRGSP-1.0")
+                     visibility="public", )
         db_session.add(ds)
         db_session.commit()
 
@@ -32,9 +32,9 @@ class TestPublicLineage:
         from modules.datasets.services import DatasetDomainService
 
         ds1 = Dataset(dataset_code="DS_LIN_SRC", dataset_type="genome",
-                      visibility="public", assembly="IRGSP-1.0")
+                      visibility="public", )
         ds2 = Dataset(dataset_code="DS_LIN_DST", dataset_type="annotation",
-                      visibility="public", assembly="IRGSP-1.0")
+                      visibility="public", )
         db_session.add_all([ds1, ds2])
         db_session.commit()
 
@@ -68,15 +68,15 @@ class TestPublicLineage:
         from modules.datasets.services import DatasetDomainService
 
         ds1 = Dataset(dataset_code="DS_LIN_BOTH_SRC", dataset_type="genome",
-                      visibility="public", assembly="IRGSP-1.0")
+                      visibility="public", )
         ds2 = Dataset(dataset_code="DS_LIN_BOTH_DST", dataset_type="annotation",
-                      visibility="public", assembly="IRGSP-1.0")
+                      visibility="public", )
         db_session.add_all([ds1, ds2])
         db_session.commit()
 
         # Registry records needed by _build_lineage_payload
-        reg1 = DatasetRegistry(id=ds1.id, title="DS_LIN_BOTH_SRC", dataset_type="genome", owner_id=1)
-        reg2 = DatasetRegistry(id=ds2.id, title="DS_LIN_BOTH_DST", dataset_type="annotation", owner_id=1)
+        reg1 = DatasetRegistry(id=ds1.id, title="DS_LIN_BOTH_SRC", dataset_type="genome")
+        reg2 = DatasetRegistry(id=ds2.id, title="DS_LIN_BOTH_DST", dataset_type="annotation")
         db_session.add_all([reg1, reg2])
         db_session.commit()
 

@@ -138,7 +138,6 @@ class DatasetRegistry(Base):
     title = Column(String(320), comment="显示标题")
     lifecycle_state = Column(String(64), default="draft", comment="生命周期状态")
     visibility = Column(String(32), default="private", comment="可见性")
-    owner_id = Column(Integer, comment="所有者用户 ID")
     is_public = Column(Boolean, default=False, comment="是否公开")
     organism = Column(String(128), comment="物种")
     validation_summary = Column(Text, comment="校验摘要")

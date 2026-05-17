@@ -93,10 +93,9 @@ def make_user(user_id, *, is_superman=False, user_type=0):
     return type("UserStub", (), {"id": user_id, "is_superman": is_superman, "user_type": user_type})()
 
 
-def create_dataset(db, *, name, owner_id, team_id=0, dataset_type="generic"):
+def create_dataset(db, *, name, team_id=0, dataset_type="generic"):
     row = DatasetRegistry(
         title=name,
-        owner_id=owner_id,
         dataset_type=dataset_type,
         lifecycle_state="ready",
         is_public=False,
@@ -125,8 +124,8 @@ def create_version(
     lifecycle_state="draft",
     release_state="unreleased",
     visibility="private",
-    is_current=0,
-    is_default_public=0,
+    is_current=False,
+    is_default_public=False,
 ):
     row = DatasetVersion(
         database_id=dataset_id,
@@ -141,7 +140,7 @@ def create_version(
         query_engine=query_engine,
         validation_summary=None,
         index_summary=None,
-        extra_json=None,
+        meta_json=None,
         is_current=is_current,
         is_default_public=is_default_public,
         create_time=1,
@@ -162,7 +161,7 @@ def create_asset(
     asset_type="metadata_table",
     file_format="txt",
     query_engine="file",
-    is_query_entry=1,
+    is_query_entry=True,
 ):
     row = DatasetAsset(
         database_id=dataset_id,
@@ -175,7 +174,7 @@ def create_asset(
         storage_backend="local",
         workflow_state="ready",
         status="active",
-        is_required=1,
+        is_required=True,
         is_query_entry=is_query_entry,
         display_order=0,
         meta_json=None,
@@ -394,8 +393,8 @@ def test_seed_dataset_registry_defaults_updates_existing_registry_rows(db_sessio
             base_code="legacy",
             name="旧变异组",
             description="outdated",
-            is_system=1,
-            is_active=1,
+            is_system=True,
+            is_active=True,
             sort_order=1,
             meta_json=None,
             create_time=1,
@@ -410,8 +409,8 @@ def test_seed_dataset_registry_defaults_updates_existing_registry_rows(db_sessio
             name="旧 Variant VCF",
             description="outdated",
             allowed_dataset_types=json.dumps(["variant"], ensure_ascii=False),
-            is_system=1,
-            is_active=1,
+            is_system=True,
+            is_active=True,
             sort_order=1,
             meta_json=None,
             create_time=1,
@@ -445,21 +444,21 @@ def test_asset_file_type_registry_defaults_cover_genome_chain(db_session):
 
     reference_file_types = (
         db_session.query(AssetFileTypeRegistry)
-        .filter(AssetFileTypeRegistry.is_active == 1)
+        .filter(AssetFileTypeRegistry.is_active == True)
         .filter(AssetFileTypeRegistry.allowed_asset_types.like('%reference_fasta%'))
         .order_by(AssetFileTypeRegistry.sort_order.asc(), AssetFileTypeRegistry.id.asc())
         .all()
     )
     annotation_file_types = (
         db_session.query(AssetFileTypeRegistry)
-        .filter(AssetFileTypeRegistry.is_active == 1)
+        .filter(AssetFileTypeRegistry.is_active == True)
         .filter(AssetFileTypeRegistry.allowed_asset_types.like('%gene_annotation%'))
         .order_by(AssetFileTypeRegistry.sort_order.asc(), AssetFileTypeRegistry.id.asc())
         .all()
     )
     functional_file_types = (
         db_session.query(AssetFileTypeRegistry)
-        .filter(AssetFileTypeRegistry.is_active == 1)
+        .filter(AssetFileTypeRegistry.is_active == True)
         .filter(AssetFileTypeRegistry.allowed_asset_types.like('%functional_annotation%'))
         .order_by(AssetFileTypeRegistry.sort_order.asc(), AssetFileTypeRegistry.id.asc())
         .all()
@@ -502,28 +501,28 @@ def test_asset_file_type_registry_defaults_cover_variome_transcriptome_and_pheno
 
     variant_file_types = (
         db_session.query(AssetFileTypeRegistry)
-        .filter(AssetFileTypeRegistry.is_active == 1)
+        .filter(AssetFileTypeRegistry.is_active == True)
         .filter(AssetFileTypeRegistry.allowed_asset_types.like('%variant_vcf%'))
         .order_by(AssetFileTypeRegistry.sort_order.asc(), AssetFileTypeRegistry.id.asc())
         .all()
     )
     expression_file_types = (
         db_session.query(AssetFileTypeRegistry)
-        .filter(AssetFileTypeRegistry.is_active == 1)
+        .filter(AssetFileTypeRegistry.is_active == True)
         .filter(AssetFileTypeRegistry.allowed_asset_types.like('%expression_matrix%'))
         .order_by(AssetFileTypeRegistry.sort_order.asc(), AssetFileTypeRegistry.id.asc())
         .all()
     )
     phenotype_table_file_types = (
         db_session.query(AssetFileTypeRegistry)
-        .filter(AssetFileTypeRegistry.is_active == 1)
+        .filter(AssetFileTypeRegistry.is_active == True)
         .filter(AssetFileTypeRegistry.allowed_asset_types.like('%phenotype_table%'))
         .order_by(AssetFileTypeRegistry.sort_order.asc(), AssetFileTypeRegistry.id.asc())
         .all()
     )
     phenotype_index_file_types = (
         db_session.query(AssetFileTypeRegistry)
-        .filter(AssetFileTypeRegistry.is_active == 1)
+        .filter(AssetFileTypeRegistry.is_active == True)
         .filter(AssetFileTypeRegistry.allowed_asset_types.like('%phenotype_index%'))
         .order_by(AssetFileTypeRegistry.sort_order.asc(), AssetFileTypeRegistry.id.asc())
         .all()
@@ -570,7 +569,7 @@ def test_asset_file_type_registry_defaults_cover_variome_transcriptome_and_pheno
 def test_genome_asset_registration_enforces_registry_file_types(db_session, tmp_path):
     seed_registry_defaults(db_session)
     owner = make_user(80315)
-    dataset = create_dataset(db_session, name="genome-registry-binding", owner_id=owner.id, dataset_type="genome")
+    dataset = create_dataset(db_session, name="genome-registry-binding", dataset_type="genome")
     version = create_version(
         db_session,
         dataset_id=dataset.id,
@@ -580,7 +579,7 @@ def test_genome_asset_registration_enforces_registry_file_types(db_session, tmp_
         file_format="fa.gz",
         query_engine="samtools/faidx",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     fasta_path = tmp_path / "genome.fa.gz"
     fasta_path.write_text(">chr1\nACGT\n", encoding="utf-8")
@@ -653,7 +652,7 @@ def test_genome_asset_registration_enforces_registry_file_types(db_session, tmp_
 def test_genome_asset_registration_rejects_invalid_primary_format(db_session, tmp_path):
     seed_registry_defaults(db_session)
     owner = make_user(80316)
-    dataset = create_dataset(db_session, name="genome-invalid-primary", owner_id=owner.id, dataset_type="genome")
+    dataset = create_dataset(db_session, name="genome-invalid-primary", dataset_type="genome")
     version = create_version(
         db_session,
         dataset_id=dataset.id,
@@ -663,7 +662,7 @@ def test_genome_asset_registration_rejects_invalid_primary_format(db_session, tm
         file_format="gff3",
         query_engine="file",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     invalid_primary = tmp_path / "genome.gff3"
     invalid_primary.write_text("chr1\tsrc\tgene\t1\t4\t.\t+\t.\tID=g1\n", encoding="utf-8")
@@ -696,7 +695,7 @@ def test_genome_asset_registration_rejects_invalid_primary_format(db_session, tm
 def test_update_dataset_asset_rejects_incompatible_asset_type_for_existing_files(db_session, tmp_path):
     seed_registry_defaults(db_session)
     owner = make_user(80317)
-    dataset = create_dataset(db_session, name="genome-asset-type-switch", owner_id=owner.id, dataset_type="genome")
+    dataset = create_dataset(db_session, name="genome-asset-type-switch", dataset_type="genome")
     version = create_version(
         db_session,
         dataset_id=dataset.id,
@@ -706,7 +705,7 @@ def test_update_dataset_asset_rejects_incompatible_asset_type_for_existing_files
         file_format="fa",
         query_engine="samtools/faidx",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     fasta_path = tmp_path / "genome.fa"
     fasta_path.write_text(">chr1\nACGT\n", encoding="utf-8")
@@ -762,7 +761,7 @@ def test_new_dataset_type_filters_match_legacy_dataset_rows(db_session, tmp_path
     file_path = tmp_path / "legacy.fa"
     file_path.write_text(">chr1\nACGT\n", encoding="utf-8")
 
-    dataset = create_dataset(db_session, name="legacy-sequence-filter", owner_id=owner.id, dataset_type="sequence")
+    dataset = create_dataset(db_session, name="legacy-sequence-filter", dataset_type="sequence")
     create_version(
         db_session,
         dataset_id=dataset.id,
@@ -772,7 +771,7 @@ def test_new_dataset_type_filters_match_legacy_dataset_rows(db_session, tmp_path
         file_format="fa",
         query_engine="samtools/faidx",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
 
     options = dataset_domain_service.get_options(
@@ -858,7 +857,7 @@ def create_phenome_sqlite_with_timepoints(db_path: Path):
 def test_phenome_sqlite_adapter_supports_summary_and_detail_queries(db_session, tmp_path):
     seed_registry_defaults(db_session)
     owner = make_user(80312)
-    dataset = create_dataset(db_session, name="rose-phenome", owner_id=owner.id, dataset_type="phenome")
+    dataset = create_dataset(db_session, name="rose-phenome", dataset_type="phenome")
     sqlite_path = tmp_path / "rose_phenome.db"
     create_phenome_sqlite(sqlite_path)
 
@@ -871,7 +870,7 @@ def test_phenome_sqlite_adapter_supports_summary_and_detail_queries(db_session, 
         file_format="db",
         query_engine="phenome",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     asset = create_asset(
         db_session,
@@ -881,7 +880,7 @@ def test_phenome_sqlite_adapter_supports_summary_and_detail_queries(db_session, 
         asset_type="phenotype_index",
         file_format="db",
         query_engine="phenome",
-        is_query_entry=1,
+        is_query_entry=True,
     )
     create_asset_file(
         db_session,
@@ -945,7 +944,7 @@ def test_phenome_sqlite_adapter_supports_summary_and_detail_queries(db_session, 
 def test_phenome_index_is_rebuilt_when_phenotype_index_asset_file_is_registered(db_session, tmp_path):
     seed_registry_defaults(db_session)
     owner = make_user(80313, is_superman=True)
-    dataset = create_dataset(db_session, name="rose-phenome-indexing", owner_id=owner.id, dataset_type="phenome")
+    dataset = create_dataset(db_session, name="rose-phenome-indexing", dataset_type="phenome")
     sqlite_path = tmp_path / "rose_phenome_index.db"
     create_phenome_sqlite(sqlite_path)
 
@@ -958,7 +957,7 @@ def test_phenome_index_is_rebuilt_when_phenotype_index_asset_file_is_registered(
         file_format="db",
         query_engine="file",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
 
     asset = dataset_domain_service.create_dataset_asset(
@@ -1013,7 +1012,7 @@ def test_phenome_index_is_rebuilt_when_phenotype_index_asset_file_is_registered(
 def test_phenome_pg_index_queries_grouped_traits_and_timepoints(db_session, tmp_path):
     seed_registry_defaults(db_session)
     owner = make_user(80314, is_superman=True)
-    dataset = create_dataset(db_session, name="rose-phenome-pg-query", owner_id=owner.id, dataset_type="phenome")
+    dataset = create_dataset(db_session, name="rose-phenome-pg-query", dataset_type="phenome")
     sqlite_path = tmp_path / "rose_phenome_timepoints.db"
     create_phenome_sqlite_with_timepoints(sqlite_path)
 
@@ -1026,7 +1025,7 @@ def test_phenome_pg_index_queries_grouped_traits_and_timepoints(db_session, tmp_
         file_format="db",
         query_engine="file",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
 
     asset = dataset_domain_service.create_dataset_asset(
@@ -1282,7 +1281,7 @@ def patch_public_db(monkeypatch, db_engine):
 
 def test_public_dataset_prefers_default_public_version(db_session, patch_public_db, tmp_path):
     owner = make_user(801)
-    dataset = create_dataset(db_session, name="public-default-version", owner_id=owner.id)
+    dataset = create_dataset(db_session, name="public-default-version")
     file_v1 = tmp_path / "v1.txt"
     file_v2 = tmp_path / "v2.txt"
     file_v1.write_text("version-1\n", encoding="utf-8")
@@ -1294,7 +1293,7 @@ def test_public_dataset_prefers_default_public_version(db_session, patch_public_
         version="v1",
         file_path=str(file_v1),
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     version_v2 = create_version(
         db_session,
@@ -1340,7 +1339,7 @@ def test_public_dataset_prefers_default_public_version(db_session, patch_public_
 
 def test_released_non_default_version_can_be_accessed_explicitly(db_session, patch_public_db, tmp_path):
     owner = make_user(802)
-    dataset = create_dataset(db_session, name="public-explicit-version", owner_id=owner.id)
+    dataset = create_dataset(db_session, name="public-explicit-version")
     file_v1 = tmp_path / "default.txt"
     file_v2 = tmp_path / "alt.txt"
     file_v1.write_text("default\n", encoding="utf-8")
@@ -1352,7 +1351,7 @@ def test_released_non_default_version_can_be_accessed_explicitly(db_session, pat
         version="v1",
         file_path=str(file_v1),
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     version_v2 = create_version(
         db_session,
@@ -1392,7 +1391,7 @@ def test_released_non_default_version_can_be_accessed_explicitly(db_session, pat
 
 def test_public_dataset_version_list_supports_filters(db_session, patch_public_db, tmp_path):
     owner = make_user(8022)
-    dataset = create_dataset(db_session, name="public-version-filtering", owner_id=owner.id)
+    dataset = create_dataset(db_session, name="public-version-filtering")
     file_v1 = tmp_path / "v1.txt"
     file_v2 = tmp_path / "v2.txt"
     file_v3 = tmp_path / "draft.txt"
@@ -1407,7 +1406,7 @@ def test_public_dataset_version_list_supports_filters(db_session, patch_public_d
         title="Genome Release 1",
         file_path=str(file_v1),
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     version_v2 = create_version(
         db_session,
@@ -1470,7 +1469,7 @@ def test_public_dataset_version_list_supports_filters(db_session, patch_public_d
 
 def test_withdraw_default_public_version_leaves_no_default_public_dataset(db_session, patch_public_db, tmp_path):
     owner = make_user(8021)
-    dataset = create_dataset(db_session, name="withdraw-default-no-public", owner_id=owner.id)
+    dataset = create_dataset(db_session, name="withdraw-default-no-public")
     file_v1 = tmp_path / "v1.txt"
     file_v2 = tmp_path / "v2.txt"
     file_v1.write_text("v1\n", encoding="utf-8")
@@ -1482,7 +1481,7 @@ def test_withdraw_default_public_version_leaves_no_default_public_dataset(db_ses
         version="v1",
         file_path=str(file_v1),
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     version_v2 = create_version(
         db_session,
@@ -1527,7 +1526,7 @@ def test_withdraw_default_public_version_leaves_no_default_public_dataset(db_ses
 
 def test_unpublish_dataset_clears_stale_default_public_registry_state(db_session, patch_public_db, tmp_path):
     owner = make_user(80211)
-    dataset = create_dataset(db_session, name="stale-public-registry", owner_id=owner.id)
+    dataset = create_dataset(db_session, name="stale-public-registry")
     file_v1 = tmp_path / "v1.txt"
     file_v1.write_text("v1\n", encoding="utf-8")
 
@@ -1539,7 +1538,7 @@ def test_unpublish_dataset_clears_stale_default_public_registry_state(db_session
         lifecycle_state="ready",
         visibility="private",
         release_state="unreleased",
-        is_current=1,
+        is_current=True,
     )
 
     dataset_payload = dataset_domain_service.get_dataset(db=db_session, dataset_id=dataset.id, user=owner)
@@ -1581,7 +1580,7 @@ def test_unpublish_dataset_clears_stale_default_public_registry_state(db_session
 
 def test_unreleased_version_is_not_accessible_through_public_version_api(db_session, patch_public_db, tmp_path):
     owner = make_user(803)
-    dataset = create_dataset(db_session, name="public-unreleased-blocked", owner_id=owner.id)
+    dataset = create_dataset(db_session, name="public-unreleased-blocked")
     file_v1 = tmp_path / "released.txt"
     file_v2 = tmp_path / "draft.txt"
     file_v1.write_text("released\n", encoding="utf-8")
@@ -1593,7 +1592,7 @@ def test_unreleased_version_is_not_accessible_through_public_version_api(db_sess
         version="v1",
         file_path=str(file_v1),
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     version_v2 = create_version(
         db_session,
@@ -1620,8 +1619,8 @@ def test_unreleased_version_is_not_accessible_through_public_version_api(db_sess
 
 def test_public_dataset_version_info_includes_public_lineage(db_session, patch_public_db, tmp_path):
     owner = make_user(8031)
-    genome_dataset = create_dataset(db_session, name="rose-genome", owner_id=owner.id, dataset_type="sequence")
-    expr_dataset = create_dataset(db_session, name="rose-expression", owner_id=owner.id, dataset_type="expression")
+    genome_dataset = create_dataset(db_session, name="rose-genome", dataset_type="sequence")
+    expr_dataset = create_dataset(db_session, name="rose-expression", dataset_type="expression")
     genome_file = tmp_path / "genome.fa"
     expr_file = tmp_path / "expr.h5"
     genome_file.write_text(">chr1\nACGT\n", encoding="utf-8")
@@ -1636,7 +1635,7 @@ def test_public_dataset_version_info_includes_public_lineage(db_session, patch_p
         file_format="fa",
         query_engine="samtools/faidx",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     expr_version = create_version(
         db_session,
@@ -1647,7 +1646,7 @@ def test_public_dataset_version_info_includes_public_lineage(db_session, patch_p
         file_format="h5",
         query_engine="hdf5",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
 
     genome_asset = create_asset(
@@ -1658,7 +1657,7 @@ def test_public_dataset_version_info_includes_public_lineage(db_session, patch_p
         asset_type="reference_fasta",
         file_format="fa",
         query_engine="samtools/faidx",
-        is_query_entry=1,
+        is_query_entry=True,
     )
     expr_asset = create_asset(
         db_session,
@@ -1668,7 +1667,7 @@ def test_public_dataset_version_info_includes_public_lineage(db_session, patch_p
         asset_type="expression_matrix",
         file_format="h5",
         query_engine="hdf5",
-        is_query_entry=1,
+        is_query_entry=True,
     )
     create_asset_file(db_session, dataset_id=genome_dataset.id, asset_id=genome_asset.id, local_path=str(genome_file), file_format="fa")
     create_asset_file(db_session, dataset_id=expr_dataset.id, asset_id=expr_asset.id, local_path=str(expr_file), file_format="h5")
@@ -1721,7 +1720,7 @@ def test_query_capabilities_can_resolve_primary_file_from_asset_when_version_fil
     tmp_path,
 ):
     owner = make_user(804)
-    dataset = create_dataset(db_session, name="asset-first-query", owner_id=owner.id)
+    dataset = create_dataset(db_session, name="asset-first-query")
     file_path = tmp_path / "asset-primary.txt"
     file_path.write_text("asset-first\n", encoding="utf-8")
 
@@ -1731,14 +1730,14 @@ def test_query_capabilities_can_resolve_primary_file_from_asset_when_version_fil
         version="v1",
         file_path=None,
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     asset = create_asset(
         db_session,
         dataset_id=dataset.id,
         version_id=version.id,
         asset_code="query_asset",
-        is_query_entry=1,
+        is_query_entry=True,
     )
     create_asset_file(
         db_session,
@@ -1777,7 +1776,7 @@ def test_query_capabilities_can_resolve_primary_file_from_asset_when_version_fil
 
 def test_version_payloads_prefer_asset_primary_file_over_stale_version_file_path(db_session, patch_public_db, tmp_path):
     owner = make_user(8041)
-    dataset = create_dataset(db_session, name="asset-first-version-payload", owner_id=owner.id)
+    dataset = create_dataset(db_session, name="asset-first-version-payload")
     stale_file = tmp_path / "stale.txt"
     asset_file = tmp_path / "asset-primary.txt"
     stale_file.write_text("stale\n", encoding="utf-8")
@@ -1789,14 +1788,14 @@ def test_version_payloads_prefer_asset_primary_file_over_stale_version_file_path
         version="v1",
         file_path=str(stale_file),
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     asset = create_asset(
         db_session,
         dataset_id=dataset.id,
         version_id=version.id,
         asset_code="query_asset",
-        is_query_entry=1,
+        is_query_entry=True,
     )
     create_asset_file(
         db_session,
@@ -1834,7 +1833,7 @@ def test_version_payloads_prefer_asset_primary_file_over_stale_version_file_path
 
 def test_sequence_query_works_with_asset_first_when_version_file_path_is_empty(db_session, patch_public_db, tmp_path, monkeypatch):
     owner = make_user(910)
-    dataset = create_dataset(db_session, name="sequence-asset-first", owner_id=owner.id, dataset_type="sequence")
+    dataset = create_dataset(db_session, name="sequence-asset-first", dataset_type="sequence")
     fasta_path = tmp_path / "genome.fa"
     fai_path = tmp_path / "genome.fa.fai"
     fasta_path.write_text(">chr1\nACGTACGT\n", encoding="utf-8")
@@ -1849,7 +1848,7 @@ def test_sequence_query_works_with_asset_first_when_version_file_path_is_empty(d
         file_format="fasta",
         query_engine="samtools",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     asset = create_asset(
         db_session,
@@ -1859,7 +1858,7 @@ def test_sequence_query_works_with_asset_first_when_version_file_path_is_empty(d
         asset_type="reference_sequence",
         file_format="fasta",
         query_engine="samtools",
-        is_query_entry=1,
+        is_query_entry=True,
     )
     primary_file = create_asset_file(
         db_session,
@@ -1920,7 +1919,7 @@ def test_sequence_query_works_with_asset_first_when_version_file_path_is_empty(d
 
 def test_version_query_can_select_asset_code_for_capabilities_and_execute(db_session, patch_public_db, tmp_path, monkeypatch):
     owner = make_user(9101)
-    dataset = create_dataset(db_session, name="sequence-multi-asset", owner_id=owner.id, dataset_type="sequence")
+    dataset = create_dataset(db_session, name="sequence-multi-asset", dataset_type="sequence")
     ref_path = tmp_path / "ref.fa"
     ref_fai_path = tmp_path / "ref.fa.fai"
     alt_path = tmp_path / "alt.fa"
@@ -1939,7 +1938,7 @@ def test_version_query_can_select_asset_code_for_capabilities_and_execute(db_ses
         file_format="fasta",
         query_engine="samtools",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     ref_asset = create_asset(
         db_session,
@@ -1949,7 +1948,7 @@ def test_version_query_can_select_asset_code_for_capabilities_and_execute(db_ses
         asset_type="reference_sequence",
         file_format="fasta",
         query_engine="samtools",
-        is_query_entry=1,
+        is_query_entry=True,
     )
     create_asset_file(
         db_session,
@@ -1974,7 +1973,7 @@ def test_version_query_can_select_asset_code_for_capabilities_and_execute(db_ses
         asset_type="reference_sequence",
         file_format="fasta",
         query_engine="samtools",
-        is_query_entry=0,
+        is_query_entry=False,
     )
     create_asset_file(
         db_session,
@@ -2059,7 +2058,7 @@ def test_version_query_can_select_asset_code_for_capabilities_and_execute(db_ses
 
 def test_variant_query_works_with_asset_first_when_version_file_path_is_empty(db_session, patch_public_db, tmp_path, monkeypatch):
     owner = make_user(911)
-    dataset = create_dataset(db_session, name="variant-asset-first", owner_id=owner.id, dataset_type="variant")
+    dataset = create_dataset(db_session, name="variant-asset-first", dataset_type="variant")
     vcf_path = tmp_path / "variants.vcf.gz"
     tbi_path = tmp_path / "variants.vcf.gz.tbi"
     vcf_path.write_text("##fileformat=VCFv4.2\n", encoding="utf-8")
@@ -2074,7 +2073,7 @@ def test_variant_query_works_with_asset_first_when_version_file_path_is_empty(db
         file_format="vcf.gz",
         query_engine="bcftools",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     asset = create_asset(
         db_session,
@@ -2084,7 +2083,7 @@ def test_variant_query_works_with_asset_first_when_version_file_path_is_empty(db
         asset_type="variant_calls",
         file_format="vcf.gz",
         query_engine="bcftools",
-        is_query_entry=1,
+        is_query_entry=True,
     )
     create_asset_file(
         db_session,
@@ -2145,7 +2144,7 @@ def test_variant_query_works_with_asset_first_when_version_file_path_is_empty(db
 
 def test_expression_query_works_with_asset_first_when_version_file_path_is_empty(db_session, patch_public_db, tmp_path, monkeypatch):
     owner = make_user(912)
-    dataset = create_dataset(db_session, name="expression-asset-first", owner_id=owner.id, dataset_type="expression")
+    dataset = create_dataset(db_session, name="expression-asset-first", dataset_type="expression")
     h5_path = tmp_path / "expr.h5"
     h5_path.write_text("placeholder\n", encoding="utf-8")
 
@@ -2158,7 +2157,7 @@ def test_expression_query_works_with_asset_first_when_version_file_path_is_empty
         file_format="h5",
         query_engine="hdf5",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     asset = create_asset(
         db_session,
@@ -2168,7 +2167,7 @@ def test_expression_query_works_with_asset_first_when_version_file_path_is_empty
         asset_type="expression_matrix",
         file_format="h5",
         query_engine="hdf5",
-        is_query_entry=1,
+        is_query_entry=True,
     )
     create_asset_file(
         db_session,
@@ -2275,7 +2274,7 @@ def test_asset_first_query_works_for_specialized_dataset_types(
     expected_count,
 ):
     owner = make_user(900)
-    dataset = create_dataset(db_session, name=f"{dataset_type}-asset-first", owner_id=owner.id, dataset_type=dataset_type)
+    dataset = create_dataset(db_session, name=f"{dataset_type}-asset-first", dataset_type=dataset_type)
     file_path = tmp_path / file_name
     file_path.write_text(content, encoding="utf-8")
 
@@ -2288,7 +2287,7 @@ def test_asset_first_query_works_for_specialized_dataset_types(
         file_format=file_format,
         query_engine=query_engine,
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     asset = create_asset(
         db_session,
@@ -2298,7 +2297,7 @@ def test_asset_first_query_works_for_specialized_dataset_types(
         asset_type=asset_type,
         file_format=file_format,
         query_engine=query_engine,
-        is_query_entry=1,
+        is_query_entry=True,
     )
     create_asset_file(
         db_session,
@@ -2350,7 +2349,7 @@ def test_asset_first_query_works_for_specialized_dataset_types(
 
 def test_annotation_gtf_queries_work_for_private_and_public_versions(db_session, patch_public_db, tmp_path):
     owner = make_user(9001)
-    dataset = create_dataset(db_session, name="annotation-gtf-asset-first", owner_id=owner.id, dataset_type="annotation")
+    dataset = create_dataset(db_session, name="annotation-gtf-asset-first", dataset_type="annotation")
     file_path = tmp_path / "genes.gtf"
     file_path.write_text(
         'chr1\tsrc\tgene\t10\t90\t.\t+\t.\tgene_id "Gene001"; gene_name "Gene001";\n'
@@ -2367,7 +2366,7 @@ def test_annotation_gtf_queries_work_for_private_and_public_versions(db_session,
         file_format="gtf",
         query_engine="tabix",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     asset = create_asset(
         db_session,
@@ -2377,7 +2376,7 @@ def test_annotation_gtf_queries_work_for_private_and_public_versions(db_session,
         asset_type="gene_annotation",
         file_format="gtf",
         query_engine="tabix",
-        is_query_entry=1,
+        is_query_entry=True,
     )
     create_asset_file(
         db_session,
@@ -2443,7 +2442,7 @@ def test_annotation_gtf_queries_work_for_private_and_public_versions(db_session,
 
 def test_sequence_functional_annotation_asset_queries_work_for_private_and_public_versions(db_session, patch_public_db, tmp_path):
     owner = make_user(90015)
-    dataset = create_dataset(db_session, name="sequence-functional-annotation", owner_id=owner.id, dataset_type="sequence")
+    dataset = create_dataset(db_session, name="sequence-functional-annotation", dataset_type="sequence")
     fasta_path = tmp_path / "genome.fa"
     fasta_path.write_text(">chr1\nACTGACTGACTG\n", encoding="utf-8")
     functional_db_path = tmp_path / "genome.db"
@@ -2458,7 +2457,7 @@ def test_sequence_functional_annotation_asset_queries_work_for_private_and_publi
         file_format="fa",
         query_engine="samtools/faidx",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     reference_asset = create_asset(
         db_session,
@@ -2468,7 +2467,7 @@ def test_sequence_functional_annotation_asset_queries_work_for_private_and_publi
         asset_type="reference_fasta",
         file_format="fa",
         query_engine="samtools/faidx",
-        is_query_entry=1,
+        is_query_entry=True,
     )
     create_asset_file(
         db_session,
@@ -2485,7 +2484,7 @@ def test_sequence_functional_annotation_asset_queries_work_for_private_and_publi
         asset_type="functional_annotation",
         file_format="db",
         query_engine="functional_annotation",
-        is_query_entry=0,
+        is_query_entry=False,
     )
     create_asset_file(
         db_session,
@@ -2612,7 +2611,6 @@ def test_sequence_bundle_provisioning_registers_reference_gene_and_functional_as
         dataset_title="arabidopsis_dataset01",
         version="TAIR10",
         organism="Arabidopsis thaliana",
-        assembly="TAIR10",
     )
 
     dataset_payload = result["dataset"]
@@ -2624,7 +2622,6 @@ def test_sequence_bundle_provisioning_registers_reference_gene_and_functional_as
     assert dataset_payload["dataset_type"] == "genome"
     assert dataset_payload["lifecycle_state"] == "ready"
     assert dataset_payload["organism"] == "Arabidopsis thaliana"
-    assert dataset_payload["assembly"] == "TAIR10"
     assert dataset_payload["default_public_version_id"] is None
     assert version_payload["version"] == "TAIR10"
     assert version_payload["is_current"] is True
@@ -2702,7 +2699,6 @@ def test_expression_bundle_provisioning_registers_expression_assets_and_referenc
         dataset_title="arabidopsis_dataset01",
         version="TAIR10",
         organism="Arabidopsis thaliana",
-        assembly="TAIR10",
     )
 
     result = bundle_provisioning.provision_expression_bundle(
@@ -2775,7 +2771,6 @@ def test_variome_bundle_provisioning_registers_indexed_variant_asset_and_referen
         dataset_title="rose_genome_SMT2024",
         version="SMT2024",
         organism="Rosa chinensis",
-        assembly="SMT2024",
     )
 
     result = bundle_provisioning.provision_variome_bundle(
@@ -2785,7 +2780,6 @@ def test_variome_bundle_provisioning_registers_indexed_variant_asset_and_referen
         dataset_title="rose_variome_test",
         version="v1",
         organism="Rosa chinensis",
-        assembly="SMT2024",
         reference_version_id=reference_result["version"]["id"],
     )
 
@@ -2798,7 +2792,6 @@ def test_variome_bundle_provisioning_registers_indexed_variant_asset_and_referen
     assert dataset_payload["title"] == "rose_variome_test"
     assert dataset_payload["dataset_type"] == "variome"
     assert dataset_payload["organism"] == "Rosa chinensis"
-    assert dataset_payload["assembly"] == "SMT2024"
     assert dataset_payload["lifecycle_state"] == "ready"
     assert version_payload["version"] == "v1"
     assert version_payload["dataset_type"] == "variome"
@@ -2825,7 +2818,7 @@ def test_variome_bundle_provisioning_registers_indexed_variant_asset_and_referen
 
 def test_signal_bigwig_region_signal_works_for_private_and_public_versions(db_session, patch_public_db, tmp_path, monkeypatch):
     owner = make_user(9002)
-    dataset = create_dataset(db_session, name="signal-bigwig-asset-first", owner_id=owner.id, dataset_type="signal")
+    dataset = create_dataset(db_session, name="signal-bigwig-asset-first", dataset_type="signal")
     file_path = tmp_path / "signal.bw"
     file_path.write_bytes(b"bigwig")
 
@@ -2838,7 +2831,7 @@ def test_signal_bigwig_region_signal_works_for_private_and_public_versions(db_se
         file_format="bw",
         query_engine="bigwig",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     asset = create_asset(
         db_session,
@@ -2848,7 +2841,7 @@ def test_signal_bigwig_region_signal_works_for_private_and_public_versions(db_se
         asset_type="signal_track",
         file_format="bw",
         query_engine="bigwig",
-        is_query_entry=1,
+        is_query_entry=True,
     )
     create_asset_file(
         db_session,
@@ -2933,7 +2926,7 @@ def test_signal_bigwig_region_signal_works_for_private_and_public_versions(db_se
 
 def test_interaction_cool_matrix_queries_work_for_private_and_public_versions(db_session, patch_public_db, tmp_path):
     owner = make_user(9003)
-    dataset = create_dataset(db_session, name="interaction-cool-asset-first", owner_id=owner.id, dataset_type="interaction")
+    dataset = create_dataset(db_session, name="interaction-cool-asset-first", dataset_type="interaction")
     file_path = tmp_path / "matrix.cool"
     create_cool_file(
         file_path,
@@ -2952,7 +2945,7 @@ def test_interaction_cool_matrix_queries_work_for_private_and_public_versions(db
         file_format="cool",
         query_engine="cooler",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     asset = create_asset(
         db_session,
@@ -2962,7 +2955,7 @@ def test_interaction_cool_matrix_queries_work_for_private_and_public_versions(db
         asset_type="interaction_matrix",
         file_format="cool",
         query_engine="cooler",
-        is_query_entry=1,
+        is_query_entry=True,
     )
     create_asset_file(
         db_session,
@@ -3019,7 +3012,7 @@ def test_interaction_cool_matrix_queries_work_for_private_and_public_versions(db
 
 def test_interaction_mcool_can_switch_query_asset_by_asset_code(db_session, patch_public_db, tmp_path):
     owner = make_user(9004)
-    dataset = create_dataset(db_session, name="interaction-mcool-multi-asset", owner_id=owner.id, dataset_type="interaction")
+    dataset = create_dataset(db_session, name="interaction-mcool-multi-asset", dataset_type="interaction")
     default_file_path = tmp_path / "default.mcool"
     alt_file_path = tmp_path / "alt.mcool"
     create_mcool_file(
@@ -3062,7 +3055,7 @@ def test_interaction_mcool_can_switch_query_asset_by_asset_code(db_session, patc
         file_format="mcool",
         query_engine="cooler",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     default_asset = create_asset(
         db_session,
@@ -3072,7 +3065,7 @@ def test_interaction_mcool_can_switch_query_asset_by_asset_code(db_session, patc
         asset_type="interaction_matrix",
         file_format="mcool",
         query_engine="cooler",
-        is_query_entry=1,
+        is_query_entry=True,
     )
     create_asset_file(
         db_session,
@@ -3089,7 +3082,7 @@ def test_interaction_mcool_can_switch_query_asset_by_asset_code(db_session, patc
         asset_type="interaction_matrix",
         file_format="mcool",
         query_engine="cooler",
-        is_query_entry=0,
+        is_query_entry=False,
     )
     create_asset_file(
         db_session,
@@ -3234,7 +3227,7 @@ def test_specialized_dataset_types_can_switch_query_asset_by_asset_code(
     alt_count,
 ):
     owner = make_user(901)
-    dataset = create_dataset(db_session, name=f"{dataset_type}-multi-asset", owner_id=owner.id, dataset_type=dataset_type)
+    dataset = create_dataset(db_session, name=f"{dataset_type}-multi-asset", dataset_type=dataset_type)
     default_file_path = tmp_path / default_file_name
     alt_file_path = tmp_path / alt_file_name
     default_file_path.write_text(default_content, encoding="utf-8")
@@ -3249,7 +3242,7 @@ def test_specialized_dataset_types_can_switch_query_asset_by_asset_code(
         file_format=file_format,
         query_engine=query_engine,
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     default_asset = create_asset(
         db_session,
@@ -3259,7 +3252,7 @@ def test_specialized_dataset_types_can_switch_query_asset_by_asset_code(
         asset_type=asset_type,
         file_format=file_format,
         query_engine=query_engine,
-        is_query_entry=1,
+        is_query_entry=True,
     )
     create_asset_file(
         db_session,
@@ -3276,7 +3269,7 @@ def test_specialized_dataset_types_can_switch_query_asset_by_asset_code(
         asset_type=asset_type,
         file_format=file_format,
         query_engine=query_engine,
-        is_query_entry=0,
+        is_query_entry=False,
     )
     create_asset_file(
         db_session,
@@ -3351,7 +3344,7 @@ def test_specialized_dataset_types_can_switch_query_asset_by_asset_code(
 
 def test_annotation_gtf_can_switch_query_asset_by_asset_code(db_session, patch_public_db, tmp_path):
     owner = make_user(9011)
-    dataset = create_dataset(db_session, name="annotation-gtf-multi-asset", owner_id=owner.id, dataset_type="annotation")
+    dataset = create_dataset(db_session, name="annotation-gtf-multi-asset", dataset_type="annotation")
     default_file_path = tmp_path / "default.gtf"
     alt_file_path = tmp_path / "alt.gtf"
     default_file_path.write_text(
@@ -3375,7 +3368,7 @@ def test_annotation_gtf_can_switch_query_asset_by_asset_code(db_session, patch_p
         file_format="gtf",
         query_engine="tabix",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     default_asset = create_asset(
         db_session,
@@ -3385,7 +3378,7 @@ def test_annotation_gtf_can_switch_query_asset_by_asset_code(db_session, patch_p
         asset_type="gene_annotation",
         file_format="gtf",
         query_engine="tabix",
-        is_query_entry=1,
+        is_query_entry=True,
     )
     create_asset_file(
         db_session,
@@ -3402,7 +3395,7 @@ def test_annotation_gtf_can_switch_query_asset_by_asset_code(db_session, patch_p
         asset_type="gene_annotation",
         file_format="gtf",
         query_engine="tabix",
-        is_query_entry=0,
+        is_query_entry=False,
     )
     create_asset_file(
         db_session,
@@ -3469,7 +3462,7 @@ def test_annotation_gtf_can_switch_query_asset_by_asset_code(db_session, patch_p
 
 def test_signal_bigwig_can_switch_query_asset_by_asset_code(db_session, patch_public_db, tmp_path, monkeypatch):
     owner = make_user(9012)
-    dataset = create_dataset(db_session, name="signal-bigwig-multi-asset", owner_id=owner.id, dataset_type="signal")
+    dataset = create_dataset(db_session, name="signal-bigwig-multi-asset", dataset_type="signal")
     default_file_path = tmp_path / "default.bw"
     alt_file_path = tmp_path / "alt.bw"
     default_file_path.write_bytes(b"default-bigwig")
@@ -3484,7 +3477,7 @@ def test_signal_bigwig_can_switch_query_asset_by_asset_code(db_session, patch_pu
         file_format="bw",
         query_engine="bigwig",
         lifecycle_state="ready",
-        is_current=1,
+        is_current=True,
     )
     default_asset = create_asset(
         db_session,
@@ -3494,7 +3487,7 @@ def test_signal_bigwig_can_switch_query_asset_by_asset_code(db_session, patch_pu
         asset_type="signal_track",
         file_format="bw",
         query_engine="bigwig",
-        is_query_entry=1,
+        is_query_entry=True,
     )
     create_asset_file(
         db_session,
@@ -3511,7 +3504,7 @@ def test_signal_bigwig_can_switch_query_asset_by_asset_code(db_session, patch_pu
         asset_type="signal_track",
         file_format="bw",
         query_engine="bigwig",
-        is_query_entry=0,
+        is_query_entry=False,
     )
     create_asset_file(
         db_session,

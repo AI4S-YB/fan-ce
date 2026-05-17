@@ -121,7 +121,6 @@ class _LegacyBridgeStub:
             lifecycle_state=getattr(r, 'lifecycle_state', ''),
             visibility=getattr(r, 'visibility', ''),
             is_public=getattr(r, 'is_public', False),
-            owner_id=getattr(r, 'owner_id', None),
             create_time=getattr(r, 'create_time', 0),
             update_time=getattr(r, 'update_time', 0),
         ) for r in rows]
@@ -2529,7 +2528,7 @@ class DatasetDomainService:
             "id": database_obj.id,
             "name": getattr(database_obj, 'title', '') or getattr(database_obj, 'name', ''),
             "status": getattr(database_obj, 'lifecycle_state', '') or getattr(database_obj, 'status', 'draft'),
-            "user_id": getattr(database_obj, 'owner_id', None) or getattr(database_obj, 'user_id', None),
+            "user_id": getattr(database_obj, 'user_id', None),
             "remark": getattr(database_obj, 'description_md', '') or getattr(database_obj, 'remark', ''),
             "is_public": bool(getattr(database_obj, 'is_public', False)),
             "is_active": True,
