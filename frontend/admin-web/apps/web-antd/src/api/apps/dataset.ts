@@ -433,31 +433,6 @@ export interface ScanJobItem {
   finished_at?: number | null;
 }
 
-// --- Registration Candidate ---
-
-export interface CandidateCreateItem {
-  staging_file_id: number;
-  is_primary: boolean;
-}
-
-export interface CandidateCreateRequest {
-  candidate_name: string;
-  dataset_type: string;
-  registration_mode: 'prebuilt' | 'hybrid' | 'recipe_build';
-  version_name?: string;
-  organism?: string;
-  assembly?: string;
-  scan_root_id?: number;
-  items: CandidateCreateItem[];
-}
-
-export interface RegisterCandidateRequest {
-  dataset_name?: string;
-  remark?: string;
-  is_public?: boolean;
-  project_id?: number;
-  activate_version?: boolean;
-}
 
 export interface RegistryListResult<T> {
   total: number;
@@ -737,13 +712,4 @@ export async function getStagingDirectoryViewApi(data: {
     ...data,
     view_mode: 'directory',
   });
-}
-
-// --- Candidate ---
-export async function createRegistrationCandidateApi(data: CandidateCreateRequest) {
-  return requestClient.post(`${pre}/candidate/create`, data);
-}
-
-export async function registerCandidateApi(candidateId: number, data: RegisterCandidateRequest) {
-  return requestClient.post(`${pre}/candidate/register`, { id: candidateId, ...data });
 }
