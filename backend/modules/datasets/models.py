@@ -141,8 +141,6 @@ class DatasetRegistry(Base):
     visibility = Column(String(32), default="private", comment="可见性")
     is_public = Column(Boolean, default=False, comment="是否公开")
     organism = Column(String(128), comment="物种")
-    validation_summary = Column(Text, comment="校验摘要")
-    index_summary = Column(Text, comment="索引摘要")
     description_md = Column(Text, comment="Markdown 格式的数据描述文档")
     meta_json = Column(JSONB, comment="扩展元数据")
     default_public_version_id = Column(Integer, index=True, comment="默认公开版本 ID")

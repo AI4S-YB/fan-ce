@@ -2568,8 +2568,8 @@ class DatasetDomainService:
             "query_profile": {
                 "file_format": current_version.file_format if current_version else "",
                 "query_engine": current_version.query_engine if current_version else "",
-                "validation_summary": registry_obj.validation_summary,
-                "index_summary": registry_obj.index_summary,
+                "validation_summary": current_version.validation_summary if current_version else "",
+                "index_summary": current_version.index_summary if current_version else "",
             },
             "query_adapter": None,
             "assets": [],
@@ -3048,10 +3048,10 @@ class DatasetDomainService:
             "query_engine": version_obj.query_engine or dataset_payload["query_profile"]["query_engine"],
             "validation_summary": version_obj.validation_summary
             if version_obj.validation_summary is not None
-            else dataset_payload["query_profile"]["validation_summary"],
+            else None,
             "index_summary": version_obj.index_summary
             if version_obj.index_summary is not None
-            else dataset_payload["query_profile"]["index_summary"],
+            else None,
         }
         return dataset_payload
 
@@ -5671,10 +5671,10 @@ class DatasetDomainService:
                 "query_engine": version_query_engine or "",
                 "validation_summary": version_validation_summary
                 if version_validation_summary is not None
-                else registry_obj.validation_summary,
+                else None,
                 "index_summary": version_index_summary
                 if version_index_summary is not None
-                else registry_obj.index_summary,
+                else None,
                 "meta_json": version_meta_json if version_meta_json is not None else registry_obj.meta_json,
                 "update_time": self._now(),
             },
