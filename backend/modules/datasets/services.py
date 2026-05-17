@@ -2788,7 +2788,7 @@ class DatasetDomainService:
             if version_obj and version_obj.dataset_id == dataset_id and self._is_version_publicly_released(version_obj):
                 return version_obj
 
-        version_rows = dataset_version_db.get_data(db=db, filters={"id": dataset_id})
+        version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})
         default_public_versions = [
             row
             for row in version_rows
@@ -2801,7 +2801,7 @@ class DatasetDomainService:
         return None
 
     def _list_public_version_objs(self, db, dataset_id):
-        version_rows = dataset_version_db.get_data(db=db, filters={"id": dataset_id})
+        version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})
         public_versions = [row for row in version_rows if self._is_version_publicly_released(row)]
         return sorted(
             public_versions,
@@ -2820,7 +2820,7 @@ class DatasetDomainService:
         return version_obj
 
     def _normalize_version_public_flags(self, db, dataset_id, default_version_id=None):
-        version_rows = dataset_version_db.get_data(db=db, filters={"id": dataset_id})
+        version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})
         for row in version_rows:
             release_state = self._get_version_release_state(row)
             should_default = bool(default_version_id and row.id == default_version_id and release_state in {"released", "deprecated"})
@@ -2838,7 +2838,7 @@ class DatasetDomainService:
     def _sync_registry_public_state(self, db, dataset_id, default_public_version_id=None):
         database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
-        current_version = dataset_version_db.get_filter(db=db, filters={"id": dataset_id, "is_current": True})
+        current_version = dataset_version_db.get_filter(db=db, filters={"dataset_id": dataset_id, "is_current": True})
         next_visibility = "public" if default_public_version_id else "private"
         update_data = {
             "visibility": next_visibility,
@@ -2987,7 +2987,7 @@ class DatasetDomainService:
         dataset_payload = self.build_dataset_payload(db=db, database_obj=database_obj)
         current_version = self.ensure_current_version(db=db, dataset_payload=dataset_payload)
         dataset_payload["current_version"] = self._build_dataset_version_payload(current_version, db=db)
-        dataset_payload["version_count"] = len(dataset_version_db.get_data(db=db, filters={"id": database_id}))
+        dataset_payload["version_count"] = len(dataset_version_db.get_data(db=db, filters={"dataset_id": database_id}))
 
         public_version = version_obj or self._get_public_version_obj(db=db, dataset_id=database_id, dataset_payload=dataset_payload)
         if not public_version:
@@ -3014,7 +3014,7 @@ class DatasetDomainService:
         dataset_payload = self.build_dataset_payload(db=db, database_obj=database_obj)
         current_version = self.ensure_current_version(db=db, dataset_payload=dataset_payload)
         dataset_payload["current_version"] = self._build_dataset_version_payload(current_version, db=db) if current_version else None
-        dataset_payload["version_count"] = len(dataset_version_db.get_data(db=db, filters={"id": version_obj.dataset_id}))
+        dataset_payload["version_count"] = len(dataset_version_db.get_data(db=db, filters={"dataset_id": version_obj.dataset_id}))
         dataset_payload = self._apply_version_to_dataset_payload(db=db, dataset_payload=dataset_payload, version_obj=version_obj)
         dataset_payload = self._apply_assets_to_dataset_payload(db=db, dataset_payload=dataset_payload, version_obj=version_obj)
         dataset_payload["selected_version"] = self._build_dataset_version_payload(version_obj, db=db)
@@ -3102,7 +3102,7 @@ class DatasetDomainService:
         if target_exists:
             return dataset_version_db.get_filter(
                 db=db,
-                filters={"id": database_id, "version": version_name},
+                filters={"dataset_id": database_id, "version": version_name},
             )
         return None
 
@@ -3111,7 +3111,7 @@ class DatasetDomainService:
         database_id = dataset_payload["id"]
         version_obj = dataset_version_db.get_filter(
             db=db,
-            filters={"id": database_id, "version": version_name},
+            filters={"dataset_id": database_id, "version": version_name},
         )
         version_data = self._build_version_data_from_dataset_payload(dataset_payload)
         if version_obj and getattr(version_obj, "meta_json", None) is not None:
@@ -3121,7 +3121,7 @@ class DatasetDomainService:
             dataset_version_db.update_one(db=db, db_obj=version_obj, obj_in=version_data)
             version_obj = dataset_version_db.get_filter(
                 db=db,
-                filters={"id": database_id, "version": version_name},
+                filters={"dataset_id": database_id, "version": version_name},
             )
             self._ensure_assets_for_version(db=db, version_obj=version_obj)
             return version_obj
@@ -3248,7 +3248,7 @@ class DatasetDomainService:
         public_version = self._get_public_version_obj(db=db, dataset_id=dataset_id, dataset_payload=payload)
         payload["default_public_version"] = self._build_dataset_version_payload(public_version, db=db) if public_version else None
         payload["published_version"] = self._build_dataset_version_payload(public_version, db=db) if public_version else None
-        payload["version_count"] = len(dataset_version_db.get_data(db=db, filters={"id": payload["id"]}))
+        payload["version_count"] = len(dataset_version_db.get_data(db=db, filters={"dataset_id": payload["id"]}))
         return payload
 
     def update_dataset(self, db, dataset_id, request_data, user=None):
@@ -3388,7 +3388,7 @@ class DatasetDomainService:
             raise HTTPException(status_code=4000, detail="dataset is not public")
 
         before_state = registry_obj.lifecycle_state
-        version_rows = dataset_version_db.get_data(db=db, filters={"id": dataset_id})
+        version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})
         candidate_public_version_ids = {getattr(registry_obj, "default_public_version_id", None)} - {None}
         for version_obj in version_rows:
             is_candidate = (
@@ -3463,7 +3463,7 @@ class DatasetDomainService:
         registry_obj = dataset_registry_db.get_filter(db=db, filters={"id": dataset_id})
         registry_id = getattr(registry_obj, "id", None)
 
-        version_rows = dataset_version_db.get_data(db=db, filters={"id": dataset_id}) or []
+        version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id}) or []
         asset_rows = dataset_asset_db.get_data(db=db, filters={"id": dataset_id}) or []
         version_ids = [item.id for item in version_rows]
         asset_ids = [item.id for item in asset_rows]
@@ -5548,7 +5548,7 @@ class DatasetDomainService:
 
     def list_dataset_versions(self, db, dataset_id, user=None):
         dataset_payload = self.get_dataset(db=db, dataset_id=dataset_id, user=user)
-        version_rows = dataset_version_db.get_data(db=db, filters={"id": dataset_id})
+        version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})
         version_rows = sorted(version_rows, key=lambda item: item.id, reverse=True)
         return {
             "dataset_id": dataset_id,
@@ -5602,7 +5602,7 @@ class DatasetDomainService:
         dataset_payload = self.get_dataset(db=db, dataset_id=request_data.dataset_id, user=user)
         existing = dataset_version_db.get_filter(
             db=db,
-            filters={"id": request_data.dataset_id, "version": request_data.version},
+            filters={"dataset_id": request_data.dataset_id, "version": request_data.version},
         )
         if existing:
             raise HTTPException(status_code=400, detail=f"dataset version already exists: {request_data.version}")

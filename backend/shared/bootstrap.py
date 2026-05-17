@@ -1,4 +1,4 @@
-import time
+from datetime import datetime, timezone
 
 from shared.security import get_password_hash
 from modules.system.rbac.models import Menu, RoleMenuLink, UserRoleLink
@@ -16,7 +16,7 @@ def _ensure_role(db, *, name: str, code: str):
     if role:
         return role
 
-    now = int(time.time())
+    now = datetime.now(timezone.utc)
     role = Role(
         name=name,
         code=code,
@@ -58,7 +58,7 @@ def _ensure_user(
             db.flush()
         return user
 
-    now = int(time.time())
+    now = datetime.now(timezone.utc)
     salt = random_str(12)
     user = User(
         user_name=username,
@@ -155,7 +155,7 @@ def _ensure_menu(
         is_hidden=False,
         is_deleted=False,
         meta=None,
-        create_time=int(time.time()),
+        create_time=datetime.now(timezone.utc),
         remark="development bootstrap menu",
     )
     db.add(menu)
@@ -261,17 +261,6 @@ def init_dev_seed_data(db):
         pid=apps_root.id,
         icon="lucide:folder-search-2",
         sort=2,
-        menu_type=2,
-    )
-    dataset_candidate_menu = _ensure_menu(
-        db,
-        name="DatasetRegistrationCandidate",
-        title="注册候选",
-        path="/apps/dataset-candidate",
-        component="/apps/dataset-candidate/index",
-        pid=apps_root.id,
-        icon="lucide:clipboard-check",
-        sort=3,
         menu_type=2,
     )
     dataset_menu = _ensure_menu(
