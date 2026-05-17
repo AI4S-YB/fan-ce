@@ -11,8 +11,6 @@ from .models import (
     DatasetKindRegistry,
     DatasetLineageEdge,
     DatasetPublishRecord,
-    DatasetRegistrationCandidate,
-    DatasetRegistrationCandidateFile,
     DatasetRegistry,
     DatasetScanJob,
     DatasetScanRoot,
@@ -84,14 +82,6 @@ class CRUDDatasetScanJob(CRUDBase[DatasetScanJob, DatasetScanJob, DatasetScanJob
     pass
 
 
-class CRUDDatasetRegistrationCandidate(CRUDBase[DatasetRegistrationCandidate, DatasetRegistrationCandidate, DatasetRegistrationCandidate]):
-    pass
-
-
-class CRUDDatasetRegistrationCandidateFile(CRUDBase[DatasetRegistrationCandidateFile, DatasetRegistrationCandidateFile, DatasetRegistrationCandidateFile]):
-    pass
-
-
 class CRUDFunctionalGene(CRUDBase[FunctionalGene, FunctionalGene, FunctionalGene]):
     pass
 
@@ -118,8 +108,6 @@ asset_file_type_registry_db = CRUDAssetFileTypeRegistry(AssetFileTypeRegistry)
 dataset_staging_file_db = CRUDDatasetStagingFile(DatasetStagingFile)
 dataset_scan_root_db = CRUDDatasetScanRoot(DatasetScanRoot)
 dataset_scan_job_db = CRUDDatasetScanJob(DatasetScanJob)
-dataset_registration_candidate_db = CRUDDatasetRegistrationCandidate(DatasetRegistrationCandidate)
-dataset_registration_candidate_file_db = CRUDDatasetRegistrationCandidateFile(DatasetRegistrationCandidateFile)
 functional_gene_db = CRUDFunctionalGene(FunctionalGene)
 functional_term_db = CRUDFunctionalTerm(FunctionalTerm)
 functional_term_assignment_db = CRUDFunctionalTermAssignment(FunctionalTermAssignment)

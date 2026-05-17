@@ -21,8 +21,6 @@ from .models import (
     DatasetKindRegistry,
     DatasetLineageEdge,
     DatasetPublishRecord,
-    DatasetRegistrationCandidate,
-    DatasetRegistrationCandidateFile,
     DatasetRegistry,
     DatasetScanJob,
     DatasetScanRoot,
@@ -67,7 +65,7 @@ def _ensure_dataset_schema_columns():
     if "release_state" not in table_columns["dataset_version"]:
         ddl_statements.append("ALTER TABLE dataset_version ADD COLUMN release_state VARCHAR(32)")
     if "is_default_public" not in table_columns["dataset_version"]:
-        ddl_statements.append("ALTER TABLE dataset_version ADD COLUMN is_default_public INTEGER DEFAULT 0")
+        ddl_statements.append("ALTER TABLE dataset_version ADD COLUMN is_default_public BOOLEAN DEFAULT FALSE")
     if "supported_file_formats" not in table_columns["asset_file_type_registry"]:
         ddl_statements.append("ALTER TABLE asset_file_type_registry ADD COLUMN supported_file_formats TEXT")
     if "asset_file_type_code" not in table_columns["asset_file"]:
@@ -82,10 +80,10 @@ def _ensure_dataset_schema_columns():
         ddl_statements.append("ALTER TABLE dataset_staging_file ADD COLUMN relative_path VARCHAR(1024)")
     if "file_mtime" not in table_columns["dataset_staging_file"]:
         ddl_statements.append("ALTER TABLE dataset_staging_file ADD COLUMN file_mtime BIGINT")
-    if "discovered_at" not in table_columns["dataset_staging_file"]:
-        ddl_statements.append("ALTER TABLE dataset_staging_file ADD COLUMN discovered_at INTEGER")
-    if "last_seen_at" not in table_columns["dataset_staging_file"]:
-        ddl_statements.append("ALTER TABLE dataset_staging_file ADD COLUMN last_seen_at INTEGER")
+    if "discover_time" not in table_columns["dataset_staging_file"]:
+        ddl_statements.append("ALTER TABLE dataset_staging_file ADD COLUMN discover_time INTEGER")
+    if "last_seen_time" not in table_columns["dataset_staging_file"]:
+        ddl_statements.append("ALTER TABLE dataset_staging_file ADD COLUMN last_seen_time INTEGER")
     if "last_scan_time" not in table_columns["dataset_scan_root"]:
         ddl_statements.append("ALTER TABLE dataset_scan_root ADD COLUMN last_scan_time INTEGER")
     if "create_user_id" not in table_columns["dataset_scan_root"]:
@@ -157,7 +155,7 @@ def _ensure_dataset_schema_column_types():
             text(
                 """
                 UPDATE dataset_version
-                SET is_default_public = 0
+                SET is_default_public = FALSE
                 WHERE is_default_public IS NULL
                 """
             )
@@ -200,8 +198,8 @@ def _backfill_default_public_versions():
 
             for item in version_rows:
                 should_default = item.id == selected_version.id
-                next_default = 1 if should_default else 0
-                if getattr(item, "is_default_public", 0) != next_default:
+                next_default = True if should_default else False
+                if getattr(item, "is_default_public", False) != next_default:
                     item.is_default_public = next_default
                     changed = True
                 if should_default and item.lifecycle_state != "public":
