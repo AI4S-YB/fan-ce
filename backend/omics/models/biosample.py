@@ -6,7 +6,7 @@ from datetime import datetime
 class BioSample(Base):
     __tablename__ = "biosample"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     accession = Column(String, unique=True, index=True)  # 样本编号，如SAMN123456
     title = Column(String, nullable=False)  # 样本标题
     description = Column(Text)  # 样本描述
@@ -25,7 +25,7 @@ class BioSample(Base):
 class BioSampleEnhancement(Base):
     __tablename__ = "biosample_enhancement"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     sample_id = Column(Integer, ForeignKey("biosample.id"))
     key = Column(String, nullable=False)  # 属性键名
     value = Column(Text)  # 属性值

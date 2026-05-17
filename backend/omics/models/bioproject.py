@@ -7,7 +7,7 @@ class BioProject(Base):
     __tablename__ = "bioproject"
 
     # 基础属性
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     accession = Column(String, unique=True, index=True)  # 项目编号，如PRJNA123456
     title = Column(String, nullable=False)  # 项目标题
     description = Column(Text)  # 项目描述
@@ -22,7 +22,7 @@ class BioProject(Base):
 class BioProjectEnhancement(Base):
     __tablename__ = "bioproject_enhancement"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     project_id = Column(Integer, ForeignKey("bioproject.id"))
     term_id = Column(String)  # 术语ID
     term_name = Column(String)  # 术语名称

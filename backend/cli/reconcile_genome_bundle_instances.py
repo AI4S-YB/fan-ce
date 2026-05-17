@@ -63,20 +63,17 @@ def _sync_registry_metadata(registry_obj: DatasetRegistry, plan, changes: list[s
     _update_attr(registry_obj, "dataset_type", plan.dataset_type, changes, f"dataset_registry[{registry_obj.id}]")
     if plan.organism:
         _update_attr(registry_obj, "organism", plan.organism, changes, f"dataset_registry[{registry_obj.id}]")
-    if plan.assembly:
-        _update_attr(registry_obj, "assembly", plan.assembly, changes, f"dataset_registry[{registry_obj.id}]")
     if primary_asset is not None:
-        _update_attr(registry_obj, "file_format", primary_asset.file_format, changes, f"dataset_registry[{registry_obj.id}]")
-        _update_attr(registry_obj, "query_engine", primary_asset.query_engine, changes, f"dataset_registry[{registry_obj.id}]")
+        pass  # file_format / query_engine now live on dataset_version / dataset_asset
 
-    extra_payload = _parse_json_object(registry_obj.extra_json)
+    extra_payload = _parse_json_object(registry_obj.meta_json)
     extra_payload["bundle"] = plan.bundle_meta
     extra_payload["provisioning"] = {
         "mode": f"{plan.dataset_type}_bundle",
         "primary_file_path": plan.primary_file_path,
     }
     encoded = _encode_json_object(extra_payload)
-    _update_attr(registry_obj, "extra_json", encoded, changes, f"dataset_registry[{registry_obj.id}]")
+    _update_attr(registry_obj, "meta_json", encoded, changes, f"dataset_registry[{registry_obj.id}]")
     registry_obj.update_time = now
 
 
@@ -89,14 +86,14 @@ def _sync_current_version(version_obj: DatasetVersion, plan, changes: list[str],
         _update_attr(version_obj, "file_format", primary_asset.file_format, changes, f"dataset_version[{version_obj.id}]")
         _update_attr(version_obj, "query_engine", primary_asset.query_engine, changes, f"dataset_version[{version_obj.id}]")
 
-    extra_payload = _parse_json_object(version_obj.extra_json)
+    extra_payload = _parse_json_object(version_obj.meta_json)
     extra_payload["bundle"] = plan.bundle_meta
     extra_payload["provisioning"] = {
         "mode": f"{plan.dataset_type}_bundle",
         "primary_file_path": plan.primary_file_path,
     }
     encoded = _encode_json_object(extra_payload)
-    _update_attr(version_obj, "extra_json", encoded, changes, f"dataset_version[{version_obj.id}]")
+    _update_attr(version_obj, "meta_json", encoded, changes, f"dataset_version[{version_obj.id}]")
     version_obj.update_time = now
 
 
@@ -243,14 +240,12 @@ def reconcile_genome_bundle_dataset(dataset_id: int, explicit_bundle_dir: str | 
         current_version = _pick_current_version(db, dataset_id)
         bundle_dir = _resolve_bundle_dir(primary_file, explicit_bundle_dir)
         organism = registry_rows[0].organism if registry_rows[0].organism else None
-        assembly = registry_rows[0].assembly if registry_rows[0].assembly else None
-        version = current_version.version if current_version is not None else (registry_rows[0].version if registry_rows else "v1")
+        version = current_version.version if current_version is not None else "v1"
         plan = discover_sequence_bundle(
             bundle_dir,
             dataset_title=dataset_name,
             version=version,
             organism=organism,
-            assembly=assembly,
         )
 
         changes: list[str] = []

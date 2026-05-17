@@ -2828,7 +2828,7 @@ class DatasetDomainService:
             update_data = {}
             if row.visibility != next_visibility:
                 update_data["visibility"] = next_visibility
-            if getattr(row, "is_default_public", 0) != (1 if should_default else 0):
+            if getattr(row, "is_default_public", False) != (1 if should_default else 0):
                 update_data["is_default_public"] = 1 if should_default else 0
             if update_data:
                 update_data["update_time"] = self._now()
@@ -2838,7 +2838,7 @@ class DatasetDomainService:
     def _sync_registry_public_state(self, db, dataset_id, default_public_version_id=None):
         database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
-        current_version = dataset_version_db.get_filter(db=db, filters={"id": dataset_id, "is_current": 1})
+        current_version = dataset_version_db.get_filter(db=db, filters={"id": dataset_id, "is_current": True})
         next_visibility = "public" if default_public_version_id else "private"
         update_data = {
             "visibility": next_visibility,
@@ -3072,7 +3072,7 @@ class DatasetDomainService:
             "query_engine": query_profile["query_engine"],
             "validation_summary": query_profile["validation_summary"],
             "index_summary": query_profile["index_summary"],
-            "is_current": 1,
+            "is_current": True,
             "is_default_public": 0,
             "update_time": self._now(),
         }
@@ -3097,7 +3097,7 @@ class DatasetDomainService:
                 dataset_version_db.update_one(
                     db=db,
                     db_obj=row_obj,
-                    obj_in={"is_current": 1 if should_be_current else 0, "update_time": self._now()},
+                    obj_in={"is_current": True if should_be_current else 0, "update_time": self._now()},
                 )
         if target_exists:
             return dataset_version_db.get_filter(
@@ -3713,8 +3713,8 @@ class DatasetDomainService:
                 "storage_backend": request_data.storage_backend or "local",
                 "workflow_state": request_data.workflow_state or "draft",
                 "status": request_data.status or "active",
-                "is_required": 1 if request_data.is_required else 0,
-                "is_query_entry": 1 if request_data.is_query_entry else 0,
+                "is_required": bool(request_data.is_required),
+                "is_query_entry": bool(request_data.is_query_entry),
                 "display_order": request_data.display_order or 0,
                 "meta_json": request_data.meta_json,
                 "create_time": self._now(),
@@ -5657,7 +5657,7 @@ class DatasetDomainService:
         dataset_version_db.update_one(
             db=db,
             db_obj=version_obj,
-            obj_in={"is_current": 1, "update_time": self._now()},
+            obj_in={"is_current": True, "update_time": self._now()},
         )
         registry_obj = dataset_registry_db.get_filter(db=db, filters={"id": dataset_id})
         dataset_registry_db.update_one(

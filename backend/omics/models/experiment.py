@@ -6,7 +6,7 @@ from datetime import datetime
 class Experiment(Base):
     __tablename__ = "experiment"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     accession = Column(String, unique=True, index=True)  # 实验编号，如SRX123456
     title = Column(String, nullable=False)  # 实验标题
     description = Column(Text)  # 实验描述
@@ -49,7 +49,7 @@ class Experiment(Base):
 class ExperimentRun(Base):
     __tablename__ = "experiment_run"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     accession = Column(String, unique=True, index=True)  # 运行编号，如SRR123456
     file_name = Column(String)  # 文件名
     file_path = Column(String)  # 文件路径
@@ -70,7 +70,7 @@ class ExperimentRun(Base):
 class ExperimentEnhancement(Base):
     __tablename__ = "experiment_enhancement"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     experiment_id = Column(Integer, ForeignKey("experiment.id"))
     term_id = Column(String)  # 术语ID
     term_name = Column(String)  # 术语名称

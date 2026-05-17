@@ -46,7 +46,6 @@ class TestDatasetMasterTable:
             dataset_code="DS00001",
             dataset_type="genome",
             organism="Oryza sativa",
-            assembly="IRGSP-1.0",
             visibility="private",
             lifecycle_state="draft",
         )
@@ -64,13 +63,11 @@ class TestDatasetMasterTable:
             dataset_code="DS_DUP",
             dataset_type="genome",
             organism="Oryza sativa",
-            assembly="IRGSP-1.0",
         )
         ds2 = Dataset(
             dataset_code="DS_DUP",
             dataset_type="variome",
             organism="Oryza sativa",
-            assembly="IRGSP-1.0",
         )
         db_session.add(ds1)
         db_session.commit()
@@ -85,7 +82,6 @@ class TestDatasetMasterTable:
             dataset_code="DS_V1_TEST",
             dataset_type="genome",
             organism="Oryza sativa",
-            assembly="IRGSP-1.0",
         )
         db_session.add(ds)
         db_session.commit()

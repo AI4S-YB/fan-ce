@@ -59,8 +59,8 @@ def _update_attr(obj: Any, field_name: str, new_value: Any, changes: list[str], 
     changes.append(f"{label}.{field_name}: {new_value}")
 
 
-def _update_bundle_mode(extra_json: str | None, canonical_type: str) -> str | None:
-    payload = _parse_json_object(extra_json)
+def _update_bundle_mode(meta_json: str | None, canonical_type: str) -> str | None:
+    payload = _parse_json_object(meta_json)
     provisioning = payload.get("provisioning")
     if isinstance(provisioning, dict):
         mode = provisioning.get("mode")
@@ -72,7 +72,7 @@ def _update_bundle_mode(extra_json: str | None, canonical_type: str) -> str | No
             provisioning["mode"] = "transcriptome_bundle"
         elif canonical_type in {"genome", "variome", "transcriptome"} and mode == f"{canonical_type}_bundle":
             pass
-    return _encode_json_object(payload) if payload else extra_json
+    return _encode_json_object(payload) if payload else meta_json
 
 
 def migrate_legacy_dataset_types() -> list[str]:
@@ -91,10 +91,10 @@ def migrate_legacy_dataset_types() -> list[str]:
                 changes,
                 f"dataset_registry[{registry_obj.id}]",
             )
-            updated_extra = _update_bundle_mode(registry_obj.extra_json, canonical_type)
+            updated_extra = _update_bundle_mode(registry_obj.meta_json, canonical_type)
             _update_attr(
                 registry_obj,
-                "extra_json",
+                "meta_json",
                 updated_extra,
                 changes,
                 f"dataset_registry[{registry_obj.id}]",
@@ -109,10 +109,10 @@ def migrate_legacy_dataset_types() -> list[str]:
                     changes,
                     f"dataset_version[{version_obj.id}]",
                 )
-                updated_extra = _update_bundle_mode(version_obj.extra_json, canonical_type)
+                updated_extra = _update_bundle_mode(version_obj.meta_json, canonical_type)
                 _update_attr(
                     version_obj,
-                    "extra_json",
+                    "meta_json",
                     updated_extra,
                     changes,
                     f"dataset_version[{version_obj.id}]",

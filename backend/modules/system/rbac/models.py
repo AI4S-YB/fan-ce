@@ -57,7 +57,7 @@ class Permission(Base):
     status = Column(Integer, default=0, comment='状态')
     pid = Column(Integer, default=0, comment='父菜单')
     uri = Column(String(250),comment="URI")
-    is_active = Column(Boolean, default=0, comment='是否激活')
+    is_active = Column(Boolean, default=False, comment='是否激活')
     is_delete = Column(Boolean, default=0, comment='是否删除')
     create_time = Column(DateTime(timezone=True), comment='创建时间')
     remark = Column(String(320), comment='备注')

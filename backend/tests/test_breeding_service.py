@@ -378,8 +378,8 @@ def test_breeding_service_biosample_assay_data_file_flow(db_session):
         asset_type="expression_matrix",
         workflow_state="ready",
         status="active",
-        is_required=1,
-        is_query_entry=1,
+        is_required=True,
+        is_query_entry=True,
         display_order=0,
         create_time=1,
         update_time=1,
@@ -568,8 +568,8 @@ def test_breeding_service_link_tables_flow(db_session):
         asset_type="variant_calls",
         workflow_state="ready",
         status="active",
-        is_required=1,
-        is_query_entry=1,
+        is_required=True,
+        is_query_entry=True,
         display_order=0,
         create_time=1,
         update_time=1,
@@ -766,7 +766,7 @@ def test_breeding_service_germplasm_validate_and_commit_flow(db_session, tmp_pat
             lineage="Eukaryota; Plantae; Rosaceae; Rosa",
             lineage_ids=[],
             source="manual",
-            is_active=1,
+            is_active=True,
         )
     )
     db_session.commit()
@@ -1042,7 +1042,7 @@ def test_breeding_service_germplasm_template_supports_comment_rows_and_legacy_al
             lineage="Eukaryota; Plantae; Rosaceae; Rosa",
             lineage_ids=[],
             source="manual",
-            is_active=1,
+            is_active=True,
         )
     )
     db_session.commit()
@@ -1077,7 +1077,7 @@ def test_breeding_service_germplasm_template_accepts_arbitrary_dynamic_headers(d
             lineage="Eukaryota; Plantae; Brassicaceae; Arabidopsis",
             lineage_ids=[],
             source="manual",
-            is_active=1,
+            is_active=True,
         )
     )
     db_session.commit()
@@ -1132,7 +1132,7 @@ def test_breeding_service_germplasm_template_rejects_blank_header_columns_with_d
             lineage="Eukaryota; Plantae; Fabaceae; Pisum",
             lineage_ids=[],
             source="manual",
-            is_active=1,
+            is_active=True,
         )
     )
     db_session.commit()
@@ -1169,7 +1169,7 @@ def test_breeding_service_delete_germplasm_import_batch_removes_related_records(
             lineage="Eukaryota; Plantae; Poaceae; Oryza",
             lineage_ids=[],
             source="manual",
-            is_active=1,
+            is_active=True,
         )
     )
     db_session.commit()
@@ -1229,7 +1229,7 @@ def test_breeding_service_taxonomy_audit(db_session, monkeypatch):
             lineage="cellular organisms; Eukaryota; Viridiplantae; Rosaceae; Rosa",
             lineage_ids=[],
             source="manual",
-            is_active=1,
+            is_active=True,
         ),
         BreedingTaxonomyNode(
             tax_id=74649,
@@ -1240,7 +1240,7 @@ def test_breeding_service_taxonomy_audit(db_session, monkeypatch):
             lineage="cellular organisms; Eukaryota; Viridiplantae; Rosaceae; Rosa",
             lineage_ids=[],
             source="ncbi_sync",
-            is_active=1,
+            is_active=True,
         ),
         BreedingTaxonomyNode(
             tax_id=999999,
@@ -1251,7 +1251,7 @@ def test_breeding_service_taxonomy_audit(db_session, monkeypatch):
             lineage="cellular organisms; Eukaryota",
             lineage_ids=[],
             source="manual",
-            is_active=1,
+            is_active=True,
         ),
         BreedingTaxonomyNode(
             tax_id=888888,
@@ -1262,7 +1262,7 @@ def test_breeding_service_taxonomy_audit(db_session, monkeypatch):
             lineage="cellular organisms; Eukaryota",
             lineage_ids=[],
             source="manual",
-            is_active=1,
+            is_active=True,
         ),
     ]
     db_session.add_all(cache_rows)
@@ -1534,8 +1534,8 @@ def test_breeding_service_program_overview_and_program_scoped_lists(db_session):
         asset_type="expression_matrix",
         workflow_state="ready",
         status="active",
-        is_required=1,
-        is_query_entry=1,
+        is_required=True,
+        is_query_entry=True,
         display_order=0,
         create_time=1,
         update_time=1,

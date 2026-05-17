@@ -82,7 +82,6 @@ class TestPhenomeBreedingBridge:
             dataset_code="DS_PHBR",
             dataset_type="phenome",
             organism="Oryza sativa",
-            assembly="IRGSP-1.0",
         )
         db_session.add(ds)
         db_session.commit()

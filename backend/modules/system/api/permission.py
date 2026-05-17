@@ -31,7 +31,7 @@ async def permission_list(request_data: PageList, db=Depends(get_db), _user=Depe
 @permission_router.post("/add", dependencies=[Depends(check_permission(["sys:permission:add"]))], summary="权限列表==sys:permission:add")
 async def permission_list(request_data: PermissionCreate, db=Depends(get_db), _user=Depends(get_active_user)):
     request_data.create_time = int(time.time())
-    request_data.is_active = 1
+    request_data.is_active = True
     permission_obj = permission_db.create_one(db=db, obj_in=request_data)
     return response_200(data=permission_obj)
 

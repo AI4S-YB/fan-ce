@@ -34,9 +34,9 @@ class TestCrossDomainVisibility:
         db_session.commit()
 
         ds_public = Dataset(dataset_code="DS_PUB_V", dataset_type="variome",
-                           visibility="public", assembly="IRGSP-1.0")
+                           visibility="public", )
         ds_private = Dataset(dataset_code="DS_PRIV_V", dataset_type="variome",
-                            visibility="private", assembly="IRGSP-1.0")
+                            visibility="private", )
         db_session.add_all([ds_public, ds_private])
         db_session.commit()
 
@@ -91,7 +91,7 @@ class TestCrossDomainVisibility:
         db_session.commit()
 
         ds_public = Dataset(dataset_code="DS_ALWAYSVIS", dataset_type="variome",
-                           visibility="public", assembly="IRGSP-1.0")
+                           visibility="public", )
         db_session.add(ds_public)
         db_session.commit()
 

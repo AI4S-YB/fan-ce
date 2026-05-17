@@ -1,4 +1,4 @@
-from sqlalchemy import ARRAY, BigInteger, CheckConstraint, Column, Date, DateTime, Index, Integer, Numeric, String, Text, ForeignKey, func
+from sqlalchemy import ARRAY, Boolean, BigInteger, CheckConstraint, Column, Date, DateTime, Index, Integer, Numeric, String, Text, ForeignKey, func
 from sqlalchemy.dialects.postgresql import JSONB
 
 from shared.database import Base
@@ -75,7 +75,7 @@ class BreedingTaxonomyNode(Base):
     lineage_ids = Column(ARRAY(Integer), nullable=False, default=list, comment="祖先 tax_id 数组")
     lineage = Column(Text, comment="lineage 展示文本")
     source = Column(String(32), nullable=False, default="plant_dump", comment="来源")
-    is_active = Column(Integer, nullable=False, default=1, comment="是否启用")
+    is_active = Column(Boolean, default=True, comment="是否启用")
     ncbi_sync_time = Column(DateTime(timezone=True), comment="NCBI 同步时间")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="创建时间")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="更新时间")
@@ -121,7 +121,7 @@ class BreedingGermplasmImportBatch(Base):
     warning_rows = Column(Integer, nullable=False, default=0, comment="警告行数")
     field_schema_json = Column(Text, comment="本批次字段结构快照 JSON")
     validation_report_json = Column(Text, comment="校验报告 JSON")
-    is_public = Column(Integer, nullable=False, default=0, comment="批次是否公开 0否1是")
+    is_public = Column(Boolean, default=False, comment="批次是否公开")
     created_by = Column(_brd_bigint(), comment="创建人")
     updated_by = Column(_brd_bigint(), comment="更新人")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="创建时间")
@@ -154,7 +154,7 @@ class BreedingGermplasm(Base):
     status = Column(String(32), nullable=False, default="active", comment="状态")
     attributes_json = Column(Text, comment="扩展属性 JSON")
     search_text = Column(Text, comment="搜索文本")
-    is_public = Column(Integer, nullable=False, default=0, comment="是否公开 0否1是")
+    is_public = Column(Boolean, default=False, comment="是否公开")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="创建时间")
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), comment="更新时间")
 

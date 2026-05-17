@@ -23,8 +23,8 @@ class TestBreedingReadiness:
         db_session.add_all([mat1, mat2, mat3])
         db_session.commit()
 
-        ds_v = Dataset(dataset_code="DS_V_READY", dataset_type="variome", assembly="IRGSP-1.0")
-        ds_p = Dataset(dataset_code="DS_P_READY", dataset_type="phenome", assembly="IRGSP-1.0")
+        ds_v = Dataset(dataset_code="DS_V_READY", dataset_type="variome", )
+        ds_p = Dataset(dataset_code="DS_P_READY", dataset_type="phenome", )
         db_session.add_all([ds_v, ds_p])
         db_session.commit()
 

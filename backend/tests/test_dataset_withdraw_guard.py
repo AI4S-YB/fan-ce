@@ -49,7 +49,7 @@ class TestWithdrawGuard:
 
         ds = DatasetRegistry(
             dataset_code="DS_WD_V2", dataset_type="variome",
-            organism="Oryza sativa", assembly="IRGSP-1.0",
+            organism="Oryza sativa",
         )
         db_session.add(ds)
         db_session.commit()

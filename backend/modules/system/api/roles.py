@@ -45,7 +45,7 @@ async def role_list(request_data: PageList, db=Depends(get_db), _user=Depends(ge
 @role_router.post("/add",dependencies=[Depends(check_permission(["sys:role:add"]))], summary="角色添加")
 async def role_add(request_data: RoleCreate, db=Depends(get_db)):
     request_data.create_time = int(time.time())
-    request_data.is_active = 1
+    request_data.is_active = True
     request_data.is_delete = 0
     obj = role_db.create_one(db=db, obj_in=request_data)
     rbd_service.create_role_menus(db=db,role=obj,request_data=request_data)

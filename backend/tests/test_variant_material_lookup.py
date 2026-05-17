@@ -21,7 +21,7 @@ class TestVariantMaterialLookup:
         db_session.commit()
 
         ds = Dataset(dataset_code="DS_VML", dataset_type="variome",
-                     visibility="public", assembly="IRGSP-1.0")
+                     visibility="public", )
         db_session.add(ds)
         db_session.commit()
 

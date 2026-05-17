@@ -57,7 +57,7 @@ class Role(Base):
     code = Column(String(320), comment='角色表示')
     sort = Column(Integer, comment='角色顺序')
     type = Column(Integer, comment='角色类型')
-    is_active = Column(Boolean, default=0, comment='是否激活')
+    is_active = Column(Boolean, default=False, comment='是否激活')
     is_deleted = Column(Boolean, default=0, comment='是否删除')
     status = Column(Integer, default=0, comment='状态')
     create_time = Column(DateTime(timezone=True), comment='创建时间')

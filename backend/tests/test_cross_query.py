@@ -2,8 +2,8 @@ class TestCrossDatasetQuery:
     def test_variant_annotation_overlap_query_builds_correctly(self, db_session):
         from modules.datasets.cross_query import CrossDatasetQueryService
         from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
-        ds_var = Dataset(dataset_code="DS_JOIN_V", dataset_type="variome", assembly="IRGSP-1.0")
-        ds_ann = Dataset(dataset_code="DS_JOIN_A", dataset_type="annotation", assembly="IRGSP-1.0")
+        ds_var = Dataset(dataset_code="DS_JOIN_V", dataset_type="variome", )
+        ds_ann = Dataset(dataset_code="DS_JOIN_A", dataset_type="annotation", )
         db_session.add_all([ds_var, ds_ann])
         db_session.commit()
         result = CrossDatasetQueryService.variant_annotation_overlap(
@@ -16,8 +16,8 @@ class TestCrossDatasetQuery:
     def test_functional_expression_pathway_query(self, db_session):
         from modules.datasets.cross_query import CrossDatasetQueryService
         from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
-        ds_func = Dataset(dataset_code="DS_FUNC", dataset_type="functional_annotation", assembly="IRGSP-1.0")
-        ds_expr = Dataset(dataset_code="DS_EXPR", dataset_type="transcriptome", assembly="IRGSP-1.0")
+        ds_func = Dataset(dataset_code="DS_FUNC", dataset_type="functional_annotation", )
+        ds_expr = Dataset(dataset_code="DS_EXPR", dataset_type="transcriptome", )
         db_session.add_all([ds_func, ds_expr])
         db_session.commit()
         result = CrossDatasetQueryService.functional_expression_pathway(

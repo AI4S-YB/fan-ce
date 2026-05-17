@@ -5,7 +5,7 @@ from omics.db.db import Base
 class FileMetadata(Base):
     __tablename__ = "file_metadata"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     path = Column(String, unique=True, index=True)
     name = Column(String)
     size = Column(Integer)
@@ -16,7 +16,7 @@ class FileMetadata(Base):
 class FileMetadataEnhancement(Base):
     __tablename__ = "file_metadata_enhancement"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     file_id = Column(Integer, ForeignKey("file_metadata.id"))
     term_id = Column(String)
     term_name = Column(String)

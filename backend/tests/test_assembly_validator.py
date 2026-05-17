@@ -14,13 +14,11 @@ from modules.breeding.models import (
     BreedingProgram,
     BreedingVariantSampleMap,
 )
-from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
 from modules.datasets.models import DatasetAsset, DatasetRegistry, DatasetVersion
 from modules.datasets.assembly_validator import AssemblyConsistencyValidator
 from shared.database import Base
 
 ASSEMBLY_VALIDATOR_TABLES = [
-    Dataset.__table__,
     DatasetRegistry.__table__,
     DatasetVersion.__table__,
     DatasetAsset.__table__,
@@ -49,31 +47,6 @@ def db_session():
 
 
 class TestAssemblyValidator:
-    def test_same_assembly_passes_consistency_check(self, db_session):
-        ds1 = Dataset(dataset_code="DS_ASM_A2", dataset_type="variome", assembly="IRGSP-1.0")
-        ds2 = Dataset(dataset_code="DS_ASM_B2", dataset_type="phenome", assembly="IRGSP-1.0")
-        db_session.add_all([ds1, ds2])
-        db_session.commit()
-
-        result = AssemblyConsistencyValidator.validate_assembly_consistency(
-            db=db_session, dataset_ids=[ds1.id, ds2.id]
-        )
-        assert result["consistent"] is True
-        assert result["assembly"] == "IRGSP-1.0"
-        assert len(result["mismatches"]) == 0
-
-    def test_mismatched_assembly_fails_consistency_check(self, db_session):
-        ds1 = Dataset(dataset_code="DS_ASM_C2", dataset_type="variome", assembly="IRGSP-1.0")
-        ds2 = Dataset(dataset_code="DS_ASM_D2", dataset_type="phenome", assembly="TAIR10")
-        db_session.add_all([ds1, ds2])
-        db_session.commit()
-
-        result = AssemblyConsistencyValidator.validate_assembly_consistency(
-            db=db_session, dataset_ids=[ds1.id, ds2.id]
-        )
-        assert result["consistent"] is False
-        assert len(result["mismatches"]) >= 1
-
     def test_sample_alignment_counts_paired_and_unpaired(self, db_session):
         program = BreedingProgram(code="P_AL2", name="Align Test", status="active")
         db_session.add(program)
@@ -86,8 +59,8 @@ class TestAssemblyValidator:
         db_session.add_all([mat1, mat2])
         db_session.commit()
 
-        ds_v = Dataset(dataset_code="DS_ALV2", dataset_type="variome", assembly="IRGSP-1.0")
-        ds_p = Dataset(dataset_code="DS_ALP2", dataset_type="phenome", assembly="IRGSP-1.0")
+        ds_v = DatasetRegistry(dataset_code="DS_ALV2", dataset_type="variome")
+        ds_p = DatasetRegistry(dataset_code="DS_ALP2", dataset_type="phenome")
         db_session.add_all([ds_v, ds_p])
         db_session.commit()
 

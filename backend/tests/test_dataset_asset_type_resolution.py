@@ -52,7 +52,7 @@ class TestAssetTypeResolution:
             base_code="variant_vcf",
             name="Custom Variant Bundle",
             allowed_dataset_types='["variome"]',
-            is_active=1,
+            is_active=True,
             sort_order=10,
         )
         db_session.add(registry_entry)
@@ -85,7 +85,7 @@ class TestAssetTypeResolution:
             base_code="variant_vcf",
             name="Inactive Variant",
             allowed_dataset_types='["variome"]',
-            is_active=0,
+            is_active=False,
             sort_order=10,
         )
         db_session.add(registry_entry)

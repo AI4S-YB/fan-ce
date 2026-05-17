@@ -6,8 +6,8 @@ class TestExpressionComparison:
         from modules.datasets.expression_comparison import ExpressionComparisonService
         from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
 
-        ds_a = Dataset(dataset_code="DS_EXPR_A", dataset_type="transcriptome", assembly="IRGSP-1.0")
-        ds_b = Dataset(dataset_code="DS_EXPR_B", dataset_type="transcriptome", assembly="IRGSP-1.0")
+        ds_a = Dataset(dataset_code="DS_EXPR_A", dataset_type="transcriptome", )
+        ds_b = Dataset(dataset_code="DS_EXPR_B", dataset_type="transcriptome", )
         db_session.add_all([ds_a, ds_b])
         db_session.commit()
 
@@ -26,7 +26,7 @@ class TestExpressionComparison:
 
         datasets = []
         for code in ["DS_PROF_1", "DS_PROF_2", "DS_PROF_3"]:
-            ds = Dataset(dataset_code=code, dataset_type="transcriptome", assembly="IRGSP-1.0")
+            ds = Dataset(dataset_code=code, dataset_type="transcriptome", )
             db_session.add(ds)
             datasets.append(ds)
         db_session.commit()

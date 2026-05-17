@@ -135,8 +135,8 @@ def test_breeding_init_creates_all_tables_and_supports_minimal_chain(db_engine, 
         asset_type="variant_calls",
         workflow_state="ready",
         status="active",
-        is_required=1,
-        is_query_entry=1,
+        is_required=True,
+        is_query_entry=True,
         display_order=0,
         create_time=1,
         update_time=1,
@@ -258,7 +258,7 @@ def test_breeding_init_creates_all_tables_and_supports_minimal_chain(db_engine, 
             role="about",
             mapping_status="reviewed",
             mapping_method="manual",
-            is_primary=1,
+            is_primary=True,
         )
     )
     db_session.add(
@@ -270,7 +270,7 @@ def test_breeding_init_creates_all_tables_and_supports_minimal_chain(db_engine, 
             role="variant_calls",
             mapping_status="reviewed",
             mapping_method="manual",
-            is_primary=1,
+            is_primary=True,
         )
     )
     db_session.add(
@@ -282,7 +282,7 @@ def test_breeding_init_creates_all_tables_and_supports_minimal_chain(db_engine, 
             material_id=material.id,
             mapping_status="reviewed",
             mapping_method="manual",
-            is_primary=1,
+            is_primary=True,
         )
     )
     db_session.add(
@@ -297,7 +297,7 @@ def test_breeding_init_creates_all_tables_and_supports_minimal_chain(db_engine, 
             trait_code="YLD",
             mapping_status="reviewed",
             mapping_method="manual",
-            is_primary=1,
+            is_primary=True,
         )
     )
     db_session.commit()
@@ -316,7 +316,7 @@ def test_germplasm_phase1_tables_support_basic_records_and_uniqueness(db_session
         lineage="Eukaryota; Plantae; Rosaceae; Rosa",
         lineage_ids=[],
         source="manual",
-        is_active=1,
+        is_active=True,
     )
     db_session.add(taxonomy)
     db_session.commit()
@@ -460,7 +460,7 @@ def test_dataset_subject_link_requires_exactly_one_subject(db_session):
             role="about",
             mapping_status="draft",
             mapping_method="manual",
-            is_primary=1,
+            is_primary=True,
         )
     )
     with pytest.raises(IntegrityError):

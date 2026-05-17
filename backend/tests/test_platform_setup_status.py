@@ -118,7 +118,7 @@ def test_init_system_tables_unlocks_when_taxonomy_snapshot_exists(db_session, mo
             lineage_ids=[],
             lineage="root",
             source="plant_dump",
-            is_active=1,
+            is_active=True,
         )
     )
     session.commit()
@@ -151,7 +151,7 @@ def test_platform_setup_state_payload(db_session):
             lineage_ids=[],
             lineage="root",
             source="plant_dump",
-            is_active=1,
+            is_active=True,
         )
     )
     session.add(

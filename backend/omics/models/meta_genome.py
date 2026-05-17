@@ -5,7 +5,7 @@ from omics.db.db import Base
 class GenomeMetadata(Base):
     __tablename__ = "genome_metadata"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     path = Column(String, unique=True, index=True)
     name = Column(String)
     file_count = Column(Integer)
@@ -17,7 +17,7 @@ class GenomeMetadata(Base):
 class GenomeMetadataEnhancement(Base):
     __tablename__ = "genome_metadata_enhancement"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     genome_id = Column(Integer, ForeignKey("genome_metadata.id"))
     term_id = Column(String)
     term_name = Column(String)

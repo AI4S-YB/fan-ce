@@ -26,7 +26,7 @@ class PageList(News):
 
 class CreateModel(BaseModel):
     """创建"""
-    is_public: Optional[bool] = 0
+    is_public: Optional[bool] = False
     is_delete: bool = 0
     model_config = ConfigDict(extra="allow")
 

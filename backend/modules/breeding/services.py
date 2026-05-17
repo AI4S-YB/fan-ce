@@ -1726,8 +1726,8 @@ class BreedingDomainService:
             .join(BreedingTaxonomyNode, BreedingGermplasm.taxonomy_tax_id == BreedingTaxonomyNode.tax_id)
         )
         if public_only:
-            query = query.filter(BreedingGermplasmImportBatch.is_public == 1)
-            query = query.filter(BreedingGermplasm.is_public == 1)
+            query = query.filter(BreedingGermplasmImportBatch.is_public == True)
+            query = query.filter(BreedingGermplasm.is_public == True)
         if request_data.taxonomy_tax_id is not None:
             query = query.filter(BreedingGermplasm.taxonomy_tax_id == request_data.taxonomy_tax_id)
         if request_data.batch_id is not None:
@@ -2122,7 +2122,7 @@ class BreedingDomainService:
         )
         if germplasm is None:
             raise HTTPException(status_code=404, detail="Germplasm not found")
-        germplasm.is_public = 1 if is_public else 0
+        germplasm.is_public = bool(is_public)
         germplasm.updated_at = func.now()
         db.add(germplasm)
         db.commit()
@@ -2136,7 +2136,7 @@ class BreedingDomainService:
         )
         if batch is None:
             raise HTTPException(status_code=404, detail="Batch not found")
-        batch.is_public = 1 if is_public else 0
+        batch.is_public = bool(is_public)
         batch.updated_at = func.now()
         db.add(batch)
         db.commit()
@@ -2163,8 +2163,8 @@ class BreedingDomainService:
             )
         )
         if public_only:
-            query = query.filter(BreedingGermplasmImportBatch.is_public == 1)
-            query = query.filter(BreedingGermplasm.is_public == 1)
+            query = query.filter(BreedingGermplasmImportBatch.is_public == True)
+            query = query.filter(BreedingGermplasm.is_public == True)
         row = query.first()
         if row is None:
             return None
