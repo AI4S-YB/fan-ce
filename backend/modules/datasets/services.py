@@ -107,7 +107,9 @@ class _LegacyBridgeStub:
 
         total = query.count()
         if size > 0:
-            query = query.offset(page * size).limit(size)
+            # page is 1-based from frontend, SQL offset is 0-based
+            p = max(0, (page or 1) - 1)
+            query = query.offset(p * size).limit(size)
         # size=0 means "return all" (used by post-filter path)
 
         rows = query.all()
@@ -3305,8 +3307,7 @@ class DatasetDomainService:
                 except Exception:
                     pass
             except Exception as e:
-                import logging
-                logging.getLogger(__name__).warning(f"list_datasets: error building payload for dataset {database_id}: {e}")
+                import sys, traceback; print(f"[ERROR] list_datasets id={database_id}: {e}", file=sys.stderr); traceback.print_exc(file=sys.stderr)
                 continue
             if request_data.dataset_type and not self._dataset_type_matches(payload["dataset_type"], request_data.dataset_type):
                 continue
