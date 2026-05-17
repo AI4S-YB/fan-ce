@@ -236,10 +236,10 @@ class DatasetDomainService:
             normalized.append(code)
         return normalized
 
-    def _dataset_type_matches(self, candidate, expected):
+    def _dataset_type_matches(self, dataset_type_value, expected):
         if not expected:
             return True
-        return self._canonical_dataset_type(candidate) == self._canonical_dataset_type(expected)
+        return self._canonical_dataset_type(dataset_type_value) == self._canonical_dataset_type(expected)
 
     def _canonicalize_asset_type_list(self, values):
         normalized = []
@@ -1032,54 +1032,41 @@ class DatasetDomainService:
             "update_time": getattr(job_obj, "update_time", None),
         }
 
-    def _candidate_format(self, staging_obj):
+    def _staging_file_format(self, staging_obj):
         file_format = str(getattr(staging_obj, "file_format", "") or "").strip().lower()
         if file_format:
             return file_format
         return str(self._guess_file_suffix(getattr(staging_obj, "local_path", None)) or "").strip().lower()
 
-    def _candidate_name_hint(self, staging_obj):
+    def _staging_name_hint(self, staging_obj):
         return str(getattr(staging_obj, "file_name", None) or getattr(staging_obj, "source_name", None) or "").lower()
 
-    def _is_candidate_index_format(self, file_format):
+    def _is_index_format(self, file_format):
         return file_format in {"fai", "gzi", "tbi", "csi"}
 
-    def _is_candidate_metadata_format(self, file_format):
+    def _is_metadata_format(self, file_format):
         return file_format in {"json", "yaml", "yml", "txt", "md"}
 
-    def _infer_candidate_file_role(self, candidate_file_obj, staging_obj):
-        explicit = str(getattr(candidate_file_obj, "file_role", "") or "").strip().lower()
-        if explicit:
-            return explicit
-        file_format = self._candidate_format(staging_obj)
-        if self._is_candidate_index_format(file_format):
+    def _infer_file_role(self, staging_obj):
+        file_format = self._staging_file_format(staging_obj)
+        if self._is_index_format(file_format):
             return "index"
-        if self._is_candidate_metadata_format(file_format):
+        if self._is_metadata_format(file_format):
             return "metadata"
-        if bool(getattr(candidate_file_obj, "is_primary", 0)):
-            return "primary"
-        return "derived"
+        return "primary"
 
-    def _resolve_candidate_file_role(self, db, candidate_obj, candidate_file_obj, staging_obj):
-        explicit = str(getattr(candidate_file_obj, "file_role", "") or "").strip().lower()
-        if explicit:
-            return explicit
-        _asset_type, asset_file_type_code = self._infer_candidate_asset_mapping(candidate_obj, candidate_file_obj, staging_obj, db=db)
+    def _resolve_file_role(self, db, staging_obj, dataset_type):
+        _asset_type, asset_file_type_code = self._infer_asset_mapping(staging_obj, dataset_type, db=db)
         if asset_file_type_code:
-            registry_obj = self._get_asset_file_type_registry_by_code(db=db, code=asset_file_type_code)
-            if registry_obj and getattr(registry_obj, "file_role", None):
-                return str(registry_obj.file_role).strip().lower()
-        return self._infer_candidate_file_role(candidate_file_obj=candidate_file_obj, staging_obj=staging_obj)
+            registry_row = asset_file_type_registry_db.get_filter(db=db, filters={"code": asset_file_type_code})
+            if registry_row and getattr(registry_row, "file_role", None):
+                return registry_row.file_role
+        return self._infer_file_role(staging_obj=staging_obj)
 
-    def _infer_candidate_asset_mapping(self, candidate_obj, candidate_file_obj, staging_obj, db=None):
-        explicit_asset_type = str(getattr(candidate_file_obj, "asset_type", "") or "").strip().lower()
-        explicit_asset_file_type = str(getattr(candidate_file_obj, "asset_file_type_code", "") or "").strip().lower()
-        if explicit_asset_type:
-            return explicit_asset_type, explicit_asset_file_type or None
-
-        dataset_type = self._canonical_dataset_type(getattr(candidate_obj, "dataset_type", None) or "generic")
-        file_format = self._candidate_format(staging_obj)
-        name_hint = self._candidate_name_hint(staging_obj)
+    def _infer_asset_mapping(self, staging_obj, dataset_type, db=None):
+        dataset_type = self._canonical_dataset_type(dataset_type or "generic")
+        file_format = self._staging_file_format(staging_obj)
+        name_hint = self._staging_name_hint(staging_obj)
 
         if dataset_type == "genome":
             if file_format in {"fa", "fasta", "fna", "fa.gz", "fasta.gz", "fna.gz"}:
@@ -1121,34 +1108,21 @@ class DatasetDomainService:
 
         return self._default_asset_type(dataset_type, db=db), None
 
-    def _candidate_asset_query_engine(self, asset_type, file_format):
+    def _asset_query_engine(self, asset_type, file_format):
         if asset_type == "functional_annotation":
             return "functional_annotation"
         if asset_type == "phenotype_index":
             return "phenome"
         return FILE_TYPE_QUERY_ENGINES.get((file_format or "").lower(), "file")
 
-    def _candidate_asset_name(self, candidate_obj, asset_type):
-        candidate_name = str(getattr(candidate_obj, "candidate_name", None) or getattr(candidate_obj, "candidate_code", None) or "candidate")
-        return f"{candidate_name}:{asset_type}"
+    def _asset_name_from_type(self, asset_type):
+        return asset_type.replace("_", " ").title()
 
-    def _get_candidate_primary_source(self, db, candidate_obj):
-        file_rows = dataset_registration_candidate_file_db.get_data(db=db, filters={"candidate_id": candidate_obj.id})
-        file_rows = sorted(file_rows, key=lambda item: (int(not bool(getattr(item, "is_primary", 0))), getattr(item, "sort_order", 0) or 0, item.id))
-        best_entry = None
-        for file_obj in file_rows:
-            staging_obj = dataset_staging_file_db.get(db=db, id=file_obj.staging_file_id)
-            asset_type, _asset_file_type_code = self._infer_candidate_asset_mapping(candidate_obj, file_obj, staging_obj, db=db)
-            file_role = self._resolve_candidate_file_role(db=db, candidate_obj=candidate_obj, candidate_file_obj=file_obj, staging_obj=staging_obj)
-            if file_role != "primary":
-                continue
-            if asset_type == self._default_asset_type(candidate_obj.dataset_type, db=db):
-                return file_obj, staging_obj
-            if best_entry is None:
-                best_entry = (file_obj, staging_obj)
-        if best_entry is not None:
-            return best_entry
-        raise HTTPException(status_code=400, detail="candidate has no primary source file for dataset registration")
+    def _get_primary_staging(self, db, staging_file_ids):
+        staging_objs = [dataset_staging_file_db.get(db=db, id=sid) for sid in staging_file_ids]
+        if not staging_objs:
+            raise HTTPException(status_code=400, detail="no staging files found")
+        return staging_objs[0], staging_objs
 
     def _find_existing_version_asset(self, db, version_id, asset_type):
         asset_rows = dataset_asset_db.get_data(db=db, filters={"dataset_version_id": version_id})
@@ -1157,7 +1131,7 @@ class DatasetDomainService:
                 return asset_obj
         return None
 
-    def _ensure_candidate_asset(self, db, *, candidate_obj, version_obj, asset_type, file_format, is_query_entry, user):
+    def _ensure_asset(self, db, *, version_obj, asset_type, file_format, is_query_entry, user):
         existing = self._find_existing_version_asset(db=db, version_id=version_obj.id, asset_type=asset_type)
         if existing:
             return self.get_dataset_asset(db=db, asset_id=existing.id, user=user)
@@ -1166,10 +1140,10 @@ class DatasetDomainService:
             request_data=SimpleNamespace(
                 version_id=version_obj.id,
                 asset_code=None,
-                asset_name=self._candidate_asset_name(candidate_obj, asset_type),
+                asset_name=self._asset_name_from_type(asset_type),
                 asset_type=asset_type,
                 file_format=file_format,
-                query_engine=self._candidate_asset_query_engine(asset_type=asset_type, file_format=file_format),
+                query_engine=self._asset_query_engine(asset_type=asset_type, file_format=file_format),
                 storage_backend="local",
                 workflow_state="ready",
                 status="active",
@@ -4424,12 +4398,12 @@ class DatasetDomainService:
             missing_count += 1
         return missing_count
 
-    def _validate_candidate_staging_source(self, staging_obj):
+    def _validate_staging_available(self, staging_obj):
         current_status = str(getattr(staging_obj, "status", "") or "").strip().lower()
         if current_status in {"missing", "deleted", "consumed", "registered"}:
             raise HTTPException(
                 status_code=400,
-                detail=f"staging file is not available for candidate: {getattr(staging_obj, 'id', None)}",
+                detail=f"staging file is not available: {getattr(staging_obj, 'id', None)}",
             )
         linked_dataset_id = getattr(staging_obj, "linked_dataset_id", None)
         if linked_dataset_id:
@@ -4441,12 +4415,11 @@ class DatasetDomainService:
         if not local_path or not os.path.exists(local_path):
             raise HTTPException(
                 status_code=400,
-                detail=f"staging file path is not available: {getattr(staging_obj, 'id', None)}",
+                detail=f"staging file not found: {getattr(staging_obj, 'id', None)}",
             )
-        return staging_obj
 
-    def validate_candidate(self, staging_entries, declared_dataset_type=None):
-        """Validate candidate files before registration.
+    def validate_staging_files(self, staging_entries, declared_dataset_type=None):
+        """Validate staging files before registration.
 
         Returns a list of error strings. Empty list means validation passed.
         """
@@ -4473,10 +4446,134 @@ class DatasetDomainService:
                 if inferred_type != "generic" and inferred_type != declared_dataset_type:
                     errors.append(
                         f"format mismatch: {os.path.basename(local_path)} appears to be "
-                        f"'{inferred_type}' but candidate declares '{declared_dataset_type}'"
+                        f"'{inferred_type}' but staging declares '{declared_dataset_type}'"
                     )
 
         return errors
+
+    def register_staging_files(self, db, request_data, user):
+        """Register staging files directly as a new dataset."""
+        staging_file_ids = request_data.staging_file_ids
+        dataset_type = request_data.dataset_type or "generic"
+        dataset_type, _dataset_kind = self._require_dataset_kind_code(
+            db=db, dataset_type=dataset_type, active_only=False,
+        )
+
+        # 1. Load and validate all staging files
+        staging_objs = []
+        for sid in staging_file_ids:
+            staging_obj = dataset_staging_file_db.get(db=db, id=sid)
+            self._validate_staging_available(staging_obj)
+            staging_objs.append(staging_obj)
+
+        primary_staging = staging_objs[0]
+        dataset_name = request_data.name or self._guess_name_from_path(
+            getattr(primary_staging, "local_path", "")
+        )
+
+        # 2. Validate the staging file set
+        staging_entries = [
+            {
+                "local_path": getattr(s, "local_path", None),
+                "file_format": self._staging_file_format(s),
+            }
+            for s in staging_objs
+        ]
+        validation_errors = self.validate_staging_files(staging_entries, declared_dataset_type=dataset_type)
+        if validation_errors:
+            raise HTTPException(
+                status_code=400,
+                detail=f"validation failed: {'; '.join(validation_errors)}",
+            )
+
+        # 3. Create DatasetRegistry via register_dataset_source
+        dataset_payload = self.register_dataset_source(
+            db=db,
+            request_data=SimpleNamespace(
+                file_path=getattr(primary_staging, "local_path", ""),
+                name=dataset_name,
+                dataset_type=dataset_type,
+                remark=getattr(request_data, "remark", None),
+                is_public=bool(getattr(request_data, "is_public", False)),
+                dry_run=False,
+                team_id=getattr(request_data, "team_id", 0) or 0,
+                project_id=getattr(request_data, "project_id", 0) or 0,
+            ),
+            user=user,
+        )
+        dataset_id = dataset_payload["id"]
+
+        # 4. Set organism on registry
+        registry_obj = dataset_registry_db.get_filter(db=db, filters={"id": dataset_id})
+        if registry_obj and getattr(request_data, "organism", None):
+            dataset_registry_db.update_one(
+                db=db, db_obj=registry_obj,
+                obj_in={"organism": request_data.organism, "update_time": self._now()},
+            )
+
+        # 5. Sync current version
+        version_obj = self.sync_current_version_from_dataset_id(db=db, dataset_id=dataset_id)
+
+        # 6. Create assets and files from staging files
+        asset_payload_cache = {}
+        for staging_obj in staging_objs:
+            asset_type, asset_file_type_code = self._infer_asset_mapping(
+                staging_obj, dataset_type, db=db,
+            )
+            file_format = self._staging_file_format(staging_obj)
+            file_role = self._resolve_file_role(
+                db=db, staging_obj=staging_obj, dataset_type=dataset_type,
+            )
+
+            cache_key = asset_type
+            asset_payload = asset_payload_cache.get(cache_key)
+            if not asset_payload:
+                asset_payload = self._ensure_asset(
+                    db=db,
+                    version_obj=version_obj,
+                    asset_type=asset_type,
+                    file_format=file_format,
+                    is_query_entry=(asset_type == self._default_asset_type(dataset_type, db=db)),
+                    user=user,
+                )
+                asset_payload_cache[cache_key] = asset_payload
+
+            asset_files = self.list_asset_files(db=db, asset_id=asset_payload["id"], user=user)["items"]
+            primary_asset_file = next(
+                (item for item in asset_files if item["file_role"] == "primary"), None
+            )
+            self.register_asset_file(
+                db=db,
+                request_data=SimpleNamespace(
+                    asset_id=asset_payload["id"],
+                    file_role=file_role,
+                    asset_file_type_code=asset_file_type_code,
+                    local_path=getattr(staging_obj, "local_path", ""),
+                    file_format=file_format,
+                    index_of_file_id=(
+                        primary_asset_file["id"]
+                        if file_role == "index" and primary_asset_file
+                        else None
+                    ),
+                    status="active",
+                    meta_json=None,
+                ),
+                user=user,
+            )
+
+        # 7. Mark staging files as registered
+        now = self._now()
+        for staging_obj in staging_objs:
+            dataset_staging_file_db.update_one(
+                db=db, db_obj=staging_obj,
+                obj_in={
+                    "status": "registered",
+                    "linked_dataset_id": dataset_id,
+                    "update_time": now,
+                },
+            )
+
+        return self.get_dataset(db=db, dataset_id=dataset_id)
 
     def list_staging_files(self, db, request_data):
         rows = dataset_staging_file_db.get_data(db=db, filters={})

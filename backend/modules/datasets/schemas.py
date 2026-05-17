@@ -665,3 +665,16 @@ class BatchSequenceRequest(BaseModel):
     inputs: list[str]
 
     model_config = ConfigDict(extra="forbid")
+
+
+class RegisterStagingFilesRequest(BaseModel):
+    staging_file_ids: list[int]
+    name: str
+    dataset_type: Optional[str] = "generic"
+    organism: Optional[str] = None
+    is_public: Optional[bool] = False
+    team_id: Optional[int] = 0
+    project_id: Optional[int] = 0
+    remark: Optional[str] = None
+
+    model_config = ConfigDict(extra="forbid")

@@ -199,13 +199,13 @@ class MockStagingFile:
         self.dataset_type = dataset_type
         self.file_name = file_name
         self.file_format = "fasta"
-        self.stage_status = "discovered"
+        self.status = "discovered"
         self.staging_code = f"stg-{id}"
         self.relative_path = file_name
         self.file_size = 1000
         self.scan_job_id = 1
         self.linked_dataset_id = None
-        self.last_seen_at = 12345
+        self.last_seen_time = 12345
         self.create_user_id = 1
         self.meta_json = None
         self.create_time = 12345
@@ -247,21 +247,21 @@ def test_build_directory_view_builds_tree():
     assert len(result["orphan_files"]) == 1  # orphan.fasta directly under /data/genomes
 
 
-def test_validate_candidate_checks_file_exists():
-    """validate_candidate should flag non-existent files"""
+def test_validate_staging_files_checks_file_exists():
+    """validate_staging_files should flag non-existent files"""
     svc = DatasetDomainService()
-    errors = svc.validate_candidate([
+    errors = svc.validate_staging_files([
         {"local_path": "/nonexistent/file.fasta", "file_format": "fasta"},
     ])
     assert len(errors) > 0
     assert any("not found" in e.lower() for e in errors)
 
 
-def test_validate_candidate_checks_format_consistency():
-    """validate_candidate should warn when file format doesn't match declared type"""
+def test_validate_staging_files_checks_format_consistency():
+    """validate_staging_files should warn when file format doesn't match declared type"""
     svc = DatasetDomainService()
     with patch("os.path.exists", return_value=True), patch("os.access", return_value=True):
-        errors = svc.validate_candidate(
+        errors = svc.validate_staging_files(
             [{"local_path": "/data/test.fasta", "file_format": "fasta"}],
             declared_dataset_type="variome",
         )
@@ -269,11 +269,11 @@ def test_validate_candidate_checks_format_consistency():
     assert any("fasta" in e.lower() or "genome" in e.lower() or "mismatch" in e.lower() for e in errors)
 
 
-def test_validate_candidate_passes_for_valid_files():
-    """validate_candidate should return empty list when everything is valid"""
+def test_validate_staging_files_passes_for_valid_files():
+    """validate_staging_files should return empty list when everything is valid"""
     svc = DatasetDomainService()
     with patch("os.path.exists", return_value=True), patch("os.access", return_value=True):
-        errors = svc.validate_candidate(
+        errors = svc.validate_staging_files(
             [{"local_path": "/data/test.fasta", "file_format": "fasta"}],
             declared_dataset_type="genome",
         )
