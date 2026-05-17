@@ -37,16 +37,15 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[AnyHttpUrl] = (
         "http://localhost:4000",
     )
-    # token
-
-    SECRET_KEY: str = os.environ.get("FANCE_SECRET_KEY", "")
-
+    # token — 生产部署请通过环境变量覆盖: export FANCE_SECRET_KEY="..."
+    SECRET_KEY: str = os.environ.get("FANCE_SECRET_KEY", "fan-ce-dev-jwt-secret-key-not-for-production-use")
     # 过期时间: 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     TOKEN_TYPE: str = 'Bearer'
     # cookie
     COOKIE_KEY: str = "sessionId"
-    MD5_SALT: str = os.environ.get("FANCE_MD5_SALT", "")
+    # 生产部署请通过环境变量覆盖: export FANCE_MD5_SALT="..."
+    MD5_SALT: str = os.environ.get("FANCE_MD5_SALT", "fan-ce-dev-md5-salt-not-for-production")
     COOKIE_MAX_AGE: int = 24 * 60 * 60
     # logs日志
     LOGGER_DIR: str = "logs"
