@@ -43,8 +43,6 @@ from .crud import (
     asset_type_registry_db,
     dataset_asset_db,
     dataset_kind_registry_db,
-    dataset_registration_candidate_db,
-    dataset_registration_candidate_file_db,
     dataset_lineage_edge_db,
     dataset_publish_record_db,
     dataset_registry_db,
@@ -150,8 +148,7 @@ class _LegacyBridgeStub:
         if not registry:
             return []
         return [{"key": "dataset_code", "value": registry.dataset_code or ""},
-                {"key": "organism", "value": registry.organism or ""},
-                {"key": "file_format", "value": registry.file_format or ""}]
+                {"key": "organism", "value": registry.organism or ""}]
 
     def list_project_links_by_project(self, db, project_id):
         return []
@@ -213,7 +210,6 @@ class DatasetDomainService:
         "bw": "signal",
         "bigwig": "signal",
     }
-    SUPPORTED_REGISTRATION_MODES = {"prebuilt", "hybrid", "recipe_build"}
     DATASET_TYPE_TO_ASSET_TYPE = {
         "genome": "reference_fasta",
         "annotation": "gene_annotation",
@@ -988,9 +984,9 @@ class DatasetDomainService:
             "scan_job_id": getattr(staging_obj, "scan_job_id", None),
             "relative_path": getattr(staging_obj, "relative_path", None),
             "file_mtime": getattr(staging_obj, "file_mtime", None),
-            "discovered_at": getattr(staging_obj, "discovered_at", None),
-            "last_seen_at": getattr(staging_obj, "last_seen_at", None),
-            "stage_status": staging_obj.stage_status,
+            "discover_time": getattr(staging_obj, "discover_time", None),
+            "last_seen_time": getattr(staging_obj, "last_seen_time", None),
+            "status": staging_obj.status,
             "linked_dataset_id": staging_obj.linked_dataset_id,
             "create_user_id": staging_obj.create_user_id,
             "meta_json": staging_obj.meta_json,
@@ -1029,75 +1025,12 @@ class DatasetDomainService:
             "missing_file_count": getattr(job_obj, "missing_file_count", 0),
             "skipped_registered_count": getattr(job_obj, "skipped_registered_count", 0),
             "error_message": getattr(job_obj, "error_message", None),
-            "started_at": getattr(job_obj, "started_at", None),
-            "finished_at": getattr(job_obj, "finished_at", None),
+            "start_time": getattr(job_obj, "start_time", None),
+            "finish_time": getattr(job_obj, "finish_time", None),
             "create_user_id": getattr(job_obj, "create_user_id", None),
             "create_time": getattr(job_obj, "create_time", None),
             "update_time": getattr(job_obj, "update_time", None),
         }
-
-    def _build_candidate_payload(self, candidate_obj):
-        meta_payload = self._parse_candidate_meta(getattr(candidate_obj, "meta_json", None))
-        return {
-            "id": candidate_obj.id,
-            "candidate_code": candidate_obj.candidate_code,
-            "scan_root_id": getattr(candidate_obj, "scan_root_id", None),
-            "dataset_type": getattr(candidate_obj, "dataset_type", None),
-            "recipe_code": getattr(candidate_obj, "recipe_code", None),
-            "registration_mode": getattr(candidate_obj, "registration_mode", None),
-            "candidate_name": getattr(candidate_obj, "candidate_name", None),
-            "version_name": getattr(candidate_obj, "version_name", None),
-            "organism": getattr(candidate_obj, "organism", None),
-            "reference_dataset_id": getattr(candidate_obj, "reference_dataset_id", None),
-            "reference_version_id": getattr(candidate_obj, "reference_version_id", None),
-            "status": getattr(candidate_obj, "status", None),
-            "validation_status": getattr(candidate_obj, "validation_status", None),
-            "build_status": getattr(candidate_obj, "build_status", None),
-            "registration_status": getattr(candidate_obj, "registration_status", None),
-            "source_kind": getattr(candidate_obj, "source_kind", None),
-            "meta_json": getattr(candidate_obj, "meta_json", None),
-            "registered_dataset_id": meta_payload.get("registered_dataset_id"),
-            "registered_version_id": meta_payload.get("registered_version_id"),
-            "registered_at": meta_payload.get("registered_at"),
-            "create_user_id": getattr(candidate_obj, "create_user_id", None),
-            "create_time": getattr(candidate_obj, "create_time", None),
-            "update_time": getattr(candidate_obj, "update_time", None),
-        }
-
-    def _build_candidate_file_payload(self, file_obj, staging_payload=None):
-        return {
-            "id": file_obj.id,
-            "candidate_id": getattr(file_obj, "candidate_id", None),
-            "staging_file_id": getattr(file_obj, "staging_file_id", None),
-            "source_role": getattr(file_obj, "source_role", None),
-            "asset_type": getattr(file_obj, "asset_type", None),
-            "asset_file_type_code": getattr(file_obj, "asset_file_type_code", None),
-            "file_role": getattr(file_obj, "file_role", None),
-            "is_primary": bool(getattr(file_obj, "is_primary", 0)),
-            "is_required": bool(getattr(file_obj, "is_required", 1)),
-            "validation_status": getattr(file_obj, "validation_status", None),
-            "confidence": getattr(file_obj, "confidence", None),
-            "origin_type": getattr(file_obj, "origin_type", None),
-            "sort_order": getattr(file_obj, "sort_order", 0),
-            "meta_json": getattr(file_obj, "meta_json", None),
-            "create_time": getattr(file_obj, "create_time", None),
-            "update_time": getattr(file_obj, "update_time", None),
-            "staging_file": staging_payload,
-        }
-
-    def _parse_candidate_meta(self, value):
-        if not value:
-            return {}
-        if isinstance(value, dict):
-            return value
-        try:
-            parsed = json.loads(value)
-        except (TypeError, json.JSONDecodeError):
-            return {}
-        return parsed if isinstance(parsed, dict) else {}
-
-    def _encode_candidate_meta(self, value):
-        return json.dumps(value or {}, ensure_ascii=False)
 
     def _candidate_format(self, staging_obj):
         file_format = str(getattr(staging_obj, "file_format", "") or "").strip().lower()
@@ -1319,7 +1252,7 @@ class DatasetDomainService:
         canonical = self._canonical_dataset_type(dataset_type)
         rows = (
             db.query(AssetTypeRegistry)
-            .filter(AssetTypeRegistry.is_active == 1)
+            .filter(AssetTypeRegistry.is_active == True)
             .order_by(AssetTypeRegistry.sort_order.desc())
             .all()
         )
@@ -1591,7 +1524,7 @@ class DatasetDomainService:
                 self._update_db_obj(
                     db,
                     asset_obj,
-                    is_query_entry=1 if should_be_entry else 0,
+                    is_query_entry=True if should_be_entry else 0,
                     update_time=self._now(),
                 )
 
@@ -2065,7 +1998,7 @@ class DatasetDomainService:
             }
         raise HTTPException(status_code=400, detail="either dataset id or file_path is required")
 
-    def _write_workflow_result(self, db, dataset_id, operator_id, task_type, from_state, to_state, task_status, detail):
+    def _write_workflow_result(self, db, dataset_id, operator_id, task_type, from_lifecycle_state, to_lifecycle_state, status, detail):
         if not dataset_id:
             return
         registry_obj = dataset_registry_db.get_filter(db=db, filters={"id": dataset_id})
@@ -2074,7 +2007,7 @@ class DatasetDomainService:
                 db=db,
                 db_obj=registry_obj,
                 obj_in={
-                    "lifecycle_state": to_state,
+                    "lifecycle_state": to_lifecycle_state,
                     "update_time": self._now(),
                 },
             )
@@ -2083,13 +2016,13 @@ class DatasetDomainService:
             obj_in={
                 "dataset_id": dataset_id,
                 "task_type": task_type,
-                "task_status": task_status,
-                "from_state": from_state,
-                "to_state": to_state,
+                "status": status,
+                "from_lifecycle_state": from_lifecycle_state,
+                "to_lifecycle_state": to_lifecycle_state,
                 "operator_id": operator_id,
                 "detail": detail,
                 "create_time": self._now(),
-                "finish_time": self._now() if task_status != "running" else None,
+                "finish_time": self._now() if status != "running" else None,
             },
         )
 
@@ -2118,9 +2051,9 @@ class DatasetDomainService:
             "id": task_obj.id,
             "dataset_id": task_obj.dataset_id,
             "task_type": task_obj.task_type,
-            "task_status": task_obj.task_status,
-            "from_state": task_obj.from_state,
-            "to_state": task_obj.to_state,
+            "status": task_obj.status,
+            "from_lifecycle_state": task_obj.from_lifecycle_state,
+            "to_lifecycle_state": task_obj.to_lifecycle_state,
             "operator_id": task_obj.operator_id,
             "detail": task_obj.detail,
             "detail_json": detail_json,
@@ -2192,9 +2125,9 @@ class DatasetDomainService:
             obj_in={
                 "dataset_id": dataset_id,
                 "task_type": action,
-                "task_status": "pending",
-                "from_state": from_state,
-                "to_state": from_state,
+                "status": "pending",
+                "from_lifecycle_state": from_state,
+                "to_lifecycle_state": from_state,
                 "operator_id": operator_id,
                 "detail": self._encode_task_detail(
                     self._build_ingest_task_detail(
@@ -2283,9 +2216,9 @@ class DatasetDomainService:
             obj_in={
                 "dataset_id": database_obj.id,
                 "task_type": "upload",
-                "task_status": "success",
-                "from_state": "draft",
-                "to_state": registry_obj.lifecycle_state,
+                "status": "success",
+                "from_lifecycle_state": "draft",
+                "to_lifecycle_state": registry_obj.lifecycle_state,
                 "operator_id": operator_id,
                 "detail": "dataset registered from existing server file",
                 "create_time": create_time,
@@ -2326,9 +2259,9 @@ class DatasetDomainService:
                     dataset_id=target["dataset_id"],
                     operator_id=operator_id,
                     task_type="validate",
-                    from_state=before_state,
-                    to_state="validated",
-                    task_status="success",
+                    from_lifecycle_state=before_state,
+                    to_lifecycle_state="validated",
+                    status="success",
                     detail=request_data.detail or "dataset validation completed",
                 )
             self.sync_current_version_from_dataset_id(db=db, dataset_id=target["dataset_id"])
@@ -2374,11 +2307,6 @@ class DatasetDomainService:
                     db_obj=registry_obj,
                     obj_in={
                         "index_summary": json.dumps(index_result, ensure_ascii=False),
-                        "file_format": self._guess_file_suffix(index_result["indexed_path"]) or registry_obj.file_format,
-                        "query_engine": FILE_TYPE_QUERY_ENGINES.get(
-                            self._guess_file_suffix(index_result["indexed_path"]) or "",
-                            registry_obj.query_engine,
-                        ),
                         "lifecycle_state": "ready",
                         "update_time": self._now(),
                     },
@@ -2389,9 +2317,9 @@ class DatasetDomainService:
                     dataset_id=target["dataset_id"],
                     operator_id=operator_id,
                     task_type="index",
-                    from_state=before_state,
-                    to_state="ready",
-                    task_status="success",
+                    from_lifecycle_state=before_state,
+                    to_lifecycle_state="ready",
+                    status="success",
                     detail=request_data.detail or index_result["operation"],
                 )
             self.sync_current_version_from_dataset_id(db=db, dataset_id=target["dataset_id"])
@@ -2462,7 +2390,7 @@ class DatasetDomainService:
             raise HTTPException(status_code=400, detail="task request payload is missing")
         if action not in {"validate", "index", "pipeline"}:
             raise HTTPException(status_code=400, detail="task is not retryable")
-        if task_obj.task_status not in {"failed", "success"}:
+        if task_obj.status not in {"failed", "success"}:
             raise HTTPException(status_code=400, detail="only completed ingest tasks can be retried")
         next_attempt = int(detail_json.get("attempt") or 1) + 1
         return self._create_ingest_workflow_task(
@@ -2494,13 +2422,13 @@ class DatasetDomainService:
                     db=db,
                     db_obj=task_obj,
                     obj_in={
-                        "task_status": "failed",
-                        "to_state": "failed",
+                        "status": "failed",
+                        "to_lifecycle_state": "failed",
                         "detail": self._encode_task_detail(
                             self._update_task_detail(
                                 detail_json,
                                 error={"message": f"unsupported ingest action: {action}"},
-                                finished_at=self._now(),
+                                finish_time=self._now(),
                             )
                         ),
                         "finish_time": self._now(),
@@ -2514,12 +2442,12 @@ class DatasetDomainService:
                 db=db,
                 db_obj=task_obj,
                 obj_in={
-                    "task_status": "running",
-                    "to_state": running_state or task_obj.to_state,
+                    "status": "running",
+                    "to_lifecycle_state": running_state or task_obj.to_lifecycle_state,
                     "detail": self._encode_task_detail(
                         self._update_task_detail(
                             detail_json,
-                            started_at=started_at,
+                            start_time=started_at,
                             running_state=running_state,
                             error=None,
                         )
@@ -2547,18 +2475,18 @@ class DatasetDomainService:
                     result = self.run_ingest_pipeline(db=db, request_data=request_model, user=user, write_workflow_task=False)
 
                 dataset_payload = self.get_dataset(db=db, dataset_id=dataset_id) if dataset_id else None
-                final_state = dataset_payload.get("lifecycle_state") if dataset_payload else task_obj.to_state
+                final_state = dataset_payload.get("lifecycle_state") if dataset_payload else task_obj.to_lifecycle_state
                 dataset_workflow_task_db.update_one(
                     db=db,
                     db_obj=task_obj,
                     obj_in={
-                        "task_status": "success",
-                        "to_state": final_state,
+                        "status": "success",
+                        "to_lifecycle_state": final_state,
                         "detail": self._encode_task_detail(
                             self._update_task_detail(
                                 task_detail,
                                 result=result,
-                                finished_at=self._now(),
+                                finish_time=self._now(),
                             )
                         ),
                         "finish_time": self._now(),
@@ -2574,8 +2502,8 @@ class DatasetDomainService:
                     db=db,
                     db_obj=dataset_workflow_task_db.get(db=db, id=task_id),
                     obj_in={
-                        "task_status": "failed",
-                        "to_state": "failed",
+                        "status": "failed",
+                        "to_lifecycle_state": "failed",
                         "detail": self._encode_task_detail(
                             self._update_task_detail(
                                 task_detail,
@@ -2583,7 +2511,7 @@ class DatasetDomainService:
                                     "type": exc.__class__.__name__,
                                     "message": message,
                                 },
-                                finished_at=self._now(),
+                                finish_time=self._now(),
                             )
                         ),
                         "finish_time": self._now(),
@@ -2602,8 +2530,6 @@ class DatasetDomainService:
             update_data = {
                 "title": registry_obj.title or database_name,
                 "dataset_type": registry_obj.dataset_type or self._infer_dataset_type(database_obj, file_obj),
-                "file_format": registry_obj.file_format or self._normalize_file_format(file_obj),
-                "query_engine": registry_obj.query_engine or self._infer_query_engine(file_obj),
                 "visibility": registry_obj.visibility or ("public" if database_is_public else "private"),
                 "update_time": self._now(),
             }
@@ -2616,12 +2542,9 @@ class DatasetDomainService:
                 "dataset_id": database_id,
                 "dataset_code": f"ds-{database_id}",
                 "dataset_type": self._infer_dataset_type(database_obj, file_obj),
-                "version": DEFAULT_DATASET_VERSION,
                 "title": database_name,
                 "lifecycle_state": "ready" if database_is_public or database_is_active else "draft",
                 "visibility": "public" if database_is_public else "private",
-                "file_format": self._normalize_file_format(file_obj),
-                "query_engine": self._infer_query_engine(file_obj),
                 "create_time": self._now(),
                 "update_time": self._now(),
             },
@@ -2641,6 +2564,7 @@ class DatasetDomainService:
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
         dataset_kind_obj = self._get_dataset_kind_registry_by_code(db=db, code=registry_obj.dataset_type)
         file_obj = dataset_legacy_bridge.get_primary_file(db=db, dataset_id=database_data["id"])
+        current_version = dataset_version_db.get_filter(db=db, filters={"dataset_id": database_data["id"], "is_current": True})
         file_payload = {
             "id": file_obj.id, "name": file_obj.name, "path": file_obj.path,
             "type": file_obj.type, "data_type": file_obj.data_type,
@@ -2656,12 +2580,12 @@ class DatasetDomainService:
             "name": database_data["name"],
             "dataset_type": registry_obj.dataset_type,
             "dataset_kind": self._build_dataset_kind_registry_payload(dataset_kind_obj) if dataset_kind_obj else None,
-            "version": registry_obj.version,
+            "version": current_version.version if current_version else "",
             "lifecycle_state": registry_obj.lifecycle_state,
             "visibility": registry_obj.visibility,
             "organism": registry_obj.organism,
             "description_md": registry_obj.description_md,
-            "extra_json": registry_obj.extra_json,
+            "meta_json": registry_obj.meta_json,
             "default_public_version_id": getattr(registry_obj, "default_public_version_id", None),
             "status": database_data["status"],
             "user_id": database_data["user_id"],
@@ -2670,8 +2594,8 @@ class DatasetDomainService:
             "is_active": database_data["is_active"],
             "file": file_payload,
             "query_profile": {
-                "file_format": registry_obj.file_format,
-                "query_engine": registry_obj.query_engine,
+                "file_format": current_version.file_format if current_version else "",
+                "query_engine": current_version.query_engine if current_version else "",
                 "validation_summary": registry_obj.validation_summary,
                 "index_summary": registry_obj.index_summary,
             },
@@ -2809,7 +2733,7 @@ class DatasetDomainService:
             "query_engine": version_obj.query_engine,
             "validation_summary": version_obj.validation_summary,
             "index_summary": version_obj.index_summary,
-            "extra_json": version_obj.extra_json,
+            "meta_json": version_obj.meta_json,
             "is_current": bool(version_obj.is_current),
             "is_default_public": is_default_public,
             "is_published": self._is_version_publicly_released(version_obj),
@@ -2999,10 +2923,10 @@ class DatasetDomainService:
         # 2. Current version
         current_version = db.query(DatasetVersion).filter(
             DatasetVersion.dataset_id == registry.id,
-            DatasetVersion.is_current == 1,
+            DatasetVersion.is_current == True,
         ).first()
 
-        version_str = current_version.version if current_version else (registry.version or "")
+        version_str = current_version.version if current_version else ""
         dataset_type = current_version.dataset_type if (current_version and current_version.dataset_type) else (registry.dataset_type or "")
         organism = registry.organism or ""
 
@@ -3011,7 +2935,7 @@ class DatasetDomainService:
         if current_version:
             qea = db.query(DatasetAsset).filter(
                 DatasetAsset.dataset_version_id == current_version.id,
-                DatasetAsset.is_query_entry == 1,
+                DatasetAsset.is_query_entry == True,
             ).first()
             if qea:
                 query_entry_asset = {"id": qea.id, "asset_code": qea.asset_code, "asset_name": qea.asset_name}
@@ -3072,7 +2996,7 @@ class DatasetDomainService:
             "lifecycle_state": registry.lifecycle_state or "",
             "visibility": "public",
             "description_md": registry.description_md or "",
-            "extra_json": registry.extra_json,
+            "meta_json": registry.meta_json,
             "query_entry_asset": query_entry_asset,
             "primary_file": primary_file,
             "assets": assets,
@@ -3214,8 +3138,8 @@ class DatasetDomainService:
             filters={"id": database_id, "version": version_name},
         )
         version_data = self._build_version_data_from_dataset_payload(dataset_payload)
-        if version_obj and getattr(version_obj, "extra_json", None) is not None:
-            version_data["extra_json"] = version_obj.extra_json
+        if version_obj and getattr(version_obj, "meta_json", None) is not None:
+            version_data["meta_json"] = version_obj.meta_json
         self._ensure_version_current_flag(db=db, database_id=database_id, version_name=version_name)
         if version_obj:
             dataset_version_db.update_one(db=db, db_obj=version_obj, obj_in=version_data)
@@ -3318,7 +3242,7 @@ class DatasetDomainService:
             if getattr(request_data, 'keyword', None):
                 keyword = request_data.keyword.strip().lower()
                 desc = (payload.get("description_md") or "").lower()
-                extra = (payload.get("extra_json") or "").lower()
+                extra = (payload.get("meta_json") or "").lower()
                 if keyword not in desc and keyword not in extra:
                     continue
             data_list.append(payload)
@@ -3372,7 +3296,7 @@ class DatasetDomainService:
             "query_engine",
             "validation_summary",
             "index_summary",
-            "extra_json",
+            "meta_json",
             "description_md",
         ]:
             value = getattr(request_data, field, None)
@@ -3390,7 +3314,7 @@ class DatasetDomainService:
             raise HTTPException(status_code=4000, detail="invalid dataset lifecycle state")
         if request_data.task_type and request_data.task_type not in WORKFLOW_TASK_TYPES:
             raise HTTPException(status_code=4000, detail="invalid workflow task type")
-        if request_data.task_status and request_data.task_status not in WORKFLOW_TASK_STATUS:
+        if request_data.status and request_data.status not in WORKFLOW_TASK_STATUS:
             raise HTTPException(status_code=4000, detail="invalid workflow task status")
 
         database_obj = self._ensure_dataset_write_access(db=db, dataset_id=dataset_id, user=user)
@@ -3423,13 +3347,13 @@ class DatasetDomainService:
             obj_in={
                 "dataset_id": dataset_id,
                 "task_type": request_data.task_type or "sync",
-                "task_status": request_data.task_status or "success",
-                "from_state": before_state,
-                "to_state": request_data.target_state,
+                "status": request_data.status or "success",
+                "from_lifecycle_state": before_state,
+                "to_lifecycle_state": request_data.target_state,
                 "operator_id": operator_id,
                 "detail": detail,
                 "create_time": self._now(),
-                "finish_time": self._now() if request_data.task_status != "running" else None,
+                "finish_time": self._now() if request_data.status != "running" else None,
             },
         )
         self.sync_current_version_from_dataset_id(db=db, dataset_id=dataset_id)
@@ -3468,9 +3392,9 @@ class DatasetDomainService:
             obj_in={
                 "dataset_id": dataset_id,
                 "task_type": "publish",
-                "task_status": "success",
-                "from_state": before_state,
-                "to_state": before_state,
+                "status": "success",
+                "from_lifecycle_state": before_state,
+                "to_lifecycle_state": before_state,
                 "operator_id": operator_id,
                 "detail": request_data.note or f"publish dataset current version {current_version['version']}",
                 "create_time": self._now(),
@@ -3539,9 +3463,9 @@ class DatasetDomainService:
             obj_in={
                 "dataset_id": dataset_id,
                 "task_type": "unpublish",
-                "task_status": "success",
-                "from_state": before_state,
-                "to_state": before_state,
+                "status": "success",
+                "from_lifecycle_state": before_state,
+                "to_lifecycle_state": before_state,
                 "operator_id": operator_id,
                 "detail": request_data.note,
                 "create_time": self._now(),
@@ -4238,7 +4162,7 @@ class DatasetDomainService:
                 "file_size": os.path.getsize(local_path),
                 "dataset_type": resolved_dataset_type,
                 "source_mode": "upload",
-                "stage_status": "uploaded",
+                "status": "uploaded",
                 "linked_dataset_id": None,
                 "create_user_id": user.id,
                 "meta_json": meta_json,
@@ -4454,14 +4378,14 @@ class DatasetDomainService:
             "scan_job_id": job_obj.id,
             "relative_path": relative_path,
             "file_mtime": int(stat_result.st_mtime),
-            "stage_status": "discovered",
+            "status": "discovered",
             "linked_dataset_id": getattr(existing, "linked_dataset_id", None) if existing else None,
             "create_user_id": user.id,
             "meta_json": self._merge_meta_json(
                 getattr(existing, "meta_json", None) if existing else None,
                 {"scan_root_code": root_obj.root_code},
             ),
-            "last_seen_at": now,
+            "last_seen_time": now,
             "update_time": now,
         }
         if existing:
@@ -4469,12 +4393,12 @@ class DatasetDomainService:
                 int(getattr(existing, "file_size", 0) or 0) != int(stat_result.st_size)
                 or int(getattr(existing, "file_mtime", 0) or 0) != int(stat_result.st_mtime)
             )
-            payload["stage_status"] = "changed" if file_changed else "seen"
-            if not getattr(existing, "discovered_at", None):
-                payload["discovered_at"] = now
+            payload["status"] = "changed" if file_changed else "seen"
+            if not getattr(existing, "discover_time", None):
+                payload["discover_time"] = now
             return self._update_db_obj(db, existing, **payload), False, False, file_changed
         payload["staging_code"] = f"stg-{uuid.uuid4().hex[:12]}"
-        payload["discovered_at"] = now
+        payload["discover_time"] = now
         payload["create_time"] = now
         staging_obj = dataset_staging_file_db.create_one(db=db, obj_in=payload)
         return staging_obj, True, False, False
@@ -4489,44 +4413,20 @@ class DatasetDomainService:
             local_path = self._normalize_local_path(getattr(row, "local_path", None))
             if not local_path or local_path in normalized_seen_paths:
                 continue
-            if str(getattr(row, "stage_status", "") or "") == "missing":
+            if str(getattr(row, "status", "") or "") == "missing":
                 continue
             self._update_db_obj(
                 db,
                 row,
-                stage_status="missing",
+                status="missing",
                 update_time=now,
             )
             missing_count += 1
         return missing_count
 
-    def _infer_candidate_source_kind(self, request_data, staging_rows):
-        explicit_kind = str(getattr(request_data, "source_kind", "") or "").strip()
-        if explicit_kind:
-            return explicit_kind
-        mode = str(getattr(request_data, "registration_mode", "") or "").strip()
-        if mode == "prebuilt":
-            return "prebuilt_candidate"
-        if mode == "hybrid":
-            return "mixed_candidate"
-        prebuilt_formats = {"db", "sqlite", "h5", "hdf5", "tbi", "csi", "fai", "gzi"}
-        has_prebuilt = False
-        has_source = False
-        for row in staging_rows:
-            file_format = str(getattr(row, "file_format", "") or "").lower()
-            if file_format in prebuilt_formats:
-                has_prebuilt = True
-            else:
-                has_source = True
-        if has_prebuilt and has_source:
-            return "mixed_candidate"
-        if has_prebuilt:
-            return "prebuilt_candidate"
-        return "source_candidate"
-
     def _validate_candidate_staging_source(self, staging_obj):
-        stage_status = str(getattr(staging_obj, "stage_status", "") or "").strip().lower()
-        if stage_status in {"missing", "deleted", "consumed", "registered"}:
+        current_status = str(getattr(staging_obj, "status", "") or "").strip().lower()
+        if current_status in {"missing", "deleted", "consumed", "registered"}:
             raise HTTPException(
                 status_code=400,
                 detail=f"staging file is not available for candidate: {getattr(staging_obj, 'id', None)}",
@@ -4590,7 +4490,7 @@ class DatasetDomainService:
                 active_only=False,
             )
         for row in rows:
-            if request_data.stage_status and row.stage_status != request_data.stage_status:
+            if request_data.status and row.status != request_data.status:
                 continue
             if request_data.source_mode and getattr(row, "source_mode", None) != request_data.source_mode:
                 continue
@@ -4774,7 +4674,7 @@ class DatasetDomainService:
 
     def register_dataset_from_staging(self, db, staging_id, request_data, user):
         staging_obj = dataset_staging_file_db.get(db=db, id=staging_id)
-        if staging_obj.stage_status == "deleted":
+        if staging_obj.status == "deleted":
             raise HTTPException(status_code=400, detail="staging file is deleted")
         if not staging_obj.local_path or not os.path.exists(staging_obj.local_path):
             raise HTTPException(status_code=404, detail=f"staging file not found: {staging_obj.local_path}")
@@ -4803,12 +4703,12 @@ class DatasetDomainService:
         if not request_data.keep_staging_file:
             result = self._relocate_dataset_files_to_managed_storage(db=db, dataset_id=result["id"])
         update_data = {
-            "stage_status": "registered",
+            "status": "registered",
             "update_time": self._now(),
             "linked_dataset_id": result["id"],
         }
         if not request_data.keep_staging_file:
-            update_data["stage_status"] = "consumed"
+            update_data["status"] = "consumed"
             update_data["local_path"] = None
             update_data["storage_uri"] = None
         staging_obj = self._update_db_obj(db, staging_obj, **update_data)
@@ -4868,7 +4768,7 @@ class DatasetDomainService:
                 "description": request_data.description,
                 "scan_recursive": 1 if request_data.scan_recursive else 0,
                 "include_hidden": 1 if request_data.include_hidden else 0,
-                "is_active": 1 if request_data.is_active else 0,
+                "is_active": True if request_data.is_active else 0,
                 "last_scan_time": None,
                 "create_user_id": user.id,
                 "create_time": now,
@@ -4913,522 +4813,6 @@ class DatasetDomainService:
         payload = self._build_scan_root_payload(root_obj)
         dataset_scan_root_db.remove(db=db, id=root_id)
         return {"deleted": True, "item": payload}
-
-    def list_registration_candidates(self, db, request_data):
-        rows = dataset_registration_candidate_db.get_data(db=db, filters={})
-        items = []
-        keyword = str(request_data.keyword or "").strip().lower()
-        dataset_type_filter = None
-        if request_data.dataset_type:
-            dataset_type_filter, _dataset_kind = self._require_dataset_kind_code(
-                db=db,
-                dataset_type=request_data.dataset_type,
-                active_only=False,
-            )
-        for row in rows:
-            if dataset_type_filter and row.dataset_type != dataset_type_filter:
-                continue
-            if request_data.registration_mode and row.registration_mode != request_data.registration_mode:
-                continue
-            if request_data.source_kind and row.source_kind != request_data.source_kind:
-                continue
-            if request_data.status and row.status != request_data.status:
-                continue
-            if request_data.scan_root_id and getattr(row, "scan_root_id", None) != request_data.scan_root_id:
-                continue
-            if keyword:
-                haystack = " ".join(
-                    [
-                        str(getattr(row, "candidate_code", "") or ""),
-                        str(getattr(row, "candidate_name", "") or ""),
-                        str(getattr(row, "dataset_type", "") or ""),
-                        str(getattr(row, "recipe_code", "") or ""),
-                        str(getattr(row, "organism", "") or ""),
-                    ]
-                ).lower()
-                if keyword not in haystack:
-                    continue
-            items.append(self._build_candidate_payload(row))
-        items = sorted(items, key=lambda item: item["id"], reverse=True)
-        total = len(items)
-        if request_data.page and request_data.size:
-            start = (request_data.page - 1) * request_data.size
-            end = start + request_data.size
-            items = items[start:end]
-        return {"dataList": items, "total": total}
-
-    def get_registration_candidate(self, db, candidate_id):
-        candidate_obj = dataset_registration_candidate_db.get(db=db, id=candidate_id)
-        payload = self._build_candidate_payload(candidate_obj)
-        payload["items"] = self.list_registration_candidate_files(
-            db=db,
-            request_data=SimpleNamespace(candidate_id=candidate_id),
-        )["items"]
-        return payload
-
-    def list_registration_candidate_files(self, db, request_data):
-        rows = dataset_registration_candidate_file_db.get_data(
-            db=db,
-            filters={"candidate_id": request_data.candidate_id},
-        )
-        items = []
-        for row in sorted(rows, key=lambda item: (getattr(item, "sort_order", 0) or 0, item.id)):
-            staging_payload = None
-            if getattr(row, "staging_file_id", None):
-                staging_obj = dataset_staging_file_db.get(db=db, id=row.staging_file_id)
-                staging_payload = self._build_dataset_staging_payload(staging_obj)
-            items.append(self._build_candidate_file_payload(row, staging_payload=staging_payload))
-        return {"items": items}
-
-    def update_registration_candidate_file(self, db, candidate_file_id, request_data, user):
-        candidate_file_obj = dataset_registration_candidate_file_db.get(db=db, id=candidate_file_id)
-        candidate_obj = dataset_registration_candidate_db.get(db=db, id=candidate_file_obj.candidate_id)
-        if str(getattr(candidate_obj, "registration_status", "") or "").lower() == "done":
-            raise HTTPException(status_code=400, detail="registered candidate files cannot be edited")
-
-        update_data = {"update_time": self._now()}
-        next_asset_type = (
-            self._normalize_registry_code(request_data.asset_type, "asset_type")
-            if request_data.asset_type is not None
-            else getattr(candidate_file_obj, "asset_type", None)
-        )
-        if next_asset_type:
-            next_asset_type, _asset_type_obj = self._require_asset_type_code(
-                db=db,
-                asset_type=next_asset_type,
-                dataset_type=candidate_obj.dataset_type,
-                active_only=False,
-            )
-            update_data["asset_type"] = next_asset_type
-
-        next_asset_file_type_code = (
-            self._normalize_registry_code(request_data.asset_file_type_code, "asset_file_type_code")
-            if request_data.asset_file_type_code is not None and request_data.asset_file_type_code
-            else getattr(candidate_file_obj, "asset_file_type_code", None)
-        )
-        if request_data.asset_file_type_code is not None and not request_data.asset_file_type_code:
-            next_asset_file_type_code = None
-            update_data["asset_file_type_code"] = None
-
-        registry_obj = None
-        if next_asset_file_type_code:
-            registry_obj = self._get_asset_file_type_registry_by_code(db=db, code=next_asset_file_type_code)
-            if not registry_obj:
-                raise HTTPException(status_code=400, detail=f"asset_file_type not found: {next_asset_file_type_code}")
-            allowed_asset_types = self._canonicalize_asset_type_list(self._parse_json_list(registry_obj.allowed_asset_types))
-            if next_asset_type and allowed_asset_types and next_asset_type not in allowed_asset_types:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"asset_file_type {next_asset_file_type_code} is not allowed for asset_type {next_asset_type}",
-                )
-            update_data["asset_file_type_code"] = next_asset_file_type_code
-
-        next_file_role = request_data.file_role
-        if next_file_role is not None and next_file_role != "":
-            next_file_role = self._normalize_file_role(next_file_role)
-        elif request_data.file_role == "":
-            next_file_role = None
-        else:
-            next_file_role = getattr(candidate_file_obj, "file_role", None)
-        if registry_obj and getattr(registry_obj, "file_role", None):
-            registry_file_role = self._normalize_file_role(registry_obj.file_role)
-            if next_file_role and next_file_role != registry_file_role:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"asset_file_type {next_asset_file_type_code} requires file_role {registry_file_role}",
-                )
-            next_file_role = registry_file_role
-        if request_data.file_role is not None or registry_obj:
-            update_data["file_role"] = next_file_role
-
-        for field_name in [
-            "source_role",
-            "confidence",
-            "origin_type",
-            "sort_order",
-            "validation_status",
-            "meta_json",
-        ]:
-            field_value = getattr(request_data, field_name, None)
-            if field_value is not None:
-                update_data[field_name] = field_value
-        if request_data.is_required is not None:
-            update_data["is_required"] = 1 if request_data.is_required else 0
-
-        if request_data.is_primary is not None:
-            update_data["is_primary"] = 1 if request_data.is_primary else 0
-            if request_data.is_primary:
-                sibling_rows = dataset_registration_candidate_file_db.get_data(db=db, filters={"candidate_id": candidate_obj.id})
-                for sibling_obj in sibling_rows:
-                    if sibling_obj.id == candidate_file_obj.id or not getattr(sibling_obj, "is_primary", 0):
-                        continue
-                    dataset_registration_candidate_file_db.update_one(
-                        db=db,
-                        db_obj=sibling_obj,
-                        obj_in={"is_primary": 0, "update_time": self._now()},
-                    )
-
-        candidate_file_obj = dataset_registration_candidate_file_db.update_one(
-            db=db,
-            db_obj=candidate_file_obj,
-            obj_in=update_data,
-        )
-        staging_payload = None
-        if getattr(candidate_file_obj, "staging_file_id", None):
-            staging_obj = dataset_staging_file_db.get(db=db, id=candidate_file_obj.staging_file_id)
-            staging_payload = self._build_dataset_staging_payload(staging_obj)
-        return self._build_candidate_file_payload(candidate_file_obj, staging_payload=staging_payload)
-
-    def create_registration_candidate(self, db, request_data, user):
-        item_requests = request_data.items or []
-        if not item_requests:
-            raise HTTPException(status_code=400, detail="candidate items are required")
-        dataset_type = request_data.dataset_type or "generic"
-        dataset_type, _dataset_kind = self._require_dataset_kind_code(
-            db=db,
-            dataset_type=dataset_type,
-            active_only=False,
-        )
-        staging_rows = []
-        scan_root_ids = set()
-        seen_staging_file_ids = set()
-        for item in item_requests:
-            if item.staging_file_id in seen_staging_file_ids:
-                raise HTTPException(status_code=400, detail=f"duplicate staging file in candidate items: {item.staging_file_id}")
-            seen_staging_file_ids.add(item.staging_file_id)
-            staging_obj = dataset_staging_file_db.get(db=db, id=item.staging_file_id)
-            self._validate_candidate_staging_source(staging_obj)
-            staging_rows.append(staging_obj)
-            if getattr(staging_obj, "scan_root_id", None):
-                scan_root_ids.add(staging_obj.scan_root_id)
-        scan_root_id = request_data.scan_root_id
-        if not scan_root_id and len(scan_root_ids) == 1:
-            scan_root_id = next(iter(scan_root_ids))
-        now = self._now()
-        candidate_obj = dataset_registration_candidate_db.create_one(
-            db=db,
-            obj_in={
-                "candidate_code": f"cand-{uuid.uuid4().hex[:12]}",
-                "scan_root_id": scan_root_id,
-                "dataset_type": dataset_type,
-                "recipe_code": request_data.recipe_code,
-                "registration_mode": request_data.registration_mode or "recipe_build",
-                "candidate_name": request_data.candidate_name.strip(),
-                "version_name": request_data.version_name,
-                "organism": request_data.organism,
-                "reference_dataset_id": request_data.reference_dataset_id,
-                "reference_version_id": request_data.reference_version_id,
-                "status": "draft",
-                "validation_status": "pending",
-                "build_status": "not_required",
-                "registration_status": "pending",
-                "source_kind": self._infer_candidate_source_kind(request_data, staging_rows),
-                "meta_json": request_data.meta_json,
-                "create_user_id": user.id,
-                "create_time": now,
-                "update_time": now,
-            },
-        )
-        for index, item in enumerate(item_requests):
-            dataset_registration_candidate_file_db.create_one(
-                db=db,
-                obj_in={
-                    "candidate_id": candidate_obj.id,
-                    "staging_file_id": item.staging_file_id,
-                    "source_role": item.source_role,
-                    "asset_type": item.asset_type,
-                    "asset_file_type_code": item.asset_file_type_code,
-                    "file_role": item.file_role,
-                    "is_primary": 1 if item.is_primary else 0,
-                    "is_required": 1 if item.is_required is not False else 0,
-                    "validation_status": "pending",
-                    "confidence": item.confidence,
-                    "origin_type": item.origin_type or "user_supplied",
-                    "sort_order": item.sort_order if item.sort_order is not None else index,
-                    "meta_json": item.meta_json,
-                    "create_time": now,
-                    "update_time": now,
-                },
-            )
-        return self.get_registration_candidate(db=db, candidate_id=candidate_obj.id)
-
-    def update_registration_candidate(self, db, candidate_id, request_data, user):
-        candidate_obj = dataset_registration_candidate_db.get(db=db, id=candidate_id)
-        update_data = {"update_time": self._now()}
-        if request_data.candidate_name is not None:
-            update_data["candidate_name"] = request_data.candidate_name.strip()
-        if request_data.dataset_type is not None:
-            dataset_type, _dataset_kind = self._require_dataset_kind_code(
-                db=db,
-                dataset_type=request_data.dataset_type,
-                active_only=False,
-            )
-            update_data["dataset_type"] = dataset_type
-        for field_name in [
-            "recipe_code",
-            "registration_mode",
-            "version_name",
-            "organism",
-                        "reference_dataset_id",
-            "reference_version_id",
-            "source_kind",
-            "scan_root_id",
-            "status",
-            "validation_status",
-            "build_status",
-            "registration_status",
-            "meta_json",
-        ]:
-            field_value = getattr(request_data, field_name, None)
-            if field_value is not None:
-                update_data[field_name] = field_value
-        candidate_obj = self._update_db_obj(db=db, db_obj=candidate_obj, **update_data)
-        return self.get_registration_candidate(db=db, candidate_id=candidate_obj.id)
-
-    def delete_registration_candidate(self, db, candidate_id, user):
-        candidate_obj = dataset_registration_candidate_db.get(db=db, id=candidate_id)
-        payload = self.get_registration_candidate(db=db, candidate_id=candidate_id)
-        file_rows = dataset_registration_candidate_file_db.get_data(db=db, filters={"candidate_id": candidate_id})
-        if file_rows:
-            dataset_registration_candidate_file_db.remove_batch_ids(
-                db=db,
-                ids=[item.id for item in file_rows],
-            )
-        dataset_registration_candidate_db.remove(db=db, id=candidate_id)
-        return {"deleted": True, "item": payload}
-
-    def register_candidate(self, db, candidate_id, request_data, user):
-        candidate_obj = dataset_registration_candidate_db.get(db=db, id=candidate_id)
-        if str(getattr(candidate_obj, "registration_status", "") or "").lower() == "done":
-            raise HTTPException(status_code=400, detail="candidate is already registered")
-
-        registration_mode = str(getattr(candidate_obj, "registration_mode", "") or "").strip().lower()
-        if registration_mode not in self.SUPPORTED_REGISTRATION_MODES:
-            raise HTTPException(
-                status_code=400,
-                detail=f"unsupported registration mode: {registration_mode}. "
-                       f"Supported: {', '.join(sorted(self.SUPPORTED_REGISTRATION_MODES))}",
-            )
-
-        primary_candidate_file, primary_staging_obj = self._get_candidate_primary_source(db=db, candidate_obj=candidate_obj)
-        self._validate_candidate_staging_source(primary_staging_obj)
-
-        dataset_name = str(request_data.dataset_name or getattr(candidate_obj, "candidate_name", "") or "").strip()
-        if not dataset_name:
-            dataset_name = self._guess_name_from_path(primary_staging_obj.local_path)
-
-        # Validate all candidate files before registration
-        candidate_file_rows = dataset_registration_candidate_file_db.get_data(
-            db=db, filters={"candidate_id": candidate_id}
-        )
-        staging_entries = []
-        for cf_row in candidate_file_rows:
-            staging_obj = dataset_staging_file_db.get(db=db, id=cf_row.staging_file_id)
-            staging_entries.append({
-                "local_path": getattr(staging_obj, "local_path", None),
-                "file_format": self._candidate_format(staging_obj),
-            })
-        validation_errors = self.validate_candidate(
-            staging_entries,
-            declared_dataset_type=getattr(candidate_obj, "dataset_type", None),
-        )
-        if validation_errors:
-            raise HTTPException(
-                status_code=400,
-                detail=f"candidate validation failed: {'; '.join(validation_errors)}",
-            )
-
-        dataset_payload = self.register_dataset_source(
-            db=db,
-            request_data=SimpleNamespace(
-                file_path=primary_staging_obj.local_path,
-                name=dataset_name,
-                dataset_type=candidate_obj.dataset_type,
-                remark=request_data.remark,
-                is_public=bool(request_data.is_public),
-                dry_run=False,
-                team_id=getattr(request_data, "team_id", 0) or 0,
-                project_id=getattr(request_data, "project_id", 0) or 0,
-            ),
-            user=user,
-        )
-        dataset_id = dataset_payload["id"]
-        registry_obj = dataset_registry_db.get_filter(db=db, filters={"id": dataset_id})
-        update_registry = {"update_time": self._now()}
-        target_version_name = str(getattr(candidate_obj, "version_name", None) or "").strip()
-        if target_version_name:
-            update_registry["version"] = target_version_name
-        if getattr(candidate_obj, "organism", None):
-            update_registry["organism"] = candidate_obj.organism
-        if registry_obj:
-            dataset_registry_db.update_one(db=db, db_obj=registry_obj, obj_in=update_registry)
-
-        version_obj = self.sync_current_version_from_dataset_id(db=db, dataset_id=dataset_id)
-        if request_data.activate_version:
-            self._ensure_version_current_flag(db=db, database_id=dataset_id, version_name=version_obj.version)
-        version_obj = dataset_version_db.get(db=db, id=version_obj.id)
-        if version_obj:
-            version_update = {"update_time": self._now()}
-            extra_payload = self._parse_candidate_meta(getattr(version_obj, "extra_json", None))
-            if getattr(candidate_obj, "organism", None):
-                extra_payload["organism"] = candidate_obj.organism
-            version_update["extra_json"] = self._encode_candidate_meta(extra_payload)
-            dataset_version_db.update_one(db=db, db_obj=version_obj, obj_in=version_update)
-            version_obj = dataset_version_db.get(db=db, id=version_obj.id)
-
-        candidate_file_rows = dataset_registration_candidate_file_db.get_data(db=db, filters={"candidate_id": candidate_id})
-        registration_entries = []
-        for candidate_file_obj in candidate_file_rows:
-            staging_obj = dataset_staging_file_db.get(db=db, id=candidate_file_obj.staging_file_id)
-            self._validate_candidate_staging_source(staging_obj)
-            asset_type, asset_file_type_code = self._infer_candidate_asset_mapping(candidate_obj, candidate_file_obj, staging_obj, db=db)
-            file_format = self._candidate_format(staging_obj)
-            file_role = self._resolve_candidate_file_role(
-                db=db,
-                candidate_obj=candidate_obj,
-                candidate_file_obj=candidate_file_obj,
-                staging_obj=staging_obj,
-            )
-            registration_entries.append(
-                {
-                    "candidate_file_obj": candidate_file_obj,
-                    "staging_obj": staging_obj,
-                    "asset_type": asset_type,
-                    "asset_file_type_code": asset_file_type_code,
-                    "file_format": file_format,
-                    "file_role": file_role,
-                }
-            )
-        registration_entries = sorted(
-            registration_entries,
-            key=lambda item: (
-                item["asset_type"],
-                0 if item["file_role"] == "primary" else 1 if item["file_role"] == "index" else 2,
-                getattr(item["candidate_file_obj"], "sort_order", 0) or 0,
-                item["candidate_file_obj"].id,
-            ),
-        )
-        asset_payload_cache = {}
-        for entry in registration_entries:
-            candidate_file_obj = entry["candidate_file_obj"]
-            staging_obj = entry["staging_obj"]
-            asset_type = entry["asset_type"]
-            asset_file_type_code = entry["asset_file_type_code"]
-            file_format = entry["file_format"]
-            file_role = entry["file_role"]
-            asset_cache_key = asset_type
-            asset_payload = asset_payload_cache.get(asset_cache_key)
-            if not asset_payload:
-                asset_payload = self._ensure_candidate_asset(
-                    db=db,
-                    candidate_obj=candidate_obj,
-                    version_obj=version_obj,
-                    asset_type=asset_type,
-                    file_format=file_format,
-                    is_query_entry=asset_type == self._default_asset_type(candidate_obj.dataset_type, db=db),
-                    user=user,
-                )
-                asset_payload_cache[asset_cache_key] = asset_payload
-
-            asset_files = self.list_asset_files(db=db, asset_id=asset_payload["id"], user=user)["items"]
-            primary_asset_file = next((item for item in asset_files if item["file_role"] == "primary"), None)
-            self.register_asset_file(
-                db=db,
-                request_data=SimpleNamespace(
-                    asset_id=asset_payload["id"],
-                    file_role=file_role,
-                    asset_file_type_code=asset_file_type_code,
-                    local_path=staging_obj.local_path,
-                    file_format=file_format,
-                    index_of_file_id=primary_asset_file["id"] if file_role == "index" and primary_asset_file else None,
-                    status="active",
-                    meta_json=None,
-                ),
-                user=user,
-            )
-            dataset_registration_candidate_file_db.update_one(
-                db=db,
-                db_obj=candidate_file_obj,
-                obj_in={
-                    "asset_type": asset_type,
-                    "asset_file_type_code": asset_file_type_code,
-                    "file_role": file_role,
-                    "validation_status": "registered",
-                    "update_time": self._now(),
-                },
-            )
-            dataset_staging_file_db.update_one(
-                db=db,
-                db_obj=staging_obj,
-                obj_in={
-                    "linked_dataset_id": dataset_id,
-                    "stage_status": "registered",
-                    "update_time": self._now(),
-                },
-            )
-            if file_role == "primary" and asset_type == self._default_asset_type(candidate_obj.dataset_type, db=db):
-                version_obj = dataset_version_db.get(db=db, id=version_obj.id)
-                dataset_version_db.update_one(
-                    db=db,
-                    db_obj=version_obj,
-                    obj_in={
-                        "file_path": staging_obj.local_path,
-                        "file_format": file_format,
-                        "query_engine": self._candidate_asset_query_engine(asset_type=asset_type, file_format=file_format),
-                        "update_time": self._now(),
-                    },
-                )
-                primary_file_obj = dataset_legacy_bridge.get_primary_file(db=db, dataset_id=dataset_id)
-                if primary_file_obj:
-                    dataset_legacy_bridge.update_primary_file(
-                        db=db,
-                        db_obj=primary_file_obj,
-                        obj_in={
-                            "path": staging_obj.local_path,
-                            "type": f".{file_format}" if file_format else primary_file_obj.type,
-                            "data_type": candidate_obj.dataset_type,
-                        },
-                    )
-
-        candidate_meta = self._parse_candidate_meta(getattr(candidate_obj, "meta_json", None))
-        candidate_meta.update(
-            {
-                "registered_dataset_id": dataset_id,
-                "registered_version_id": version_obj.id if version_obj else None,
-                "registered_at": self._now(),
-            }
-        )
-        dataset_registration_candidate_db.update_one(
-            db=db,
-            db_obj=candidate_obj,
-            obj_in={
-                "status": "registered",
-                "validation_status": "passed",
-                "build_status": "not_required",
-                "registration_status": "done",
-                "meta_json": self._encode_candidate_meta(candidate_meta),
-                "update_time": self._now(),
-            },
-        )
-        dataset_workflow_task_db.create_one(
-            db=db,
-            obj_in={
-                "dataset_id": dataset_id,
-                "task_type": "register_candidate",
-                "task_status": "success",
-                "from_state": "draft",
-                "to_state": "uploaded",
-                "operator_id": user.id,
-                "detail": f"registered from candidate {candidate_obj.candidate_code}",
-                "create_time": self._now(),
-                "finish_time": self._now(),
-            },
-        )
-        self.sync_current_version_from_dataset_id(db=db, dataset_id=dataset_id)
-        return {
-            "candidate": self.get_registration_candidate(db=db, candidate_id=candidate_id),
-            "dataset": self.get_dataset(db=db, dataset_id=dataset_id, user=user),
-        }
 
     def list_scan_jobs(self, db, request_data):
         rows = dataset_scan_job_db.get_data(db=db, filters={})
@@ -5482,8 +4866,8 @@ class DatasetDomainService:
                 "missing_file_count": 0,
                 "skipped_registered_count": 0,
                 "error_message": None,
-                "started_at": now,
-                "finished_at": None,
+                "start_time": now,
+                "finish_time": None,
                 "create_user_id": user.id,
                 "create_time": now,
                 "update_time": now,
@@ -5541,7 +4925,7 @@ class DatasetDomainService:
                 changed_file_count=changed_file_count,
                 missing_file_count=missing_file_count,
                 skipped_registered_count=skipped_registered_count,
-                finished_at=finished_at,
+                finish_time=finished_at,
                 update_time=finished_at,
             )
             self._update_db_obj(db, root_obj, last_scan_time=finished_at, update_time=finished_at)
@@ -5563,7 +4947,7 @@ class DatasetDomainService:
                 missing_file_count=missing_file_count,
                 skipped_registered_count=skipped_registered_count,
                 error_message=str(error),
-                finished_at=failed_at,
+                finish_time=failed_at,
                 update_time=failed_at,
             )
             raise HTTPException(
@@ -5655,8 +5039,8 @@ class DatasetDomainService:
                 "base_code": base_code,
                 "name": request_data.name,
                 "description": request_data.description,
-                "is_system": 0,
-                "is_active": 1 if request_data.is_active is None else (1 if request_data.is_active else 0),
+                "is_system": False,
+                "is_active": True if request_data.is_active is None else (1 if request_data.is_active else 0),
                 "sort_order": request_data.sort_order or 0,
                 "meta_json": request_data.meta_json,
                 "create_time": now,
@@ -5814,8 +5198,8 @@ class DatasetDomainService:
                 "name": request_data.name,
                 "description": request_data.description,
                 "allowed_dataset_types": self._encode_json_list(allowed_dataset_types),
-                "is_system": 0,
-                "is_active": 1 if request_data.is_active is None else (1 if request_data.is_active else 0),
+                "is_system": False,
+                "is_active": True if request_data.is_active is None else (1 if request_data.is_active else 0),
                 "sort_order": request_data.sort_order or 0,
                 "meta_json": request_data.meta_json,
                 "create_time": now,
@@ -6007,8 +5391,8 @@ class DatasetDomainService:
                 "supported_file_formats": self._encode_json_file_format_list(supported_file_formats),
                 "file_role": self._normalize_file_role(request_data.file_role),
                 "allowed_asset_types": self._encode_json_asset_type_list(allowed_asset_types),
-                "is_system": 0,
-                "is_active": 1 if request_data.is_active is None else (1 if request_data.is_active else 0),
+                "is_system": False,
+                "is_active": True if request_data.is_active is None else (1 if request_data.is_active else 0),
                 "sort_order": request_data.sort_order or 0,
                 "meta_json": request_data.meta_json,
                 "create_time": now,
@@ -6144,7 +5528,7 @@ class DatasetDomainService:
                 "query_engine": FILE_TYPE_QUERY_ENGINES.get(file_format or "", dataset_payload["query_profile"]["query_engine"]),
                 "validation_summary": None,
                 "index_summary": None,
-                "extra_json": request_data.extra_json,
+                "meta_json": request_data.meta_json,
                 "is_current": 0,
                 "is_default_public": 0,
                 "create_time": self._now(),
@@ -6165,7 +5549,7 @@ class DatasetDomainService:
         version_query_engine = version_obj.query_engine
         version_validation_summary = version_obj.validation_summary
         version_index_summary = version_obj.index_summary
-        version_extra_json = version_obj.extra_json
+        version_meta_json = version_obj.meta_json
         database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
         lifecycle_state = registry_obj.lifecycle_state
@@ -6185,15 +5569,15 @@ class DatasetDomainService:
                 "version": version_name,
                 "title": version_title or registry_obj.title,
                 "dataset_type": version_dataset_type or registry_obj.dataset_type,
-                "file_format": version_file_format or registry_obj.file_format,
-                "query_engine": version_query_engine or registry_obj.query_engine,
+                "file_format": version_file_format or "",
+                "query_engine": version_query_engine or "",
                 "validation_summary": version_validation_summary
                 if version_validation_summary is not None
                 else registry_obj.validation_summary,
                 "index_summary": version_index_summary
                 if version_index_summary is not None
                 else registry_obj.index_summary,
-                "extra_json": version_extra_json if version_extra_json is not None else registry_obj.extra_json,
+                "meta_json": version_meta_json if version_meta_json is not None else registry_obj.meta_json,
                 "update_time": self._now(),
             },
         )
@@ -6202,9 +5586,9 @@ class DatasetDomainService:
             obj_in={
                 "dataset_id": dataset_id,
                 "task_type": "sync",
-                "task_status": "success",
-                "from_state": lifecycle_state,
-                "to_state": lifecycle_state,
+                "status": "success",
+                "from_lifecycle_state": lifecycle_state,
+                "to_lifecycle_state": lifecycle_state,
                 "operator_id": operator_id,
                 "detail": request_data.note or f"activate dataset version {version_name}",
                 "create_time": self._now(),
@@ -6459,7 +5843,7 @@ class DatasetDomainService:
                     "version": item.version,
                     "lifecycle_state": item.lifecycle_state,
                     "description_md": (item.description_md or "")[:500],
-                    "extra_json": item.extra_json,
+                    "meta_json": item.meta_json,
                 })
 
             total = len(data_list)
@@ -6613,7 +5997,7 @@ class DatasetDomainService:
 
             cur_ver = db.query(DatasetVersion).filter(
                 DatasetVersion.dataset_id == dataset_id,
-                DatasetVersion.is_current == 1,
+                DatasetVersion.is_current == True,
             ).first()
 
             if cur_ver:
