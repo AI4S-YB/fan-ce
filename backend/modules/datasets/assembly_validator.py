@@ -1,49 +1,9 @@
-"""Cross-dataset assembly consistency and sample alignment validation."""
+"""Cross-dataset sample alignment validation."""
 from sqlalchemy.orm import Session
 
 
 class AssemblyConsistencyValidator:
-    """Cross-dataset assembly and sample alignment validation."""
-
-    @staticmethod
-    def validate_assembly_consistency(db: Session, dataset_ids: list[int]) -> dict:
-        """Check that all given datasets share the same assembly."""
-        from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
-
-        datasets = db.query(Dataset).filter(Dataset.id.in_(dataset_ids)).all()
-        if not datasets:
-            return {"consistent": True, "assembly": None, "datasets": [], "mismatches": []}
-
-        assemblies: dict[str, list[dict]] = {}
-        for ds in datasets:
-            asm = (ds.assembly or "").strip()
-            assemblies.setdefault(asm, []).append({
-                "dataset_id": ds.id,
-                "dataset_code": ds.dataset_code,
-                "assembly": ds.assembly,
-            })
-
-        if len(assemblies) == 1:
-            asm_key = list(assemblies.keys())[0]
-            return {
-                "consistent": True,
-                "assembly": asm_key or None,
-                "datasets": assemblies[asm_key],
-                "mismatches": [],
-            }
-
-        majority_key = max(assemblies, key=lambda k: len(assemblies[k]))
-        mismatches = []
-        for asm_key, items in assemblies.items():
-            if asm_key != majority_key:
-                mismatches.extend(items)
-
-        return {
-            "consistent": False,
-            "assembly": majority_key,
-            "datasets": assemblies[majority_key],
-            "mismatches": mismatches,
-        }
+    """Cross-dataset sample alignment validation."""
 
     @staticmethod
     def check_sample_alignment(db: Session, variant_dataset_id: int, phenotype_dataset_id: int) -> dict:

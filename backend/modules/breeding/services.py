@@ -159,7 +159,7 @@ class BreedingDomainService:
     def _build_taxonomy_node_query(self, db, request_data):
         query = db.query(BreedingTaxonomyNode)
         if getattr(request_data, "active_only", 1):
-            query = query.filter(BreedingTaxonomyNode.is_active == 1)
+            query = query.filter(BreedingTaxonomyNode.is_active == True)
         if getattr(request_data, "tax_id", None):
             query = query.filter(BreedingTaxonomyNode.tax_id == int(request_data.tax_id))
         if getattr(request_data, "keyword", None):
@@ -200,7 +200,7 @@ class BreedingDomainService:
             .filter(BreedingGermplasm.status == "active")
         )
         if getattr(request_data, "active_only", 1):
-            query = query.filter(BreedingTaxonomyNode.is_active == 1)
+            query = query.filter(BreedingTaxonomyNode.is_active == True)
         if getattr(request_data, "tax_id", None):
             query = query.filter(BreedingTaxonomyNode.tax_id == int(request_data.tax_id))
         if getattr(request_data, "keyword", None):
@@ -268,7 +268,7 @@ class BreedingDomainService:
     def _build_local_taxonomy_query(self, db, request_data):
         query = db.query(BreedingTaxonomyNode)
         if getattr(request_data, "active_only", 1):
-            query = query.filter(BreedingTaxonomyNode.is_active == 1)
+            query = query.filter(BreedingTaxonomyNode.is_active == True)
         if getattr(request_data, "tax_id", None):
             query = query.filter(BreedingTaxonomyNode.tax_id == int(request_data.tax_id))
         if getattr(request_data, "keyword", None):
@@ -296,7 +296,7 @@ class BreedingDomainService:
         def node_base_query():
             query = db.query(BreedingTaxonomyNode)
             if active_only:
-                query = query.filter(BreedingTaxonomyNode.is_active == 1)
+                query = query.filter(BreedingTaxonomyNode.is_active == True)
             return query
 
         def name_tax_ids(pattern, *, exact=False):

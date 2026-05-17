@@ -44,7 +44,6 @@ class CrossDomainDatasetLookup:
                     "dataset_code": ds.dataset_code,
                     "dataset_type": ds.dataset_type,
                     "organism": ds.organism,
-                    "assembly": ds.assembly,
                     "links": [],
                 }
             results[ds.id]["links"].append({"role": role, "link_type": link_type})
@@ -125,7 +124,6 @@ class CrossDomainDatasetLookup:
                     "dataset_code": ds.dataset_code,
                     "dataset_type": ds.dataset_type,
                     "organism": ds.organism,
-                    "assembly": ds.assembly,
                     "links": [],
                 }
             results[ds.id]["links"].append({"role": role, "link_type": link_type})

@@ -268,7 +268,7 @@ def rebuild_phenome_index(
                     value_text=None if _normalize_numeric(raw_value) is not None else (_normalize_text(raw_value) if not is_missing else None),
                     value_category=None,
                     raw_value=None if raw_value is None else str(raw_value),
-                    is_missing=1 if is_missing else 0,
+                    is_missing=True if is_missing else 0,
                     source_sheet="phenotype",
                     source_row_key=source_row_key,
                     source_column_name=source_name,

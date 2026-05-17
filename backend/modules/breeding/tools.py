@@ -70,7 +70,6 @@ async def _link_dataset_to_program(db, arguments: dict, user) -> dict:
             "id": ds.get("id"),
             "type": ds.get("dataset_type"),
             "organism": ds.get("organism"),
-            "assembly": ds.get("assembly"),
             "query_adapter": ds.get("query_adapter", {}),
         },
         "program": {

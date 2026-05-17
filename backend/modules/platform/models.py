@@ -8,13 +8,13 @@ from shared.database import Base
 
 class News(Base):
     __tablename__ = "pf_news"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     title = Column(String(100), comment='标题')
     type = Column(String(3), default='1', comment='类型')
     content = Column(String(500), comment='内容')
     author = Column(String(100), default=0, comment='作者')
     is_public = Column(Boolean, default=0, comment='是否公共')
-    create_time = Column(Integer, comment='创建时间')
+    create_time = Column(DateTime(timezone=True), comment='创建时间')
     user_id = Column(Integer, comment='用户ID')
     is_delete = Column(Boolean, default=0, comment='是否删除')
 
@@ -31,7 +31,7 @@ class News(Base):
 class PlatformSiteSetting(Base):
     __tablename__ = "pf_site_setting"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     site_code = Column(String(64), unique=True, nullable=False, comment="站点编码")
     site_name = Column(String(255), default="", comment="网站名称")
     site_title = Column(String(255), default="", comment="网站标题")
@@ -50,8 +50,8 @@ class PlatformSiteSetting(Base):
     frp_status = Column(String(32), default="stopped", comment="stopped/running/error")
     frp_config_json = Column(Text, default=None, comment="高级自定义frpc配置")
     public_ai_chat_enabled = Column(Boolean, default=False, comment="是否启用公共AI对话")
-    create_time = Column(Integer, default=lambda: int(time.time()), comment="创建时间")
-    update_time = Column(Integer, default=lambda: int(time.time()), comment="更新时间")
+    create_time = Column(DateTime(timezone=True), comment="创建时间")
+    update_time = Column(DateTime(timezone=True), comment="更新时间")
     user_id = Column(Integer, default=0, comment="操作用户ID")
 
     def to_dict(self):
@@ -63,7 +63,7 @@ class PlatformSiteSetting(Base):
 class PlatformSiteDatasetLink(Base):
     __tablename__ = "pf_site_dataset_link"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     site_code = Column(String(64), ForeignKey("pf_site_setting.site_code", ondelete="CASCADE"), nullable=False, comment="站点编码")
     dataset_id = Column(Integer, ForeignKey("dataset_registry.id", ondelete="CASCADE"), nullable=False, comment="数据集ID")
     created_at = Column(DateTime(timezone=True), server_default=func.now(), comment="创建时间")
@@ -81,7 +81,7 @@ class PlatformSiteDatasetLink(Base):
 class PlatformModelApiSetting(Base):
     __tablename__ = "pf_model_api_setting"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     provider_code = Column(String(64), default="", comment="模型平台编码")
     provider_name = Column(String(128), default="", comment="模型平台名称")
     model_name = Column(String(255), default="", comment="模型名称")
@@ -92,8 +92,8 @@ class PlatformModelApiSetting(Base):
     sort_order = Column(Integer, default=0, comment="排序值")
     remark = Column(String(500), default="", comment="备注")
     extra_json = Column(Text, default="{}", comment="扩展配置JSON")
-    create_time = Column(Integer, default=lambda: int(time.time()), comment="创建时间")
-    update_time = Column(Integer, default=lambda: int(time.time()), comment="更新时间")
+    create_time = Column(DateTime(timezone=True), comment="创建时间")
+    update_time = Column(DateTime(timezone=True), comment="更新时间")
     user_id = Column(Integer, default=0, comment="操作用户ID")
 
     def to_dict(self):

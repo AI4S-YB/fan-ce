@@ -147,7 +147,7 @@ def public_dataset_downloads(
         raise HTTPException(status_code=404, detail="Dataset not found or not public")
 
     version = db.query(DatasetVersion).filter_by(
-        database_id=ds.dataset_id, is_current=1,
+        database_id=ds.dataset_id, is_current=True,
     ).first()
     if not version:
         return response_200(data=jsonable_encoder({"dataset_code": dataset_code, "files": []}))

@@ -13,7 +13,7 @@ from shared.database import Base
 class User(Base):
     """用户表"""
     __tablename__ = "system_users"
-    id = Column(Integer, primary_key=True, index=True,comment="唯一ID")
+    id = Column(Integer, primary_key=True,comment="唯一ID")
     user_name = Column(String(350), unique=True, nullable=False, comment='用户名称')
     nickname = Column(String(350), comment='用户昵称')
     user_email = Column(String(320), comment='用户邮箱')
@@ -26,8 +26,8 @@ class User(Base):
     is_active = Column(Boolean, default=True,comment='是否激活')
     is_superman = Column(Boolean, default=0, comment='是否超管')
     is_deleted = Column(Boolean, default=0, comment='是否删除')
-    create_time = Column(Integer, default=int(time.time()), comment='创建时间')
-    update_time = Column(Integer, default=int(time.time()), comment='修改时间')
+    create_time = Column(DateTime(timezone=True), comment='创建时间')
+    update_time = Column(DateTime(timezone=True), comment='修改时间')
     remark = Column(String(320), default='', comment='备注')
     
     # 认证密钥相关字段
@@ -52,7 +52,7 @@ class User(Base):
 
 class Role(Base):
     __tablename__ = "system_role"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(320), comment='角色名称')
     code = Column(String(320), comment='角色表示')
     sort = Column(Integer, comment='角色顺序')
@@ -60,7 +60,7 @@ class Role(Base):
     is_active = Column(Boolean, default=0, comment='是否激活')
     is_deleted = Column(Boolean, default=0, comment='是否删除')
     status = Column(Integer, default=0, comment='状态')
-    create_time = Column(Integer, comment='创建时间')
+    create_time = Column(DateTime(timezone=True), comment='创建时间')
     remark = Column(String(320), comment='备注')
 
 

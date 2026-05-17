@@ -22,8 +22,8 @@ class Sample(Base):
     user_id = Column(Integer, comment="项目ID")
     status = Column(Integer, default=0, comment='状态')
     is_delete = Column(Boolean, default=0, comment='是否删除')
-    create_time = Column(Integer, comment='创建时间')
-    update_time = Column(Integer, comment='更新时间')
+    create_time = Column(DateTime(timezone=True), comment='创建时间')
+    update_time = Column(DateTime(timezone=True), comment='更新时间')
     description = Column(Text,comment="样本描述")
     meta_json = Column(JSONB, comment="元数据json")
 
@@ -44,7 +44,7 @@ class SampleMeta(Base):
     key = Column(String(320), comment='属性键名')
     value = Column(Text, comment='属性值')
     category = Column(String(250), comment="分类")
-    create_time = Column(Integer, comment='创建时间')
+    create_time = Column(DateTime(timezone=True), comment='创建时间')
     description = Column(Text, comment="样本描述")
 
     def to_dict(self):

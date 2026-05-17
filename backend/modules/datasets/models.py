@@ -163,7 +163,7 @@ class DatasetWorkflowTask(Base):
     to_lifecycle_state = Column(String(64), comment="目标状态")
     operator_id = Column(Integer, comment="操作人")
     detail = Column(Text, comment="任务详情")
-    create_time = Column(Integer, comment="创建时间")
+    create_time = Column(DateTime(timezone=True), comment="创建时间")
     finish_time = Column(DateTime(timezone=True), comment="完成时间")
 
 
@@ -178,7 +178,7 @@ class DatasetPublishRecord(Base):
     lifecycle_after = Column(String(64), comment="变更后状态")
     operator_id = Column(Integer, comment="操作人")
     note = Column(Text, comment="说明")
-    create_time = Column(Integer, comment="创建时间")
+    create_time = Column(DateTime(timezone=True), comment="创建时间")
 
 
 class DatasetVersion(Base):
@@ -271,7 +271,7 @@ class DatasetLineageEdge(Base):
     relation_type = Column(String(64), index=True, comment="关系类型")
     detail_json = Column(Text, comment="关系详情")
     create_user_id = Column(Integer, comment="创建人")
-    create_time = Column(Integer, comment="创建时间")
+    create_time = Column(DateTime(timezone=True), comment="创建时间")
 
 
 class DatasetVersionPublishRecord(Base):
@@ -287,7 +287,7 @@ class DatasetVersionPublishRecord(Base):
     lifecycle_after = Column(String(64), comment="变更后状态")
     operator_id = Column(Integer, comment="操作人")
     note = Column(Text, comment="说明")
-    create_time = Column(Integer, comment="创建时间")
+    create_time = Column(DateTime(timezone=True), comment="创建时间")
 
 
 class FunctionalGene(Base):
@@ -367,7 +367,7 @@ class FunctionalTermAssignment(Base):
     term_name = Column(Text, comment="term display name")
     term_type = Column(String(255), comment="term subtype")
     attributes_json = Column(Text, comment="raw assignment payload")
-    create_time = Column(Integer, comment="创建时间")
+    create_time = Column(DateTime(timezone=True), comment="创建时间")
 
 
 class PhenomeImportRun(Base):
@@ -470,7 +470,7 @@ class PhenomeSourceColumn(Base):
     timepoint = Column(String(64), comment="timepoint")
     parse_rule = Column(String(128), comment="parse rule")
     meta_json = Column(JSONB, comment="extra structured payload")
-    create_time = Column(Integer, comment="创建时间")
+    create_time = Column(DateTime(timezone=True), comment="创建时间")
 
 
 class PhenomeTrial(Base):
@@ -539,4 +539,4 @@ class PhenomeObservation(Base):
     source_column_name = Column(String(255), comment="source column name")
     qc_status = Column(String(32), comment="qc status")
     meta_json = Column(JSONB, comment="extra structured payload")
-    create_time = Column(Integer, comment="创建时间")
+    create_time = Column(DateTime(timezone=True), comment="创建时间")

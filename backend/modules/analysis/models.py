@@ -9,7 +9,7 @@ Base = pgsql_db.Base
 class BrdAnalysisJob(Base):
     __tablename__ = "brd_analysis_job"
 
-    id = Column(BigInteger, primary_key=True, index=True, autoincrement=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
     tool_id = Column(String(128), nullable=False, comment="工具ID")
     status = Column(String(32), nullable=False, default="pending",
                     comment="pending|running|success|failed|timeout|cancelled")
@@ -22,5 +22,5 @@ class BrdAnalysisJob(Base):
     error_message = Column(Text, comment="错误信息")
     created_by = Column(BigInteger, comment="创建者用户ID，NULL为匿名")
     created_at = Column(Integer, default=lambda: int(time.time()))
-    started_at = Column(Integer)
-    finished_at = Column(Integer)
+    started_at = Column(DateTime(timezone=True))
+    finished_at = Column(DateTime(timezone=True))

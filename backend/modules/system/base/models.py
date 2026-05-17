@@ -12,13 +12,13 @@ def _sys_bigint():
 class SystemDictData(Base):
     """系统字典表"""
     __tablename__ = "system_dict_data"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(320), default='', comment='名称')
     key = Column(String(320), default='', comment='唯一表示')
     type = Column(String(320), default='', comment='类型')
     status = Column(String(320), default=1, comment='状态')
-    create_time = Column(Integer, default=int(time.time()), comment='创建时间')
-    update_time = Column(Integer, default=int(time.time()), comment='修改时间')
+    create_time = Column(DateTime(timezone=True), comment='创建时间')
+    update_time = Column(DateTime(timezone=True), comment='修改时间')
     remark = Column(String(320), default='', comment='备注')
 
     @classmethod
@@ -29,7 +29,7 @@ class SystemDictData(Base):
 class SystemDictField(Base):
     """系统字典表"""
     __tablename__ = "system_dict_field"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     type_id = Column(Integer, default=0, comment="父ID")
     name = Column(String(320), default='', comment='名称')
     type = Column(String(320), default='', comment='类型唯一')
@@ -40,7 +40,7 @@ class SystemDictField(Base):
     color = Column(String(320), default='', comment='color')
     is_default = Column(Boolean, default=0, comment="是否默认选择")
     status = Column(String(320), default=1, comment='状态')
-    create_time = Column(Integer, default=int(time.time()), comment='创建时间')
+    create_time = Column(DateTime(timezone=True), comment='创建时间')
     remark = Column(String(320), default='', comment='备注')
 
     @classmethod
@@ -50,7 +50,7 @@ class SystemDictField(Base):
 
 class SysLog(Base):
     __tablename__ = "system_log"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(320), comment='名称')
     model = Column(String(320), comment='模块')
     type = Column(String(320), comment='类型')
@@ -59,7 +59,7 @@ class SysLog(Base):
     ip = Column(String(320), comment='客户端IP地址')
     addr = Column(String(320), comment='客户端IP地址')
     status = Column(Integer, default=0, comment='状态')
-    create_time = Column(Integer, comment='创建时间')
+    create_time = Column(DateTime(timezone=True), comment='创建时间')
     remark = Column(String(320), comment='备注')
 
     def to_dict(self):
@@ -75,7 +75,7 @@ class SysLog(Base):
 class SystemInstallPackage(Base):
     __tablename__ = "sys_install_package"
 
-    id = Column(_sys_bigint(), primary_key=True, index=True)
+    id = Column(_sys_bigint(), primary_key=True)
     package_code = Column(String(64), unique=True, nullable=False, comment="安装包编码")
     package_type = Column(String(32), nullable=False, comment="安装包类型")
     package_name = Column(String(256), nullable=False, comment="安装包名称")
@@ -99,7 +99,7 @@ class SystemInstallPackage(Base):
 class SystemInstallJob(Base):
     __tablename__ = "sys_install_job"
 
-    id = Column(_sys_bigint(), primary_key=True, index=True)
+    id = Column(_sys_bigint(), primary_key=True)
     job_type = Column(String(32), nullable=False, comment="任务类型")
     package_id = Column(
         _sys_bigint(),

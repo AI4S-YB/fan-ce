@@ -45,9 +45,9 @@ class Experiment(Base):
     is_public = Column(Boolean, default=True, comment=' # 是否公开')
     user_id = Column(Integer, comment="用户ID")
     sample_id = Column(Integer, comment="样本ID")
-    is_delete = Column(Boolean, default=0, comment='是否删除')
-    create_time = Column(Integer,default=int(time.time()), comment='创建时间')
-    update_time = Column(Integer, comment='更新时间')
+    is_delete = Column(Boolean, default=False, comment='是否删除')
+    create_time = Column(DateTime(timezone=True), comment='创建时间')
+    update_time = Column(DateTime(timezone=True), comment='更新时间')
     description = Column(Text, comment="样本描述")
     meta_json = Column(JSONB, comment="元数据json")
 
@@ -71,7 +71,7 @@ class EnhancementMeta(Base):
     value = Column(Text, comment='属性值')
     category = Column(String(250), comment="分类")
     description = Column(Text, comment="样本描述")
-    create_time = Column(Integer, comment='创建时间')
+    create_time = Column(DateTime(timezone=True), comment='创建时间')
 
     def to_dict(self):
         model_dict = dict(self.__dict__)
