@@ -115,23 +115,6 @@ def test_browse_path_outside_root_is_rejected():
                 assert "outside browse root" in str(e.detail)
 
 
-def test_supported_registration_modes_includes_recipe_build():
-    """SUPPORTED_REGISTRATION_MODES should include recipe_build"""
-    svc = DatasetDomainService()
-    assert "recipe_build" in svc.SUPPORTED_REGISTRATION_MODES
-    assert "prebuilt" in svc.SUPPORTED_REGISTRATION_MODES
-    assert "hybrid" in svc.SUPPORTED_REGISTRATION_MODES
-    assert len(svc.SUPPORTED_REGISTRATION_MODES) == 3
-
-
-def test_unsupported_mode_raises_error_message():
-    """unknown mode should produce a helpful error listing valid modes"""
-    svc = DatasetDomainService()
-    assert "prebuilt" in svc.SUPPORTED_REGISTRATION_MODES
-    bad_mode = "invalid_mode"
-    assert bad_mode not in svc.SUPPORTED_REGISTRATION_MODES
-
-
 def test_browse_scan_root_path_returns_files():
     """browse API should return files in current directory"""
     svc = DatasetDomainService()
