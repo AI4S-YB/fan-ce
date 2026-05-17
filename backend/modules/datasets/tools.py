@@ -168,7 +168,7 @@ async def _execute_list_datasets(db, arguments: dict, user) -> dict:
             "lifecycle_state": item.get("lifecycle_state", ""),
             "version": item.get("version", ""),
             "description_md": item.get("description_md", ""),
-            "extra_json": item.get("extra_json", ""),
+            "meta_json": item.get("meta_json", ""),
         })
     return {"items": items, "total": result.get("total", 0), "page": page, "size": size}
 
@@ -183,7 +183,7 @@ async def _execute_get_dataset_info(db, arguments: dict, user) -> dict:
         "dataset_type": dataset.get("dataset_type", ""),
         "version": dataset.get("version", ""),
         "description_md": dataset.get("description_md", ""),
-        "extra_json": dataset.get("extra_json", ""),
+        "meta_json": dataset.get("meta_json", ""),
         "query_profile": dataset.get("query_profile", {}),
         "query_adapter": dataset.get("query_adapter", {}),
     }
@@ -312,7 +312,6 @@ async def _execute_get_related_datasets(db, arguments: dict, user) -> dict:
             "dst_title": item.get("dst_dataset_title"),
             "dst_type": item.get("dst_dataset_type"),
             "relation_type": item.get("relation_type"),
-            "direction": item.get("direction"),
         })
     return {"dataset_id": dataset_id, "relations": items, "total": len(items)}
 

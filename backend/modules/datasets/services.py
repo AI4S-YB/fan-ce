@@ -1349,7 +1349,6 @@ class DatasetDomainService:
             "dst_asset_id": lineage_obj.dst_asset_id,
             "dst_asset_code": dst_asset.asset_code if dst_asset else None,
             "relation_type": lineage_obj.relation_type,
-            "direction": lineage_obj.direction,
             "detail_json": lineage_obj.detail_json,
             "create_user_id": lineage_obj.create_user_id,
             "create_time": lineage_obj.create_time,
@@ -1397,7 +1396,6 @@ class DatasetDomainService:
                 results.append({
                     "id": item.id,
                     "relation_type": item.relation_type,
-                    "direction": item.direction,
                     "src_dataset_id": sv.dataset_id,
                     "src_dataset_title": src_reg.title or "",
                     "src_dataset_type": src_reg.dataset_type or "",
@@ -1449,7 +1447,6 @@ class DatasetDomainService:
             results.append({
                 "id": item.id,
                 "relation_type": item.relation_type,
-                "direction": item.direction,
                 "src_dataset_id": sv.dataset_id,
                 "src_dataset_title": src_reg.title or "",
                 "src_dataset_type": src_reg.dataset_type or "",
@@ -4015,7 +4012,7 @@ class DatasetDomainService:
                 "dst_dataset_version_id": request_data.dst_version_id,
                 "dst_asset_id": request_data.dst_asset_id,
                 "relation_type": request_data.relation_type,
-                "direction": request_data.direction or "forward",
+                
                 "detail_json": request_data.detail_json,
                 "create_user_id": user.id,
                 "create_time": self._now(),

@@ -111,7 +111,6 @@ class SequenceBundlePlan:
     dataset_type: str
     primary_file_path: str
     organism: str | None = None
-    assembly: str | None = None
     assets: list[BundleAssetPlan] = field(default_factory=list)
     bundle_meta: dict[str, Any] = field(default_factory=dict)
 
@@ -257,7 +256,6 @@ def discover_sequence_bundle(
     dataset_title: str | None = None,
     version: str = "v1",
     organism: str | None = None,
-    assembly: str | None = None,
 ) -> SequenceBundlePlan:
     bundle_path = Path(bundle_dir).expanduser().resolve()
     if not bundle_path.exists():
@@ -379,7 +377,7 @@ def discover_sequence_bundle(
         dataset_type="genome",
         primary_file_path=str(reference_fasta.resolve()),
         organism=organism,
-        assembly=assembly,
+        
         assets=assets,
         bundle_meta=bundle_meta,
     )
@@ -391,7 +389,6 @@ def discover_expression_bundle(
     dataset_title: str | None = None,
     version: str = "v1",
     organism: str | None = None,
-    assembly: str | None = None,
 ) -> SequenceBundlePlan:
     bundle_path = Path(bundle_dir).expanduser().resolve()
     if not bundle_path.exists():
@@ -483,7 +480,7 @@ def discover_expression_bundle(
         dataset_type="transcriptome",
         primary_file_path=str(matrix_path.resolve()),
         organism=organism or dataset_info.get("organism"),
-        assembly=assembly,
+        
         assets=assets,
         bundle_meta=bundle_meta,
     )
@@ -528,7 +525,6 @@ def discover_variome_bundle(
     dataset_title: str | None = None,
     version: str = "v1",
     organism: str | None = None,
-    assembly: str | None = None,
     primary_file: str | Path | None = None,
 ) -> SequenceBundlePlan:
     bundle_path = Path(bundle_dir).expanduser().resolve()
@@ -580,7 +576,7 @@ def discover_variome_bundle(
         dataset_type="variome",
         primary_file_path=str(variant_path.resolve()),
         organism=organism,
-        assembly=assembly,
+        
         assets=assets,
         bundle_meta=bundle_meta,
     )
@@ -658,7 +654,7 @@ def _ensure_dataset_ready(db, dataset_id: int, user, detail: str):
                 id=dataset_id,
                 target_state=next_state,
                 task_type="sync",
-                task_status="success",
+                status="success",
                 detail=detail,
             ),
             user=user,
@@ -674,12 +670,12 @@ def _ensure_version(db, dataset_id: int, plan: SequenceBundlePlan, user):
         dataset_type=plan.dataset_type,
         version=plan.version,
         organism=plan.organism,
-        assembly=plan.assembly,
+        
         file_format=_guess_file_format(Path(plan.primary_file_path)),
         query_engine=primary_asset.query_engine if primary_asset else "file",
         validation_summary=None,
         index_summary=None,
-        extra_json=json.dumps(
+        meta_json=json.dumps(
             {
                 "bundle": plan.bundle_meta,
                 "provisioning": {
@@ -911,7 +907,6 @@ def _ensure_version_lineage(
             relation_type=relation_type,
             src_asset_id=src_asset_id,
             dst_asset_id=dst_asset_id,
-            direction="forward",
             detail_json=detail_json,
         ),
         user=user,
@@ -929,7 +924,6 @@ def provision_sequence_bundle(
     project_id: int = 0,
     team_id: int = 0,
     organism: str | None = None,
-    assembly: str | None = None,
     publish: bool = False,
 ) -> dict[str, Any]:
     plan = discover_sequence_bundle(
@@ -937,7 +931,7 @@ def provision_sequence_bundle(
         dataset_title=dataset_title,
         version=version,
         organism=organism,
-        assembly=assembly,
+        
     )
 
     target_dataset_id = dataset_id or _find_dataset_id_by_title(db=db, dataset_title=plan.dataset_title)
@@ -1022,7 +1016,6 @@ def provision_expression_bundle(
     project_id: int = 0,
     team_id: int = 0,
     organism: str | None = None,
-    assembly: str | None = None,
     reference_version_id: int | None = None,
     publish: bool = False,
 ) -> dict[str, Any]:
@@ -1031,7 +1024,7 @@ def provision_expression_bundle(
         dataset_title=dataset_title,
         version=version,
         organism=organism,
-        assembly=assembly,
+        
     )
 
     target_dataset_id = dataset_id or _find_dataset_id_by_title(db=db, dataset_title=plan.dataset_title)
@@ -1142,7 +1135,6 @@ def provision_variome_bundle(
     project_id: int = 0,
     team_id: int = 0,
     organism: str | None = None,
-    assembly: str | None = None,
     primary_file: str | Path | None = None,
     reference_version_id: int | None = None,
     publish: bool = False,
@@ -1152,7 +1144,7 @@ def provision_variome_bundle(
         dataset_title=dataset_title,
         version=version,
         organism=organism,
-        assembly=assembly,
+        
         primary_file=primary_file,
     )
 

@@ -271,7 +271,6 @@ class DatasetLineageEdge(Base):
     dst_dataset_version_id = Column(Integer, index=True, comment="目标版本 ID")
     dst_asset_id = Column(Integer, index=True, comment="目标资产 ID")
     relation_type = Column(String(64), index=True, comment="关系类型")
-    direction = Column(String(16), default="forward", comment="关系方向")
     detail_json = Column(Text, comment="关系详情")
     create_user_id = Column(Integer, comment="创建人")
     create_time = Column(Integer, comment="创建时间")

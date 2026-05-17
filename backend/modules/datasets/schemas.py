@@ -319,7 +319,6 @@ class DatasetLineageCreateRequest(BaseModel):
     relation_type: str
     src_asset_id: Optional[int] = None
     dst_asset_id: Optional[int] = None
-    direction: Optional[str] = "forward"
     detail_json: Optional[str] = None
 
     model_config = ConfigDict(extra="forbid")
