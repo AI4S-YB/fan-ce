@@ -6,7 +6,7 @@
 @version :  1.0
 @Desc    :  None
 """
-from sqlalchemy import Boolean, Column, Integer, String, JSON,ForeignKey
+from sqlalchemy import DateTime, Boolean, Column, Integer, String, JSON,ForeignKey
 from sqlalchemy.orm import relationship
 from shared.database import Base
 

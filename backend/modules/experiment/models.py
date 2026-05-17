@@ -5,7 +5,7 @@
 @version :  1.0
 @Desc    :  None
 """
-from sqlalchemy import Boolean, Column, Integer, String, Text, ForeignKey, Float
+from sqlalchemy import DateTime, Boolean, Column, Integer, String, Text, ForeignKey, Float
 from sqlalchemy.dialects.postgresql import JSONB
 import time
 from shared.database import Base

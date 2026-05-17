@@ -1,6 +1,6 @@
 """Analysis framework database models."""
 import time
-from sqlalchemy import Column, Integer, String, Text, BigInteger
+from sqlalchemy import DateTime, Column, Integer, String, Text, BigInteger
 from shared.pgorm.connect import pgsql_db
 
 Base = pgsql_db.Base

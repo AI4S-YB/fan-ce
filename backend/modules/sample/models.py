@@ -5,7 +5,7 @@
 @version :  1.0
 @Desc    :  None
 """
-from sqlalchemy import Boolean, Column, Integer, String, Text
+from sqlalchemy import DateTime, Boolean, Column, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 
 from shared.database import Base

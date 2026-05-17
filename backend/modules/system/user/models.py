@@ -6,7 +6,7 @@
 @Desc    :   None
 """
 import time
-from sqlalchemy import Boolean, Column, Integer, String, BigInteger, Enum
+from sqlalchemy import DateTime, Boolean, Column, Integer, String, BigInteger, Enum
 from shared.database import Base
 
 
