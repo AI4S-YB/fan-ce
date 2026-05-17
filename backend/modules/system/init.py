@@ -9,25 +9,9 @@ from .base.models import SysLog, SystemDictData, SystemDictField, SystemInstallJ
 
 
 def init_system_tables():
-    tables = [
-        SystemDictData.__table__,
-        SystemDictField.__table__,
-        SysLog.__table__,
-        SystemInstallPackage.__table__,
-        SystemInstallJob.__table__,
-        SystemInstallLock.__table__,
-    ]
-    for table in tables:
-        for attempt in range(3):
-            try:
-                table.create(bind=engine, checkfirst=True)
-                break
-            except OperationalError:
-                if attempt == 2:
-                    raise
-                time.sleep(1)
+    """Tables are now created by alembic migration (consolidate_init_tables).
+    This function keeps only the install defaults check."""
     _ensure_install_defaults()
-
 
 def _ensure_install_defaults():
     with MyDBManager() as db:

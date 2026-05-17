@@ -27,34 +27,8 @@ from .models import (
 
 
 def init_breeding_tables():
-    tables = [
-        BreedingProgram.__table__,
-        BreedingMaterial.__table__,
-        BreedingTaxonomyNode.__table__,
-        BreedingTaxonomyName.__table__,
-        BreedingGermplasmImportBatch.__table__,
-        BreedingGermplasm.__table__,
-        BreedingGermplasmLineage.__table__,
-        BreedingTrial.__table__,
-        BreedingPlot.__table__,
-        BreedingObservation.__table__,
-        BreedingBioSample.__table__,
-        BreedingAssay.__table__,
-        BreedingDataFile.__table__,
-        BreedingDatasetSubjectLink.__table__,
-        BreedingDatasetAssayLink.__table__,
-        BreedingVariantSampleMap.__table__,
-        BreedingPhenotypeSubjectMap.__table__,
-    ]
-    for table in tables:
-        for attempt in range(3):
-            try:
-                table.create(bind=engine, checkfirst=True)
-                break
-            except OperationalError:
-                if attempt == 2:
-                    raise
-                time.sleep(1)
+    """Tables are now created by alembic migration (consolidate_init_tables).
+    This function keeps only the runtime schema/index helpers."""
     _ensure_breeding_schema_columns()
     _ensure_breeding_search_indexes()
 

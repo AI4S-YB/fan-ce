@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
-from omics.db import Base
+from omics.db.db import Base
 
 class FileMetadata(Base):
     __tablename__ = "file_metadata"

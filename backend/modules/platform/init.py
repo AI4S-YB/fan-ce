@@ -8,17 +8,5 @@ from .models import PlatformModelApiSetting, PlatformSiteDatasetLink, PlatformSi
 
 
 def init_platform_tables():
-    tables = [
-        PlatformSiteSetting.__table__,
-        PlatformSiteDatasetLink.__table__,
-        PlatformModelApiSetting.__table__,
-    ]
-    for table in tables:
-        for attempt in range(3):
-            try:
-                table.create(bind=engine, checkfirst=True)
-                break
-            except OperationalError:
-                if attempt == 2:
-                    raise
-                time.sleep(1)
+    """Tables are now created by alembic migration (consolidate_init_tables)."""
+    pass

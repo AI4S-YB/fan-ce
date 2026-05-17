@@ -144,16 +144,9 @@ _psql -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" 2>/
     _psql -d postgres -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;" 2>/dev/null
 }
 
-# Skip alembic for fresh installs (tables created by init_*_tables functions).
-TABLE_COUNT=$(_psql -d "$DB_NAME" -tc \
-    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public';" 2>/dev/null | xargs || echo "0")
-if [ "${TABLE_COUNT:-0}" -gt 10 ]; then
-    echo "  Detected existing database ($TABLE_COUNT tables). Running migrations..."
-    pixi run uv run --directory backend alembic upgrade head || \
-        echo -e "  ${YELLOW}Warning: alembic upgrade had errors (may be harmless).${NC}"
-else
-    echo "  Fresh database detected. Tables will be created in next step."
-fi
+# Run alembic migrations (idempotent — skips already-applied migrations)
+pixi run uv run --directory backend alembic upgrade head || \
+    echo -e "  ${YELLOW}Warning: alembic upgrade had errors (may be harmless).${NC}"
 echo -e "  ${GREEN}Done.${NC}"
 echo ""
 

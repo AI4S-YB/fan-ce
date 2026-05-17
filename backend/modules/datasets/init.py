@@ -42,42 +42,8 @@ from .models import (
 
 
 def init_dataset_tables():
-    tables = [
-        DatasetKindRegistry.__table__,
-        AssetTypeRegistry.__table__,
-        AssetFileTypeRegistry.__table__,
-        DatasetScanRoot.__table__,
-        DatasetScanJob.__table__,
-        DatasetStagingFile.__table__,
-        DatasetRegistrationCandidate.__table__,
-        DatasetRegistrationCandidateFile.__table__,
-        DatasetRegistry.__table__,
-        Dataset.__table__,
-        DatasetWorkflowTask.__table__,
-        DatasetPublishRecord.__table__,
-        DatasetVersion.__table__,
-        DatasetAsset.__table__,
-        AssetFile.__table__,
-        DatasetLineageEdge.__table__,
-        DatasetVersionPublishRecord.__table__,
-        FunctionalGene.__table__,
-        FunctionalTerm.__table__,
-        FunctionalTermAssignment.__table__,
-        PhenomeImportRun.__table__,
-        PhenomeSubject.__table__,
-        PhenomeTrait.__table__,
-        PhenomeSourceColumn.__table__,
-        PhenomeObservation.__table__,
-    ]
-    for table in tables:
-        for attempt in range(3):
-            try:
-                table.create(bind=engine, checkfirst=True)
-                break
-            except OperationalError:
-                if attempt == 2:
-                    raise
-                time.sleep(1)
+    """Tables are now created by alembic migration (consolidate_init_tables).
+    This function keeps only the runtime schema/index helpers."""
     _ensure_dataset_schema_columns()
     _ensure_dataset_schema_column_types()
     _backfill_default_public_versions()
