@@ -31,8 +31,13 @@ class Settings(BaseSettings):
     AVATAR_PATH: str = os.path.join(BASE_PATH, 'static', 'avatar')
     STATIC_PATH: str = os.path.join(BASE_PATH, 'static')
     IMG_PATH: str = os.path.join(BASE_PATH, 'static', 'img')
+    # 运行时临时目录（分析任务、文件下载、扫描缓存等）
+    RUNTIME_DIR: str = os.path.join(BASE_PATH, 'runtime')
+    DOWNLOAD_DIR: str = os.path.join(BASE_PATH, 'runtime', 'downloads')
     os.makedirs(AVATAR_PATH, exist_ok=True)
     os.makedirs(IMG_PATH, exist_ok=True)
+    os.makedirs(RUNTIME_DIR, exist_ok=True)
+    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
     # 跨域
     CORS_ORIGINS: List[AnyHttpUrl] = (
         "http://localhost:4000",

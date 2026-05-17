@@ -92,7 +92,7 @@ class SequenceAdapter(DatasetQueryAdapter):
             sequence_lines = sequence_text.strip().split("\n")
             sequence_str = "".join(sequence_lines[1:])
             if len(sequence_str) > MAX_INLINE_SIZE:
-                temp_fasta = f"/tmp/{seq_id}_{uuid.uuid4().hex}.fasta"
+                temp_fasta = f"{settings.DOWNLOAD_DIR}/{seq_id}_{uuid.uuid4().hex}.fasta"
                 with open(temp_fasta, "w", encoding="utf-8") as handle:
                     handle.write(sequence_text)
                 gzip_path = compress_file_to_gzip(temp_fasta)

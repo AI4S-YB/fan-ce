@@ -4185,7 +4185,7 @@ class DatasetDomainService:
             if normalized_root:
                 return os.path.realpath(normalized_root)
         # Safe fallback instead of /
-        return os.path.realpath("/var/tmp/dataset_scan")
+        return os.path.realpath(f"{settings.RUNTIME_DIR}/dataset_scan")
 
     def _resolve_scan_browse_path(self, requested_path):
         browse_root = self._get_scan_browse_root()
@@ -6668,7 +6668,7 @@ class DatasetDomainService:
             truncated = total_len > 1_000_000
             download_url = None
             if truncated:
-                tmp = f"/tmp/fance-seq-{uuid.uuid4().hex}.fasta"
+                tmp = f"{settings.RUNTIME_DIR}/fance-seq-{uuid.uuid4().hex}.fasta"
                 with open(tmp, "w") as fh:
                     for r in results:
                         if r.get("sequence"):

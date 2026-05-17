@@ -7,7 +7,7 @@ from typing import List, Optional
 from omics.schemas.ngs import NGSFileInfo
 
 DOWNLOAD_BASE_URL = "http://localhost:8000/basis/downloads"
-DOWNLOAD_DIR = "/tmp/downloads"
+from config.settings import settings; DOWNLOAD_DIR = settings.DOWNLOAD_DIR
 
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 

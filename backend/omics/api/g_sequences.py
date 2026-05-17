@@ -101,7 +101,7 @@ async def get_single_sequence(request: GenomicSequenceRequest):
         sequence_str = "".join(sequence_lines[1:])
 
         if len(sequence_str) > MAX_INLINE_SIZE:
-            temp_fasta = f"/tmp/{request.seq_id}_{uuid.uuid4().hex}.fasta"
+            temp_fasta = f"{settings.RUNTIME_DIR}/{request.seq_id}_{uuid.uuid4().hex}.fasta"
             with open(temp_fasta, "w") as f:
                 f.write(sequence_text)
             gzip_path = compress_file_to_gzip(temp_fasta)
@@ -213,7 +213,7 @@ async def get_batch_sequences(request: GenomicBatchSequenceRequest):
 
 @g_sequence_router.get("/downloads/{filename}")
 async def download_file(filename: str):
-    file_path = os.path.join("/tmp/downloads", filename)
+    file_path = os.path.join(settings.DOWNLOAD_DIR, filename)
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(file_path, filename=filename)

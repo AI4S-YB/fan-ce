@@ -12,7 +12,7 @@ from omics.core.variant_utils import check_vcf_file, extract_variants
 from .base import DatasetQueryAdapter
 
 
-DOWNLOAD_DIR = "/tmp/downloads"
+from config.settings import settings; DOWNLOAD_DIR = settings.DOWNLOAD_DIR
 DOWNLOAD_BASE_URL = "http://yourdomain.com/downloads"
 
 

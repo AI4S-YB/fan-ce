@@ -111,7 +111,7 @@ def public_sequence_download(file: str = None):
     basename = os.path.basename(file)
     if not basename.startswith("fance-seq-"):
         raise HTTPException(status_code=400, detail="Invalid file reference")
-    tmp_path = f"/tmp/{basename}"
+    tmp_path = f"{settings.DOWNLOAD_DIR}/{basename}"
     if not os.path.exists(tmp_path):
         raise HTTPException(status_code=404, detail="File not found or expired")
     return FileResponse(tmp_path, filename="sequences.fasta", media_type="text/plain")

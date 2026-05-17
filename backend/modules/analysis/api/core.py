@@ -279,7 +279,7 @@ async def admin_install_plugin(file: UploadFile = FastAPIFile(...), _user=Depend
         raise HTTPException(status_code=400, detail="Only .whl files are accepted")
 
     import os, uuid
-    tmp_path = f"/tmp/{uuid.uuid4().hex}_{file.filename}"
+    tmp_path = f"{settings.RUNTIME_DIR}/{uuid.uuid4().hex}_{file.filename}"
     with open(tmp_path, "wb") as f:
         content = await file.read()
         f.write(content)

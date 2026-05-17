@@ -17,7 +17,7 @@ variant_router = APIRouter(
 )
 
 DOWNLOAD_BASE_URL = "http://yourdomain.com/downloads"  # 你可以换成真实域名
-DOWNLOAD_DIR = "/tmp/downloads"
+from config.settings import settings; DOWNLOAD_DIR = settings.DOWNLOAD_DIR
 
 
 @variant_router.post("/file/process",

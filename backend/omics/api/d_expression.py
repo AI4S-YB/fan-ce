@@ -279,7 +279,7 @@ async def query_expression(req: ExpressionQueryRequest):
 
 @rnaseq_router.get("/download/{filename}")
 async def download_file(filename: str):
-    file_path = f"/tmp/{filename}"
+    file_path = f"{settings.RUNTIME_DIR}/{filename}"
     if not os.path.isfile(file_path):
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(file_path, filename=filename, media_type="application/gzip")

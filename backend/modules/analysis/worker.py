@@ -73,7 +73,7 @@ class AnalysisWorker:
                     BrdAnalysisJob.status.in_(["success", "failed", "timeout", "cancelled"]),
                 ).all()
                 for job in old_jobs:
-                    work_dir = f"/tmp/fance-jobs/{job.id}"
+                    from config.settings import settings; work_dir = f"{settings.RUNTIME_DIR}/fance-jobs/{job.id}"
                     if os.path.exists(work_dir):
                         shutil.rmtree(work_dir, ignore_errors=True)
                     job.status = "expired"
@@ -105,7 +105,7 @@ class AnalysisWorker:
             db.commit()
             return
 
-        work_dir = f"/tmp/fance-jobs/{job.id}"
+        from config.settings import settings; work_dir = f"{settings.RUNTIME_DIR}/fance-jobs/{job.id}"
         os.makedirs(work_dir, exist_ok=True)
 
         try:
