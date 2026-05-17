@@ -3078,7 +3078,7 @@ class DatasetDomainService:
         }
 
     def _ensure_version_current_flag(self, db, database_id, version_name):
-        version_rows = dataset_version_db.get_data(db=db, filters={"id": database_id})
+        version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": database_id})
         version_snapshots = [
             {
                 "id": row.id,
@@ -5927,18 +5927,18 @@ class DatasetDomainService:
 
             data_list = []
             for item in registry_rows:
-                if request_data.dataset_id and item.dataset_id != request_data.dataset_id:
+                if request_data.dataset_id and item.id != request_data.dataset_id:
                     continue
                 if request_data.name and request_data.name not in (item.title or "") and request_data.name not in (item.dataset_code or ""):
                     continue
                 data_list.append({
                     "id": item.id,
-                    "dataset_id": item.dataset_id,
+                    "dataset_id": item.id,
                     "dataset_code": item.dataset_code,
                     "title": item.title,
                     "dataset_type": item.dataset_type,
                     "organism": item.organism,
-                    "version": item.version,
+                    "version": "",
                     "lifecycle_state": item.lifecycle_state,
                     "description_md": (item.description_md or "")[:500],
                     "meta_json": item.meta_json,
