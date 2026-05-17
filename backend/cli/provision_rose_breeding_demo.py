@@ -11,7 +11,7 @@ from pathlib import Path
 from openpyxl import load_workbook
 from sqlalchemy import or_
 
-from apps.breeding.models import (
+from modules.breeding.models import (
     BreedingAssay,
     BreedingBioSample,
     BreedingDataFile,
@@ -25,8 +25,8 @@ from apps.breeding.models import (
     BreedingTrial,
     BreedingVariantSampleMap,
 )
-from apps.datasets.models import AssetFile, DatasetAsset, DatasetVersion
-from db.database import MyDBManager
+from modules.datasets.models import AssetFile, DatasetAsset, DatasetVersion
+from shared.database import MyDBManager
 
 
 ROOT_DIR = Path(os.environ.get("TEST_DATA_DIR", Path(__file__).resolve().parent.parent / "test_data"))

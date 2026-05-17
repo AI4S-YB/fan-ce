@@ -3,12 +3,12 @@ import pytest
 
 class TestBreedingReadiness:
     def test_program_readiness_counts_materials_with_both_data_types(self, db_session):
-        from apps.breeding.services import BreedingDomainService
-        from apps.breeding.models import (
+        from modules.breeding.services import BreedingDomainService
+        from modules.breeding.models import (
             BreedingProgram, BreedingMaterial,
             BreedingVariantSampleMap, BreedingPhenotypeSubjectMap,
         )
-        from apps.datasets.dataset_model import Dataset
+        from modules.datasets.dataset_model import Dataset
 
         program = BreedingProgram(code="P_READY", name="Readiness Program", status="active")
         db_session.add(program)

@@ -10,8 +10,8 @@ from sqlalchemy.pool import StaticPool
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import apps.breeding.init as breeding_init_module
-from apps.breeding.models import (
+import modules.breeding.init as breeding_init_module
+from modules.breeding.models import (
     BreedingAssay,
     BreedingBioSample,
     BreedingDataFile,
@@ -30,8 +30,8 @@ from apps.breeding.models import (
     BreedingTrial,
     BreedingVariantSampleMap,
 )
-from apps.datasets.models import AssetFile, DatasetAsset, DatasetRegistry, DatasetVersion
-from db.database import Base
+from modules.datasets.models import AssetFile, DatasetAsset, DatasetRegistry, DatasetVersion
+from shared.database import Base
 
 
 DATASET_CORE_TABLES = [

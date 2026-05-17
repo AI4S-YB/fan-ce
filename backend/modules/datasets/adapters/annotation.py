@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import HTTPException
 
-from basis.core.sqlite_utils import query_sqlite
+from omics.core.sqlite_utils import query_sqlite
 
 from .base import DatasetQueryAdapter
 

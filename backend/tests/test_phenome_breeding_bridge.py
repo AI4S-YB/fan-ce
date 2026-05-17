@@ -8,15 +8,15 @@ from sqlalchemy.pool import StaticPool
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from apps.breeding.models import (
+from modules.breeding.models import (
     BreedingMaterial,
     BreedingPhenotypeSubjectMap,
     BreedingProgram,
     BreedingTrial,
     BreedingPlot,
 )
-from apps.datasets.dataset_model import Dataset
-from apps.datasets.models import (
+from modules.datasets.dataset_model import Dataset
+from modules.datasets.models import (
     DatasetAsset,
     DatasetRegistry,
     DatasetVersion,
@@ -25,7 +25,7 @@ from apps.datasets.models import (
     PhenomeSubject,
     PhenomeTrait,
 )
-from db.database import Base
+from shared.database import Base
 
 BRIDGE_TABLES = [
     Dataset.__table__,
@@ -63,7 +63,7 @@ def db_session():
 
 class TestPhenomeBreedingBridge:
     def test_bridge_maps_phenome_observation_to_breeding(self, db_session):
-        from apps.datasets.phenome_indexing import PhenomeBreedingBridge
+        from modules.datasets.phenome_indexing import PhenomeBreedingBridge
 
         program = BreedingProgram(code="P_PHBR", name="Phenome Bridge", status="active")
         db_session.add(program)
@@ -124,7 +124,7 @@ class TestPhenomeBreedingBridge:
         assert result["material_id"] == mat.id
 
     def test_bridge_returns_unmapped_for_unknown_subject(self, db_session):
-        from apps.datasets.phenome_indexing import PhenomeBreedingBridge
+        from modules.datasets.phenome_indexing import PhenomeBreedingBridge
 
         result = PhenomeBreedingBridge.map_subject_to_material(
             db=db_session,

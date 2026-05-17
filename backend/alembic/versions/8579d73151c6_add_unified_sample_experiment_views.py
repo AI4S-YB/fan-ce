@@ -15,7 +15,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    from apps.datasets.unified_sample import BIOLOGICAL_SAMPLE_VIEW_DDL, SEQUENCING_EXPERIMENT_VIEW_DDL
+    from modules.datasets.unified_sample import BIOLOGICAL_SAMPLE_VIEW_DDL, SEQUENCING_EXPERIMENT_VIEW_DDL
     op.execute(BIOLOGICAL_SAMPLE_VIEW_DDL)
     op.execute(SEQUENCING_EXPERIMENT_VIEW_DDL)
 

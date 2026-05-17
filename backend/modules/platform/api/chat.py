@@ -6,10 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from apps.common.depends import get_active_user
-from db.database import get_db
-from libs.responses.response import response_200
-from libs.tool_registry import tool_registry
+from modules.common.depends import get_active_user
+from shared.database import get_db
+from shared.responses import response_200
+from shared.tool_registry import tool_registry
 from ..models import PlatformModelApiSetting
 from ..schemas import PlatformChatCompletionRequest, PlatformChatTestRequest
 

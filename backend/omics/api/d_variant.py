@@ -5,9 +5,9 @@ import uuid
 
 from fastapi import APIRouter, HTTPException
 
-from basis.core.variant_utils import process_variant_file as process_vcf_file, check_vcf_file, extract_variants, get_gene_region
-from basis.schemas.variant import *
-from libs.responses.response import response_200
+from omics.core.variant_utils import process_variant_file as process_vcf_file, check_vcf_file, extract_variants, get_gene_region
+from omics.schemas.variant import *
+from shared.responses import response_200
 import subprocess
 
 # 创建 APIRouter 实例

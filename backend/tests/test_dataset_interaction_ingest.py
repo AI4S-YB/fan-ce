@@ -5,7 +5,7 @@ import h5py
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from apps.datasets.services import dataset_domain_service
+from modules.datasets.services import dataset_domain_service
 
 
 def create_cool_group(group, *, chrom_length, bin_size, pixels, weights=None):

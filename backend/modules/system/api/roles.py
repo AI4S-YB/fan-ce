@@ -11,13 +11,13 @@ import time
 from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 
-from apps.common.depends import get_active_user,check_permission
-from db.database import get_db
-from libs.responses.response import response_200, response_200
+from modules.common.depends import get_active_user,check_permission
+from shared.database import get_db
+from shared.responses import response_200, response_200
 from ..rbac.crud import role_db, role_menu_db
 from ..rbac.schemas import RoleUpdate, RoleCreate, RoleMenuUpdate
 from ..schemas import PageList, DataInfo, DataDelete
-from apps.services.rbd import rbd_service
+from modules.services.rbd import rbd_service
 role_router = APIRouter()
 
 

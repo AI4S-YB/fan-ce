@@ -4,8 +4,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from apps.datasets.init import init_dataset_tables, seed_dataset_registry_defaults
-from apps.datasets.models import (
+from modules.datasets.init import init_dataset_tables, seed_dataset_registry_defaults
+from modules.datasets.models import (
     AssetFile,
     DatasetAsset,
     DatasetKindRegistry,
@@ -25,7 +25,7 @@ from apps.datasets.models import (
     PhenomeSubject,
     PhenomeTrait,
 )
-from db.database import MyDBManager
+from shared.database import MyDBManager
 
 
 CANONICAL_TYPE_MAP = {

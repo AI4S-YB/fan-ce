@@ -1,5 +1,5 @@
-from apps.system.rbac.crud import role_menu_db, menu_permission_db, permission_db, user_role_db
-from apps.breeding.models import BreedingProgram
+from modules.system.rbac.crud import role_menu_db, menu_permission_db, permission_db, user_role_db
+from modules.breeding.models import BreedingProgram
 
 
 class RBDService:

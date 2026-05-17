@@ -14,16 +14,16 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 
-from apps.common.depends import get_db
-from apps.common.depends import users_db
-from apps.common.schemas import Token, TokenDoc
-from apps.common.security import create_access_token
-from apps.services.rbd import rbd_service
-from apps.services.auth_key_service import auth_key_service
-from core.config import settings
-from libs.exceptions.exception import exceptions
-from libs.responses.response import response_200
-from libs.responses.result import ResultModel
+from modules.common.depends import get_db
+from modules.common.depends import users_db
+from modules.common.schemas import Token, TokenDoc
+from modules.common.security import create_access_token
+from modules.services.rbd import rbd_service
+from modules.services.auth_key_service import auth_key_service
+from config.settings import settings
+from shared.exceptions import exceptions
+from shared.responses import response_200
+from shared.result import ResultModel
 from .schemas import UserGetToken, AuthKeyLoginRequest, AuthKeyLoginResponse, AuthKeyVerifyRequest, AuthKeyVerifyResponse, UserInfo
 
 login_router = APIRouter(tags=['auth:认证'])

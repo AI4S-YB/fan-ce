@@ -5,7 +5,7 @@ import sqlite3
 import gffutils
 import json
 import logging
-from basis.core.dtypes import blast, ipr, go, family, gene, kegg
+from omics.core.dtypes import blast, ipr, go, family, gene, kegg
 
 # Configure logging
 logger = logging.getLogger(__name__)

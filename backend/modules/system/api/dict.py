@@ -11,9 +11,9 @@ import time
 from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 
-from apps.common.depends import get_active_user
-from db.database import get_db
-from libs.responses.response import response_200, response_200
+from modules.common.depends import get_active_user
+from shared.database import get_db
+from shared.responses import response_200, response_200
 from ..base.crud import system_dict_db, system_dict_field_db
 from ..base.models import SystemDictField
 from ..base.schemas import PageList, DataInfo, DataDelete, SystemDictCreate, SystemDictUpdate, SystemDictFieldCreate, SystemDictFieldUpdate, \

@@ -3,14 +3,14 @@ import pytest
 
 class TestCrossDomainVisibility:
     def test_cross_domain_lookup_filters_out_private_datasets(self, db_session):
-        from apps.datasets.cross_domain import CrossDomainDatasetLookup
-        from apps.datasets.dataset_model import Dataset
-        from apps.datasets.models import DatasetVersion
-        from apps.breeding.models import (
+        from modules.datasets.cross_domain import CrossDomainDatasetLookup
+        from modules.datasets.dataset_model import Dataset
+        from modules.datasets.models import DatasetVersion
+        from modules.breeding.models import (
             BreedingProgram, BreedingMaterial, BreedingDatasetSubjectLink,
             BreedingDatasetAssayLink, BreedingBioSample, BreedingAssay,
         )
-        from db.database import Base
+        from shared.database import Base
 
         # Ensure all link tables queried by get_datasets_for_material exist
         Base.metadata.create_all(
@@ -60,14 +60,14 @@ class TestCrossDomainVisibility:
         assert ds_private.id not in ds_ids
 
     def test_public_datasets_always_visible(self, db_session):
-        from apps.datasets.cross_domain import CrossDomainDatasetLookup
-        from apps.datasets.dataset_model import Dataset
-        from apps.datasets.models import DatasetVersion
-        from apps.breeding.models import (
+        from modules.datasets.cross_domain import CrossDomainDatasetLookup
+        from modules.datasets.dataset_model import Dataset
+        from modules.datasets.models import DatasetVersion
+        from modules.breeding.models import (
             BreedingProgram, BreedingMaterial, BreedingDatasetSubjectLink,
             BreedingDatasetAssayLink, BreedingBioSample, BreedingAssay,
         )
-        from db.database import Base
+        from shared.database import Base
 
         # Ensure all link tables queried by get_datasets_for_material exist
         Base.metadata.create_all(

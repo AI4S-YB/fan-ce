@@ -7,7 +7,7 @@ import json
 import os
 from unittest.mock import patch, MagicMock, Mock
 
-from apps.datasets.services import DatasetDomainService
+from modules.datasets.services import DatasetDomainService
 
 
 def test_phenome_sqlite_detected_via_directory_context():

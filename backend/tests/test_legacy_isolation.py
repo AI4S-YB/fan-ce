@@ -5,10 +5,10 @@ import pytest
 class TestLegacyIsolation:
     def test_services_py_no_longer_imports_legacy_models_directly(self):
         """services.py must not directly import old apps.databases models"""
-        from apps.datasets import services
+        from modules.datasets import services
         source = inspect.getsource(services)
         for forbidden in [
-            "from apps.databases",
+            "from modules.databases",
             "import Databases",
             "import DatabasesFile",
             "import DatabasesMeta",
@@ -20,13 +20,13 @@ class TestLegacyIsolation:
 
     def test_legacy_bridge_exposes_delete_cascade(self):
         """legacy_bridge exposes delete_legacy_cascade needed by services.py"""
-        from apps.datasets.legacy_bridge import dataset_legacy_bridge
+        from modules.datasets.legacy_bridge import dataset_legacy_bridge
         assert hasattr(dataset_legacy_bridge, "delete_legacy_cascade")
         assert callable(dataset_legacy_bridge.delete_legacy_cascade)
 
     def test_legacy_bridge_exposes_required_wrappers(self):
         """legacy_bridge exposes all CRUD methods needed by services.py"""
-        from apps.datasets.legacy_bridge import dataset_legacy_bridge
+        from modules.datasets.legacy_bridge import dataset_legacy_bridge
         for name in [
             "get_database",
             "list_databases",

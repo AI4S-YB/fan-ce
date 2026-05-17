@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from db.db import SessionLocal
+from omics.db import SessionLocal
 from models.meta_file import FileMetadata, FileMetadataEnhancement
 from schemas.meta_file import FilePathInput, EnhancementCreate, FileMetadataOut, EnhancementOut
 from core.meta_utils import extract_basic_metadata

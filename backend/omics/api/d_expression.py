@@ -3,11 +3,11 @@ import os
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
 
-from db.database import get_db
-from apps.datasets.models import AssetFile
-from basis.core.expression_utils import process_rnaseq_file, extract_expression_matrix, load_gene_sample_names
-from basis.schemas.expression import ExpressionProcessRequest, ExpressionQueryRequest, ExpressionResult
-from libs.responses.response import response_200
+from shared.database import get_db
+from modules.datasets.models import AssetFile
+from omics.core.expression_utils import process_rnaseq_file, extract_expression_matrix, load_gene_sample_names
+from omics.schemas.expression import ExpressionProcessRequest, ExpressionQueryRequest, ExpressionResult
+from shared.responses import response_200
 from sqlalchemy import desc
 import h5py
 

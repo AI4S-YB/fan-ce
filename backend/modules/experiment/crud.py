@@ -7,8 +7,8 @@
 """
 from typing import TypeVar
 
-from db.base import CRUDBase
-from db.database import Base
+from shared.crud_base import CRUDBase
+from shared.database import Base
 from .models import Experiment,EnhancementMeta
 from .schemas import CreateModel
 

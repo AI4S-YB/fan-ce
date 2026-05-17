@@ -1,5 +1,5 @@
-from apps.breeding.models import BreedingTaxonomyNode
-from apps.system.base.models import SystemInstallJob, SystemInstallLock
+from modules.breeding.models import BreedingTaxonomyNode
+from modules.system.base.models import SystemInstallJob, SystemInstallLock
 
 TAXONOMY_LOCK_CODE = "taxonomy_required"
 

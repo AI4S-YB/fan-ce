@@ -11,17 +11,17 @@ from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
-from apps.common.depends import get_active_user, check_permission
-from apps.services.user import user_service
-from apps.services.auth_key_service import auth_key_service
-from apps.auth.schemas import (
+from modules.common.depends import get_active_user, check_permission
+from modules.services.user import user_service
+from modules.services.auth_key_service import auth_key_service
+from modules.auth.schemas import (
     AuthKeyInfo, AuthKeyCreateResponse, AuthKeyUpdateRequest, AuthKeyUpdateResponse,
     AuthKeyDeleteResponse, AuthKeyBatchQueryRequest, AuthKeyBatchQueryResponse, AuthKeyBatchItem
 )
-from db.database import get_db
-from libs.exceptions.exception import exceptions
-from libs.responses.response import response_200, response_200
-from libs.responses.result import ResultModel, ResultPlusModel
+from shared.database import get_db
+from shared.exceptions import exceptions
+from shared.responses import response_200, response_200
+from shared.result import ResultModel, ResultPlusModel
 from ..user.crud import users_db
 from ..user.models import User
 from ..user.schemas import PageList, UserList, UserCreate, DataId, UserOut, UserPwdRest, UserPwdUpdate, UserDelete, UserUpdate, \

@@ -13,20 +13,20 @@ from sqlalchemy.pool import StaticPool
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import apps.datasets.adapters.expression as expression_adapter_module
-import apps.datasets.adapters.sequence as sequence_adapter_module
-import apps.datasets.adapters.signal as signal_adapter_module
-import apps.datasets.adapters.variant as variant_adapter_module
-import apps.datasets.bundle_provisioning as bundle_provisioning
-import apps.datasets.init as dataset_init_module
-import apps.datasets.services as dataset_services
-from apps.datasets.crud import dataset_registry_db
-from apps.datasets.constants import (
+import modules.datasets.adapters.expression as expression_adapter_module
+import modules.datasets.adapters.sequence as sequence_adapter_module
+import modules.datasets.adapters.signal as signal_adapter_module
+import modules.datasets.adapters.variant as variant_adapter_module
+import modules.datasets.bundle_provisioning as bundle_provisioning
+import modules.datasets.init as dataset_init_module
+import modules.datasets.services as dataset_services
+from modules.datasets.crud import dataset_registry_db
+from modules.datasets.constants import (
     DEFAULT_ASSET_FILE_TYPE_REGISTRY_ITEMS,
     DEFAULT_ASSET_TYPE_REGISTRY_ITEMS,
     DEFAULT_DATASET_KIND_REGISTRY_ITEMS,
 )
-from apps.datasets.models import (
+from modules.datasets.models import (
     AssetFile,
     AssetFileTypeRegistry,
     AssetTypeRegistry,
@@ -48,15 +48,15 @@ from apps.datasets.models import (
     PhenomeSubject,
     PhenomeTrait,
 )
-from apps.breeding.models import BreedingDatasetAssayLink, BreedingDatasetSubjectLink, BreedingPhenotypeSubjectMap, BreedingVariantSampleMap
-from apps.datasets.schemas import (
+from modules.breeding.models import BreedingDatasetAssayLink, BreedingDatasetSubjectLink, BreedingPhenotypeSubjectMap, BreedingVariantSampleMap
+from modules.datasets.schemas import (
     DatasetVersionReleaseRequest,
     DatasetVersionSetDefaultPublicRequest,
     DatasetVersionWithdrawRequest,
 )
-from apps.datasets.services import dataset_domain_service
-from apps.system.user.models import Role, User
-from db.database import Base
+from modules.datasets.services import dataset_domain_service
+from modules.system.user.models import Role, User
+from shared.database import Base
 
 
 DATASET_TEST_TABLES = [

@@ -42,7 +42,7 @@ class AnalysisWorker:
             db = None
             try:
                 db = self.db_factory()
-                from apps.analysis.models import BrdAnalysisJob
+                from modules.analysis.models import BrdAnalysisJob
                 job = db.query(BrdAnalysisJob).filter_by(status="pending") \
                     .order_by(BrdAnalysisJob.created_at.asc()).first()
                 if job:
@@ -67,7 +67,7 @@ class AnalysisWorker:
             try:
                 cutoff = int(time.time()) - RETENTION_SECONDS
                 db = self.db_factory()
-                from apps.analysis.models import BrdAnalysisJob
+                from modules.analysis.models import BrdAnalysisJob
                 old_jobs = db.query(BrdAnalysisJob).filter(
                     BrdAnalysisJob.created_at < cutoff,
                     BrdAnalysisJob.status.in_(["success", "failed", "timeout", "cancelled"]),
@@ -91,7 +91,7 @@ class AnalysisWorker:
             time.sleep(CLEANUP_INTERVAL)
 
     def _execute(self, db: Session, job):
-        from apps.analysis.models import BrdAnalysisJob
+        from modules.analysis.models import BrdAnalysisJob
         job.status = "running"
         job.started_at = int(time.time())
         db.commit()
@@ -115,7 +115,7 @@ class AnalysisWorker:
 
             file_paths = {}
             for param_name, asset_file_id in bindings.items():
-                from apps.datasets.models import AssetFile
+                from modules.datasets.models import AssetFile
                 af = db.query(AssetFile).filter_by(id=asset_file_id).first()
                 if not af:
                     raise FileNotFoundError(f"AssetFile id={asset_file_id} not found")
@@ -249,7 +249,7 @@ def scan_plugin_dir(plugin_dir: str) -> list[dict]:
 
 def _scan_entry_points() -> list[dict]:
     """Scan entry_points for new tools and register them as inactive."""
-    from basis.analysis.registry import discover_plugins
+    from omics.analysis.registry import discover_plugins
     new_tools = []
     for tool in discover_plugins():
         t = register_tool(tool)

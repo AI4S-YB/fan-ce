@@ -3,11 +3,11 @@ import pytest
 
 class TestVariantMaterialLookup:
     def test_lookup_returns_materials_for_samples(self, db_session):
-        from apps.datasets.variant_material_lookup import VariantMaterialLookup
-        from apps.breeding.models import (
+        from modules.datasets.variant_material_lookup import VariantMaterialLookup
+        from modules.breeding.models import (
             BreedingProgram, BreedingMaterial, BreedingVariantSampleMap,
         )
-        from apps.datasets.dataset_model import Dataset
+        from modules.datasets.dataset_model import Dataset
 
         program = BreedingProgram(code="P_VML", name="Variant Lookup", status="active")
         db_session.add(program)
@@ -49,7 +49,7 @@ class TestVariantMaterialLookup:
         assert "M_VML2" in materials
 
     def test_lookup_returns_empty_for_no_matches(self, db_session):
-        from apps.datasets.variant_material_lookup import VariantMaterialLookup
+        from modules.datasets.variant_material_lookup import VariantMaterialLookup
 
         result = VariantMaterialLookup.lookup_materials_for_samples(
             db=db_session, dataset_id=999, sample_names=["NOBODY"],

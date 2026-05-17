@@ -3,9 +3,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from main import app
-from db.database import MyDBManager
-from apps.platform.models import PlatformSiteDatasetLink, PlatformSiteSetting
-from apps.datasets.models import DatasetRegistry
+from shared.database import MyDBManager
+from modules.platform.models import PlatformSiteDatasetLink, PlatformSiteSetting
+from modules.datasets.models import DatasetRegistry
 
 
 client = TestClient(app)
@@ -60,8 +60,8 @@ class TestDatasetBinding:
                 db.add(site)
                 db.commit()
 
-            from apps.platform.multi_site import bind_dataset_to_site, unbind_dataset_from_site
-            from apps.platform.models import PlatformSiteDatasetLink
+            from modules.platform.multi_site import bind_dataset_to_site, unbind_dataset_from_site
+            from modules.platform.models import PlatformSiteDatasetLink
 
             # Bind
             bind_dataset_to_site(db, "default", ds.id)
@@ -81,13 +81,13 @@ class TestDatasetBinding:
             if not ds:
                 pytest.skip("No private dataset available")
 
-            from apps.platform.multi_site import bind_dataset_to_site
+            from modules.platform.multi_site import bind_dataset_to_site
             with pytest.raises(ValueError, match="public"):
                 bind_dataset_to_site(db, "default", ds.id)
 
     def test_get_site_dataset_ids(self):
         with MyDBManager() as db:
-            from apps.platform.multi_site import get_site_dataset_ids
+            from modules.platform.multi_site import get_site_dataset_ids
             ids = get_site_dataset_ids(db, "default")
             assert isinstance(ids, set)
 

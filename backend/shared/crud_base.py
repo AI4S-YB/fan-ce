@@ -14,9 +14,9 @@ from sqlalchemy import func, distinct
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from db.database import Base
-from libs.exceptions.exception import ExceptionStatus
-from libs.filter.filters import apply_filters
+from shared.database import Base
+from shared.exceptions import ExceptionStatus
+from shared.filter import apply_filters
 
 ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)

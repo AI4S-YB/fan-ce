@@ -8,14 +8,14 @@ from sqlalchemy.pool import StaticPool
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from apps.breeding.models import (
+from modules.breeding.models import (
     BreedingDatasetAssayLink,
     BreedingDatasetSubjectLink,
     BreedingPhenotypeSubjectMap,
     BreedingVariantSampleMap,
 )
-from apps.datasets.models import DatasetRegistry
-from db.database import Base
+from modules.datasets.models import DatasetRegistry
+from shared.database import Base
 
 BREEDING_CORE_TABLES = [
     BreedingVariantSampleMap.__table__,
@@ -45,7 +45,7 @@ def db_session():
 
 class TestWithdrawGuard:
     def test_check_breeding_references_detects_variant_map(self, db_session):
-        from apps.datasets.services import DatasetDomainService
+        from modules.datasets.services import DatasetDomainService
 
         ds = DatasetRegistry(
             dataset_code="DS_WD_V2", dataset_type="variome",
@@ -70,7 +70,7 @@ class TestWithdrawGuard:
         assert refs["details"][0]["vcf_sample_name"] == "GUARD_TEST"
 
     def test_check_breeding_references_empty_when_none(self, db_session):
-        from apps.datasets.services import DatasetDomainService
+        from modules.datasets.services import DatasetDomainService
 
         service = DatasetDomainService()
         refs = service._check_breeding_references(db=db_session, version_id=99999)

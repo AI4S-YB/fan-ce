@@ -8,7 +8,7 @@
 """
 from sqlalchemy import Boolean, Column, Integer, String, JSON,ForeignKey
 from sqlalchemy.orm import relationship
-from db.database import Base
+from shared.database import Base
 
 
 class Menu(Base):

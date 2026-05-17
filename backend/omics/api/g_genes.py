@@ -1,10 +1,10 @@
 import os
 from fastapi import APIRouter, Query, Path, HTTPException
-from basis.schemas.gene_model import *
-from basis.core.gene_utils import extract_genomic_sequences
-from basis.core.sqlite_utils import query_sqlite
-from basis.core.path_utils import get_genome_db_path, get_genome_base_dir
-from libs.responses.response import response_200
+from omics.schemas.gene_model import *
+from omics.core.gene_utils import extract_genomic_sequences
+from omics.core.sqlite_utils import query_sqlite
+from omics.core.path_utils import get_genome_db_path, get_genome_base_dir
+from shared.responses import response_200
 
 # 创建 APIRouter 实例
 g_gene_router = APIRouter(

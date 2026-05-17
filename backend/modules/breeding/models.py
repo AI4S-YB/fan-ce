@@ -1,6 +1,6 @@
 from sqlalchemy import ARRAY, BigInteger, CheckConstraint, Column, Date, DateTime, Index, Integer, Numeric, String, Text, ForeignKey, func
 
-from db.database import Base
+from shared.database import Base
 
 
 def _brd_bigint():

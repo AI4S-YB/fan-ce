@@ -4,8 +4,8 @@ from typing import Any, Dict, List
 
 from fastapi import HTTPException
 
-from basis.core.file_utils import compress_file_to_gzip, generate_download_url
-from basis.core.samtools_utils import extract_batch_sequences, extract_sequence
+from omics.core.file_utils import compress_file_to_gzip, generate_download_url
+from omics.core.samtools_utils import extract_batch_sequences, extract_sequence
 
 from .base import DatasetQueryAdapter
 

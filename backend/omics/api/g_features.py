@@ -2,9 +2,9 @@ import os
 
 from fastapi import APIRouter, HTTPException
 
-from basis.core.path_utils import get_genome_db_path
-from basis.core.sqlite_utils import query_sqlite
-from basis.schemas.genomic_feature import *
+from omics.core.path_utils import get_genome_db_path
+from omics.core.sqlite_utils import query_sqlite
+from omics.schemas.genomic_feature import *
 
 MAX_RECOED_NUM = 1_000  # 1K limit num for front-end display, if > 1k, return a download link
 

@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from apps.datasets.models import DatasetRegistry
-from db.database import get_db
-from libs.responses.response import response_200
+from modules.datasets.models import DatasetRegistry
+from shared.database import get_db
+from shared.responses import response_200
 
 from ..multi_site import get_current_site, get_site_dataset_ids
 

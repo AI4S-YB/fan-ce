@@ -4,8 +4,8 @@
 from fastapi import FastAPI, APIRouter
 
 from core import settings
-from apps.routers import app_routers
-from basis.routers import basis_router
+from modules.routers import app_routers
+from omics.routers import basis_router
 
 
 def register_router(app: FastAPI):

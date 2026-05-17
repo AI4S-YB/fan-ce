@@ -4,11 +4,11 @@ import logging
 import uuid
 from typing import Dict, Any
 
-from basis.core.meta_utils import extract_genome_metadata
-from basis.core.genome_utils import process_genome_files
-from basis.db.db import SessionLocal
-from basis.models.meta_genome import GenomeMetadata, GenomeMetadataEnhancement
-from basis.schemas.meta_genome import *
+from omics.core.meta_utils import extract_genome_metadata
+from omics.core.genome_utils import process_genome_files
+from omics.db.db import SessionLocal
+from omics.models.meta_genome import GenomeMetadata, GenomeMetadataEnhancement
+from omics.schemas.meta_genome import *
 
 # 配置logging
 logging.basicConfig(level=logging.INFO)

@@ -1,9 +1,9 @@
 import os
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
-from basis.schemas.feature import *
-from basis.core.feature_utils import process_tabix_file
-from libs.responses.response import response_200
+from omics.schemas.feature import *
+from omics.core.feature_utils import process_tabix_file
+from shared.responses import response_200
 import gzip
 
 

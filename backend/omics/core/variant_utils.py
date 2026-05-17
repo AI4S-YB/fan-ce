@@ -4,8 +4,8 @@ import subprocess
 import gzip
 import shutil
 
-from basis.core.path_utils import get_genome_db_path
-from basis.core.sqlite_utils import query_sqlite
+from omics.core.path_utils import get_genome_db_path
+from omics.core.sqlite_utils import query_sqlite
 
 
 def process_variant_file(input_file):

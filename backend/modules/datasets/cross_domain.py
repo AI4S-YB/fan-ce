@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 class CrossDomainDatasetLookup:
     """Cross-domain dataset lookup: given a breeding entity, find linked datasets.
 
-    Consumes breeding link tables from apps.breeding.models.
-    Returns dataset summaries from apps.datasets.dataset_model.Dataset.
+    Consumes breeding link tables from modules.breeding.models.
+    Returns dataset summaries from modules.datasets.dataset_model.Dataset.
     Placed in datasets app to avoid circular imports.
     """
 
@@ -23,7 +23,7 @@ class CrossDomainDatasetLookup:
         return False
 
     def get_datasets_for_material(self, db: Session, material_id: int, user=None) -> list[dict]:
-        from apps.breeding.models import (
+        from modules.breeding.models import (
             BreedingVariantSampleMap,
             BreedingPhenotypeSubjectMap,
             BreedingDatasetSubjectLink,
@@ -31,7 +31,7 @@ class CrossDomainDatasetLookup:
             BreedingBioSample,
             BreedingAssay,
         )
-        from apps.datasets.dataset_model import Dataset
+        from modules.datasets.dataset_model import Dataset
 
         results: dict[int, dict] = {}
 
@@ -98,7 +98,7 @@ class CrossDomainDatasetLookup:
         return list(results.values())
 
     def get_datasets_for_program(self, db: Session, program_id: int, dataset_type: str = None, user=None) -> list[dict]:
-        from apps.breeding.models import (
+        from modules.breeding.models import (
             BreedingVariantSampleMap,
             BreedingPhenotypeSubjectMap,
             BreedingDatasetSubjectLink,
@@ -107,7 +107,7 @@ class CrossDomainDatasetLookup:
             BreedingAssay,
             BreedingMaterial,
         )
-        from apps.datasets.dataset_model import Dataset
+        from modules.datasets.dataset_model import Dataset
 
         results: dict[int, dict] = {}
         material_ids_subq = (

@@ -8,15 +8,15 @@
 """
 from fastapi import APIRouter
 
-from apps.auth.routers import auth_routers
-from apps.breeding.routers import app_breeding_router
-from apps.datasets.routers import app_dataset_router
-from apps.analysis.routers import app_analysis_router
-from apps.sample.routers import app_sample_router
-from apps.system.routers import system_routers
-from apps.experiment.routers import app_experiment_router
-from apps.platform.routers import app_platform_router
-from apps.gene.routers import app_gene_router
+from modules.auth.routers import auth_routers
+from modules.breeding.routers import app_breeding_router
+from modules.datasets.routers import app_dataset_router
+from modules.analysis.routers import app_analysis_router
+from modules.sample.routers import app_sample_router
+from modules.system.routers import system_routers
+from modules.experiment.routers import app_experiment_router
+from modules.platform.routers import app_platform_router
+from modules.gene.routers import app_gene_router
 
 app_routers = APIRouter()
 app_routers.include_router(auth_routers)

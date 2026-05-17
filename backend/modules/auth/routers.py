@@ -7,8 +7,8 @@
 @Desc   :  None
 """
 from fastapi import APIRouter
-from apps.auth.login import login_router
-from apps.auth.menus import menu_router
+from modules.auth.login import login_router
+from modules.auth.menus import menu_router
 
 auth_routers = APIRouter()
 auth_routers.include_router(login_router)

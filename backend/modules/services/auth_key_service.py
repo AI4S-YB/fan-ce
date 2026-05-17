@@ -12,8 +12,8 @@ from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
-from apps.system.user.models import User
-from apps.system.user.crud import users_db
+from modules.system.user.models import User
+from modules.system.user.crud import users_db
 
 
 class AuthKeyService:

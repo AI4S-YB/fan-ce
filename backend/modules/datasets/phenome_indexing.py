@@ -307,7 +307,7 @@ class PhenomeBreedingBridge:
         db, subject_name, dataset_id, version_id, asset_id
     ) -> dict:
         """Match a phenome subject_name to BreedingMaterial by material_code or material_name."""
-        from apps.breeding.models import BreedingMaterial, BreedingPhenotypeSubjectMap
+        from modules.breeding.models import BreedingMaterial, BreedingPhenotypeSubjectMap
 
         material = (
             db.query(BreedingMaterial)

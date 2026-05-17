@@ -15,8 +15,8 @@ from sqlalchemy.orm.exc import UnmappedInstanceError
 from starlette.requests import Request
 from starlette.exceptions import HTTPException
 
-from libs.logger.loggers import logger
-from libs.responses.response import response_400, response_except
+from shared.logger import logger
+from shared.responses import response_400, response_except
 
 
 def register_exception(app: FastAPI):

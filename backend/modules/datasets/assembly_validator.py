@@ -8,7 +8,7 @@ class AssemblyConsistencyValidator:
     @staticmethod
     def validate_assembly_consistency(db: Session, dataset_ids: list[int]) -> dict:
         """Check that all given datasets share the same assembly."""
-        from apps.datasets.dataset_model import Dataset
+        from modules.datasets.dataset_model import Dataset
 
         datasets = db.query(Dataset).filter(Dataset.id.in_(dataset_ids)).all()
         if not datasets:
@@ -48,7 +48,7 @@ class AssemblyConsistencyValidator:
     @staticmethod
     def check_sample_alignment(db: Session, variant_dataset_id: int, phenotype_dataset_id: int) -> dict:
         """Check how many materials are paired between variant and phenotype datasets."""
-        from apps.breeding.models import BreedingVariantSampleMap, BreedingPhenotypeSubjectMap
+        from modules.breeding.models import BreedingVariantSampleMap, BreedingPhenotypeSubjectMap
 
         variant_materials = set(
             r[0] for r in

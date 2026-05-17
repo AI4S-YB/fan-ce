@@ -4,9 +4,9 @@ import pytest
 class TestPublicLineage:
     def test_public_lineage_endpoint_returns_empty_when_no_lineage(self, db_session):
         """Public lineage returns empty list when no edges exist"""
-        from apps.datasets.dataset_model import Dataset
-        from apps.datasets.models import DatasetVersion
-        from apps.datasets.services import DatasetDomainService
+        from modules.datasets.dataset_model import Dataset
+        from modules.datasets.models import DatasetVersion
+        from modules.datasets.services import DatasetDomainService
 
         ds = Dataset(dataset_code="DS_NO_LINEAGE", dataset_type="genome",
                      visibility="public", assembly="IRGSP-1.0")
@@ -27,9 +27,9 @@ class TestPublicLineage:
 
     def test_public_lineage_excludes_draft_versions(self, db_session):
         """Edges with draft dst version are excluded from public lineage"""
-        from apps.datasets.dataset_model import Dataset
-        from apps.datasets.models import DatasetVersion, DatasetLineageEdge
-        from apps.datasets.services import DatasetDomainService
+        from modules.datasets.dataset_model import Dataset
+        from modules.datasets.models import DatasetVersion, DatasetLineageEdge
+        from modules.datasets.services import DatasetDomainService
 
         ds1 = Dataset(dataset_code="DS_LIN_SRC", dataset_type="genome",
                       visibility="public", assembly="IRGSP-1.0")
@@ -63,9 +63,9 @@ class TestPublicLineage:
 
     def test_public_lineage_includes_released_edges(self, db_session):
         """Edges where both src and dst are released are included"""
-        from apps.datasets.dataset_model import Dataset
-        from apps.datasets.models import DatasetVersion, DatasetLineageEdge, DatasetRegistry
-        from apps.datasets.services import DatasetDomainService
+        from modules.datasets.dataset_model import Dataset
+        from modules.datasets.models import DatasetVersion, DatasetLineageEdge, DatasetRegistry
+        from modules.datasets.services import DatasetDomainService
 
         ds1 = Dataset(dataset_code="DS_LIN_BOTH_SRC", dataset_type="genome",
                       visibility="public", assembly="IRGSP-1.0")

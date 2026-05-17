@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 import subprocess
 from pathlib import Path
-from basis.schemas.sequence import (
+from omics.schemas.sequence import (
     SequenceRequest, SequenceResponse
 )
 

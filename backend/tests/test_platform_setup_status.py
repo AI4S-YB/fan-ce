@@ -8,16 +8,16 @@ from sqlalchemy.pool import StaticPool
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from apps.breeding.models import BreedingTaxonomyName, BreedingTaxonomyNode
-from apps.platform.setup_jobs import get_taxonomy_import_job, run_taxonomy_import_job, submit_taxonomy_import_job
-from apps.platform.setup_state import (
+from modules.breeding.models import BreedingTaxonomyName, BreedingTaxonomyNode
+from modules.platform.setup_jobs import get_taxonomy_import_job, run_taxonomy_import_job, submit_taxonomy_import_job
+from modules.platform.setup_state import (
     is_taxonomy_ready,
     list_taxonomy_packages,
     query_taxonomy_setup_state,
     register_taxonomy_package,
 )
-from apps.system.base.models import SystemInstallJob, SystemInstallLock, SystemInstallPackage
-from db.database import Base
+from modules.system.base.models import SystemInstallJob, SystemInstallLock, SystemInstallPackage
+from shared.database import Base
 
 
 TEST_TABLES = [
@@ -91,7 +91,7 @@ def test_init_system_tables_creates_locked_taxonomy_guard_without_snapshot(db_se
     _session, engine, testing_session = db_session
     _patch_system_init(monkeypatch, testing_session, engine)
 
-    from apps.system.init import init_system_tables
+    from modules.system.init import init_system_tables
 
     init_system_tables()
 
@@ -125,7 +125,7 @@ def test_init_system_tables_unlocks_when_taxonomy_snapshot_exists(db_session, mo
 
     _patch_system_init(monkeypatch, testing_session, engine)
 
-    from apps.system.init import init_system_tables
+    from modules.system.init import init_system_tables
 
     init_system_tables()
 

@@ -2,8 +2,8 @@ import time
 
 from sqlalchemy.exc import OperationalError
 
-from apps.breeding.models import BreedingTaxonomyNode
-from db.database import MyDBManager, engine
+from modules.breeding.models import BreedingTaxonomyNode
+from shared.database import MyDBManager, engine
 
 from .base.models import SysLog, SystemDictData, SystemDictField, SystemInstallJob, SystemInstallLock, SystemInstallPackage
 

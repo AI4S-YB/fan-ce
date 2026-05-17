@@ -5,9 +5,9 @@ import time
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 
-from apps.common.depends import get_active_user
-from db.database import get_db
-from libs.responses.response import response_200
+from modules.common.depends import get_active_user
+from shared.database import get_db
+from shared.responses import response_200
 from ..models import PlatformModelApiSetting, PlatformSiteSetting
 from ..schemas import (
     FrpConfigUpdateRequest,
@@ -19,7 +19,7 @@ from ..schemas import (
     PlatformSiteSettingInfoRequest,
     PlatformSiteSettingUpdateRequest,
 )
-from apps.platform.frp_service import start_frpc, stop_frpc, get_frpc_status
+from modules.platform.frp_service import start_frpc, stop_frpc, get_frpc_status
 
 setting_router = APIRouter(tags=["app:platform:平台设置"])
 

@@ -4,7 +4,7 @@ import json
 from sqlalchemy import inspect, text
 from sqlalchemy.exc import OperationalError
 
-from db.database import MyDBManager, engine
+from shared.database import MyDBManager, engine
 
 from .constants import (
     DEFAULT_ASSET_FILE_TYPE_REGISTRY_ITEMS,
@@ -391,6 +391,6 @@ def seed_dataset_registry_defaults():
         db.commit()
 
 
-from apps.datasets.tools import register_dataset_tools
+from modules.datasets.tools import register_dataset_tools
 
 register_dataset_tools()

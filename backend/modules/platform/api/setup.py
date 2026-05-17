@@ -1,8 +1,8 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
-from apps.common.depends import get_active_user
-from db.database import get_db
-from libs.responses.response import response_200
+from modules.common.depends import get_active_user
+from shared.database import get_db
+from shared.responses import response_200
 from ..schemas import PlatformSetupTaxonomyImportStartRequest
 from ..setup_jobs import get_taxonomy_import_job, run_taxonomy_import_job, submit_taxonomy_import_job
 from ..setup_state import query_taxonomy_setup_state

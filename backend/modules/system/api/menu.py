@@ -13,12 +13,12 @@ import time
 from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 
-from apps.common.depends import get_active_user,check_permission
-from apps.services.rbd import menu_service
-from db.database import get_db
-from libs.dataes import get_menu_tree
-from libs.exceptions.exception import exceptions
-from libs.responses.response import response_200, response_200
+from modules.common.depends import get_active_user,check_permission
+from modules.services.rbd import menu_service
+from shared.database import get_db
+from shared.tree import get_menu_tree
+from shared.exceptions import exceptions
+from shared.responses import response_200, response_200
 from ..rbac.crud import menu_db, menu_permission_db, permission_db
 from ..rbac.models import Menu
 from ..rbac.schemas import PageList, MenuCreate, MenuUpdate, MenuDelete, MenuInfo

@@ -8,8 +8,8 @@
 """
 from typing import TypeVar
 
-from db.base import CRUDBase
-from db.database import Base
+from shared.crud_base import CRUDBase
+from shared.database import Base
 from .models import Menu, Permission, MenuPermissionLink, RoleMenuLink, UserRoleLink
 from .schemas import MenuCreate, PermissionCreate, RoleCreate
 from ..user.models import Role

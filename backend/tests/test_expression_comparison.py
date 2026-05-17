@@ -3,8 +3,8 @@ import pytest
 
 class TestExpressionComparison:
     def test_comparison_plan_builds_correctly(self, db_session):
-        from apps.datasets.expression_comparison import ExpressionComparisonService
-        from apps.datasets.dataset_model import Dataset
+        from modules.datasets.expression_comparison import ExpressionComparisonService
+        from modules.datasets.dataset_model import Dataset
 
         ds_a = Dataset(dataset_code="DS_EXPR_A", dataset_type="transcriptome", assembly="IRGSP-1.0")
         ds_b = Dataset(dataset_code="DS_EXPR_B", dataset_type="transcriptome", assembly="IRGSP-1.0")
@@ -21,8 +21,8 @@ class TestExpressionComparison:
         assert result["query_plan"]["dataset_b"]["operation"] == "matrix_slice"
 
     def test_multi_dataset_profile_builds_correctly(self, db_session):
-        from apps.datasets.expression_comparison import ExpressionComparisonService
-        from apps.datasets.dataset_model import Dataset
+        from modules.datasets.expression_comparison import ExpressionComparisonService
+        from modules.datasets.dataset_model import Dataset
 
         datasets = []
         for code in ["DS_PROF_1", "DS_PROF_2", "DS_PROF_3"]:

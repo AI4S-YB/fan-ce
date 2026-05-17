@@ -1,20 +1,20 @@
 from fastapi import APIRouter
 
-from basis.api.m_genome import genome_router
-from basis.api.biofile import biofile_router
+from omics.api.m_genome import genome_router
+from omics.api.biofile import biofile_router
 
-from basis.api.d_ngs import ngs_router
-from basis.api.d_sequences import sequence_router
-from basis.api.d_features import feature_router
-from basis.api.d_expression import rnaseq_router
-from basis.api.d_variant import variant_router
-from basis.api.d_peaks import peaks_router
-from basis.api.d_phenome import phenome_router
-from basis.api.d_grn import grn_router
+from omics.api.d_ngs import ngs_router
+from omics.api.d_sequences import sequence_router
+from omics.api.d_features import feature_router
+from omics.api.d_expression import rnaseq_router
+from omics.api.d_variant import variant_router
+from omics.api.d_peaks import peaks_router
+from omics.api.d_phenome import phenome_router
+from omics.api.d_grn import grn_router
 
-from basis.api.g_sequences import g_sequence_router
-from basis.api.g_genes import g_gene_router
-from basis.api.g_features import g_feature_router 
+from omics.api.g_sequences import g_sequence_router
+from omics.api.g_genes import g_gene_router
+from omics.api.g_features import g_feature_router 
 
 basis_router = APIRouter()
 

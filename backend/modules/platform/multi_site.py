@@ -45,7 +45,7 @@ def get_site_dataset_ids(db: Session, site_code: str) -> set[int]:
 
 def bind_dataset_to_site(db: Session, site_code: str, dataset_id: int):
     """Bind a dataset to a site. Dataset must be public."""
-    from apps.datasets.models import DatasetRegistry
+    from modules.datasets.models import DatasetRegistry
 
     ds = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
     if not ds:

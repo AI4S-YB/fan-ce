@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
-from basis.schemas.ngs import NGSFileFilterRequest, NGSFileListResponse
-from basis.core.file_utils import list_ngs_files
-from libs.responses.response import response_200
+from omics.schemas.ngs import NGSFileFilterRequest, NGSFileListResponse
+from omics.core.file_utils import list_ngs_files
+from shared.responses import response_200
 
 
 # 创建 APIRouter 实例

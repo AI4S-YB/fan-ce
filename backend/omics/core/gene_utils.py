@@ -4,7 +4,7 @@ import sqlite3
 import subprocess
 from fastapi import HTTPException
 from typing import List, Dict, Optional
-from basis.core.samtools_utils import extract_sequence, clean_fasta_sequence
+from omics.core.samtools_utils import extract_sequence, clean_fasta_sequence
 
 def extract_genomic_sequences(
     genome_path: str,

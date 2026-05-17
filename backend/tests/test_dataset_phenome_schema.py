@@ -8,12 +8,12 @@ from sqlalchemy.pool import StaticPool
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import apps.datasets.init as dataset_init_module
-from apps.datasets.schemas import (
+import modules.datasets.init as dataset_init_module
+from modules.datasets.schemas import (
     DatasetVersionQueryCapabilitiesRequest,
     DatasetVersionQueryRequest,
 )
-from apps.datasets.models import (
+from modules.datasets.models import (
     AssetFileTypeRegistry,
     AssetTypeRegistry,
     DatasetKindRegistry,

@@ -3,7 +3,7 @@
 # @desc : 请求响应拦截
 import time
 from fastapi import FastAPI, Request, status
-from libs.logger.loggers import logger
+from shared.logger import logger
 
 
 def register_middleware(app: FastAPI):

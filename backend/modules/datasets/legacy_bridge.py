@@ -7,7 +7,7 @@ and ``asset_file`` instead.
 
 from types import SimpleNamespace
 
-from apps.datasets.models import AssetFile, DatasetRegistry, DatasetAsset, DatasetVersion
+from modules.datasets.models import AssetFile, DatasetRegistry, DatasetAsset, DatasetVersion
 
 
 class DatasetLegacyBridge:

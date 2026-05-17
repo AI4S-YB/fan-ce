@@ -11,10 +11,10 @@ import time
 from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 
-from apps.common.depends import get_active_user, check_permission, get_rbd_user
-from db.database import get_db
-from libs.dataes import get_tree_filter
-from libs.responses.response import response_200
+from modules.common.depends import get_active_user, check_permission, get_rbd_user
+from shared.database import get_db
+from shared.tree import get_tree_filter
+from shared.responses import response_200
 from ..rbac.crud import permission_db, menu_permission_db
 from ..rbac.schemas import PermissionCreate, PermissionUpdate
 from ..schemas import PageList, DataInfo, PageFilterList

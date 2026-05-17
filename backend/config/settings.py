@@ -15,7 +15,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List, Optional
 
 # from pydantic import BaseSettings
-from libs.hytconfig.config import Registry, ConfigFile
+from shared.config_loader import Registry, ConfigFile
 
 
 class Settings(BaseSettings):

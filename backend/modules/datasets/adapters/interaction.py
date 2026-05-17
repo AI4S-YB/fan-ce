@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 from fastapi import HTTPException
 
-from apps.datasets.interaction_matrix import (
+from modules.datasets.interaction_matrix import (
     inspect_interaction_matrix,
     list_interaction_resolutions,
     query_interaction_matrix_slice,

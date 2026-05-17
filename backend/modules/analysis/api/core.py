@@ -6,12 +6,12 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from apps.common.depends import get_active_user
+from modules.common.depends import get_active_user
 
-from db.database import get_db
-from libs.responses.response import response_200
-from apps.analysis.models import BrdAnalysisJob
-from apps.analysis.worker import get_tools, register_tool, _get_tool
+from shared.database import get_db
+from shared.responses import response_200
+from modules.analysis.models import BrdAnalysisJob
+from modules.analysis.worker import get_tools, register_tool, _get_tool
 
 
 class SubmitJobRequest(BaseModel):
@@ -72,7 +72,7 @@ def submit_job(req: SubmitJobRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=f"Unknown tool: {req.tool_id}")
 
     # Validate input bindings exist
-    from apps.datasets.models import AssetFile
+    from modules.datasets.models import AssetFile
     for param_name, asset_file_id in req.input_bindings.items():
         af = db.query(AssetFile).filter_by(id=asset_file_id).first()
         if not af:
@@ -143,7 +143,7 @@ def cancel_job(job_id: int, db: Session = Depends(get_db)):
 
 @analysis_router.post("/files/search", summary="搜索可用于分析的 asset_files")
 def search_files(req: FileSearchRequest, db: Session = Depends(get_db)):
-    from apps.datasets.models import AssetFile, DatasetAsset, DatasetRegistry
+    from modules.datasets.models import AssetFile, DatasetAsset, DatasetRegistry
     query = db.query(AssetFile, DatasetAsset.asset_type, DatasetRegistry.dataset_code, DatasetRegistry.title)\
         .join(DatasetAsset, AssetFile.dataset_asset_id == DatasetAsset.id)\
         .join(DatasetRegistry, DatasetAsset.database_id == DatasetRegistry.database_id)
@@ -166,7 +166,7 @@ def search_files(req: FileSearchRequest, db: Session = Depends(get_db)):
 def go_enrich_example_genes(db: Session = Depends(get_db)):
     """Read a GAF file and return the first N unique gene IDs as example."""
     import os
-    from apps.datasets.models import AssetFile
+    from modules.datasets.models import AssetFile
     # Find go_gene.gaf from any functional_annotation asset
     af = db.query(AssetFile).filter(
         AssetFile.file_name.ilike("%go_gene%"),
@@ -200,7 +200,7 @@ def go_enrich_example_genes(db: Session = Depends(get_db)):
 def kegg_enrich_example_genes(db: Session = Depends(get_db)):
     """Read gene IDs from kegg_gene.txt annotation file (tab-separated: gene_id\\tko\\tmap_id\\tdescription)."""
     import os
-    from apps.datasets.models import AssetFile
+    from modules.datasets.models import AssetFile
     af = db.query(AssetFile).filter(
         AssetFile.file_name.ilike("%kegg_gene%"),
         AssetFile.file_role == "kegg_pathway_annotation",
@@ -234,7 +234,7 @@ def kegg_enrich_example_genes(db: Session = Depends(get_db)):
 
 @analysis_router.get("/admin/tools", summary="管理端：列出分析工具（含状态）")
 def admin_list_tools(_user=Depends(get_active_user)):
-    from apps.analysis.worker import get_all_tools
+    from modules.analysis.worker import get_all_tools
     tools = get_all_tools()
     return response_200(data=[
         {
@@ -254,7 +254,7 @@ def admin_list_tools(_user=Depends(get_active_user)):
 
 @analysis_router.get("/admin/tools/{tool_id}", summary="管理端：查看工具详情")
 def admin_get_tool(tool_id: str, _user=Depends(get_active_user)):
-    from apps.analysis.worker import _get_tool
+    from modules.analysis.worker import _get_tool
     t = _get_tool(tool_id)
     if not t:
         raise HTTPException(status_code=404, detail="Tool not found")
@@ -284,7 +284,7 @@ async def admin_install_plugin(file: UploadFile = FastAPIFile(...), _user=Depend
         content = await file.read()
         f.write(content)
 
-    from apps.analysis.worker import install_whl
+    from modules.analysis.worker import install_whl
     try:
         new_tools = install_whl(tmp_path)
         os.remove(tmp_path)
@@ -302,7 +302,7 @@ def admin_scan_plugins(_user=Depends(get_active_user)):
         os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     )))
     plugin_dir = os.path.join(base, "plugin")
-    from apps.analysis.worker import scan_plugin_dir
+    from modules.analysis.worker import scan_plugin_dir
     try:
         new_tools = scan_plugin_dir(plugin_dir)
         return response_200(data={"new_tools": new_tools})
@@ -312,7 +312,7 @@ def admin_scan_plugins(_user=Depends(get_active_user)):
 
 @analysis_router.post("/admin/tools/{tool_id}/enable", summary="启用工具")
 def admin_enable_tool(tool_id: str, _user=Depends(get_active_user)):
-    from apps.analysis.worker import set_tool_status
+    from modules.analysis.worker import set_tool_status
     if not set_tool_status(tool_id, "active"):
         raise HTTPException(status_code=404, detail="Tool not found")
     return response_200(data={"tool_id": tool_id, "status": "active"})
@@ -320,7 +320,7 @@ def admin_enable_tool(tool_id: str, _user=Depends(get_active_user)):
 
 @analysis_router.post("/admin/tools/{tool_id}/disable", summary="禁用工具")
 def admin_disable_tool(tool_id: str, _user=Depends(get_active_user)):
-    from apps.analysis.worker import set_tool_status
+    from modules.analysis.worker import set_tool_status
     if not set_tool_status(tool_id, "disabled"):
         raise HTTPException(status_code=404, detail="Tool not found")
     return response_200(data={"tool_id": tool_id, "status": "disabled"})
@@ -328,7 +328,7 @@ def admin_disable_tool(tool_id: str, _user=Depends(get_active_user)):
 
 @analysis_router.post("/admin/tools/{tool_id}/uninstall", summary="卸载工具")
 def admin_uninstall_tool(tool_id: str, _user=Depends(get_active_user)):
-    from apps.analysis.worker import _get_tool, unregister_tool
+    from modules.analysis.worker import _get_tool, unregister_tool
     tool = _get_tool(tool_id)
     if not tool:
         raise HTTPException(status_code=404, detail="Tool not found")

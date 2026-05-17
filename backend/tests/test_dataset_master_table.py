@@ -8,9 +8,9 @@ from sqlalchemy.orm import sessionmaker
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from apps.datasets.dataset_model import Dataset
-from apps.datasets.models import DatasetVersion
-from db.database import Base
+from modules.datasets.dataset_model import Dataset
+from modules.datasets.models import DatasetVersion
+from shared.database import Base
 
 DATASET_TEST_TABLES = [
     Dataset.__table__,

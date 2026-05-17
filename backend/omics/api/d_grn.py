@@ -2,10 +2,10 @@ import os
 from typing import List
 from fastapi import APIRouter, HTTPException, Query, Depends
 from fastapi.responses import FileResponse
-from basis.core.grn_utils import GeneRegulatoryNetworkGraph, get_graph_path
+from omics.core.grn_utils import GeneRegulatoryNetworkGraph, get_graph_path
 from datetime import datetime
-from libs.responses.response import response_200
-from db.database import get_db
+from shared.responses import response_200
+from shared.database import get_db
 
 
 # 创建 APIRouter 实例

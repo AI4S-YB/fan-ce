@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from apps.datasets.adapters import dataset_adapter_registry
+from modules.datasets.adapters import dataset_adapter_registry
 
 
 def _build_payload(*, dataset_type, asset_type, query_engine, file_format):

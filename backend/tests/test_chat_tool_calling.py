@@ -4,7 +4,7 @@ import httpx
 import pytest
 from unittest.mock import patch
 
-from libs.tool_registry import ToolDefinition, tool_registry
+from shared.tool_registry import ToolDefinition, tool_registry
 
 
 async def _fake_execute(db, arguments, user):
@@ -141,8 +141,8 @@ def make_chunk(content=None, tool_calls=None):
 @pytest.mark.asyncio
 async def test_chat_text_only():
     """Pure text conversation -- no tool calls."""
-    from apps.platform.api.chat import _stream_tool_calling_loop
-    from apps.platform.models import PlatformModelApiSetting
+    from modules.platform.api.chat import _stream_tool_calling_loop
+    from modules.platform.models import PlatformModelApiSetting
 
     model = PlatformModelApiSetting(
         model_name="test-model",
@@ -177,8 +177,8 @@ async def test_chat_text_only():
 @pytest.mark.asyncio
 async def test_chat_with_tool_call():
     """LLM returns a tool call in round 1, then a summary in round 2."""
-    from apps.platform.api.chat import _stream_tool_calling_loop
-    from apps.platform.models import PlatformModelApiSetting
+    from modules.platform.api.chat import _stream_tool_calling_loop
+    from modules.platform.models import PlatformModelApiSetting
 
     model = PlatformModelApiSetting(
         model_name="test-model",
@@ -249,8 +249,8 @@ async def test_chat_data_lineage_orchestration():
       2. get_related_datasets(dataset_id=10) → finds genome dataset 5
       3. get_gene_function(dataset_id=5, gene_id="RhNAC1")
     """
-    from apps.platform.api.chat import _stream_tool_calling_loop
-    from apps.platform.models import PlatformModelApiSetting
+    from modules.platform.api.chat import _stream_tool_calling_loop
+    from modules.platform.models import PlatformModelApiSetting
 
     model = PlatformModelApiSetting(
         model_name="test-model",
@@ -329,8 +329,8 @@ async def test_chat_data_lineage_orchestration():
 @pytest.mark.asyncio
 async def test_chat_max_tool_rounds_enforced():
     """After MAX_TOOL_ROUNDS (3), the loop stops even if LLM keeps requesting tools."""
-    from apps.platform.api.chat import _stream_tool_calling_loop, MAX_TOOL_ROUNDS
-    from apps.platform.models import PlatformModelApiSetting
+    from modules.platform.api.chat import _stream_tool_calling_loop, MAX_TOOL_ROUNDS
+    from modules.platform.models import PlatformModelApiSetting
 
     model = PlatformModelApiSetting(
         model_name="test-model",
@@ -368,8 +368,8 @@ async def test_chat_max_tool_rounds_enforced():
 @pytest.mark.asyncio
 async def test_chat_tool_call_error_handling():
     """When a tool raises an exception, the error is sent as tool_result with error field."""
-    from apps.platform.api.chat import _stream_tool_calling_loop, MAX_TOOL_ROUNDS
-    from apps.platform.models import PlatformModelApiSetting
+    from modules.platform.api.chat import _stream_tool_calling_loop, MAX_TOOL_ROUNDS
+    from modules.platform.models import PlatformModelApiSetting
 
     tool_registry._tools.clear()
 

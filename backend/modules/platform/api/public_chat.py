@@ -9,9 +9,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from libs.responses.response import response_200
-from libs.tool_registry import tool_registry
+from shared.database import get_db
+from shared.responses import response_200
+from shared.tool_registry import tool_registry
 from .chat import _build_payload, _extract_text_from_chunk, _extract_tool_calls_from_chunk, _sse_event, _find_primary_model
 from ..models import PlatformSiteSetting
 

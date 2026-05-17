@@ -12,7 +12,7 @@ from types import SimpleNamespace
 from fastapi import HTTPException
 from sqlalchemy import or_
 
-from apps.breeding.models import (
+from modules.breeding.models import (
     BreedingDataFile,
     BreedingDatasetAssayLink,
     BreedingDatasetSubjectLink,
@@ -20,10 +20,10 @@ from apps.breeding.models import (
     BreedingPhenotypeSubjectMap,
     BreedingVariantSampleMap,
 )
-from apps.datasets.adapters import dataset_adapter_registry
-from basis.core.expression_utils import process_rnaseq_file
-from basis.core.samtools_utils import process_sequence
-from basis.core.variant_utils import process_variant_file
+from modules.datasets.adapters import dataset_adapter_registry
+from omics.core.expression_utils import process_rnaseq_file
+from omics.core.samtools_utils import process_sequence
+from omics.core.variant_utils import process_variant_file
 
 from .interaction_matrix import inspect_interaction_matrix, list_interaction_resolutions
 from .functional_indexing import clear_functional_annotation_index, rebuild_functional_annotation_index
@@ -71,8 +71,8 @@ from .models import (
     AssetTypeRegistry,
     DatasetRegistry,
 )
-from core.config import settings
-from db.database import MyDBManager, mydb
+from config.settings import settings
+from shared.database import MyDBManager, mydb
 
 
 def validate_lineage_relation_type(relation_type: str) -> bool:
@@ -2879,7 +2879,7 @@ class DatasetDomainService:
 
         # Cascade: if dataset becomes private, remove all site bindings
         if not bool(default_public_version_id):
-            from apps.platform.models import PlatformSiteDatasetLink
+            from modules.platform.models import PlatformSiteDatasetLink
 
             db.query(PlatformSiteDatasetLink).filter(
                 PlatformSiteDatasetLink.dataset_id == dataset_id

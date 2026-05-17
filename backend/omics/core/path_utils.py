@@ -1,7 +1,7 @@
 import os
 import re
-from db.database import get_db
-from apps.datasets.models import AssetFile
+from shared.database import get_db
+from modules.datasets.models import AssetFile
 
 
 def get_genome_base_dir(genome_id: str) -> str:

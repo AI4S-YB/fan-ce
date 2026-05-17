@@ -7,7 +7,7 @@ from typing import Any, Dict, List
 
 from fastapi import HTTPException
 
-from basis.core.variant_utils import check_vcf_file, extract_variants
+from omics.core.variant_utils import check_vcf_file, extract_variants
 
 from .base import DatasetQueryAdapter
 

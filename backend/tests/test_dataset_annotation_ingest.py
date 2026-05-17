@@ -5,7 +5,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from apps.datasets.services import dataset_domain_service
+from modules.datasets.services import dataset_domain_service
 
 
 def test_validate_annotation_gtf_detects_index_state(tmp_path):

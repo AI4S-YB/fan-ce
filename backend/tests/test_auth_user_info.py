@@ -6,7 +6,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from apps.auth.menus import login_get_user
+from modules.auth.menus import login_get_user
 
 
 class DummyUser:

@@ -964,7 +964,7 @@ class BreedingDomainService:
     def get_program_analysis_readiness(self, db, program_id: int) -> dict:
         """Count materials in a breeding program that are analysis-ready
         (have both variant and phenotype data with matched mappings)."""
-        from apps.breeding.models import (
+        from modules.breeding.models import (
             BreedingMaterial,
             BreedingVariantSampleMap,
             BreedingPhenotypeSubjectMap,
@@ -1049,7 +1049,7 @@ class BreedingDomainService:
         return jsonable_encoder(breeding_material_db.get(db=db, id=material_id))
 
     def get_material_overview(self, db, material_id):
-        from apps.datasets.dataset_model import Dataset
+        from modules.datasets.dataset_model import Dataset
 
         material = breeding_material_db.get(db=db, id=material_id)
         if not material:
@@ -1244,7 +1244,7 @@ class BreedingDomainService:
         seen: set = set()
 
         if material_ids:
-            from apps.datasets.dataset_model import Dataset
+            from modules.datasets.dataset_model import Dataset
 
             for vmap, ds in (
                 db.query(BreedingVariantSampleMap, Dataset)
@@ -2752,8 +2752,8 @@ class BreedingDomainService:
         return jsonable_encoder(breeding_phenotype_subject_map_db.update_one(db=db, db_obj=obj, obj_in=payload))
 
     def link_dataset_to_program(self, db, program_id, dataset_id, version_id=None, link_type="dataset_subject_link", role=None, material_id=None, note=None):
-        from apps.datasets.dataset_model import Dataset
-        from apps.datasets.models import DatasetVersion
+        from modules.datasets.dataset_model import Dataset
+        from modules.datasets.models import DatasetVersion
 
         # Validate dataset exists
         dataset = db.query(Dataset).filter_by(id=dataset_id).first()

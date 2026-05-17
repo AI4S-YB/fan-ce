@@ -4,10 +4,10 @@ import uuid
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
-from basis.schemas.sequence import *
-from basis.core.samtools_utils import process_sequence, extract_sequence, extract_batch_sequences
-from basis.core.file_utils import compress_file_to_gzip, generate_download_url
-from libs.responses.response import response_200
+from omics.schemas.sequence import *
+from omics.core.samtools_utils import process_sequence, extract_sequence, extract_batch_sequences
+from omics.core.file_utils import compress_file_to_gzip, generate_download_url
+from shared.responses import response_200
 
 
 MAX_INLINE_SIZE = 1_000_000  # 1MB limit size for front-end display, if > 1MB, return a download link

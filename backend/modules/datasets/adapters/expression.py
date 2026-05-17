@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 from fastapi import HTTPException
 
-from basis.core.expression_utils import extract_expression_matrix, load_gene_sample_names
+from omics.core.expression_utils import extract_expression_matrix, load_gene_sample_names
 
 from .base import DatasetQueryAdapter
 

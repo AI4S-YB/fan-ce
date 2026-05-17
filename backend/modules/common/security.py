@@ -12,7 +12,7 @@ from jose import jwt
 from jose.exceptions import JWTError,ExpiredSignatureError
 from passlib.context import CryptContext
 
-from core.config import settings
+from config.settings import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

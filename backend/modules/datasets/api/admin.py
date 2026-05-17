@@ -2,8 +2,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from apps.common.depends import get_db, require_superadmin
-from libs.responses.response import response_200
+from modules.common.depends import get_db, require_superadmin
+from shared.responses import response_200
 
 router = APIRouter()
 
@@ -14,8 +14,8 @@ def admin_force_delete_dataset(
     db: Session = Depends(get_db),
 ):
     """Superadmin only: permanently remove a dataset and all related records."""
-    from apps.datasets.dataset_model import Dataset
-    from apps.datasets.models import DatasetVersion, DatasetAsset, AssetFile
+    from modules.datasets.dataset_model import Dataset
+    from modules.datasets.models import DatasetVersion, DatasetAsset, AssetFile
 
     ds = db.query(Dataset).filter_by(id=dataset_id).first()
     if not ds:
@@ -31,7 +31,7 @@ def admin_force_delete_dataset(
     db.query(DatasetVersion).filter_by(dataset_id=dataset_id).delete()
 
     # Delete breeding link table records
-    from apps.breeding.models import (
+    from modules.breeding.models import (
         BreedingVariantSampleMap, BreedingPhenotypeSubjectMap,
         BreedingDatasetSubjectLink, BreedingDatasetAssayLink,
     )
@@ -51,7 +51,7 @@ def admin_rollback_lifecycle_state(
     db: Session = Depends(get_db),
 ):
     """Superadmin only: rollback a dataset's lifecycle_state."""
-    from apps.datasets.dataset_model import Dataset
+    from modules.datasets.dataset_model import Dataset
 
     valid_states = {"draft", "active", "archived", "deprecated"}
     if target_state not in valid_states:

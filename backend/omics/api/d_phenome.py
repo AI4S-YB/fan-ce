@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Query
 import os
-from basis.core.phenome_utils import process_phenome_file, get_sqlite_path, get_table_columns, get_first_column_data, get_phenome_data
-from libs.responses.response import response_200
-from basis.schemas.traits import TraitsQueryModel
+from omics.core.phenome_utils import process_phenome_file, get_sqlite_path, get_table_columns, get_first_column_data, get_phenome_data
+from shared.responses import response_200
+from omics.schemas.traits import TraitsQueryModel
 
 
 

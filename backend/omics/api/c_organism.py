@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
-from basis.schemas.organism import (
+from omics.schemas.organism import (
     OrganismCreateModel, OrganismResponseModel,
     OrganismUpdateModel, OrganismDeleteModel,
     TaxonomyResponseModel, TaxonomySearchModel

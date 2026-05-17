@@ -2,7 +2,7 @@ import time
 
 from sqlalchemy.exc import OperationalError
 
-from db.database import engine
+from shared.database import engine
 
 from .models import PlatformModelApiSetting, PlatformSiteDatasetLink, PlatformSiteSetting
 

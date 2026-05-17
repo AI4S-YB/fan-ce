@@ -3,10 +3,10 @@ from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 
-from apps.breeding.models import BreedingTaxonomyNode
-from apps.breeding.taxonomy_loader import load_taxonomy_dump
-from apps.system.base.models import SystemInstallJob, SystemInstallLock
-from db.database import MyDBManager
+from modules.breeding.models import BreedingTaxonomyNode
+from modules.breeding.taxonomy_loader import load_taxonomy_dump
+from modules.system.base.models import SystemInstallJob, SystemInstallLock
+from shared.database import MyDBManager
 
 from .setup_state import TAXONOMY_LOCK_CODE, query_taxonomy_setup_state
 

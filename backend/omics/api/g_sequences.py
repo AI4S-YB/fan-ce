@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
-from basis.schemas.genomic_sequence import *
-from basis.core.path_utils import get_fasta_path, get_genome_base_dir
-from basis.core.samtools_utils import extract_sequence, extract_batch_sequences
-from basis.core.file_utils import compress_file_to_gzip, generate_download_url
-from libs.responses.response import response_200
+from omics.schemas.genomic_sequence import *
+from omics.core.path_utils import get_fasta_path, get_genome_base_dir
+from omics.core.samtools_utils import extract_sequence, extract_batch_sequences
+from omics.core.file_utils import compress_file_to_gzip, generate_download_url
+from shared.responses import response_200
 import os
 import uuid
 

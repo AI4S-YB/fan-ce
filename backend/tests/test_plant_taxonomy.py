@@ -2,8 +2,8 @@
 import pytest
 from sqlalchemy import text
 
-from apps.breeding.models import BreedingTaxonomyName, BreedingTaxonomyNode
-from db.database import MyDBManager
+from modules.breeding.models import BreedingTaxonomyName, BreedingTaxonomyNode
+from shared.database import MyDBManager
 
 
 class TestTaxonomyNodeSchema:

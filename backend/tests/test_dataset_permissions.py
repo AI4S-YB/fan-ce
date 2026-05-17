@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from apps.datasets.models import (
+from modules.datasets.models import (
     AssetFile,
     AssetFileTypeRegistry,
     AssetTypeRegistry,
@@ -24,14 +24,14 @@ from apps.datasets.models import (
     DatasetVersionPublishRecord,
     DatasetWorkflowTask,
 )
-from apps.datasets.schemas import (
+from modules.datasets.schemas import (
     AssetTypeRegistryCreateRequest,
     DatasetKindRegistryCreateRequest,
     DatasetVersionReleaseRequest,
 )
-from apps.datasets.services import dataset_domain_service
-from apps.system.user.models import Role, User
-from db.database import Base
+from modules.datasets.services import dataset_domain_service
+from modules.system.user.models import Role, User
+from shared.database import Base
 
 
 DATASET_TEST_TABLES = [

@@ -8,8 +8,8 @@ from sqlalchemy.pool import StaticPool
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from apps.datasets.models import AssetTypeRegistry
-from db.database import Base
+from modules.datasets.models import AssetTypeRegistry
+from shared.database import Base
 
 
 DATASET_RESOLUTION_TABLES = [
@@ -58,7 +58,7 @@ class TestAssetTypeResolution:
         db_session.add(registry_entry)
         db_session.commit()
 
-        from apps.datasets.services import DatasetDomainService
+        from modules.datasets.services import DatasetDomainService
         service = DatasetDomainService()
         resolved = service._resolve_default_asset_type_code(
             db=db_session,
@@ -69,7 +69,7 @@ class TestAssetTypeResolution:
 
     def test_fallback_to_hardcoded_when_no_registry_match(self, db_session):
         """When no AssetTypeRegistry entry matches, fall back to the hardcoded map."""
-        from apps.datasets.services import DatasetDomainService
+        from modules.datasets.services import DatasetDomainService
         service = DatasetDomainService()
         resolved = service._resolve_default_asset_type_code(
             db=db_session,
@@ -91,7 +91,7 @@ class TestAssetTypeResolution:
         db_session.add(registry_entry)
         db_session.commit()
 
-        from apps.datasets.services import DatasetDomainService
+        from modules.datasets.services import DatasetDomainService
         service = DatasetDomainService()
         resolved = service._resolve_default_asset_type_code(
             db=db_session,

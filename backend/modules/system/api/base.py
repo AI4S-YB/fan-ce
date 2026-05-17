@@ -10,12 +10,12 @@ import os
 from fastapi import APIRouter, Depends, Request
 from starlette.responses import FileResponse
 from fastapi import APIRouter, Depends, UploadFile, File, Query
-from libs.responses.response import response_200, response_200
+from shared.responses import response_200, response_200
 from starlette.background import BackgroundTask
 from fastapi.encoders import jsonable_encoder
-from apps.common.security import check_token
-from db.database import get_db
-from libs.responses.response import response_200
+from modules.common.security import check_token
+from shared.database import get_db
+from shared.responses import response_200
 
 base_router = APIRouter()
 

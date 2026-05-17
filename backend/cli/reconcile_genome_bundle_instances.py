@@ -7,11 +7,11 @@ import time
 from pathlib import Path
 from typing import Any
 
-from apps.datasets.bundle_provisioning import discover_sequence_bundle
-from apps.datasets.init import init_dataset_tables
-from apps.datasets.models import AssetFile, DatasetAsset, DatasetRegistry, DatasetVersion
-from apps.datasets.services import dataset_domain_service
-from db.database import MyDBManager
+from modules.datasets.bundle_provisioning import discover_sequence_bundle
+from modules.datasets.init import init_dataset_tables
+from modules.datasets.models import AssetFile, DatasetAsset, DatasetRegistry, DatasetVersion
+from modules.datasets.services import dataset_domain_service
+from shared.database import MyDBManager
 
 
 def _parse_json_object(raw_value: str | None) -> dict[str, Any]:

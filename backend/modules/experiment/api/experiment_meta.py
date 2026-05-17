@@ -9,9 +9,9 @@
 import time
 from fastapi import APIRouter, Depends
 
-from apps.common.depends import get_active_user,check_permission
-from db.database import get_db
-from libs.responses.response import response_200
+from modules.common.depends import get_active_user,check_permission
+from shared.database import get_db
+from shared.responses import response_200
 from ..crud import experiment_meta_db
 from ..schemas import PageList, DataInfo, DataDelete,UpdateModel,CreateModel
 

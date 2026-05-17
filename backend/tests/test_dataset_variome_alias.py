@@ -3,9 +3,9 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from apps.datasets.constants import DEFAULT_ASSET_TYPE_REGISTRY_ITEMS, DEFAULT_DATASET_KIND_REGISTRY_ITEMS
-from apps.datasets.services import dataset_domain_service
-from basis.core.variant_utils import check_vcf_file
+from modules.datasets.constants import DEFAULT_ASSET_TYPE_REGISTRY_ITEMS, DEFAULT_DATASET_KIND_REGISTRY_ITEMS
+from modules.datasets.services import dataset_domain_service
+from omics.core.variant_utils import check_vcf_file
 
 
 def test_variome_is_registered_as_dataset_kind_and_variant_asset_target():

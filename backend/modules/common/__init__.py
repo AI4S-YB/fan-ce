@@ -6,7 +6,7 @@
 @version:  1.0
 @Desc   :  None
 """
-from apps.system.user.crud import users_db
-from apps.system.user.models import User
+from modules.system.user.crud import users_db
+from modules.system.user.models import User
 
 __all__ = ['User', 'users_db']

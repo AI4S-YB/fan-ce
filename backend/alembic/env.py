@@ -2,9 +2,22 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
-from db.database import Base
-from db.init import *
-# import db.init
+from shared.database import Base
+# Import all models so Alembic autogenerate can detect them
+from modules.system.base import *
+from modules.system.rbac import *
+from modules.system.base.models import *
+from modules.system.user.models import *
+from modules.datasets.models import *
+from modules.sample.models import *
+from modules.experiment.models import *
+from modules.gene.models import *
+from modules.platform.models import *
+from omics.models.biosample import *
+from omics.models.bioproject import *
+from omics.models.experiment import *
+from omics.models.meta_file import *
+from omics.models.meta_genome import *
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

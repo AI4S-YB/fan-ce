@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from apps.common.depends import get_active_user
-from db.database import get_db
-from libs.responses.response import response_200
+from modules.common.depends import get_active_user
+from shared.database import get_db
+from shared.responses import response_200
 
 from ..models import PlatformSiteDatasetLink, PlatformSiteSetting
 from ..multi_site import bind_dataset_to_site, get_site_dataset_ids
@@ -172,7 +172,7 @@ async def list_site_datasets(
     if not site:
         raise HTTPException(status_code=404, detail="Site not found")
 
-    from apps.datasets.models import DatasetRegistry
+    from modules.datasets.models import DatasetRegistry
 
     bound_ids = get_site_dataset_ids(db, site_code)
     if not bound_ids:

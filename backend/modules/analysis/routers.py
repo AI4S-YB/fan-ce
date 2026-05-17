@@ -5,7 +5,7 @@ app_analysis_router = APIRouter()
 app_analysis_router.include_router(analysis_router, prefix="/analysis")
 
 # Include plugin API routers
-from basis.analysis.registry import discover_plugin_routers
+from omics.analysis.registry import discover_plugin_routers
 for name, plugin_router in discover_plugin_routers():
     app_analysis_router.include_router(plugin_router, prefix="/analysis")
     import logging
@@ -15,9 +15,9 @@ for name, plugin_router in discover_plugin_routers():
 def on_startup():
     """Register built-in tools and start the worker. Called from main.py startup."""
     import os
-    from apps.analysis.worker import register_tool, start_worker, scan_plugin_dir
-    from basis.analysis.registry import discover_plugins
-    from db.database import mydb
+    from modules.analysis.worker import register_tool, start_worker, scan_plugin_dir
+    from omics.analysis.registry import discover_plugins
+    from shared.database import mydb
 
     # Discover tools from installed entry_points
     for tool in discover_plugins():

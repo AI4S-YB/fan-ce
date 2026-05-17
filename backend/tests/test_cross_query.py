@@ -1,7 +1,7 @@
 class TestCrossDatasetQuery:
     def test_variant_annotation_overlap_query_builds_correctly(self, db_session):
-        from apps.datasets.cross_query import CrossDatasetQueryService
-        from apps.datasets.dataset_model import Dataset
+        from modules.datasets.cross_query import CrossDatasetQueryService
+        from modules.datasets.dataset_model import Dataset
         ds_var = Dataset(dataset_code="DS_JOIN_V", dataset_type="variome", assembly="IRGSP-1.0")
         ds_ann = Dataset(dataset_code="DS_JOIN_A", dataset_type="annotation", assembly="IRGSP-1.0")
         db_session.add_all([ds_var, ds_ann])
@@ -14,8 +14,8 @@ class TestCrossDatasetQuery:
         assert result["query_plan"]["annotation_step"]["operation"] == "region_features"
 
     def test_functional_expression_pathway_query(self, db_session):
-        from apps.datasets.cross_query import CrossDatasetQueryService
-        from apps.datasets.dataset_model import Dataset
+        from modules.datasets.cross_query import CrossDatasetQueryService
+        from modules.datasets.dataset_model import Dataset
         ds_func = Dataset(dataset_code="DS_FUNC", dataset_type="functional_annotation", assembly="IRGSP-1.0")
         ds_expr = Dataset(dataset_code="DS_EXPR", dataset_type="transcriptome", assembly="IRGSP-1.0")
         db_session.add_all([ds_func, ds_expr])

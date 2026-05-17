@@ -4,7 +4,7 @@
 from typing import Generator
 from urllib.parse import quote_plus
 
-from core.config import settings
+from config.settings import settings
 
 app_options = settings.app_options
 

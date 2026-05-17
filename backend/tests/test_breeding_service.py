@@ -10,7 +10,7 @@ from sqlalchemy.pool import StaticPool
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from apps.breeding.models import (
+from modules.breeding.models import (
     BreedingAssay,
     BreedingBioSample,
     BreedingDataFile,
@@ -29,11 +29,11 @@ from apps.breeding.models import (
     BreedingTrial,
     BreedingVariantSampleMap,
 )
-from apps.breeding.taxonomy_loader import load_taxonomy_dump
-from apps.breeding.services import breeding_domain_service
-from apps.datasets.models import AssetFile, DatasetAsset, DatasetRegistry, DatasetVersion
-from apps.datasets.dataset_model import Dataset
-from db.database import Base
+from modules.breeding.taxonomy_loader import load_taxonomy_dump
+from modules.breeding.services import breeding_domain_service
+from modules.datasets.models import AssetFile, DatasetAsset, DatasetRegistry, DatasetVersion
+from modules.datasets.dataset_model import Dataset
+from shared.database import Base
 
 
 BREEDING_CORE_TABLES = [
@@ -987,7 +987,7 @@ def test_breeding_service_taxonomy_sync_and_local_only_search(db_session, monkey
         "is_active": 1,
     }
 
-    import apps.breeding.services as breeding_services_module
+    import modules.breeding.services as breeding_services_module
 
     monkeypatch.setattr(
         breeding_services_module.ncbi_taxonomy_client,
@@ -1322,7 +1322,7 @@ def test_breeding_service_taxonomy_audit(db_session, monkeypatch):
             raise RuntimeError("ncbi timeout")
         return None
 
-    import apps.breeding.services as breeding_services_module
+    import modules.breeding.services as breeding_services_module
 
     monkeypatch.setattr(
         breeding_services_module.ncbi_taxonomy_client,

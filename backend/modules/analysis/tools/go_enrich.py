@@ -1,7 +1,7 @@
 """GO Enrichment analysis — embedded reference implementation."""
 import os
 import subprocess
-from basis.analysis.base import (
+from omics.analysis.base import (
     BaseAnalysisTool, FileParam, TextParam, ChoiceParam, FloatParam, IntParam, FileOutput,
 )
 

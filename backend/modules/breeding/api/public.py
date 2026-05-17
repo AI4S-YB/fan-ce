@@ -5,8 +5,8 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, Field
 from typing import Optional
 
-from db.database import get_db
-from libs.responses.response import response_200
+from shared.database import get_db
+from shared.responses import response_200
 
 from ..services import breeding_domain_service
 

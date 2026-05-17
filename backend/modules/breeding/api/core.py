@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 
-from apps.common.depends import ensure_taxonomy_ready, get_active_user
-from db.database import get_db
-from libs.responses.response import response_200, response_403, response_404
+from modules.common.depends import ensure_taxonomy_ready, get_active_user
+from shared.database import get_db
+from shared.responses import response_200, response_403, response_404
 
 from ..germplasm_import import persist_uploaded_excel
 from ..schemas import (
@@ -611,8 +611,8 @@ async def breeding_program_link_dataset(
     db=Depends(get_db),
     _user=Depends(get_active_user),
 ):
-    from apps.datasets.services import DatasetDomainService
-    from apps.datasets.dataset_model import Dataset
+    from modules.datasets.services import DatasetDomainService
+    from modules.datasets.dataset_model import Dataset
 
     dataset = db.query(Dataset).filter_by(id=request_data.dataset_id).first()
     if not dataset:
@@ -651,7 +651,7 @@ async def breeding_material_datasets(
     db=Depends(get_db),
     _user=Depends(get_active_user),
 ):
-    from apps.datasets.cross_domain import CrossDomainDatasetLookup
+    from modules.datasets.cross_domain import CrossDomainDatasetLookup
 
     lookup = CrossDomainDatasetLookup()
     datasets = lookup.get_datasets_for_material(db=db, material_id=request_data.id)
@@ -664,7 +664,7 @@ async def breeding_program_datasets(
     db=Depends(get_db),
     _user=Depends(get_active_user),
 ):
-    from apps.datasets.cross_domain import CrossDomainDatasetLookup
+    from modules.datasets.cross_domain import CrossDomainDatasetLookup
 
     lookup = CrossDomainDatasetLookup()
     datasets = lookup.get_datasets_for_program(

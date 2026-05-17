@@ -7,7 +7,7 @@
 """
 import time
 from sqlalchemy import Boolean, Column, Integer, String, BigInteger, Enum
-from db.database import Base
+from shared.database import Base
 
 
 class User(Base):

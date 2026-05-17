@@ -1,5 +1,5 @@
 
-from apps.system.rbac.crud import user_role_db,role_db
+from modules.system.rbac.crud import user_role_db,role_db
 
 class UserService:
     @staticmethod

@@ -10,10 +10,10 @@ from types import SimpleNamespace
 
 from fastapi import HTTPException
 
-from apps.datasets.adapters.registry import dataset_adapter_registry
-from apps.datasets.models import DatasetRegistry
-from apps.datasets.services import dataset_domain_service
-from libs.tool_registry import ToolDefinition, tool_registry
+from modules.datasets.adapters.registry import dataset_adapter_registry
+from modules.datasets.models import DatasetRegistry
+from modules.datasets.services import dataset_domain_service
+from shared.tool_registry import ToolDefinition, tool_registry
 
 
 # ---------------------------------------------------------------------------
@@ -328,8 +328,8 @@ async def _execute_search_germplasm(db, arguments: dict, user) -> dict:
     page = arguments.get("page", 1)
     size = arguments.get("size", 20)
 
-    from apps.breeding.schemas import BreedingGermplasmListRequest
-    from apps.breeding.services import breeding_domain_service
+    from modules.breeding.schemas import BreedingGermplasmListRequest
+    from modules.breeding.services import breeding_domain_service
 
     request_data = BreedingGermplasmListRequest(
         page=page,
@@ -365,7 +365,7 @@ async def _save_genes_as_gene_set(db, arguments: dict, user) -> dict:
     if not gene_ids:
         return {"success": False, "message": "At least one gene ID is required"}
 
-    from apps.gene.crud import crud_gene_set, crud_gene_set_link
+    from modules.gene.crud import crud_gene_set, crud_gene_set_link
 
     # Create gene set
     gene_set = crud_gene_set.create(db, obj_in={

@@ -3,8 +3,8 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse
 import os
 
-from db.database import get_db
-from libs.responses.response import response_200
+from shared.database import get_db
+from shared.responses import response_200
 
 from ..dataset_model import Dataset
 from ..models import AssetFile, DatasetAsset, DatasetRegistry, DatasetVersion

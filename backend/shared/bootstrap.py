@@ -1,10 +1,10 @@
 import time
 
-from apps.common.security import get_password_hash
-from apps.system.rbac.models import Menu, RoleMenuLink, UserRoleLink
-from apps.system.user.models import Role, User
-from core.config import settings
-from libs.dataes.data_string import random_str
+from modules.common.security import get_password_hash
+from modules.system.rbac.models import Menu, RoleMenuLink, UserRoleLink
+from modules.system.user.models import Role, User
+from config.settings import settings
+from shared.string_utils import random_str
 
 
 def _get_bootstrap_options():

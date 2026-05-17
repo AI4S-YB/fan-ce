@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 
-from apps.common.depends import check_permission, get_active_user
-from db.database import get_db
-from libs.responses.response import response_200
+from modules.common.depends import check_permission, get_active_user
+from shared.database import get_db
+from shared.responses import response_200
 
 from ..schemas import (
     DatasetVersionActivateRequest,

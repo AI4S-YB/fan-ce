@@ -1,6 +1,6 @@
 from sqlalchemy import BigInteger, Boolean, Column, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 
-from db.database import Base
+from shared.database import Base
 
 
 class DatasetKindRegistry(Base):

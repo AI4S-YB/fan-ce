@@ -3,10 +3,10 @@ from typing import Any, Dict, List, Tuple
 from fastapi import HTTPException
 from sqlalchemy import func, or_
 
-from basis.core.sqlite_utils import query_sqlite
-from db.database import mydb
+from omics.core.sqlite_utils import query_sqlite
+from shared.database import mydb
 
-from apps.datasets.models import PhenomeObservation, PhenomeSubject, PhenomeTrait
+from modules.datasets.models import PhenomeObservation, PhenomeSubject, PhenomeTrait
 
 from .base import DatasetQueryAdapter
 

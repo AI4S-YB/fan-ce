@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
-from core.config import settings
+from config.settings import settings
 
 
 def register_cors(app: FastAPI):

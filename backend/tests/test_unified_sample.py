@@ -12,9 +12,9 @@ from sqlalchemy.orm import sessionmaker
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from apps.breeding.models import BreedingBioSample, BreedingMaterial, BreedingPlot, BreedingProgram, BreedingTrial
-from apps.sample.models import Sample
-from db.database import Base
+from modules.breeding.models import BreedingBioSample, BreedingMaterial, BreedingPlot, BreedingProgram, BreedingTrial
+from modules.sample.models import Sample
+from shared.database import Base
 
 # Tables needed for the biological_sample_view tests
 BIOSAMPLE_TEST_TABLES = [

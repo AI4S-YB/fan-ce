@@ -3,7 +3,7 @@ import time
 from sqlalchemy import inspect, text
 from sqlalchemy.exc import IntegrityError, OperationalError, ProgrammingError
 
-from db.database import engine
+from shared.database import engine
 
 from .models import (
     BreedingAssay,
@@ -162,6 +162,6 @@ def _ensure_breeding_search_indexes():
                 raise
 
 
-from apps.breeding.tools import register_breeding_tools
+from modules.breeding.tools import register_breeding_tools
 
 register_breeding_tools()

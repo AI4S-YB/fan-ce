@@ -4,11 +4,11 @@ from typing import Any, Dict, List, Optional
 from fastapi import HTTPException
 from sqlalchemy import and_, desc, distinct, func, or_
 
-from basis.core.sqlite_utils import query_sqlite
-from db.database import mydb
+from omics.core.sqlite_utils import query_sqlite
+from shared.database import mydb
 
-from apps.datasets.functional_indexing import rebuild_functional_annotation_index
-from apps.datasets.models import FunctionalGene, FunctionalTerm, FunctionalTermAssignment
+from modules.datasets.functional_indexing import rebuild_functional_annotation_index
+from modules.datasets.models import FunctionalGene, FunctionalTerm, FunctionalTermAssignment
 
 from .base import DatasetQueryAdapter
 

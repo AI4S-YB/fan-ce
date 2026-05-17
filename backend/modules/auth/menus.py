@@ -12,12 +12,12 @@ from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
-from apps.common.depends import get_db, get_active_user,get_rbd_user
-from apps.system.rbac.crud import menu_db
-from libs.dataes import get_menu_tree
-from libs.responses.response import response_200
+from modules.common.depends import get_db, get_active_user,get_rbd_user
+from modules.system.rbac.crud import menu_db
+from shared.tree import get_menu_tree
+from shared.responses import response_200
 from .schemas import TreeData,TeamUserInfo
-from apps.services.rbd import rbd_service,menu_service
+from modules.services.rbd import rbd_service,menu_service
 
 menu_router = APIRouter(tags=['auth:认证'])
 

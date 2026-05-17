@@ -1,13 +1,13 @@
 # apps/breeding/tools.py
 """Breeding program tools for LLM function calling."""
-from apps.breeding.models import (
+from modules.breeding.models import (
     BreedingBioSample,
     BreedingMaterial,
     BreedingProgram,
     BreedingTrial,
 )
-from apps.datasets.services import dataset_domain_service
-from libs.tool_registry import ToolDefinition, tool_registry
+from modules.datasets.services import dataset_domain_service
+from shared.tool_registry import ToolDefinition, tool_registry
 
 
 async def _link_dataset_to_program(db, arguments: dict, user) -> dict:

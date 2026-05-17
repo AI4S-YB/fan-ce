@@ -1,6 +1,6 @@
 """KEGG Pathway Enrichment — uses local func_anno SQLite data, no KEGG API needed."""
 import os
-from basis.analysis.base import (
+from omics.analysis.base import (
     BaseAnalysisTool, FileParam, TextParam, ChoiceParam, FloatParam, IntParam, FileOutput,
 )
 

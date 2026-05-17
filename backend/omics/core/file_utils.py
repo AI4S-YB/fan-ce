@@ -4,7 +4,7 @@ import os
 import uuid
 import datetime
 from typing import List, Optional
-from basis.schemas.ngs import NGSFileInfo
+from omics.schemas.ngs import NGSFileInfo
 
 DOWNLOAD_BASE_URL = "http://localhost:8000/basis/downloads"
 DOWNLOAD_DIR = "/tmp/downloads"

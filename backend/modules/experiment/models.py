@@ -7,7 +7,7 @@
 """
 from sqlalchemy import Boolean, Column, Integer, String, Text, ForeignKey, Float
 import time
-from db.database import Base
+from shared.database import Base
 
 
 class Experiment(Base):

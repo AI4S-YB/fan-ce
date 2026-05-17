@@ -3,10 +3,10 @@ from typing import Literal, List, Tuple
 from pathlib import Path
 import tempfile, shutil, os
 
-from basis.schemas.biofile import PathRequest, AnalyzeResponse, BatchAnalyzeResponse
-from basis.core.biofile.detector import detect_path
-from basis.core.biofile.analyze import analyze_file
-from libs.responses.response import response_200
+from omics.schemas.biofile import PathRequest, AnalyzeResponse, BatchAnalyzeResponse
+from omics.core.biofile.detector import detect_path
+from omics.core.biofile.analyze import analyze_file
+from shared.responses import response_200
 
 biofile_router = APIRouter(prefix="/omics/biofile", tags=["omics:biofile"])
 

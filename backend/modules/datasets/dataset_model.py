@@ -1,6 +1,6 @@
 from sqlalchemy import Column, DateTime, Integer, String, Text, func
 
-from db.database import Base
+from shared.database import Base
 
 
 class Dataset(Base):

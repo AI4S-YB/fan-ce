@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
-from basis.db.db import Base
+from omics.db.db import Base
 from datetime import datetime
 
 class BioProject(Base):

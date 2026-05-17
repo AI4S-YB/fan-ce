@@ -18,17 +18,17 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 from typing_extensions import Annotated
 
-from apps.common.schemas import TokenPayload, UserInfo
-from apps.common.security import ALGORITHM
-from apps.system.rbac.crud import user_role_db, role_menu_db, menu_permission_db, permission_db
-from apps.platform.setup_state import is_taxonomy_ready
+from modules.common.schemas import TokenPayload, UserInfo
+from modules.common.security import ALGORITHM
+from modules.system.rbac.crud import user_role_db, role_menu_db, menu_permission_db, permission_db
+from modules.platform.setup_state import is_taxonomy_ready
 from core import settings
-from db.database import get_db
-from libs.dataes.data_crypto import read_pem_public_key, verify_license, get_serial_number
-from libs.exceptions.exception import ExceptionStatus
+from shared.database import get_db
+from shared.crypto import read_pem_public_key, verify_license, get_serial_number
+from shared.exceptions import ExceptionStatus
 from . import User
 from . import users_db
-from apps.services.rbd import rbd_service
+from modules.services.rbd import rbd_service
 
 reusable_oauth2 = OAuth2PasswordBearer(tokenUrl=f"{settings.API_STR}/login/access-token")
 db = Annotated[Session, Depends(get_db)]

@@ -7,8 +7,8 @@
 @Desc    :  None
 """
 from typing import Any, Dict, Union, Optional, TypeVar
-from db.base import CRUDBase
-from db.database import Base
+from shared.crud_base import CRUDBase
+from shared.database import Base
 from .models import SystemDictData, SystemDictField
 from ..base.schemas import SystemDictCreate
 

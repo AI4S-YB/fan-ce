@@ -6,8 +6,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from db.database import MyDBManager
-from apps.breeding.taxonomy_loader import load_taxonomy_dump
+from shared.database import MyDBManager
+from modules.breeding.taxonomy_loader import load_taxonomy_dump
 
 
 def main():

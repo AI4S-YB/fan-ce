@@ -9,8 +9,8 @@ from typing import TypeVar, List
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from db.base import CRUDBase
-from db.database import Base
+from shared.crud_base import CRUDBase
+from shared.database import Base
 from .models import GeneSet, GeneSetLink
 from .schemas import CreateModel
 

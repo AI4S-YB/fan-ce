@@ -1,5 +1,5 @@
 import pytest
-from libs.tool_registry import ToolDefinition, ToolRegistry
+from shared.tool_registry import ToolDefinition, ToolRegistry
 
 
 async def _fake_execute(db, arguments, user):
@@ -83,7 +83,7 @@ async def test_execute_unknown_tool():
 
 def test_all_dataset_tools_register():
     """All 16 domain tools register correctly and produce valid OpenAI tool schemas."""
-    from apps.datasets.tools import DATASET_TOOLS
+    from modules.datasets.tools import DATASET_TOOLS
 
     registry = ToolRegistry()
     registry.register_many(DATASET_TOOLS)
@@ -106,7 +106,7 @@ def test_all_dataset_tools_register():
 
 def test_all_tools_have_valid_openai_schema():
     """Every tool produces a valid OpenAI function-calling schema."""
-    from apps.datasets.tools import DATASET_TOOLS
+    from modules.datasets.tools import DATASET_TOOLS
 
     for tool in DATASET_TOOLS:
         schema = tool.to_openai_tool()
@@ -122,7 +122,7 @@ def test_all_tools_have_valid_openai_schema():
 
 def test_query_tools_accept_dataset_keyword():
     """All data-query tools accept dataset_keyword for keyword-based resolution."""
-    from apps.datasets.tools import DATASET_TOOLS
+    from modules.datasets.tools import DATASET_TOOLS
 
     query_tool_names = {
         "search_genes", "fetch_sequence",
@@ -143,7 +143,7 @@ def test_query_tools_accept_dataset_keyword():
 
 def test_discovery_tools_are_present():
     """list_datasets and get_dataset_info form the discovery layer."""
-    from apps.datasets.tools import DATASET_TOOLS
+    from modules.datasets.tools import DATASET_TOOLS
 
     tool_map = {t.name: t for t in DATASET_TOOLS}
     assert "list_datasets" in tool_map

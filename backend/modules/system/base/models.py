@@ -2,7 +2,7 @@ import time
 
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, Text, func
 
-from db.database import Base
+from shared.database import Base
 
 
 def _sys_bigint():

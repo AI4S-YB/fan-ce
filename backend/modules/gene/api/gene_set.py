@@ -9,9 +9,9 @@
 import time
 from fastapi import APIRouter, Depends
 
-from apps.common.depends import get_active_user
-from db.database import get_db
-from libs.responses.response import response_200,response_200
+from modules.common.depends import get_active_user
+from shared.database import get_db
+from shared.responses import response_200,response_200
 from ..crud import gene_set_db, gene_set_link_db
 from ..schemas import PageList, DataInfo, DataDelete, GeneSetCrate, GeneSetUpdate, GeneSetCreate, GeneSetListByGenome, GeneSetDetail, GeneSetOptionsQuery
 from ..models import GeneSet, GeneSetLink

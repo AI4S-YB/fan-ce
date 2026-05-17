@@ -10,13 +10,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 import time
 import os
-from db.base import CRUDBase
+from shared.crud_base import CRUDBase
 from .models import User
 from .schemas import UserCreate, UserUpdate, UserRegister
-from apps.common.security import get_password_hash, verify_password
-from libs.dataes.data_string import random_str
-from db.database import Base
-from core.config import settings
+from modules.common.security import get_password_hash, verify_password
+from shared.string_utils import random_str
+from shared.database import Base
+from config.settings import settings
 from fastapi.encoders import jsonable_encoder
 
 ModelType = TypeVar("ModelType", bound=Base)
