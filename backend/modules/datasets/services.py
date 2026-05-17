@@ -93,7 +93,7 @@ class _LegacyBridgeStub:
 
     def list_databases(self, db, **kwargs):
         from types import SimpleNamespace
-        return SimpleNamespace(items=[], total=0)
+        return {"dataList": [], "total": 0}
 
     def create_database(self, db, obj_in):
         raise NotImplementedError("Use DatasetRegistry directly")

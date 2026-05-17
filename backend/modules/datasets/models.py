@@ -191,7 +191,6 @@ class DatasetRegistry(Base):
     )
 
     id = Column(Integer, primary_key=True, index=True)
-    database_id = Column(Integer, index=True, comment="legacy database ID")
     dataset_code = Column(String(128), index=True, comment="稳定数据集编码")
     dataset_type = Column(String(128), comment="数据集类型")
     version = Column(String(64), default="v1", comment="版本号")
@@ -221,7 +220,6 @@ class DatasetWorkflowTask(Base):
     __tablename__ = "dataset_workflow_task"
 
     id = Column(Integer, primary_key=True, index=True)
-    database_id = Column(Integer, index=True, comment="legacy database ID")
     task_type = Column(String(64), comment="任务类型")
     task_status = Column(String(64), default="pending", comment="任务状态")
     from_state = Column(String(64), comment="起始状态")
@@ -236,7 +234,6 @@ class DatasetPublishRecord(Base):
     __tablename__ = "dataset_publish_record"
 
     id = Column(Integer, primary_key=True, index=True)
-    database_id = Column(Integer, index=True, comment="legacy database ID")
     action = Column(String(64), comment="发布动作")
     visibility_before = Column(String(32), comment="变更前可见性")
     visibility_after = Column(String(32), comment="变更后可见性")
@@ -251,7 +248,6 @@ class DatasetVersion(Base):
     __tablename__ = "dataset_version"
 
     id = Column(Integer, primary_key=True, index=True)
-    database_id = Column(Integer, index=True, comment="legacy database ID")
     version = Column(String(64), index=True, comment="版本号")
     title = Column(String(320), comment="版本标题")
     dataset_type = Column(String(128), comment="数据集类型")
@@ -281,7 +277,6 @@ class DatasetAsset(Base):
     __tablename__ = "dataset_asset"
 
     id = Column(Integer, primary_key=True, index=True)
-    database_id = Column(Integer, index=True, comment="legacy database ID")
     dataset_version_id = Column(Integer, index=True, comment="dataset version ID")
     asset_code = Column(String(128), index=True, comment="资产编码")
     asset_name = Column(String(320), comment="资产名称")
@@ -303,7 +298,6 @@ class AssetFile(Base):
     __tablename__ = "asset_file"
 
     id = Column(Integer, primary_key=True, index=True)
-    database_id = Column(Integer, index=True, comment="legacy database ID")
     dataset_asset_id = Column(Integer, index=True, comment="dataset asset ID")
     asset_file_type_code = Column(String(128), index=True, comment="资产文件类型编码")
     file_role = Column(String(32), comment="文件角色")
@@ -334,7 +328,6 @@ class DatasetLineageEdge(Base):
     )
 
     id = Column(Integer, primary_key=True, index=True)
-    database_id = Column(Integer, index=True, comment="legacy database ID")
     src_dataset_version_id = Column(Integer, index=True, comment="来源版本 ID")
     src_asset_id = Column(Integer, index=True, comment="来源资产 ID")
     dst_dataset_version_id = Column(Integer, index=True, comment="目标版本 ID")
@@ -350,7 +343,6 @@ class DatasetVersionPublishRecord(Base):
     __tablename__ = "dataset_version_publish_record"
 
     id = Column(Integer, primary_key=True, index=True)
-    database_id = Column(Integer, index=True, comment="legacy database ID")
     dataset_version_id = Column(Integer, index=True, comment="dataset version ID")
     version = Column(String(64), index=True, comment="版本号")
     action = Column(String(64), comment="发布动作")
