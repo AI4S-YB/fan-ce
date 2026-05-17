@@ -4,7 +4,7 @@ import pytest
 class TestPublicLineage:
     def test_public_lineage_endpoint_returns_empty_when_no_lineage(self, db_session):
         """Public lineage returns empty list when no edges exist"""
-        from modules.datasets.dataset_model import Dataset
+        from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
         from modules.datasets.models import DatasetVersion
         from modules.datasets.services import DatasetDomainService
 
@@ -27,7 +27,7 @@ class TestPublicLineage:
 
     def test_public_lineage_excludes_draft_versions(self, db_session):
         """Edges with draft dst version are excluded from public lineage"""
-        from modules.datasets.dataset_model import Dataset
+        from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
         from modules.datasets.models import DatasetVersion, DatasetLineageEdge
         from modules.datasets.services import DatasetDomainService
 
@@ -63,7 +63,7 @@ class TestPublicLineage:
 
     def test_public_lineage_includes_released_edges(self, db_session):
         """Edges where both src and dst are released are included"""
-        from modules.datasets.dataset_model import Dataset
+        from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
         from modules.datasets.models import DatasetVersion, DatasetLineageEdge, DatasetRegistry
         from modules.datasets.services import DatasetDomainService
 

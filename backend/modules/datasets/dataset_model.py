@@ -3,8 +3,9 @@ from sqlalchemy import Column, DateTime, Integer, String, Text, func
 from shared.database import Base
 
 
-class Dataset(Base):
-    __tablename__ = "dataset"
+# Dataset table merged into dataset_registry — class kept for backward compat
+class _DatasetLegacy(Base):  # noqa — use DatasetRegistry instead
+    __tablename__ = "_dataset_legacy_removed"
 
     id = Column(Integer, primary_key=True, index=True)
     dataset_code = Column(String(128), unique=True, index=True, nullable=False, comment="稳定数据集编码")

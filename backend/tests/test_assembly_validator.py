@@ -14,7 +14,7 @@ from modules.breeding.models import (
     BreedingProgram,
     BreedingVariantSampleMap,
 )
-from modules.datasets.dataset_model import Dataset
+from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
 from modules.datasets.models import DatasetAsset, DatasetRegistry, DatasetVersion
 from modules.datasets.assembly_validator import AssemblyConsistencyValidator
 from shared.database import Base

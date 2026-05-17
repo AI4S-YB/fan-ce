@@ -31,7 +31,7 @@ class CrossDomainDatasetLookup:
             BreedingBioSample,
             BreedingAssay,
         )
-        from modules.datasets.dataset_model import Dataset
+        from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
 
         results: dict[int, dict] = {}
 
@@ -107,7 +107,7 @@ class CrossDomainDatasetLookup:
             BreedingAssay,
             BreedingMaterial,
         )
-        from modules.datasets.dataset_model import Dataset
+        from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
 
         results: dict[int, dict] = {}
         material_ids_subq = (

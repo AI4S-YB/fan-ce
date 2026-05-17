@@ -12,7 +12,7 @@ from .constants import (
     DEFAULT_DATASET_KIND_REGISTRY_ITEMS,
 )
 from .crud import asset_file_type_registry_db, asset_type_registry_db, dataset_kind_registry_db
-from .dataset_model import Dataset
+from .models import DatasetRegistry as Dataset  # was dataset_model.Dataset
 from .models import (
     AssetFile,
     AssetFileTypeRegistry,
@@ -44,7 +44,7 @@ from .models import (
 def init_dataset_tables():
     """Tables are now created by alembic migration (consolidate_init_tables).
     Import Dataset to register it with Base.metadata for FK resolution."""
-    from .dataset_model import Dataset  # noqa: F401 — register with Base.metadata
+    from .models import DatasetRegistry as Dataset  # was dataset_model.Dataset  # noqa: F401 — register with Base.metadata
     _ensure_dataset_schema_columns()
     _ensure_dataset_schema_column_types()
     _backfill_default_public_versions()

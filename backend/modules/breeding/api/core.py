@@ -612,7 +612,7 @@ async def breeding_program_link_dataset(
     _user=Depends(get_active_user),
 ):
     from modules.datasets.services import DatasetDomainService
-    from modules.datasets.dataset_model import Dataset
+    from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
 
     dataset = db.query(Dataset).filter_by(id=request_data.dataset_id).first()
     if not dataset:

@@ -8,7 +8,7 @@ class TestBreedingReadiness:
             BreedingProgram, BreedingMaterial,
             BreedingVariantSampleMap, BreedingPhenotypeSubjectMap,
         )
-        from modules.datasets.dataset_model import Dataset
+        from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
 
         program = BreedingProgram(code="P_READY", name="Readiness Program", status="active")
         db_session.add(program)

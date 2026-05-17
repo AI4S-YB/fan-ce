@@ -8,7 +8,7 @@ class AssemblyConsistencyValidator:
     @staticmethod
     def validate_assembly_consistency(db: Session, dataset_ids: list[int]) -> dict:
         """Check that all given datasets share the same assembly."""
-        from modules.datasets.dataset_model import Dataset
+        from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
 
         datasets = db.query(Dataset).filter(Dataset.id.in_(dataset_ids)).all()
         if not datasets:

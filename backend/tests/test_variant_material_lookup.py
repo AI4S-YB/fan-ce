@@ -7,7 +7,7 @@ class TestVariantMaterialLookup:
         from modules.breeding.models import (
             BreedingProgram, BreedingMaterial, BreedingVariantSampleMap,
         )
-        from modules.datasets.dataset_model import Dataset
+        from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
 
         program = BreedingProgram(code="P_VML", name="Variant Lookup", status="active")
         db_session.add(program)

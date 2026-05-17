@@ -4,7 +4,7 @@ import pytest
 class TestCrossDomainVisibility:
     def test_cross_domain_lookup_filters_out_private_datasets(self, db_session):
         from modules.datasets.cross_domain import CrossDomainDatasetLookup
-        from modules.datasets.dataset_model import Dataset
+        from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
         from modules.datasets.models import DatasetVersion
         from modules.breeding.models import (
             BreedingProgram, BreedingMaterial, BreedingDatasetSubjectLink,
@@ -61,7 +61,7 @@ class TestCrossDomainVisibility:
 
     def test_public_datasets_always_visible(self, db_session):
         from modules.datasets.cross_domain import CrossDomainDatasetLookup
-        from modules.datasets.dataset_model import Dataset
+        from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
         from modules.datasets.models import DatasetVersion
         from modules.breeding.models import (
             BreedingProgram, BreedingMaterial, BreedingDatasetSubjectLink,

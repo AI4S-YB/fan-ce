@@ -14,7 +14,7 @@ def admin_force_delete_dataset(
     db: Session = Depends(get_db),
 ):
     """Superadmin only: permanently remove a dataset and all related records."""
-    from modules.datasets.dataset_model import Dataset
+    from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
     from modules.datasets.models import DatasetVersion, DatasetAsset, AssetFile
 
     ds = db.query(Dataset).filter_by(id=dataset_id).first()
@@ -51,7 +51,7 @@ def admin_rollback_lifecycle_state(
     db: Session = Depends(get_db),
 ):
     """Superadmin only: rollback a dataset's lifecycle_state."""
-    from modules.datasets.dataset_model import Dataset
+    from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
 
     valid_states = {"draft", "active", "archived", "deprecated"}
     if target_state not in valid_states:

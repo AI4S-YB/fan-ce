@@ -267,9 +267,9 @@ class DatasetVersion(Base):
 
     dataset_id = Column(
         Integer,
-        ForeignKey("dataset.id", ondelete="RESTRICT"),
+        ForeignKey("dataset_registry.id", ondelete="RESTRICT"),
         index=True,
-        comment="dataset 主表 ID",
+        comment="dataset registry ID",
     )
 
 

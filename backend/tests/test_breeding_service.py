@@ -32,7 +32,7 @@ from modules.breeding.models import (
 from modules.breeding.taxonomy_loader import load_taxonomy_dump
 from modules.breeding.services import breeding_domain_service
 from modules.datasets.models import AssetFile, DatasetAsset, DatasetRegistry, DatasetVersion
-from modules.datasets.dataset_model import Dataset
+from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
 from shared.database import Base
 
 

@@ -6,7 +6,7 @@ import os
 from shared.database import get_db
 from shared.responses import response_200
 
-from ..dataset_model import Dataset
+from ..models import DatasetRegistry as Dataset
 from ..models import AssetFile, DatasetAsset, DatasetRegistry, DatasetVersion
 from ..schemas import (
     BatchSequenceRequest,

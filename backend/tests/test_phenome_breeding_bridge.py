@@ -15,7 +15,7 @@ from modules.breeding.models import (
     BreedingTrial,
     BreedingPlot,
 )
-from modules.datasets.dataset_model import Dataset
+from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
 from modules.datasets.models import (
     DatasetAsset,
     DatasetRegistry,
