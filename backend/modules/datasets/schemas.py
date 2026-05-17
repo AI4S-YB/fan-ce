@@ -32,7 +32,7 @@ class DatasetUpdateRequest(BaseModel):
     query_engine: Optional[str] = None
     validation_summary: Optional[str] = None
     index_summary: Optional[str] = None
-    extra_json: Optional[str] = None
+    meta_json: Optional[str] = None
     description_md: Optional[str] = None
 
     model_config = ConfigDict(extra="forbid")
@@ -48,7 +48,7 @@ class DatasetStateTransitionRequest(BaseModel):
     id: int
     target_state: str
     task_type: Optional[str] = None
-    task_status: Optional[str] = "success"
+    status: Optional[str] = "success"
     detail: Optional[str] = None
 
     model_config = ConfigDict(extra="forbid")
@@ -164,7 +164,7 @@ class DatasetVersionCreateRequest(BaseModel):
     version: str
     title: Optional[str] = None
     file_path: Optional[str] = None
-    extra_json: Optional[str] = None
+    meta_json: Optional[str] = None
 
     model_config = ConfigDict(extra="forbid")
 
@@ -560,7 +560,7 @@ class DatasetStagingListRequest(DatasetContext):
     page: Optional[int] = 1
     size: Optional[int] = 10
     keyword: Optional[str] = None
-    stage_status: Optional[str] = None
+    status: Optional[str] = None
     dataset_type: Optional[str] = None
     source_mode: Optional[str] = None
     scan_root_id: Optional[int] = None
@@ -656,115 +656,6 @@ class DatasetScanRunRequest(DatasetContext):
     model_config = ConfigDict(extra="forbid")
 
 
-class DatasetRegistrationCandidateSourceFileRequest(BaseModel):
-    staging_file_id: int
-    source_role: Optional[str] = None
-    asset_type: Optional[str] = None
-    asset_file_type_code: Optional[str] = None
-    file_role: Optional[str] = None
-    is_primary: Optional[bool] = False
-    is_required: Optional[bool] = True
-    confidence: Optional[float] = None
-    origin_type: Optional[str] = "user_supplied"
-    sort_order: Optional[int] = 0
-    meta_json: Optional[str] = None
-
-    model_config = ConfigDict(extra="forbid")
-
-
-class DatasetRegistrationCandidateListRequest(DatasetContext):
-    page: Optional[int] = 1
-    size: Optional[int] = 20
-    keyword: Optional[str] = None
-    dataset_type: Optional[str] = None
-    registration_mode: Optional[str] = None
-    source_kind: Optional[str] = None
-    status: Optional[str] = None
-    scan_root_id: Optional[int] = None
-
-    model_config = ConfigDict(extra="forbid")
-
-
-class DatasetRegistrationCandidateInfoRequest(DatasetContext):
-    id: int
-
-    model_config = ConfigDict(extra="forbid")
-
-
-class DatasetRegistrationCandidateFileListRequest(DatasetContext):
-    candidate_id: int
-
-    model_config = ConfigDict(extra="forbid")
-
-
-class DatasetRegistrationCandidateFileUpdateRequest(DatasetContext):
-    id: int
-    source_role: Optional[str] = None
-    asset_type: Optional[str] = None
-    asset_file_type_code: Optional[str] = None
-    file_role: Optional[str] = None
-    is_primary: Optional[bool] = None
-    is_required: Optional[bool] = None
-    confidence: Optional[float] = None
-    origin_type: Optional[str] = None
-    sort_order: Optional[int] = None
-    validation_status: Optional[str] = None
-    meta_json: Optional[str] = None
-
-    model_config = ConfigDict(extra="forbid")
-
-
-class DatasetRegistrationCandidateCreateRequest(DatasetContext):
-    candidate_name: str
-    dataset_type: Optional[str] = None
-    recipe_code: Optional[str] = None
-    registration_mode: Optional[str] = "recipe_build"
-    version_name: Optional[str] = None
-    organism: Optional[str] = None
-    reference_dataset_id: Optional[int] = None
-    reference_version_id: Optional[int] = None
-    source_kind: Optional[str] = None
-    scan_root_id: Optional[int] = None
-    items: List[DatasetRegistrationCandidateSourceFileRequest]
-    meta_json: Optional[str] = None
-
-    model_config = ConfigDict(extra="forbid")
-
-
-class DatasetRegistrationCandidateUpdateRequest(DatasetContext):
-    id: int
-    candidate_name: Optional[str] = None
-    dataset_type: Optional[str] = None
-    recipe_code: Optional[str] = None
-    registration_mode: Optional[str] = None
-    version_name: Optional[str] = None
-    organism: Optional[str] = None
-    reference_dataset_id: Optional[int] = None
-    reference_version_id: Optional[int] = None
-    source_kind: Optional[str] = None
-    scan_root_id: Optional[int] = None
-    status: Optional[str] = None
-    validation_status: Optional[str] = None
-    build_status: Optional[str] = None
-    registration_status: Optional[str] = None
-    meta_json: Optional[str] = None
-
-    model_config = ConfigDict(extra="forbid")
-
-
-class DatasetRegistrationCandidateDeleteRequest(DatasetContext):
-    id: int
-
-    model_config = ConfigDict(extra="forbid")
-
-
-class DatasetRegistrationCandidateRegisterRequest(DatasetContext):
-    id: int
-    dataset_name: Optional[str] = None
-    remark: Optional[str] = None
-    is_public: Optional[bool] = False
-    activate_version: Optional[bool] = True
-
 
 class BatchSequenceRequest(BaseModel):
     dataset_id: int
@@ -772,7 +663,5 @@ class BatchSequenceRequest(BaseModel):
     upstream: int = 2000
     downstream: int = 1000
     inputs: list[str]
-
-    model_config = ConfigDict(extra="forbid")
 
     model_config = ConfigDict(extra="forbid")
