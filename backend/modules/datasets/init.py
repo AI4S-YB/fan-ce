@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import time
 import json
 
@@ -220,7 +221,7 @@ def _backfill_default_public_versions():
 
 
 def seed_dataset_registry_defaults():
-    now = int(time.time())
+    now = datetime.now(timezone.utc)
     with MyDBManager() as db:
         dataset_kind_codes = {item["code"] for item in DEFAULT_DATASET_KIND_REGISTRY_ITEMS}
         for item in DEFAULT_DATASET_KIND_REGISTRY_ITEMS:

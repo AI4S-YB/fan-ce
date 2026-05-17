@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 import subprocess
-import time
+from datetime import datetime, timezone
 import uuid
 import gzip
 from copy import deepcopy
@@ -121,8 +121,8 @@ class _LegacyBridgeStub:
             lifecycle_state=getattr(r, 'lifecycle_state', ''),
             visibility=getattr(r, 'visibility', ''),
             is_public=getattr(r, 'is_public', False),
-            create_time=getattr(r, 'create_time', 0),
-            update_time=getattr(r, 'update_time', 0),
+            create_time=getattr(r, 'create_time', None),
+            update_time=getattr(r, 'update_time', None),
         ) for r in rows]
         return {"dataList": items, "total": total}
 
@@ -576,7 +576,7 @@ class DatasetDomainService:
         return True
 
     def _now(self):
-        return int(time.time())
+        return datetime.now(timezone.utc)
 
     @staticmethod
     def _merge_meta_json(existing_json, new_fields):

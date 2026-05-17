@@ -594,7 +594,7 @@ def _ensure_dataset_primary_file(db, dataset_id: int, primary_file_path: str, da
     database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
     primary_file_obj = dataset_legacy_bridge.get_primary_file(db=db, dataset_id=dataset_id)
     file_suffix = _guess_file_format(Path(primary_file_path))
-    now = int(time.time())
+    now = datetime.now(timezone.utc)
 
     dataset_legacy_bridge.update_database(
         db=db,
