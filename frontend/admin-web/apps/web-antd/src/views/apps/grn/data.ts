@@ -166,11 +166,11 @@ export function gridOptions(gridApi?: any): VxeGridProps<GrnItem & Record<string
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         query: async ({ page }: any, formValues: any) => {
           // 先决条件：必须选择调控网络数据（来自 /database/options, type: 9）
-          if (!formValues?.database_id) {
+          if (!formValues?.dataset_id) {
             return { dataList: [] };
           }
 
-          const filePath = formValues?.database_id?.option?.file_path;
+          const filePath = formValues?.dataset_id?.option?.file_path;
           if (!filePath) {
             return { dataList: [] };
           }
@@ -285,7 +285,7 @@ export function formOptions(onFilePathChange?: (filePath: string) => void) {
     schema: [
       {
         component: 'Select',
-        fieldName: 'database_id',
+        fieldName: 'dataset_id',
         label: $t('grn.list.networkData'),
         rules: 'required',
         formItemClass: 'col-span-2',

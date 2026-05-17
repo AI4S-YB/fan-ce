@@ -11,8 +11,7 @@ from typing import Any
 from fastapi import HTTPException
 
 from .crud import dataset_lineage_edge_db, dataset_registry_db
-from .legacy_bridge import dataset_legacy_bridge
-from .services import dataset_domain_service
+from .services import dataset_domain_service, dataset_legacy_bridge
 
 
 REFERENCE_FASTA_CANDIDATES = (
@@ -596,7 +595,7 @@ def _find_dataset_id_by_title(db, dataset_title: str) -> int | None:
 
 
 def _ensure_dataset_primary_file(db, dataset_id: int, primary_file_path: str, dataset_title: str, dataset_type: str):
-    database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=dataset_id)
+    database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
     primary_file_obj = dataset_legacy_bridge.get_primary_file(db=db, dataset_id=dataset_id)
     file_suffix = _guess_file_format(Path(primary_file_path))
     now = int(time.time())

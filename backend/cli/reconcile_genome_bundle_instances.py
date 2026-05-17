@@ -43,10 +43,10 @@ def _resolve_bundle_dir(primary_file: AssetFile, explicit_bundle_dir: str | None
     return candidate.parent if candidate.is_file() else candidate
 
 
-def _pick_current_version(db, database_id: int) -> DatasetVersion | None:
+def _pick_current_version(db, dataset_id: int) -> DatasetVersion | None:
     rows = (
         db.query(DatasetVersion)
-        .filter(DatasetVersion.database_id == database_id)
+        .filter(DatasetVersion.dataset_id == dataset_id)
         .order_by(DatasetVersion.is_current.desc(), DatasetVersion.id.desc())
         .all()
     )
@@ -100,10 +100,10 @@ def _sync_current_version(version_obj: DatasetVersion, plan, changes: list[str],
     version_obj.update_time = now
 
 
-def _sync_current_assets(db, database_id: int, version_id: int, plan, changes: list[str], now: int) -> None:
+def _sync_current_assets(db, dataset_id: int, version_id: int, plan, changes: list[str], now: int) -> None:
     assets = (
         db.query(DatasetAsset)
-        .filter(DatasetAsset.database_id == database_id, DatasetAsset.dataset_version_id == version_id)
+        .filter(DatasetAsset.dataset_id == dataset_id, DatasetAsset.dataset_version_id == version_id)
         .all()
     )
     asset_by_code = {item.asset_code: item for item in assets}
@@ -219,28 +219,28 @@ def _sync_asset_files(db, *, asset_obj, asset_plan, changes: list[str]) -> None:
         )
 
 
-def reconcile_genome_bundle_dataset(database_id: int, explicit_bundle_dir: str | None = None, dry_run: bool = False) -> dict[str, Any]:
+def reconcile_genome_bundle_dataset(dataset_id: int, explicit_bundle_dir: str | None = None, dry_run: bool = False) -> dict[str, Any]:
     with MyDBManager() as db:
         registry_rows = (
             db.query(DatasetRegistry)
-            .filter(DatasetRegistry.database_id == database_id)
+            .filter(DatasetRegistry.dataset_id == dataset_id)
             .order_by(DatasetRegistry.id.asc())
             .all()
         )
         if not registry_rows:
-            raise SystemExit(f"dataset not found: {database_id}")
+            raise SystemExit(f"dataset not found: {dataset_id}")
 
         primary_file = (
             db.query(AssetFile)
-            .filter(AssetFile.database_id == database_id)
+            .filter(AssetFile.dataset_id == dataset_id)
             .order_by(AssetFile.id.asc())
             .first()
         )
         if primary_file is None or not primary_file.local_path:
-            raise SystemExit(f"dataset {database_id} has no primary file path")
+            raise SystemExit(f"dataset {dataset_id} has no primary file path")
 
         dataset_name = registry_rows[0].title
-        current_version = _pick_current_version(db, database_id)
+        current_version = _pick_current_version(db, dataset_id)
         bundle_dir = _resolve_bundle_dir(primary_file, explicit_bundle_dir)
         organism = registry_rows[0].organism if registry_rows[0].organism else None
         assembly = registry_rows[0].assembly if registry_rows[0].assembly else None
@@ -261,7 +261,7 @@ def reconcile_genome_bundle_dataset(database_id: int, explicit_bundle_dir: str |
 
         version_rows = (
             db.query(DatasetVersion)
-            .filter(DatasetVersion.database_id == database_id)
+            .filter(DatasetVersion.dataset_id == dataset_id)
             .order_by(DatasetVersion.id.asc())
             .all()
         )
@@ -271,7 +271,7 @@ def reconcile_genome_bundle_dataset(database_id: int, explicit_bundle_dir: str |
 
         if current_version is not None:
             _sync_current_version(current_version, plan, changes, now)
-            _sync_current_assets(db, database_id, current_version.id, plan, changes, now)
+            _sync_current_assets(db, dataset_id, current_version.id, plan, changes, now)
 
         if dry_run:
             db.rollback()
@@ -279,7 +279,7 @@ def reconcile_genome_bundle_dataset(database_id: int, explicit_bundle_dir: str |
             db.commit()
 
         return {
-            "database_id": database_id,
+            "dataset_id": dataset_id,
             "dataset_name": dataset_name,
             "bundle_dir": str(bundle_dir),
             "dataset_type": plan.dataset_type,
@@ -296,13 +296,13 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true", help="Show planned changes without committing them.")
     args = parser.parse_args()
 
-    for database_id in args.database_id:
+    for dataset_id in args.dataset_id:
         result = reconcile_genome_bundle_dataset(
-            database_id=database_id,
+            dataset_id=dataset_id,
             explicit_bundle_dir=args.bundle_dir,
             dry_run=args.dry_run,
         )
-        print(f"[dataset {result['database_id']}] {result['dataset_name']} -> {result['dataset_type']}")
+        print(f"[dataset {result['dataset_id']}] {result['dataset_name']} -> {result['dataset_type']}")
         print(f"bundle_dir: {result['bundle_dir']}")
         if result["changes"]:
             for item in result["changes"]:

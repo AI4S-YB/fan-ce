@@ -55,7 +55,6 @@ from .crud import (
     dataset_version_publish_record_db,
     dataset_workflow_task_db,
 )
-from .legacy_bridge import dataset_legacy_bridge
 from .models import (
     AssetFile,
     DatasetAsset,
@@ -83,6 +82,48 @@ def validate_lineage_relation_type(relation_type: str) -> bool:
             detail=f"Invalid relation_type: '{relation_type}'. Must be one of: {sorted(VALID_TYPES)}",
         )
     return True
+
+
+# ── Legacy bridge stub (databases table removed, database_id kept as column) ──
+class _LegacyBridgeStub:
+    """Minimal stub replacing dataset_legacy_bridge."""
+
+    def get_database(self, db, dataset_id):
+        return db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
+
+    def list_databases(self, db, **kwargs):
+        from types import SimpleNamespace
+        return SimpleNamespace(items=[], total=0)
+
+    def create_database(self, db, obj_in):
+        raise NotImplementedError("Use DatasetRegistry directly")
+
+    def update_database(self, db, db_obj, obj_in):
+        pass
+
+    def get_primary_file(self, db, dataset_id):
+        return None
+
+    def create_primary_file(self, db, **kwargs):
+        pass
+
+    def update_primary_file(self, db, **kwargs):
+        pass
+
+    def list_meta(self, db, dataset_id):
+        return []
+
+    def list_project_links_by_project(self, db, project_id):
+        return []
+
+    def create_project_link(self, db, **kwargs):
+        pass
+
+    def delete_legacy_cascade(self, db, dataset_id):
+        pass
+
+
+dataset_legacy_bridge = _LegacyBridgeStub()
 
 
 class DatasetDomainService:
@@ -553,13 +594,13 @@ class DatasetDomainService:
         return False
 
     def _ensure_dataset_read_access(self, db, dataset_id, user):
-        database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=dataset_id)
+        database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
         if self._can_access_dataset(db=db, database_obj=database_obj, user=user):
             return database_obj
         raise HTTPException(status_code=403, detail=f"dataset read access denied: {dataset_id}")
 
     def _ensure_dataset_write_access(self, db, dataset_id, user):
-        database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=dataset_id)
+        database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
         if self._can_access_dataset(db=db, database_obj=database_obj, user=user):
             return database_obj
         raise HTTPException(status_code=403, detail=f"dataset write access denied: {dataset_id}")
@@ -615,7 +656,7 @@ class DatasetDomainService:
         if not dataset_ids:
             return True
         return all(
-            self._can_access_dataset(db=db, database_obj=dataset_legacy_bridge.get_database(db=db, dataset_id=dataset_id), user=user)
+            self._can_access_dataset(db=db, database_obj=db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first(), user=user)
             for dataset_id in dataset_ids
         )
 
@@ -2801,7 +2842,7 @@ class DatasetDomainService:
         )
 
     def _get_public_version_obj(self, db, dataset_id, dataset_payload=None):
-        database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=dataset_id)
+        database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
         default_public_version_id = getattr(registry_obj, "default_public_version_id", None)
         if default_public_version_id:
@@ -2860,7 +2901,7 @@ class DatasetDomainService:
                 dataset_version_db.update_one(db=db, db_obj=row_obj, obj_in=update_data)
 
     def _sync_registry_public_state(self, db, dataset_id, default_public_version_id=None):
-        database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=dataset_id)
+        database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
         current_version = dataset_version_db.get_filter(db=db, filters={"database_id": dataset_id, "is_current": 1})
         next_visibility = "public" if default_public_version_id else "private"
@@ -3157,7 +3198,7 @@ class DatasetDomainService:
         return version_obj
 
     def sync_current_version_from_dataset_id(self, db, dataset_id):
-        database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=dataset_id)
+        database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
         dataset_payload = self.build_dataset_payload(db=db, database_obj=database_obj)
         return self.sync_current_version_from_dataset_payload(db=db, dataset_payload=dataset_payload)
 
@@ -3364,7 +3405,7 @@ class DatasetDomainService:
         self._ensure_dataset_write_access(db=db, dataset_id=dataset_id, user=user)
         dataset_payload = self.get_dataset(db=db, dataset_id=dataset_id, user=user)
         current_version = dataset_payload["current_version"]
-        database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=dataset_id)
+        database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
         if registry_obj.lifecycle_state != "ready":
             raise HTTPException(status_code=4000, detail="dataset must be ready before publish")
@@ -6090,7 +6131,7 @@ class DatasetDomainService:
         version_validation_summary = version_obj.validation_summary
         version_index_summary = version_obj.index_summary
         version_extra_json = version_obj.extra_json
-        database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=dataset_id)
+        database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
         lifecycle_state = registry_obj.lifecycle_state
 

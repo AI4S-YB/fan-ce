@@ -319,7 +319,7 @@ def main():
 
             db.add(
                 BreedingDatasetSubjectLink(
-                    dataset_id=phenome_version.database_id,
+                    dataset_id=phenome_version.dataset_id,
                     version_id=phenome_version.id,
                     asset_id=phenotype_asset.id,
                     material_id=material.id,
@@ -335,7 +335,7 @@ def main():
             )
             db.add(
                 BreedingPhenotypeSubjectMap(
-                    dataset_id=phenome_version.database_id,
+                    dataset_id=phenome_version.dataset_id,
                     version_id=phenome_version.id,
                     asset_id=phenotype_asset.id,
                     row_key=accession,
@@ -356,7 +356,7 @@ def main():
 
         db.add(
             BreedingDatasetSubjectLink(
-                dataset_id=phenome_version.database_id,
+                dataset_id=phenome_version.dataset_id,
                 version_id=phenome_version.id,
                 asset_id=phenotype_asset.id,
                 trial_id=trial.id,
@@ -395,7 +395,7 @@ def main():
                         obs_date=obs_date,
                         observer="FAN-CE inferred curator",
                         qc_status="reviewed",
-                        source_dataset_id=phenome_version.database_id,
+                        source_dataset_id=phenome_version.dataset_id,
                         source_version_id=phenome_version.id,
                         source_asset_id=phenotype_asset.id,
                         source_row_key=accession,
@@ -493,7 +493,7 @@ def main():
             for asset in (expression_asset,):
                 db.add(
                     BreedingDatasetAssayLink(
-                        dataset_id=transcriptome_version.database_id,
+                        dataset_id=transcriptome_version.dataset_id,
                         version_id=transcriptome_version.id,
                         asset_id=asset.id,
                         assay_id=rna_assay.id,
@@ -509,7 +509,7 @@ def main():
                 )
             db.add(
                 BreedingDatasetAssayLink(
-                    dataset_id=variome_version.database_id,
+                    dataset_id=variome_version.dataset_id,
                     version_id=variome_version.id,
                     asset_id=variant_asset.id,
                     assay_id=dna_assay.id,
@@ -527,7 +527,7 @@ def main():
             if index - 1 < len(representative_variant_samples):
                 db.add(
                     BreedingVariantSampleMap(
-                        dataset_id=variome_version.database_id,
+                        dataset_id=variome_version.dataset_id,
                         version_id=variome_version.id,
                         asset_id=variant_asset.id,
                         vcf_sample_name=representative_variant_samples[index - 1],
@@ -558,7 +558,7 @@ def main():
                         BreedingDataFile(
                             assay_id=first_rna_assay.id,
                             source_mode="dataset_file",
-                            dataset_id=transcriptome_version.database_id,
+                            dataset_id=transcriptome_version.dataset_id,
                             version_id=transcriptome_version.id,
                             asset_id=asset.id,
                             asset_file_id=asset_file.id,
@@ -580,7 +580,7 @@ def main():
                     BreedingDataFile(
                         assay_id=first_dna_assay.id,
                         source_mode="dataset_file",
-                        dataset_id=variome_version.database_id,
+                        dataset_id=variome_version.dataset_id,
                         version_id=variome_version.id,
                         asset_id=variant_asset.id,
                         asset_file_id=asset_file.id,
@@ -606,9 +606,9 @@ def main():
             "observations": observation_count,
             "representative_assays": len(representative_materials) * 2,
             "variant_sample_maps": len(representative_variant_samples),
-            "phenome_dataset_id": phenome_version.database_id,
-            "transcriptome_dataset_id": transcriptome_version.database_id,
-            "variome_dataset_id": variome_version.database_id,
+            "phenome_dataset_id": phenome_version.dataset_id,
+            "transcriptome_dataset_id": transcriptome_version.dataset_id,
+            "variome_dataset_id": variome_version.dataset_id,
         }
         print(json.dumps(summary, ensure_ascii=False, indent=2))
 
