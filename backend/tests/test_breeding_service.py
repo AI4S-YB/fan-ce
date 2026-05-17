@@ -356,7 +356,7 @@ def test_breeding_service_biosample_assay_data_file_flow(db_session):
     db_session.refresh(dataset)
 
     version = DatasetVersion(
-        database_id=dataset.database_id,
+        database_id=dataset.dataset_id,
         version="v1",
         title="v1",
         dataset_type="expression",
@@ -371,7 +371,7 @@ def test_breeding_service_biosample_assay_data_file_flow(db_session):
     db_session.refresh(version)
 
     asset = DatasetAsset(
-        database_id=dataset.database_id,
+        database_id=dataset.dataset_id,
         dataset_version_id=version.id,
         asset_code="expr_matrix",
         asset_name="expr_matrix",
@@ -389,7 +389,7 @@ def test_breeding_service_biosample_assay_data_file_flow(db_session):
     db_session.refresh(asset)
 
     asset_file = AssetFile(
-        database_id=dataset.database_id,
+        database_id=dataset.dataset_id,
         dataset_asset_id=asset.id,
         file_role="primary",
         file_name="expr.h5",
@@ -546,7 +546,7 @@ def test_breeding_service_link_tables_flow(db_session):
     db_session.refresh(dataset)
 
     version = DatasetVersion(
-        database_id=dataset.database_id,
+        database_id=dataset.dataset_id,
         version="v1",
         title="v1",
         dataset_type="variant",
@@ -561,7 +561,7 @@ def test_breeding_service_link_tables_flow(db_session):
     db_session.refresh(version)
 
     asset = DatasetAsset(
-        database_id=dataset.database_id,
+        database_id=dataset.dataset_id,
         dataset_version_id=version.id,
         asset_code="variant_calls",
         asset_name="variant_calls",
@@ -1512,7 +1512,7 @@ def test_breeding_service_program_overview_and_program_scoped_lists(db_session):
     db_session.refresh(dataset)
 
     version = DatasetVersion(
-        database_id=dataset.database_id,
+        database_id=dataset.dataset_id,
         version="v1",
         title="v1",
         dataset_type="transcriptome",
@@ -1527,7 +1527,7 @@ def test_breeding_service_program_overview_and_program_scoped_lists(db_session):
     db_session.refresh(version)
 
     asset = DatasetAsset(
-        database_id=dataset.database_id,
+        database_id=dataset.dataset_id,
         dataset_version_id=version.id,
         asset_code="expr_matrix",
         asset_name="expr_matrix",
@@ -1545,7 +1545,7 @@ def test_breeding_service_program_overview_and_program_scoped_lists(db_session):
     db_session.refresh(asset)
 
     asset_file = AssetFile(
-        database_id=dataset.database_id,
+        database_id=dataset.dataset_id,
         dataset_asset_id=asset.id,
         file_role="primary",
         file_name="expr5.h5",

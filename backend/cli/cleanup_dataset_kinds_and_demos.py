@@ -100,7 +100,7 @@ def migrate_legacy_dataset_types() -> list[str]:
                 f"dataset_registry[{registry_obj.id}]",
             )
 
-            version_rows = db.query(DatasetVersion).filter(DatasetVersion.database_id == registry_obj.database_id).all()
+            version_rows = db.query(DatasetVersion).filter(DatasetVersion.dataset_id == registry_obj.id).all()
             for version_obj in version_rows:
                 _update_attr(
                     version_obj,
@@ -124,11 +124,11 @@ def migrate_legacy_dataset_types() -> list[str]:
 def _delete_dataset(db, dataset_id: int, changes: list[str]) -> None:
     version_ids = [
         item.id
-        for item in db.query(DatasetVersion.id).filter(DatasetVersion.database_id == dataset_id).all()
+        for item in db.query(DatasetVersion.id).filter(DatasetVersion.dataset_id == dataset_id).all()
     ]
     asset_ids = [
         item.id
-        for item in db.query(DatasetAsset.id).filter(DatasetAsset.database_id == dataset_id).all()
+        for item in db.query(DatasetAsset.id).filter(DatasetAsset.dataset_id == dataset_id).all()
     ]
 
     for model in (FunctionalGene, FunctionalTerm, FunctionalTermAssignment):
@@ -149,7 +149,7 @@ def _delete_dataset(db, dataset_id: int, changes: list[str]) -> None:
 
     if version_ids:
         db.query(DatasetVersionPublishRecord).filter(
-            (DatasetVersionPublishRecord.database_id == dataset_id)
+            (DatasetVersionPublishRecord.dataset_id == dataset_id)
             | (DatasetVersionPublishRecord.dataset_version_id.in_(version_ids))
         ).delete(synchronize_session=False)
 
@@ -160,9 +160,9 @@ def _delete_dataset(db, dataset_id: int, changes: list[str]) -> None:
     if version_ids:
         db.query(DatasetVersion).filter(DatasetVersion.id.in_(version_ids)).delete(synchronize_session=False)
 
-    db.query(DatasetPublishRecord).filter(DatasetPublishRecord.database_id == dataset_id).delete(synchronize_session=False)
-    db.query(DatasetWorkflowTask).filter(DatasetWorkflowTask.database_id == dataset_id).delete(synchronize_session=False)
-    db.query(DatasetRegistry).filter(DatasetRegistry.database_id == dataset_id).delete(synchronize_session=False)
+    db.query(DatasetPublishRecord).filter(DatasetPublishRecord.dataset_id == dataset_id).delete(synchronize_session=False)
+    db.query(DatasetWorkflowTask).filter(DatasetWorkflowTask.dataset_id == dataset_id).delete(synchronize_session=False)
+    db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).delete(synchronize_session=False)
     db.query(DatasetStagingFile).filter(DatasetStagingFile.linked_dataset_id == dataset_id).delete(synchronize_session=False)
     changes.append(f"deleted dataset[{dataset_id}]")
 
@@ -172,7 +172,7 @@ def delete_demo_datasets() -> list[str]:
     with MyDBManager() as db:
         rows = db.query(DatasetRegistry).filter(DatasetRegistry.title.in_(sorted(DELETE_DATASET_NAMES))).all()
         for registry_obj in rows:
-            _delete_dataset(db=db, dataset_id=registry_obj.database_id, changes=changes)
+            _delete_dataset(db=db, dataset_id=registry_obj.id, changes=changes)
         db.commit()
     return changes
 

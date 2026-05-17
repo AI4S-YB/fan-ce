@@ -146,7 +146,7 @@ def search_files(req: FileSearchRequest, db: Session = Depends(get_db)):
     from modules.datasets.models import AssetFile, DatasetAsset, DatasetRegistry
     query = db.query(AssetFile, DatasetAsset.asset_type, DatasetRegistry.dataset_code, DatasetRegistry.title)\
         .join(DatasetAsset, AssetFile.dataset_asset_id == DatasetAsset.id)\
-        .join(DatasetRegistry, DatasetAsset.database_id == DatasetRegistry.database_id)
+        .join(DatasetRegistry, DatasetAsset.dataset_id == DatasetRegistry.id)
     if req.asset_types:
         query = query.filter(DatasetAsset.asset_type.in_(req.asset_types))
     if req.file_formats:

@@ -588,7 +588,7 @@ def discover_variome_bundle(
 
 def _find_dataset_id_by_title(db, dataset_title: str) -> int | None:
     rows = dataset_registry_db.get_data(db=db, filters={"title": dataset_title})
-    dataset_ids = sorted({item.database_id for item in rows if item.database_id})
+    dataset_ids = sorted({item.dataset_id for item in rows if item.dataset_id})
     if len(dataset_ids) > 1:
         raise HTTPException(status_code=400, detail=f"multiple datasets found with title: {dataset_title}")
     return dataset_ids[0] if dataset_ids else None
@@ -634,7 +634,7 @@ def _ensure_dataset_primary_file(db, dataset_id: int, primary_file_path: str, da
             "path": primary_file_path,
             "type": f".{file_suffix}" if file_suffix else Path(primary_file_path).suffix,
             "data_type": dataset_type,
-            "database_id": dataset_id,
+            "dataset_id": dataset_id,
             "status": 1,
             "create_time": now,
         },

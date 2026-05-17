@@ -113,7 +113,7 @@ def test_breeding_init_creates_all_tables_and_supports_minimal_chain(db_engine, 
     db_session.refresh(dataset)
 
     version = DatasetVersion(
-        database_id=dataset.database_id,
+        database_id=dataset.dataset_id,
         version="v1",
         title="v1",
         dataset_type="variant",
@@ -128,7 +128,7 @@ def test_breeding_init_creates_all_tables_and_supports_minimal_chain(db_engine, 
     db_session.refresh(version)
 
     asset = DatasetAsset(
-        database_id=dataset.database_id,
+        database_id=dataset.dataset_id,
         dataset_version_id=version.id,
         asset_code="vcf_primary",
         asset_name="vcf_primary",
@@ -146,7 +146,7 @@ def test_breeding_init_creates_all_tables_and_supports_minimal_chain(db_engine, 
     db_session.refresh(asset)
 
     asset_file = AssetFile(
-        database_id=dataset.database_id,
+        database_id=dataset.dataset_id,
         dataset_asset_id=asset.id,
         file_role="primary",
         file_name="rose.vcf.gz",
@@ -420,7 +420,7 @@ def test_dataset_subject_link_requires_exactly_one_subject(db_session):
     db_session.refresh(dataset)
 
     version = DatasetVersion(
-        database_id=dataset.database_id,
+        database_id=dataset.dataset_id,
         version="v1",
         title="v1",
         dataset_type="phenotype",

@@ -69,7 +69,7 @@ def create_dataset(db, *, name, owner_id, team_id=0, dataset_type="generic"):
     db.commit()
     db.refresh(row)
     # Set database_id to self-reference so legacy_bridge.get_database can find it
-    row.database_id = row.id
+    row.dataset_id = row.id
     db.commit()
     db.refresh(row)
     return row

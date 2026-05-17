@@ -607,46 +607,46 @@ class DatasetDomainService:
 
     def _ensure_version_read_access(self, db, version_id, user):
         version_obj = dataset_version_db.get(db=db, id=version_id)
-        self._ensure_dataset_read_access(db=db, dataset_id=version_obj.database_id, user=user)
+        self._ensure_dataset_read_access(db=db, dataset_id=version_obj.dataset_id, user=user)
         return version_obj
 
     def _ensure_version_write_access(self, db, version_id, user):
         version_obj = dataset_version_db.get(db=db, id=version_id)
-        self._ensure_dataset_write_access(db=db, dataset_id=version_obj.database_id, user=user)
+        self._ensure_dataset_write_access(db=db, dataset_id=version_obj.dataset_id, user=user)
         return version_obj
 
     def _ensure_asset_read_access(self, db, asset_id, user):
         asset_obj = dataset_asset_db.get(db=db, id=asset_id)
-        self._ensure_dataset_read_access(db=db, dataset_id=asset_obj.database_id, user=user)
+        self._ensure_dataset_read_access(db=db, dataset_id=asset_obj.dataset_id, user=user)
         return asset_obj
 
     def _ensure_asset_write_access(self, db, asset_id, user):
         asset_obj = dataset_asset_db.get(db=db, id=asset_id)
-        self._ensure_dataset_write_access(db=db, dataset_id=asset_obj.database_id, user=user)
+        self._ensure_dataset_write_access(db=db, dataset_id=asset_obj.dataset_id, user=user)
         return asset_obj
 
     def _ensure_asset_file_read_access(self, db, asset_file_id, user):
         file_obj = asset_file_db.get(db=db, id=asset_file_id)
-        self._ensure_dataset_read_access(db=db, dataset_id=file_obj.database_id, user=user)
+        self._ensure_dataset_read_access(db=db, dataset_id=file_obj.dataset_id, user=user)
         return file_obj
 
     def _ensure_asset_file_write_access(self, db, asset_file_id, user):
         file_obj = asset_file_db.get(db=db, id=asset_file_id)
-        self._ensure_dataset_write_access(db=db, dataset_id=file_obj.database_id, user=user)
+        self._ensure_dataset_write_access(db=db, dataset_id=file_obj.dataset_id, user=user)
         return file_obj
 
     def _get_lineage_dataset_ids(self, db, lineage_obj):
         dataset_ids = set()
-        if getattr(lineage_obj, "database_id", None):
-            dataset_ids.add(lineage_obj.database_id)
+        if getattr(lineage_obj, "dataset_id", None):
+            dataset_ids.add(lineage_obj.dataset_id)
         if getattr(lineage_obj, "src_dataset_version_id", None):
             src_version = dataset_version_db.get_one(db=db, id=lineage_obj.src_dataset_version_id)
-            if src_version and src_version.database_id:
-                dataset_ids.add(src_version.database_id)
+            if src_version and src_version.dataset_id:
+                dataset_ids.add(src_version.dataset_id)
         if getattr(lineage_obj, "dst_dataset_version_id", None):
             dst_version = dataset_version_db.get_one(db=db, id=lineage_obj.dst_dataset_version_id)
-            if dst_version and dst_version.database_id:
-                dataset_ids.add(dst_version.database_id)
+            if dst_version and dst_version.dataset_id:
+                dataset_ids.add(dst_version.dataset_id)
         return dataset_ids
 
     def _can_access_lineage(self, db, lineage_obj, user):
@@ -673,11 +673,11 @@ class DatasetDomainService:
     def _ensure_task_access(self, db, task_obj, user, write=False):
         if not user or self._is_platform_admin(user):
             return task_obj
-        if task_obj.database_id:
+        if task_obj.dataset_id:
             if write:
-                self._ensure_dataset_write_access(db=db, dataset_id=task_obj.database_id, user=user)
+                self._ensure_dataset_write_access(db=db, dataset_id=task_obj.dataset_id, user=user)
             else:
-                self._ensure_dataset_read_access(db=db, dataset_id=task_obj.database_id, user=user)
+                self._ensure_dataset_read_access(db=db, dataset_id=task_obj.dataset_id, user=user)
             return task_obj
         if getattr(task_obj, "operator_id", None) == getattr(user, "id", None):
             return task_obj
@@ -718,7 +718,7 @@ class DatasetDomainService:
             return None
         return rebuild_functional_annotation_index(
             db=db,
-            dataset_id=asset_obj.database_id,
+            dataset_id=asset_obj.dataset_id,
             version_id=asset_obj.dataset_version_id,
             asset_id=asset_obj.id,
             file_path=primary_file_path,
@@ -729,7 +729,7 @@ class DatasetDomainService:
             return
         clear_functional_annotation_index(
             db=db,
-            dataset_id=asset_obj.database_id,
+            dataset_id=asset_obj.dataset_id,
             version_id=asset_obj.dataset_version_id,
             asset_id=asset_obj.id,
         )
@@ -749,7 +749,7 @@ class DatasetDomainService:
             return None
         return rebuild_phenome_index(
             db=db,
-            dataset_id=asset_obj.database_id,
+            dataset_id=asset_obj.dataset_id,
             version_id=asset_obj.dataset_version_id,
             asset_id=asset_obj.id,
             file_path=primary_file_path,
@@ -760,7 +760,7 @@ class DatasetDomainService:
             return
         clear_phenome_index(
             db=db,
-            dataset_id=asset_obj.database_id,
+            dataset_id=asset_obj.dataset_id,
             version_id=asset_obj.dataset_version_id,
             asset_id=asset_obj.id,
         )
@@ -1355,7 +1355,7 @@ class DatasetDomainService:
     def _build_dataset_asset_payload(self, asset_obj, files=None):
         return {
             "id": asset_obj.id,
-            "dataset_id": asset_obj.database_id,
+            "dataset_id": asset_obj.dataset_id,
             "version_id": asset_obj.dataset_version_id,
             "asset_code": asset_obj.asset_code,
             "asset_name": asset_obj.asset_name,
@@ -1379,14 +1379,14 @@ class DatasetDomainService:
         dst_version = dataset_version_db.get_one(db=db, id=lineage_obj.dst_dataset_version_id) if lineage_obj.dst_dataset_version_id else None
         src_asset = dataset_asset_db.get_one(db=db, id=lineage_obj.src_asset_id) if lineage_obj.src_asset_id else None
         dst_asset = dataset_asset_db.get_one(db=db, id=lineage_obj.dst_asset_id) if lineage_obj.dst_asset_id else None
-        src_database = dataset_legacy_bridge.get_database(db=db, dataset_id=src_version.database_id) if src_version else None
-        dst_database = dataset_legacy_bridge.get_database(db=db, dataset_id=dst_version.database_id) if dst_version else None
-        src_registry = dataset_registry_db.get_filter(db=db, filters={"database_id": src_version.database_id}) if src_version else None
-        dst_registry = dataset_registry_db.get_filter(db=db, filters={"database_id": dst_version.database_id}) if dst_version else None
+        src_database = dataset_legacy_bridge.get_database(db=db, dataset_id=src_version.dataset_id) if src_version else None
+        dst_database = dataset_legacy_bridge.get_database(db=db, dataset_id=dst_version.dataset_id) if dst_version else None
+        src_registry = dataset_registry_db.get_filter(db=db, filters={"dataset_id": src_version.dataset_id}) if src_version else None
+        dst_registry = dataset_registry_db.get_filter(db=db, filters={"dataset_id": dst_version.dataset_id}) if dst_version else None
         return {
             "id": lineage_obj.id,
-            "dataset_id": lineage_obj.database_id,
-            "src_dataset_id": src_version.database_id if src_version else None,
+            "dataset_id": lineage_obj.dataset_id,
+            "src_dataset_id": src_version.dataset_id if src_version else None,
             "src_dataset_code": src_registry.dataset_code if src_registry else None,
             "src_dataset_title": src_database.name if src_database else None,
             "src_dataset_type": (src_registry.dataset_type if src_registry else None) or (src_version.dataset_type if src_version else None),
@@ -1394,7 +1394,7 @@ class DatasetDomainService:
             "src_version": src_version.version if src_version else None,
             "src_asset_id": lineage_obj.src_asset_id,
             "src_asset_code": src_asset.asset_code if src_asset else None,
-            "dst_dataset_id": dst_version.database_id if dst_version else None,
+            "dst_dataset_id": dst_version.dataset_id if dst_version else None,
             "dst_dataset_code": dst_registry.dataset_code if dst_registry else None,
             "dst_dataset_title": dst_database.name if dst_database else None,
             "dst_dataset_type": (dst_registry.dataset_type if dst_registry else None) or (dst_version.dataset_type if dst_version else None),
@@ -1429,35 +1429,35 @@ class DatasetDomainService:
                 if not self._is_version_publicly_released(sv) or not self._is_version_publicly_released(dv):
                     continue
                 matched.append((item, sv, dv))
-                all_dataset_ids.add(sv.database_id)
-                all_dataset_ids.add(dv.database_id)
+                all_dataset_ids.add(sv.dataset_id)
+                all_dataset_ids.add(dv.dataset_id)
 
             if not matched:
                 return []
 
             # Bulk fetch registries — 1 query instead of 2 per edge
             registries = db.query(DatasetRegistry).filter(
-                DatasetRegistry.database_id.in_(all_dataset_ids),
+                DatasetRegistry.id.in_(all_dataset_ids),
             ).all()
-            registry_map = {r.database_id: r for r in registries}
+            registry_map = {r.dataset_id: r for r in registries}
 
             matched.sort(key=lambda x: x[0].id, reverse=True)
             results = []
             for item, sv, dv in matched[:limit]:
-                src_reg = registry_map.get(sv.database_id)
-                dst_reg = registry_map.get(dv.database_id)
+                src_reg = registry_map.get(sv.dataset_id)
+                dst_reg = registry_map.get(dv.dataset_id)
                 if not src_reg or not dst_reg:
                     continue
                 results.append({
                     "id": item.id,
                     "relation_type": item.relation_type,
                     "direction": item.direction,
-                    "src_dataset_id": sv.database_id,
+                    "src_dataset_id": sv.dataset_id,
                     "src_dataset_title": src_reg.title or "",
                     "src_dataset_type": src_reg.dataset_type or "",
                     "src_dataset_code": src_reg.dataset_code or "",
                     "src_version": sv.version or "",
-                    "dst_dataset_id": dv.database_id,
+                    "dst_dataset_id": dv.dataset_id,
                     "dst_dataset_title": dst_reg.title or "",
                     "dst_dataset_type": dst_reg.dataset_type or "",
                     "dst_dataset_code": dst_reg.dataset_code or "",
@@ -1482,34 +1482,34 @@ class DatasetDomainService:
             if not self._is_version_publicly_released(sv) or not self._is_version_publicly_released(dv):
                 continue
             matched.append((item, sv, dv))
-            all_dataset_ids.add(sv.database_id)
-            all_dataset_ids.add(dv.database_id)
+            all_dataset_ids.add(sv.dataset_id)
+            all_dataset_ids.add(dv.dataset_id)
 
         if not matched:
             return []
 
         registries = db.query(DatasetRegistry).filter(
-            DatasetRegistry.database_id.in_(all_dataset_ids),
+            DatasetRegistry.id.in_(all_dataset_ids),
         ).all()
-        registry_map = {r.database_id: r for r in registries}
+        registry_map = {r.dataset_id: r for r in registries}
 
         matched.sort(key=lambda x: x[0].id, reverse=True)
         results = []
         for item, sv, dv in matched[:limit]:
-            src_reg = registry_map.get(sv.database_id)
-            dst_reg = registry_map.get(dv.database_id)
+            src_reg = registry_map.get(sv.dataset_id)
+            dst_reg = registry_map.get(dv.dataset_id)
             if not src_reg or not dst_reg:
                 continue
             results.append({
                 "id": item.id,
                 "relation_type": item.relation_type,
                 "direction": item.direction,
-                "src_dataset_id": sv.database_id,
+                "src_dataset_id": sv.dataset_id,
                 "src_dataset_title": src_reg.title or "",
                 "src_dataset_type": src_reg.dataset_type or "",
                 "src_dataset_code": src_reg.dataset_code or "",
                 "src_version": sv.version or "",
-                "dst_dataset_id": dv.database_id,
+                "dst_dataset_id": dv.dataset_id,
                 "dst_dataset_title": dst_reg.title or "",
                 "dst_dataset_type": dst_reg.dataset_type or "",
                 "dst_dataset_code": dst_reg.dataset_code or "",
@@ -1592,7 +1592,7 @@ class DatasetDomainService:
             break
         file_name = Path(local_path).name
         payload = {
-            "database_id": asset_obj.database_id,
+            "dataset_id": asset_obj.dataset_id,
             "dataset_asset_id": asset_obj.id,
             "asset_file_type_code": resolved_asset_file_type_code,
             "file_role": normalized_file_role,
@@ -1633,7 +1633,7 @@ class DatasetDomainService:
                 default_asset = dataset_asset_db.create_one(
                     db=db,
                     obj_in={
-                        "database_id": version_obj.database_id,
+                        "dataset_id": version_obj.dataset_id,
                         "dataset_version_id": version_obj.id,
                         "asset_code": default_asset_code,
                         "asset_name": self._asset_name_from_version(version_obj, default_asset_type),
@@ -2028,7 +2028,7 @@ class DatasetDomainService:
     def _write_workflow_result(self, db, dataset_id, operator_id, task_type, from_state, to_state, task_status, detail):
         if not dataset_id:
             return
-        registry_obj = dataset_registry_db.get_filter(db=db, filters={"database_id": dataset_id})
+        registry_obj = dataset_registry_db.get_filter(db=db, filters={"dataset_id": dataset_id})
         if registry_obj:
             dataset_registry_db.update_one(
                 db=db,
@@ -2041,7 +2041,7 @@ class DatasetDomainService:
         dataset_workflow_task_db.create_one(
             db=db,
             obj_in={
-                "database_id": dataset_id,
+                "dataset_id": dataset_id,
                 "task_type": task_type,
                 "task_status": task_status,
                 "from_state": from_state,
@@ -2076,7 +2076,7 @@ class DatasetDomainService:
         detail_json = self._parse_task_detail(task_obj.detail)
         return {
             "id": task_obj.id,
-            "dataset_id": task_obj.database_id,
+            "dataset_id": task_obj.dataset_id,
             "task_type": task_obj.task_type,
             "task_status": task_obj.task_status,
             "from_state": task_obj.from_state,
@@ -2099,7 +2099,7 @@ class DatasetDomainService:
     def _update_dataset_lifecycle_state(self, db, dataset_id, state):
         if not dataset_id or not state:
             return
-        registry_obj = dataset_registry_db.get_filter(db=db, filters={"database_id": dataset_id})
+        registry_obj = dataset_registry_db.get_filter(db=db, filters={"dataset_id": dataset_id})
         if not registry_obj:
             return
         dataset_registry_db.update_one(
@@ -2150,7 +2150,7 @@ class DatasetDomainService:
         task_obj = dataset_workflow_task_db.create_one(
             db=db,
             obj_in={
-                "database_id": dataset_id,
+                "dataset_id": dataset_id,
                 "task_type": action,
                 "task_status": "pending",
                 "from_state": from_state,
@@ -2227,7 +2227,7 @@ class DatasetDomainService:
                 "path": file_path,
                 "type": f".{file_suffix}" if file_suffix and not file_suffix.startswith(".") else Path(file_path).suffix,
                 "data_type": dataset_type,
-                "database_id": database_obj.id,
+                "dataset_id": database_obj.id,
                 "status": 1,
                 "create_time": create_time,
             },
@@ -2235,13 +2235,13 @@ class DatasetDomainService:
         if request_data.project_id:
             dataset_legacy_bridge.create_project_link(
                 db=db,
-                obj_in={"database_id": database_obj.id, "project_id": request_data.project_id},
+                obj_in={"dataset_id": database_obj.id, "project_id": request_data.project_id},
             )
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
         dataset_workflow_task_db.create_one(
             db=db,
             obj_in={
-                "database_id": database_obj.id,
+                "dataset_id": database_obj.id,
                 "task_type": "upload",
                 "task_status": "success",
                 "from_state": "draft",
@@ -2269,7 +2269,7 @@ class DatasetDomainService:
 
         if target["dataset_id"] and target["persist"]:
             before_state = target["dataset_payload"]["lifecycle_state"]
-            registry_obj = dataset_registry_db.get_filter(db=db, filters={"database_id": target["dataset_id"]})
+            registry_obj = dataset_registry_db.get_filter(db=db, filters={"dataset_id": target["dataset_id"]})
             if registry_obj:
                 dataset_registry_db.update_one(
                     db=db,
@@ -2327,7 +2327,7 @@ class DatasetDomainService:
                             "type": f".{new_suffix}" if new_suffix else file_obj.type,
                         },
                     )
-            registry_obj = dataset_registry_db.get_filter(db=db, filters={"database_id": target["dataset_id"]})
+            registry_obj = dataset_registry_db.get_filter(db=db, filters={"dataset_id": target["dataset_id"]})
             if registry_obj:
                 dataset_registry_db.update_one(
                     db=db,
@@ -2448,7 +2448,7 @@ class DatasetDomainService:
                 action=action,
                 request_payload=detail_json.get("request") or {},
             )
-            dataset_id = task_obj.database_id or request_payload.get("id")
+            dataset_id = task_obj.dataset_id or request_payload.get("id")
             if action not in {"validate", "index", "pipeline"}:
                 dataset_workflow_task_db.update_one(
                     db=db,
@@ -2556,7 +2556,7 @@ class DatasetDomainService:
         database_type = getattr(database_obj, "type", None) or getattr(database_obj, "dataset_type", "generic")
         database_is_public = getattr(database_obj, "is_public", False)
         database_is_active = getattr(database_obj, "is_active", False)
-        registry_obj = dataset_registry_db.get_filter(db=db, filters={"database_id": database_id})
+        registry_obj = dataset_registry_db.get_filter(db=db, filters={"dataset_id": database_id})
         file_obj = dataset_legacy_bridge.get_primary_file(db=db, dataset_id=database_id)
         if registry_obj:
             update_data = {
@@ -2573,7 +2573,7 @@ class DatasetDomainService:
         return dataset_registry_db.create_one(
             db=db,
             obj_in={
-                "database_id": database_id,
+                "dataset_id": database_id,
                 "dataset_code": f"ds-{database_id}",
                 "dataset_type": self._infer_dataset_type(database_obj, file_obj),
                 "version": DEFAULT_DATASET_VERSION,
@@ -2601,8 +2601,8 @@ class DatasetDomainService:
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
         dataset_kind_obj = self._get_dataset_kind_registry_by_code(db=db, code=registry_obj.dataset_type)
         file_obj = dataset_legacy_bridge.get_primary_file(db=db, dataset_id=database_data["id"])
-        workflow_tasks = dataset_workflow_task_db.get_data(db=db, filters={"database_id": database_data["id"]})
-        publish_records = dataset_publish_record_db.get_data(db=db, filters={"database_id": database_data["id"]})
+        workflow_tasks = dataset_workflow_task_db.get_data(db=db, filters={"dataset_id": database_data["id"]})
+        publish_records = dataset_publish_record_db.get_data(db=db, filters={"dataset_id": database_data["id"]})
         return {
             "id": database_data["id"],
             "legacy_database_id": database_data["id"],
@@ -2762,7 +2762,7 @@ class DatasetDomainService:
             file_path = self._resolve_version_primary_file_path(db=db, version_obj=version_obj) or file_path
         return {
             "id": version_obj.id,
-            "dataset_id": version_obj.database_id,
+            "dataset_id": version_obj.dataset_id,
             "version": version_obj.version,
             "title": version_obj.title,
             "dataset_type": version_obj.dataset_type,
@@ -2785,7 +2785,7 @@ class DatasetDomainService:
     def _build_version_publish_record_payload(self, record_obj):
         return {
             "id": record_obj.id,
-            "dataset_id": record_obj.database_id,
+            "dataset_id": record_obj.dataset_id,
             "version_id": record_obj.dataset_version_id,
             "version": record_obj.version,
             "action": record_obj.action,
@@ -2827,7 +2827,7 @@ class DatasetDomainService:
         return dataset_version_publish_record_db.create_one(
             db=db,
             obj_in={
-                "database_id": version_snapshot["database_id"],
+                "dataset_id": version_snapshot["dataset_id"],
                 "dataset_version_id": version_snapshot["id"],
                 "version": version_snapshot["version"],
                 "action": action,
@@ -2850,10 +2850,10 @@ class DatasetDomainService:
                 version_obj = dataset_version_db.get(db=db, id=default_public_version_id)
             except Exception:
                 version_obj = None
-            if version_obj and version_obj.database_id == dataset_id and self._is_version_publicly_released(version_obj):
+            if version_obj and version_obj.dataset_id == dataset_id and self._is_version_publicly_released(version_obj):
                 return version_obj
 
-        version_rows = dataset_version_db.get_data(db=db, filters={"database_id": dataset_id})
+        version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})
         default_public_versions = [
             row
             for row in version_rows
@@ -2866,7 +2866,7 @@ class DatasetDomainService:
         return None
 
     def _list_public_version_objs(self, db, dataset_id):
-        version_rows = dataset_version_db.get_data(db=db, filters={"database_id": dataset_id})
+        version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})
         public_versions = [row for row in version_rows if self._is_version_publicly_released(row)]
         return sorted(
             public_versions,
@@ -2878,14 +2878,14 @@ class DatasetDomainService:
         registry = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
         if not registry:
             raise HTTPException(status_code=404, detail=f"Public dataset not found: {dataset_id}")
-        database_id = registry.database_id
+        database_id = registry.id
         version_obj = dataset_version_db.get(db=db, id=version_id)
-        if version_obj.database_id != database_id or not self._is_version_publicly_released(version_obj):
+        if version_obj.dataset_id != database_id or not self._is_version_publicly_released(version_obj):
             raise HTTPException(status_code=404, detail=f"public dataset version not found: dataset={dataset_id}, version={version_id}")
         return version_obj
 
     def _normalize_version_public_flags(self, db, dataset_id, default_version_id=None):
-        version_rows = dataset_version_db.get_data(db=db, filters={"database_id": dataset_id})
+        version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})
         for row in version_rows:
             release_state = self._get_version_release_state(row)
             should_default = bool(default_version_id and row.id == default_version_id and release_state in {"released", "deprecated"})
@@ -2903,7 +2903,7 @@ class DatasetDomainService:
     def _sync_registry_public_state(self, db, dataset_id, default_public_version_id=None):
         database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
-        current_version = dataset_version_db.get_filter(db=db, filters={"database_id": dataset_id, "is_current": 1})
+        current_version = dataset_version_db.get_filter(db=db, filters={"dataset_id": dataset_id, "is_current": 1})
         next_visibility = "public" if default_public_version_id else "private"
         update_data = {
             "visibility": next_visibility,
@@ -2934,7 +2934,7 @@ class DatasetDomainService:
             db=db,
             version_snapshot={
                 "id": selected_version.id,
-                "database_id": selected_version.database_id,
+                "dataset_id": selected_version.dataset_id,
                 "version": selected_version.version,
                 "visibility": selected_version.visibility,
                 "lifecycle_state": selected_version.lifecycle_state,
@@ -2963,7 +2963,7 @@ class DatasetDomainService:
 
         # 2. Current version
         current_version = db.query(DatasetVersion).filter(
-            DatasetVersion.database_id == registry.database_id,
+            DatasetVersion.dataset_id == registry.id,
             DatasetVersion.is_current == 1,
         ).first()
 
@@ -3028,7 +3028,7 @@ class DatasetDomainService:
                     })
 
         return {
-            "id": registry.database_id,
+            "id": registry.id,
             "dataset_code": registry.dataset_code,
             "title": registry.title or "",
             "dataset_type": dataset_type,
@@ -3047,12 +3047,12 @@ class DatasetDomainService:
         registry = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
         if not registry:
             raise HTTPException(status_code=404, detail=f"Public dataset not found: {dataset_id}")
-        database_id = registry.database_id
+        database_id = registry.id
         database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=database_id)
         dataset_payload = self.build_dataset_payload(db=db, database_obj=database_obj)
         current_version = self.ensure_current_version(db=db, dataset_payload=dataset_payload)
         dataset_payload["current_version"] = self._build_dataset_version_payload(current_version, db=db)
-        dataset_payload["version_count"] = len(dataset_version_db.get_data(db=db, filters={"database_id": database_id}))
+        dataset_payload["version_count"] = len(dataset_version_db.get_data(db=db, filters={"dataset_id": database_id}))
 
         public_version = version_obj or self._get_public_version_obj(db=db, dataset_id=database_id, dataset_payload=dataset_payload)
         if not public_version:
@@ -3075,15 +3075,15 @@ class DatasetDomainService:
         return dataset_payload
 
     def _build_dataset_payload_for_version(self, db, version_obj):
-        database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=version_obj.database_id)
+        database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=version_obj.dataset_id)
         dataset_payload = self.build_dataset_payload(db=db, database_obj=database_obj)
         current_version = self.ensure_current_version(db=db, dataset_payload=dataset_payload)
         dataset_payload["current_version"] = self._build_dataset_version_payload(current_version, db=db) if current_version else None
-        dataset_payload["version_count"] = len(dataset_version_db.get_data(db=db, filters={"database_id": version_obj.database_id}))
+        dataset_payload["version_count"] = len(dataset_version_db.get_data(db=db, filters={"dataset_id": version_obj.dataset_id}))
         dataset_payload = self._apply_version_to_dataset_payload(db=db, dataset_payload=dataset_payload, version_obj=version_obj)
         dataset_payload = self._apply_assets_to_dataset_payload(db=db, dataset_payload=dataset_payload, version_obj=version_obj)
         dataset_payload["selected_version"] = self._build_dataset_version_payload(version_obj, db=db)
-        public_version = self._get_public_version_obj(db=db, dataset_id=version_obj.database_id, dataset_payload=dataset_payload)
+        public_version = self._get_public_version_obj(db=db, dataset_id=version_obj.dataset_id, dataset_payload=dataset_payload)
         dataset_payload["default_public_version"] = self._build_dataset_version_payload(public_version, db=db) if public_version else None
         dataset_payload["published_version"] = self._build_dataset_version_payload(public_version, db=db) if public_version else None
         dataset_payload["query_adapter"] = dataset_adapter_registry.describe(dataset_payload)
@@ -3125,7 +3125,7 @@ class DatasetDomainService:
         query_profile = dataset_payload["query_profile"]
         published_version = dataset_payload.get("published_version") or {}
         return {
-            "database_id": dataset_payload["id"],
+            "dataset_id": dataset_payload["id"],
             "version": dataset_payload["version"],
             "title": dataset_payload["title"],
             "dataset_type": dataset_payload["dataset_type"],
@@ -3143,7 +3143,7 @@ class DatasetDomainService:
         }
 
     def _ensure_version_current_flag(self, db, database_id, version_name):
-        version_rows = dataset_version_db.get_data(db=db, filters={"database_id": database_id})
+        version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": database_id})
         version_snapshots = [
             {
                 "id": row.id,
@@ -3167,7 +3167,7 @@ class DatasetDomainService:
         if target_exists:
             return dataset_version_db.get_filter(
                 db=db,
-                filters={"database_id": database_id, "version": version_name},
+                filters={"dataset_id": database_id, "version": version_name},
             )
         return None
 
@@ -3176,7 +3176,7 @@ class DatasetDomainService:
         database_id = dataset_payload["id"]
         version_obj = dataset_version_db.get_filter(
             db=db,
-            filters={"database_id": database_id, "version": version_name},
+            filters={"dataset_id": database_id, "version": version_name},
         )
         version_data = self._build_version_data_from_dataset_payload(dataset_payload)
         if version_obj and getattr(version_obj, "extra_json", None) is not None:
@@ -3186,7 +3186,7 @@ class DatasetDomainService:
             dataset_version_db.update_one(db=db, db_obj=version_obj, obj_in=version_data)
             version_obj = dataset_version_db.get_filter(
                 db=db,
-                filters={"database_id": database_id, "version": version_name},
+                filters={"dataset_id": database_id, "version": version_name},
             )
             self._ensure_assets_for_version(db=db, version_obj=version_obj)
             return version_obj
@@ -3222,7 +3222,7 @@ class DatasetDomainService:
         database_ids = []
         if request_data.project_id:
             database_ids = [
-                item.database_id
+                item.dataset_id
                 for item in dataset_legacy_bridge.list_project_links_by_project(db=db, project_id=request_data.project_id)
             ]
         if database_ids:
@@ -3313,7 +3313,7 @@ class DatasetDomainService:
         public_version = self._get_public_version_obj(db=db, dataset_id=dataset_id, dataset_payload=payload)
         payload["default_public_version"] = self._build_dataset_version_payload(public_version, db=db) if public_version else None
         payload["published_version"] = self._build_dataset_version_payload(public_version, db=db) if public_version else None
-        payload["version_count"] = len(dataset_version_db.get_data(db=db, filters={"database_id": payload["id"]}))
+        payload["version_count"] = len(dataset_version_db.get_data(db=db, filters={"dataset_id": payload["id"]}))
         return payload
 
     def update_dataset(self, db, dataset_id, request_data, user=None):
@@ -3325,7 +3325,7 @@ class DatasetDomainService:
             database_update["name"] = request_data.title
         if database_update:
             dataset_legacy_bridge.update_database(db=db, db_obj=database_obj, obj_in=database_update)
-            registry_obj = dataset_registry_db.get_filter(db=db, filters={"database_id": dataset_id})
+            registry_obj = dataset_registry_db.get_filter(db=db, filters={"dataset_id": dataset_id})
 
         registry_update = {"update_time": self._now()}
         for field in [
@@ -3386,7 +3386,7 @@ class DatasetDomainService:
         dataset_workflow_task_db.create_one(
             db=db,
             obj_in={
-                "database_id": dataset_id,
+                "dataset_id": dataset_id,
                 "task_type": request_data.task_type or "sync",
                 "task_status": request_data.task_status or "success",
                 "from_state": before_state,
@@ -3417,7 +3417,7 @@ class DatasetDomainService:
         dataset_publish_record_db.create_one(
             db=db,
             obj_in={
-                "database_id": dataset_id,
+                "dataset_id": dataset_id,
                 "action": "publish",
                 "visibility_before": before_visibility,
                 "visibility_after": "public",
@@ -3431,7 +3431,7 @@ class DatasetDomainService:
         dataset_workflow_task_db.create_one(
             db=db,
             obj_in={
-                "database_id": dataset_id,
+                "dataset_id": dataset_id,
                 "task_type": "publish",
                 "task_status": "success",
                 "from_state": before_state,
@@ -3453,7 +3453,7 @@ class DatasetDomainService:
             raise HTTPException(status_code=4000, detail="dataset is not public")
 
         before_state = registry_obj.lifecycle_state
-        version_rows = dataset_version_db.get_data(db=db, filters={"database_id": dataset_id})
+        version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})
         candidate_public_version_ids = {getattr(registry_obj, "default_public_version_id", None)} - {None}
         for version_obj in version_rows:
             is_candidate = (
@@ -3479,16 +3479,16 @@ class DatasetDomainService:
                 },
             )
 
-        registry_obj = dataset_registry_db.get_filter(db=db, filters={"database_id": dataset_id})
+        registry_obj = dataset_registry_db.get_filter(db=db, filters={"dataset_id": dataset_id})
         if getattr(registry_obj, "default_public_version_id", None):
             self._normalize_version_public_flags(db=db, dataset_id=dataset_id, default_version_id=None)
             self._sync_registry_public_state(db=db, dataset_id=dataset_id, default_public_version_id=None)
-            registry_obj = dataset_registry_db.get_filter(db=db, filters={"database_id": dataset_id})
+            registry_obj = dataset_registry_db.get_filter(db=db, filters={"dataset_id": dataset_id})
         next_state = registry_obj.lifecycle_state
         dataset_publish_record_db.create_one(
             db=db,
             obj_in={
-                "database_id": dataset_id,
+                "dataset_id": dataset_id,
                 "action": "unpublish",
                 "visibility_before": "public",
                 "visibility_after": "private",
@@ -3502,7 +3502,7 @@ class DatasetDomainService:
         dataset_workflow_task_db.create_one(
             db=db,
             obj_in={
-                "database_id": dataset_id,
+                "dataset_id": dataset_id,
                 "task_type": "unpublish",
                 "task_status": "success",
                 "from_state": before_state,
@@ -3518,18 +3518,18 @@ class DatasetDomainService:
 
     def get_task_list(self, db, dataset_id, limit, user=None):
         self._ensure_dataset_read_access(db=db, dataset_id=dataset_id, user=user)
-        tasks = dataset_workflow_task_db.get_data(db=db, filters={"database_id": dataset_id})
+        tasks = dataset_workflow_task_db.get_data(db=db, filters={"dataset_id": dataset_id})
         tasks = sorted(tasks, key=lambda item: item.id, reverse=True)[:limit]
         return [self._build_workflow_task_payload(item) for item in tasks]
 
     def delete_dataset(self, db, dataset_id, user=None):
         database_obj = self._ensure_dataset_write_access(db=db, dataset_id=dataset_id, user=user)
         payload = self.get_dataset(db=db, dataset_id=dataset_id, user=user)
-        registry_obj = dataset_registry_db.get_filter(db=db, filters={"database_id": dataset_id})
+        registry_obj = dataset_registry_db.get_filter(db=db, filters={"dataset_id": dataset_id})
         registry_id = getattr(registry_obj, "id", None)
 
-        version_rows = dataset_version_db.get_data(db=db, filters={"database_id": dataset_id}) or []
-        asset_rows = dataset_asset_db.get_data(db=db, filters={"database_id": dataset_id}) or []
+        version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id}) or []
+        asset_rows = dataset_asset_db.get_data(db=db, filters={"dataset_id": dataset_id}) or []
         version_ids = [item.id for item in version_rows]
         asset_ids = [item.id for item in asset_rows]
         asset_file_rows = []
@@ -3618,7 +3618,7 @@ class DatasetDomainService:
 
         if version_ids:
             db.query(dataset_version_publish_record_db.model).filter(
-                (dataset_version_publish_record_db.model.database_id == dataset_id)
+                (dataset_version_publish_record_db.model.dataset_id == dataset_id)
                 | (dataset_version_publish_record_db.model.dataset_version_id.in_(version_ids))
             ).delete(synchronize_session=False)
 
@@ -3635,13 +3635,13 @@ class DatasetDomainService:
                 synchronize_session=False
             )
 
-        db.query(dataset_publish_record_db.model).filter(dataset_publish_record_db.model.database_id == dataset_id).delete(
+        db.query(dataset_publish_record_db.model).filter(dataset_publish_record_db.model.dataset_id == dataset_id).delete(
             synchronize_session=False
         )
-        db.query(dataset_workflow_task_db.model).filter(dataset_workflow_task_db.model.database_id == dataset_id).delete(
+        db.query(dataset_workflow_task_db.model).filter(dataset_workflow_task_db.model.dataset_id == dataset_id).delete(
             synchronize_session=False
         )
-        db.query(dataset_registry_db.model).filter(dataset_registry_db.model.database_id == dataset_id).delete(
+        db.query(dataset_registry_db.model).filter(dataset_registry_db.model.dataset_id == dataset_id).delete(
             synchronize_session=False
         )
         db.query(dataset_staging_file_db.model).filter(dataset_staging_file_db.model.linked_dataset_id == dataset_id).delete(
@@ -3659,7 +3659,7 @@ class DatasetDomainService:
 
     def get_publish_record_list(self, db, dataset_id, limit, user=None):
         self._ensure_dataset_read_access(db=db, dataset_id=dataset_id, user=user)
-        records = dataset_publish_record_db.get_data(db=db, filters={"database_id": dataset_id})
+        records = dataset_publish_record_db.get_data(db=db, filters={"dataset_id": dataset_id})
         records = sorted(records, key=lambda item: item.id, reverse=True)[:limit]
         return [
             {
@@ -3682,10 +3682,10 @@ class DatasetDomainService:
         if version_id is not None:
             version_obj = self._ensure_version_read_access(db=db, version_id=version_id, user=user)
             if dataset_id is None:
-                dataset_id = version_obj.database_id
+                dataset_id = version_obj.dataset_id
         filters = {}
         if dataset_id is not None:
-            filters["database_id"] = dataset_id
+            filters["dataset_id"] = dataset_id
         if version_id is not None:
             filters["dataset_version_id"] = version_id
         records = dataset_version_publish_record_db.get_data(db=db, filters=filters)
@@ -3695,7 +3695,7 @@ class DatasetDomainService:
                 for item in records
                 if self._can_access_dataset(
                     db=db,
-                    database_obj=dataset_legacy_bridge.get_database(db=db, dataset_id=item.database_id),
+                    database_obj=dataset_legacy_bridge.get_database(db=db, dataset_id=item.dataset_id),
                     user=user,
                 )
             ]
@@ -3710,7 +3710,7 @@ class DatasetDomainService:
         version_obj = self._ensure_version_read_access(db=db, version_id=version_id, user=user)
         return {
             "version_id": version_id,
-            "dataset_id": version_obj.database_id,
+            "dataset_id": version_obj.dataset_id,
             "version": version_obj.version,
             "items": self._build_asset_list_payload(db=db, version_id=version_id),
         }
@@ -3763,7 +3763,7 @@ class DatasetDomainService:
         asset_obj = dataset_asset_db.create_one(
             db=db,
             obj_in={
-                "database_id": version_obj.database_id,
+                "dataset_id": version_obj.dataset_id,
                 "dataset_version_id": request_data.version_id,
                 "asset_code": asset_code,
                 "asset_name": request_data.asset_name,
@@ -3878,7 +3878,7 @@ class DatasetDomainService:
         return {
             "asset_id": asset_id,
             "version_id": asset_obj.dataset_version_id,
-            "dataset_id": asset_obj.database_id,
+            "dataset_id": asset_obj.dataset_id,
             "items": [self._build_asset_file_payload(item) for item in file_rows],
         }
 
@@ -4032,14 +4032,14 @@ class DatasetDomainService:
         if version_id is not None:
             version_obj = self._ensure_version_read_access(db=db, version_id=version_id, user=user)
             if dataset_id is None:
-                dataset_id = version_obj.database_id
+                dataset_id = version_obj.dataset_id
         lineage_rows = dataset_lineage_edge_db.get_data(db=db, filters={})
         if dataset_id is not None:
             matched_rows = []
             for item in lineage_rows:
                 src_version = dataset_version_db.get_one(db=db, id=item.src_dataset_version_id) if item.src_dataset_version_id else None
                 dst_version = dataset_version_db.get_one(db=db, id=item.dst_dataset_version_id) if item.dst_dataset_version_id else None
-                if (src_version and src_version.database_id == dataset_id) or (dst_version and dst_version.database_id == dataset_id):
+                if (src_version and src_version.dataset_id == dataset_id) or (dst_version and dst_version.dataset_id == dataset_id):
                     matched_rows.append(item)
             lineage_rows = matched_rows
         if version_id is not None:
@@ -4077,7 +4077,7 @@ class DatasetDomainService:
         lineage_obj = dataset_lineage_edge_db.create_one(
             db=db,
             obj_in={
-                "database_id": src_version.database_id,
+                "dataset_id": src_version.dataset_id,
                 "src_dataset_version_id": request_data.src_version_id,
                 "src_asset_id": request_data.src_asset_id,
                 "dst_dataset_version_id": request_data.dst_version_id,
@@ -4111,7 +4111,7 @@ class DatasetDomainService:
         database_ids = []
         if request_data.project_id:
             database_ids = [
-                item.database_id
+                item.dataset_id
                 for item in dataset_legacy_bridge.list_project_links_by_project(db=db, project_id=request_data.project_id)
             ]
         if database_ids:
@@ -5218,7 +5218,7 @@ class DatasetDomainService:
             user=user,
         )
         dataset_id = dataset_payload["id"]
-        registry_obj = dataset_registry_db.get_filter(db=db, filters={"database_id": dataset_id})
+        registry_obj = dataset_registry_db.get_filter(db=db, filters={"dataset_id": dataset_id})
         update_registry = {"update_time": self._now()}
         target_version_name = str(getattr(candidate_obj, "version_name", None) or "").strip()
         if target_version_name:
@@ -5378,7 +5378,7 @@ class DatasetDomainService:
         dataset_workflow_task_db.create_one(
             db=db,
             obj_in={
-                "database_id": dataset_id,
+                "dataset_id": dataset_id,
                 "task_type": "register_candidate",
                 "task_status": "success",
                 "from_state": "draft",
@@ -6030,7 +6030,7 @@ class DatasetDomainService:
 
     def list_dataset_versions(self, db, dataset_id, user=None):
         dataset_payload = self.get_dataset(db=db, dataset_id=dataset_id, user=user)
-        version_rows = dataset_version_db.get_data(db=db, filters={"database_id": dataset_id})
+        version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})
         version_rows = sorted(version_rows, key=lambda item: item.id, reverse=True)
         return {
             "dataset_id": dataset_id,
@@ -6054,7 +6054,7 @@ class DatasetDomainService:
         dataset_payload = self._select_asset_for_query(dataset_payload, asset_code=asset_code)
         file_path = self._resolve_dataset_primary_file_path(dataset_payload)
         return {
-            "dataset_id": version_obj.database_id,
+            "dataset_id": version_obj.dataset_id,
             "version_id": version_obj.id,
             "dataset_code": dataset_payload["dataset_code"],
             "version": dataset_payload.get("selected_version"),
@@ -6084,7 +6084,7 @@ class DatasetDomainService:
         dataset_payload = self.get_dataset(db=db, dataset_id=request_data.dataset_id, user=user)
         existing = dataset_version_db.get_filter(
             db=db,
-            filters={"database_id": request_data.dataset_id, "version": request_data.version},
+            filters={"dataset_id": request_data.dataset_id, "version": request_data.version},
         )
         if existing:
             raise HTTPException(status_code=400, detail=f"dataset version already exists: {request_data.version}")
@@ -6097,7 +6097,7 @@ class DatasetDomainService:
         version_obj = dataset_version_db.create_one(
             db=db,
             obj_in={
-                "database_id": request_data.dataset_id,
+                "dataset_id": request_data.dataset_id,
                 "version": request_data.version,
                 "title": request_data.title or dataset_payload["title"],
                 "dataset_type": dataset_type,
@@ -6122,7 +6122,7 @@ class DatasetDomainService:
     def activate_dataset_version(self, db, version_id, request_data, user):
         operator_id = user.id
         version_obj = self._ensure_version_write_access(db=db, version_id=version_id, user=user)
-        dataset_id = version_obj.database_id
+        dataset_id = version_obj.dataset_id
         version_name = version_obj.version
         version_title = version_obj.title
         version_dataset_type = version_obj.dataset_type
@@ -6142,7 +6142,7 @@ class DatasetDomainService:
             db_obj=version_obj,
             obj_in={"is_current": 1, "update_time": self._now()},
         )
-        registry_obj = dataset_registry_db.get_filter(db=db, filters={"database_id": dataset_id})
+        registry_obj = dataset_registry_db.get_filter(db=db, filters={"dataset_id": dataset_id})
         dataset_registry_db.update_one(
             db=db,
             db_obj=registry_obj,
@@ -6165,7 +6165,7 @@ class DatasetDomainService:
         dataset_workflow_task_db.create_one(
             db=db,
             obj_in={
-                "database_id": dataset_id,
+                "dataset_id": dataset_id,
                 "task_type": "sync",
                 "task_status": "success",
                 "from_state": lifecycle_state,
@@ -6186,7 +6186,7 @@ class DatasetDomainService:
             raise HTTPException(status_code=400, detail="dataset version must be ready before release")
         registry_obj = self.ensure_registry(
             db=db,
-            database_obj=dataset_legacy_bridge.get_database(db=db, dataset_id=version_obj.database_id),
+            database_obj=dataset_legacy_bridge.get_database(db=db, dataset_id=version_obj.dataset_id),
         )
         had_default_public = bool(getattr(registry_obj, "default_public_version_id", None))
 
@@ -6205,7 +6205,7 @@ class DatasetDomainService:
             db=db,
             version_snapshot={
                 "id": version_obj.id,
-                "database_id": version_obj.database_id,
+                "dataset_id": version_obj.dataset_id,
                 "version": version_obj.version,
                 "visibility": before_visibility,
                 "lifecycle_state": before_lifecycle_state,
@@ -6217,11 +6217,11 @@ class DatasetDomainService:
             note=request_data.note or f"release dataset version {version_obj.version}",
         )
 
-        default_public = self._get_public_version_obj(db=db, dataset_id=version_obj.database_id)
+        default_public = self._get_public_version_obj(db=db, dataset_id=version_obj.dataset_id)
         if not had_default_public:
             version_obj = self._set_default_public_version(
                 db=db,
-                dataset_id=version_obj.database_id,
+                dataset_id=version_obj.dataset_id,
                 version_obj=version_obj,
                 note=request_data.note,
                 operator_id=operator_id,
@@ -6229,12 +6229,12 @@ class DatasetDomainService:
         else:
             self._normalize_version_public_flags(
                 db=db,
-                dataset_id=version_obj.database_id,
+                dataset_id=version_obj.dataset_id,
                 default_version_id=default_public.id,
             )
             self._sync_registry_public_state(
                 db=db,
-                dataset_id=version_obj.database_id,
+                dataset_id=version_obj.dataset_id,
                 default_public_version_id=default_public.id,
             )
         return self.get_dataset_version(db=db, version_id=version_obj.id, user=user)
@@ -6300,7 +6300,7 @@ class DatasetDomainService:
         version_obj = self._ensure_version_write_access(db=db, version_id=version_id, user=user)
         if not self._is_version_publicly_released(version_obj):
             raise HTTPException(status_code=400, detail="dataset version is not released")
-        current_default_public = self._get_public_version_obj(db=db, dataset_id=version_obj.database_id)
+        current_default_public = self._get_public_version_obj(db=db, dataset_id=version_obj.dataset_id)
 
         before_visibility = version_obj.visibility
         before_lifecycle_state = version_obj.lifecycle_state
@@ -6319,7 +6319,7 @@ class DatasetDomainService:
             db=db,
             version_snapshot={
                 "id": version_obj.id,
-                "database_id": version_obj.database_id,
+                "dataset_id": version_obj.dataset_id,
                 "version": version_obj.version,
                 "visibility": before_visibility,
                 "lifecycle_state": before_lifecycle_state,
@@ -6333,12 +6333,12 @@ class DatasetDomainService:
 
         self._normalize_version_public_flags(
             db=db,
-            dataset_id=version_obj.database_id,
+            dataset_id=version_obj.dataset_id,
             default_version_id=None if was_default_public else getattr(current_default_public, "id", None),
         )
         self._sync_registry_public_state(
             db=db,
-            dataset_id=version_obj.database_id,
+            dataset_id=version_obj.dataset_id,
             default_public_version_id=None if was_default_public else getattr(current_default_public, "id", None),
         )
         result = self.get_dataset_version(db=db, version_id=version_obj.id, user=user)
@@ -6354,7 +6354,7 @@ class DatasetDomainService:
 
         version_obj = self._set_default_public_version(
             db=db,
-            dataset_id=version_obj.database_id,
+            dataset_id=version_obj.dataset_id,
             version_obj=version_obj,
             note=request_data.note,
             operator_id=operator_id,
@@ -6410,13 +6410,13 @@ class DatasetDomainService:
 
             data_list = []
             for item in registry_rows:
-                if request_data.dataset_id and item.database_id != request_data.dataset_id:
+                if request_data.dataset_id and item.dataset_id != request_data.dataset_id:
                     continue
                 if request_data.name and request_data.name not in (item.title or "") and request_data.name not in (item.dataset_code or ""):
                     continue
                 data_list.append({
                     "id": item.id,
-                    "database_id": item.database_id,
+                    "dataset_id": item.dataset_id,
                     "dataset_code": item.dataset_code,
                     "title": item.title,
                     "dataset_type": item.dataset_type,
@@ -6577,7 +6577,7 @@ class DatasetDomainService:
             func_anno_path = None
 
             cur_ver = db.query(DatasetVersion).filter(
-                DatasetVersion.database_id == dataset_id,
+                DatasetVersion.dataset_id == dataset_id,
                 DatasetVersion.is_current == 1,
             ).first()
 

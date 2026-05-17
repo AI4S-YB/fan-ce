@@ -106,7 +106,7 @@ def create_dataset(db, *, name, owner_id, team_id=0, dataset_type="generic"):
     db.commit()
     db.refresh(row)
     # Set database_id to self-reference so legacy_bridge.get_database can find it
-    row.database_id = row.id
+    row.dataset_id = row.id
     db.commit()
     db.refresh(row)
     return row
@@ -1543,7 +1543,7 @@ def test_unpublish_dataset_clears_stale_default_public_registry_state(db_session
     )
 
     dataset_payload = dataset_domain_service.get_dataset(db=db_session, dataset_id=dataset.id, user=owner)
-    registry_obj = dataset_registry_db.get_filter(db=db_session, filters={"database_id": dataset.id})
+    registry_obj = dataset_registry_db.get_filter(db=db_session, filters={"dataset_id": dataset.id})
     dataset_registry_db.update_one(
         db=db_session,
         db_obj=registry_obj,

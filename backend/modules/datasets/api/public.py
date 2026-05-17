@@ -130,9 +130,9 @@ def public_dataset_lineage(
         raise HTTPException(status_code=404, detail="Dataset not found")
 
     svc = dataset_domain_service
-    edges = svc._list_public_lineage(db=db, dataset_id=ds.database_id)
+    edges = svc._list_public_lineage(db=db, dataset_id=ds.dataset_id)
     return response_200(data=jsonable_encoder(
-        {"dataset_id": ds.database_id, "dataset_code": ds.dataset_code, "lineage_edges": edges}
+        {"dataset_id": ds.dataset_id, "dataset_code": ds.dataset_code, "lineage_edges": edges}
     ))
 
 
@@ -147,7 +147,7 @@ def public_dataset_downloads(
         raise HTTPException(status_code=404, detail="Dataset not found or not public")
 
     version = db.query(DatasetVersion).filter_by(
-        database_id=ds.database_id, is_current=1,
+        database_id=ds.dataset_id, is_current=1,
     ).first()
     if not version:
         return response_200(data=jsonable_encoder({"dataset_code": dataset_code, "files": []}))
