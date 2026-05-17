@@ -293,7 +293,7 @@ onBeforeUnmount(() => {
           />
           <div class="summary-help">
             {{ $t('platform.taxonomy.lastLoadTime') }}{{
-              formatDateTime(taxonomyCurrent?.latest_job?.finished_at)
+              formatDateTime(taxonomyCurrent?.latest_job?.finish_time)
             }}
           </div>
         </Card>

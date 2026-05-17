@@ -61,8 +61,8 @@ interface ScanJobItem {
   missing_file_count?: number;
   skipped_registered_count?: number;
   error_message?: null | string;
-  started_at?: null | number;
-  finished_at?: null | number;
+  start_time?: null | string | number;
+  finish_time?: null | string | number;
 }
 
 interface StagingItem {
@@ -75,10 +75,10 @@ interface StagingItem {
   file_size?: null | number;
   dataset_type?: string;
   source_mode?: string;
-  stage_status?: string;
+  status?: string;
   linked_dataset_id?: null | number;
   scan_root_id?: null | number;
-  last_seen_at?: null | number;
+  last_seen_time?: null | string | number;
 }
 
 interface BrowseEntryItem {
@@ -189,7 +189,7 @@ function formatTime(value?: null | number) {
   if (!value) {
     return '-';
   }
-  const date = new Date(value * 1000);
+  const date = new Date(typeof value === "number" ? value * 1000 : value);
   if (Number.isNaN(date.getTime())) {
     return '-';
   }
@@ -593,37 +593,7 @@ function openCandidateModal() {
 }
 
 async function submitCandidateForm() {
-  if (!candidateForm.candidate_name.trim()) {
-    createMessage.error($t('dataset.staging.fillCandidateName'));
-    return;
-  }
-  if (!selectedStagingRowKeys.value.length) {
-    createMessage.error($t('dataset.staging.noStagingFileToSubmit'));
-    return;
-  }
-  candidateModalLoading.value = true;
-  try {
-    await requestClient.post('/admin/dataset/candidate/create', {
-      candidate_name: candidateForm.candidate_name.trim(),
-      dataset_type: candidateForm.dataset_type,
-      registration_mode: candidateForm.registration_mode,
-      version_name: candidateForm.version_name.trim() || undefined,
-      organism: candidateForm.organism.trim() || undefined,
-      assembly: candidateForm.assembly.trim() || undefined,
-      scan_root_id: activeRootId.value || undefined,
-      items: selectedStagingRows.value.map((item, index) => ({
-        staging_file_id: item.id,
-        is_primary: index === 0,
-      })),
-    });
-    candidateModalVisible.value = false;
-    createMessage.success($t('dataset.staging.candidateCreated'));
-    selectedStagingRowKeys.value = [];
-  } catch (error: any) {
-    createMessage.error(error?.message || $t('dataset.staging.candidateCreateFailed'));
-  } finally {
-    candidateModalLoading.value = false;
-  }
+  createMessage.warning($t('dataset.staging.candidateNotAvailable') || 'Candidate registration has been removed. Please use direct dataset registration instead.');
 }
 
 
@@ -731,9 +701,9 @@ const jobColumns = [
   },
   {
     title: $t('dataset.staging.completeTime'),
-    key: 'finished_at',
+    key: 'finish_time',
     customRender: ({ record }: { record: ScanJobItem }) =>
-      formatTime(record.finished_at || record.started_at),
+      formatTime(record.finish_time || record.start_time),
   },
 ];
 
@@ -761,14 +731,14 @@ const stagingColumns = [
   },
   {
     title: $t('dataset.staging.lastFound'),
-    key: 'last_seen_at',
+    key: 'last_seen_time',
     customRender: ({ record }: { record: StagingItem }) =>
-      formatTime(record.last_seen_at),
+      formatTime(record.last_seen_time),
   },
   {
     title: $t('dataset.list.status'),
-    dataIndex: 'stage_status',
-    key: 'stage_status',
+    dataIndex: 'status',
+    key: 'status',
     width: 120,
   },
   {

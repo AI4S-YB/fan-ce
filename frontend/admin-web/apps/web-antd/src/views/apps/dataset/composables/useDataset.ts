@@ -171,7 +171,7 @@ export function getSelectedVersionExposure(version?: DatasetVersionItem | null) 
 
 export function formatTime(ts?: number | null) {
   if (!ts) return '-';
-  const d = new Date(ts * 1000);
+  const d = new Date(typeof ts === "number" ? ts * 1000 : ts);
   return d.toLocaleString('zh-CN');
 }
 

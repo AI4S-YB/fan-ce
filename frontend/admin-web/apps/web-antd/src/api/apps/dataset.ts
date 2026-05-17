@@ -82,9 +82,9 @@ export interface DatasetWorkflowTaskItem {
   id: number;
   dataset_id?: number | null;
   task_type?: string;
-  task_status?: string;
-  from_state?: string;
-  to_state?: string;
+  status?: string;
+  from_lifecycle_state?: string;
+  to_lifecycle_state?: string;
   operator_id?: number;
   detail?: string | null;
   detail_json?: Record<string, any> | null;
@@ -161,7 +161,7 @@ export interface DatasetVersionItem {
   query_engine?: string;
   validation_summary?: string | null;
   index_summary?: string | null;
-  extra_json?: string | null;
+  meta_json?: string | null;
   is_current?: boolean;
   is_published?: boolean;
   is_default_public?: boolean;
@@ -202,7 +202,7 @@ export interface DatasetLineageItem {
   dst_asset_id?: number | null;
   dst_asset_code?: string | null;
   relation_type?: string;
-  direction?: string;
+  // direction removed
   detail_json?: string | null;
   create_user_id?: number;
   create_time?: number;
@@ -219,7 +219,7 @@ export interface DatasetItem {
   visibility?: string;
   version?: string;
   organism?: string;
-  assembly?: string;
+  // assembly removed
   file_format?: string;
   query_engine?: string;
   version_count?: number;
@@ -349,7 +349,7 @@ export interface DatasetStagingItem {
   file_format?: string;
   file_size?: number;
   dataset_type?: string;
-  stage_status?: string;
+  status?: string;
   linked_dataset_id?: number | null;
   create_user_id?: number;
   meta_json?: string | null;
@@ -429,8 +429,8 @@ export interface ScanJobItem {
   missing_file_count?: number;
   skipped_registered_count?: number;
   error_message?: string | null;
-  started_at?: number | null;
-  finished_at?: number | null;
+  start_time?: string | number | null;
+  finish_time?: string | number | null;
 }
 
 
@@ -457,7 +457,7 @@ export async function deleteDatasetApi(data: { id: number }) {
   return requestClient.post(`${pre}/delete`, data);
 }
 
-export async function updateDatasetApi(data: { id: number; title?: string; version?: string; description_md?: string; extra_json?: string }) {
+export async function updateDatasetApi(data: { id: number; title?: string; version?: string; description_md?: string; meta_json?: string }) {
   return requestClient.post<DatasetDetailItem>(`${pre}/update`, data);
 }
 

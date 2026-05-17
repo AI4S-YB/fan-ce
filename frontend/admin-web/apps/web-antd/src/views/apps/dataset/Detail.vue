@@ -225,7 +225,7 @@ const debouncedSaveExtraJson = useDebounceFn(async () => {
     if (f.key.trim()) obj[f.key.trim()] = f.value;
   }
   const json = Object.keys(obj).length > 0 ? JSON.stringify(obj) : '';
-  await updateDatasetApi({ id: datasetId.value, extra_json: json });
+  await updateDatasetApi({ id: datasetId.value, meta_json: json });
 }, 2000);
 
 function addExtraField() {
@@ -244,7 +244,7 @@ watch(detailData, (data) => {
   if (data) {
     extraJsonInit = true;
     try {
-      const parsed = data.extra_json ? JSON.parse(data.extra_json) : {};
+      const parsed = data.meta_json ? JSON.parse(data.meta_json) : {};
       const fields: KvField[] = [];
       for (const [key, value] of Object.entries(parsed)) {
         fields.push({ key, value: String(value) });
@@ -416,7 +416,7 @@ onMounted(() => loadAll());
           </thead>
           <tbody>
           <tr v-for="r in publishRecords" :key="r.id">
-            <td style="padding: 3px 6px; border: 1px solid #e0e0e0;">{{ r.create_time ? new Date(r.create_time * 1000).toLocaleString('zh-CN') : '-' }}</td>
+            <td style="padding: 3px 6px; border: 1px solid #e0e0e0;">{{ r.create_time ? new Date(typeof r.create_time === "number" ? r.create_time * 1000 : r.create_time).toLocaleString('zh-CN') : '-' }}</td>
             <td style="padding: 3px 6px; border: 1px solid #e0e0e0;">{{ r.action || '-' }}</td>
             <td style="padding: 3px 6px; border: 1px solid #e0e0e0;">{{ r.visibility_before || '-' }} → {{ r.visibility_after || '-' }}</td>
             <td style="padding: 3px 6px; border: 1px solid #e0e0e0;">{{ r.lifecycle_before || '-' }} → {{ r.lifecycle_after || '-' }}</td>
@@ -432,8 +432,8 @@ onMounted(() => loadAll());
         <div style="display: flex; gap: 24px; margin-top: 8px;">
           <span>ID: {{ detailData.id }}</span>
           <span>Code: {{ detailData.dataset_code }}</span>
-          <span>创建: {{ detailData.create_time ? new Date(detailData.create_time * 1000).toLocaleString('zh-CN') : '-' }}</span>
-          <span>更新: {{ detailData.update_time ? new Date(detailData.update_time * 1000).toLocaleString('zh-CN') : '-' }}</span>
+          <span>创建: {{ detailData.create_time ? new Date(typeof detailData.create_time === "number" ? detailData.create_time * 1000 : detailData.create_time).toLocaleString('zh-CN') : '-' }}</span>
+          <span>更新: {{ detailData.update_time ? new Date(typeof detailData.update_time === "number" ? detailData.update_time * 1000 : detailData.update_time).toLocaleString('zh-CN') : '-' }}</span>
         </div>
       </details>
 
