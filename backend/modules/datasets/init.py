@@ -170,7 +170,7 @@ def _backfill_default_public_versions():
         for registry_obj in registry_rows:
             version_rows = (
                 db.query(DatasetVersion)
-                .filter(DatasetVersion.dataset_id == registry_obj.dataset_id)
+                .filter(DatasetVersion.dataset_id == registry_obj.id)
                 .order_by(DatasetVersion.id.desc())
                 .all()
             )

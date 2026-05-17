@@ -91,9 +91,39 @@ class _LegacyBridgeStub:
     def get_database(self, db, dataset_id):
         return db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
 
-    def list_databases(self, db, **kwargs):
+    def list_databases(self, db, page=0, size=0, filters=None, filters_exp=None, sort="-id"):
+        """Query DatasetRegistry directly (was legacy databases table)."""
         from types import SimpleNamespace
-        return {"dataList": [], "total": 0}
+
+        query = db.query(DatasetRegistry)
+        if filters:
+            for k, v in filters.items():
+                if hasattr(DatasetRegistry, k):
+                    query = query.filter(getattr(DatasetRegistry, k) == v)
+        if filters_exp:
+            for fe in filters_exp:
+                if len(fe) == 3 and hasattr(DatasetRegistry, fe[0]):
+                    query = query.filter(getattr(DatasetRegistry, fe[0]) == fe[2])
+
+        total = query.count()
+        if size > 0:
+            query = query.offset(page * size).limit(size)
+
+        rows = query.all()
+        items = [SimpleNamespace(
+            id=r.id,
+            dataset_code=getattr(r, 'dataset_code', ''),
+            title=getattr(r, 'title', ''),
+            organism=getattr(r, 'organism', ''),
+            file_format=getattr(r, 'file_format', ''),
+            lifecycle_state=getattr(r, 'lifecycle_state', ''),
+            visibility=getattr(r, 'visibility', ''),
+            is_public=getattr(r, 'is_public', False),
+            owner_id=getattr(r, 'owner_id', None),
+            create_time=getattr(r, 'create_time', 0),
+            update_time=getattr(r, 'update_time', 0),
+        ) for r in rows]
+        return {"dataList": items, "total": total}
 
     def create_database(self, db, obj_in):
         raise NotImplementedError("Use DatasetRegistry directly")
@@ -111,7 +141,13 @@ class _LegacyBridgeStub:
         pass
 
     def list_meta(self, db, dataset_id):
-        return []
+        """Return metadata for a dataset. Replaced by direct query."""
+        registry = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
+        if not registry:
+            return []
+        return [{"key": "dataset_code", "value": registry.dataset_code or ""},
+                {"key": "organism", "value": registry.organism or ""},
+                {"key": "file_format", "value": registry.file_format or ""}]
 
     def list_project_links_by_project(self, db, project_id):
         return []
@@ -1381,8 +1417,8 @@ class DatasetDomainService:
         dst_asset = dataset_asset_db.get_one(db=db, id=lineage_obj.dst_asset_id) if lineage_obj.dst_asset_id else None
         src_database = dataset_legacy_bridge.get_database(db=db, dataset_id=src_version.dataset_id) if src_version else None
         dst_database = dataset_legacy_bridge.get_database(db=db, dataset_id=dst_version.dataset_id) if dst_version else None
-        src_registry = dataset_registry_db.get_filter(db=db, filters={"dataset_id": src_version.dataset_id}) if src_version else None
-        dst_registry = dataset_registry_db.get_filter(db=db, filters={"dataset_id": dst_version.dataset_id}) if dst_version else None
+        src_registry = dataset_registry_db.get_filter(db=db, filters={"id": src_version.dataset_id}) if src_version else None
+        dst_registry = dataset_registry_db.get_filter(db=db, filters={"id": dst_version.dataset_id}) if dst_version else None
         return {
             "id": lineage_obj.id,
             "dataset_id": lineage_obj.dataset_id,
@@ -3641,7 +3677,7 @@ class DatasetDomainService:
         db.query(dataset_workflow_task_db.model).filter(dataset_workflow_task_db.model.dataset_id == dataset_id).delete(
             synchronize_session=False
         )
-        db.query(dataset_registry_db.model).filter(dataset_registry_db.model.dataset_id == dataset_id).delete(
+        db.query(dataset_registry_db.model).filter(dataset_registry_db.model.id == dataset_id).delete(
             synchronize_session=False
         )
         db.query(dataset_staging_file_db.model).filter(dataset_staging_file_db.model.linked_dataset_id == dataset_id).delete(
