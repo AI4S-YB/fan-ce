@@ -43,7 +43,8 @@ from .models import (
 
 def init_dataset_tables():
     """Tables are now created by alembic migration (consolidate_init_tables).
-    This function keeps only the runtime schema/index helpers."""
+    Import Dataset to register it with Base.metadata for FK resolution."""
+    from .dataset_model import Dataset  # noqa: F401 — register with Base.metadata
     _ensure_dataset_schema_columns()
     _ensure_dataset_schema_column_types()
     _backfill_default_public_versions()
