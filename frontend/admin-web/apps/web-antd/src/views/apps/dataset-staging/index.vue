@@ -626,9 +626,6 @@ async function submitCandidateForm() {
   }
 }
 
-function openCandidatePage() {
-  void router.push('/apps/dataset-candidate');
-}
 
 function selectRoot(record: ScanRootItem | Record<string, any>) {
   const root = record as ScanRootItem;
@@ -832,7 +829,6 @@ const stagingRowSelection = computed(() => ({
       <Space wrap>
         <Button @click="reloadAll">{{ $t('common.redo') }}</Button>
         <Button type="primary" ghost @click="openUploadModal">{{ $t('dataset.staging.uploadToStaging') }}</Button>
-        <Button @click="openCandidatePage">{{ $t('dataset.staging.viewCandidates') }}</Button>
         <Button
           v-if="activeRoot"
           type="primary"
@@ -973,7 +969,6 @@ const stagingRowSelection = computed(() => ({
       <template #extra>
         <Space wrap>
           <Button type="primary" ghost @click="openUploadModal">{{ $t('dataset.staging.uploadToStaging') }}</Button>
-          <Button @click="openCandidatePage">{{ $t('dataset.staging.viewCandidates') }}</Button>
         </Space>
       </template>
       <DirectoryBrowser
@@ -1124,41 +1119,6 @@ const stagingRowSelection = computed(() => ({
     </Modal>
 
     <Modal
-      v-model:open="candidateModalVisible"
-      :title="$t('dataset.staging.generateRegistryCandidate')"
-      :confirm-loading="candidateModalLoading"
-      @ok="submitCandidateForm"
-    >
-      <div class="modal-form">
-        <Input
-          v-model:value="candidateForm.candidate_name"
-          :placeholder="$t('dataset.staging.candidateNamePlaceholder')"
-        />
-        <Select
-          v-model:value="candidateForm.dataset_type"
-          :options="DATASET_TYPE_OPTIONS"
-          :placeholder="$t('dataset.staging.targetDataTypePlaceholder')"
-        />
-        <Select
-          v-model:value="candidateForm.registration_mode"
-          :options="REGISTRATION_MODE_OPTIONS"
-          :placeholder="$t('dataset.staging.registrationModePlaceholder')"
-        />
-        <Input
-          v-model:value="candidateForm.version_name"
-          :placeholder="$t('dataset.staging.optionalTargetVersion')"
-        />
-        <Input
-          v-model:value="candidateForm.organism"
-          :placeholder="$t('dataset.staging.optionalSpeciesName')"
-        />
-        <Input
-          v-model:value="candidateForm.assembly"
-          :placeholder="$t('dataset.staging.optionalAssemblyVersion')"
-        />
-        <div class="candidate-tip">
-          {{ $t('dataset.staging.candidateTipStaging') }}
-        </div>
       </div>
     </Modal>
 
