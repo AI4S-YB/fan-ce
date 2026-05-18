@@ -3,7 +3,8 @@ import { ref, computed } from 'vue';
 import {
   Button, Space, Tag, Input, Select, Modal, Empty, message, Switch,
 } from 'ant-design-vue';
-import { getAssetTypeOptionsApi } from '#/api/apps/dataset';
+import { EditOutlined } from '@ant-design/icons-vue';
+import { getAssetTypeOptionsApi, updateDatasetAssetApi } from '#/api/apps/dataset';
 import { $t } from '@vben/locales';
 import {
   useDataset,
@@ -53,6 +54,31 @@ const assetForm = ref({
   query_engine: '',
   is_query_entry: false,
 });
+
+// Inline asset name editing
+const editingAssetNameId = ref<number | null>(null);
+const editingAssetNameText = ref('');
+const editingAssetNameSaving = ref(false);
+
+function startEditAssetName(asset: DatasetAssetItem) {
+  editingAssetNameId.value = asset.id;
+  editingAssetNameText.value = asset.asset_name || '';
+}
+
+async function saveAssetName() {
+  if (editingAssetNameId.value == null) return;
+  editingAssetNameSaving.value = true;
+  try {
+    await updateDatasetAssetApi({ id: editingAssetNameId.value, asset_name: editingAssetNameText.value.trim() || undefined });
+    message.success('Asset name updated');
+    editingAssetNameId.value = null;
+    emit('refresh');
+  } catch (e: any) {
+    message.error(e?.message || 'Update failed');
+  } finally {
+    editingAssetNameSaving.value = false;
+  }
+}
 
 function openAssetCreate() {
   editingAsset.value = null;
@@ -174,7 +200,17 @@ async function handleToggleDownload(file: AssetFileItem, val: boolean) {
     <div v-for="asset in filteredAssets" :key="asset.id" style="border: 1px solid #e0e0e0; border-radius: 4px; padding: 12px; margin-bottom: 8px; background: #fff;">
       <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
         <div>
+        <div v-if="editingAssetNameId !== asset.id">
           <strong>{{ asset.asset_name || asset.asset_code || `asset-${asset.id}` }}</strong>
+          <Button size="small" type="text" @click="startEditAssetName(asset)" title="Edit name">
+            <EditOutlined style="font-size: 12px; color: #1677ff;" />
+          </Button>
+        </div>
+        <div v-else style="display:flex;align-items:center;gap:8px;">
+          <Input v-model:value="editingAssetNameText" size="small" style="width:180px;" />
+          <Button size="small" type="primary" :loading="editingAssetNameSaving" @click="saveAssetName">OK</Button>
+          <Button size="small" @click="editingAssetNameId = null">Cancel</Button>
+        </div>
           <span style="color: #888; font-size: 12px;"> / {{ asset.asset_type || '-' }}</span>
         </div>
         <Space size="small">
