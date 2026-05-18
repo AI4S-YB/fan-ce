@@ -45,6 +45,35 @@ const organismTaxId = ref<number | undefined>(undefined);
 const organismOptions = ref<Array<{ label: string; value: number }>>([]);
 const organismSaving = ref(false);
 
+// Visibility inline edit
+const editingVisibilityId = ref<number | null>(null);
+const editingVisibilityValue = ref<string>('private');
+const visibilitySaving = ref(false);
+
+function startEditVisibility(record: DatasetItem) {
+  editingVisibilityId.value = record.id;
+  editingVisibilityValue.value = record.visibility || 'private';
+}
+
+async function saveVisibility() {
+  if (editingVisibilityId.value == null) return;
+  visibilitySaving.value = true;
+  try {
+    if (editingVisibilityValue.value === 'public') {
+      await publishDatasetApi({ id: editingVisibilityId.value });
+    } else {
+      await unpublishDatasetApi({ id: editingVisibilityId.value });
+    }
+    createMessage.success('Visibility updated');
+    editingVisibilityId.value = null;
+    await loadDatasets();
+  } catch (e: any) {
+    createMessage.error(e?.message || 'Update failed');
+  } finally {
+    visibilitySaving.value = false;
+  }
+}
+
 // Inline title editing
 const editingTitleId = ref<number | null>(null);
 const editingTitleText = ref('');
@@ -380,31 +409,34 @@ onMounted(async () => {
           </Tag>
         </template>
         <template v-else-if="column.key === 'visibility'">
-          <Tag :color="visibilityColor((record as DatasetItem).visibility)">
-            {{ (record as DatasetItem).visibility || '-' }}
-          </Tag>
+          <div v-if="editingVisibilityId !== (record as DatasetItem).id">
+            <Space size="small">
+              <Tag :color="visibilityColor((record as DatasetItem).visibility)">
+                {{ (record as DatasetItem).visibility || '-' }}
+              </Tag>
+              <Button size="small" type="text" @click="startEditVisibility(record as DatasetItem)" title="Edit visibility">
+                <EditOutlined style="font-size: 13px; color: #1677ff;" />
+              </Button>
+            </Space>
+          </div>
+          <div v-else>
+            <Select
+              v-model:value="editingVisibilityValue"
+              style="width: 120px;"
+              size="small"
+              :options="visibilityOptions"
+            />
+            <Space size="small" style="margin-top: 4px;">
+              <Button size="small" type="primary" :loading="visibilitySaving" @click="saveVisibility">OK</Button>
+              <Button size="small" @click="editingVisibilityId = null">Cancel</Button>
+            </Space>
+          </div>
         </template>
         <template v-else-if="column.key === 'action'">
           <Space wrap>
             <Button type="link" @click="router.push(`/dataset/${(record as DatasetItem).id}`)">{{ $t('dataset.list.detail') }}</Button>
             <Button type="link" @click="router.push(`/dataset/${(record as DatasetItem).id}/query`)">{{ $t('dataset.list.dataQuery') }}</Button>
             <Button type="link" @click="openLinkModal(record as DatasetItem)">{{ $t('dataset.list.linkToProgram') }}</Button>
-            <Button
-              v-if="(record as DatasetItem).visibility !== 'public'"
-              type="link"
-              :loading="visibilityLoading === (record as DatasetItem).id"
-              @click="handleToggleVisibility(record as DatasetItem)"
-            >
-              {{ $t('dataset.list.makePublic') }}
-            </Button>
-            <Button
-              v-else
-              type="link"
-              :loading="visibilityLoading === (record as DatasetItem).id"
-              @click="handleToggleVisibility(record as DatasetItem)"
-            >
-              {{ $t('dataset.list.cancelPublic') }}
-            </Button>
             <Button
               v-if="(record as DatasetItem).lifecycle_state === 'archived'"
               type="link"

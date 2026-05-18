@@ -3044,6 +3044,8 @@ class DatasetDomainService:
 
         dataset_payload["version"] = version_obj.version
         dataset_payload["title"] = version_obj.title or dataset_payload["title"]
+        dataset_payload["lifecycle_state"] = version_obj.lifecycle_state or dataset_payload["lifecycle_state"]
+        dataset_payload["visibility"] = version_obj.visibility or dataset_payload["visibility"]
         dataset_payload["dataset_type"] = dataset_payload["dataset_type"]
         dataset_kind_obj = self._get_dataset_kind_registry_by_code(db=db, code=dataset_payload["dataset_type"])
         dataset_payload["dataset_kind"] = self._build_dataset_kind_registry_payload(dataset_kind_obj) if dataset_kind_obj else None
