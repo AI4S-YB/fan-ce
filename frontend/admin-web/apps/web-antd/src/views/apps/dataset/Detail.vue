@@ -168,7 +168,6 @@ function handleDelete() {
   });
 }
 
-
 // ── description_md editor ──
 const descriptionMd = ref('');
 let descriptionMdInit = false;
@@ -227,7 +226,8 @@ watch(detailData, (data) => {
   if (data) {
     extraJsonInit = true;
     try {
-      const parsed = data.meta_json ? (typeof data.meta_json === "string" ? JSON.parse(data.meta_json) : data.meta_json) : {};
+      const raw = data.meta_json;
+      const parsed = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : {};
       const fields: KvField[] = [];
       for (const [key, value] of Object.entries(parsed)) {
         fields.push({ key, value: String(value) });
@@ -270,7 +270,7 @@ onMounted(() => loadAll());
             <Tag>{{ detailData.dataset_code || '-' }}</Tag>
           </div>
           <div style="color: #888; font-size: 13px;">
-            <span>{{ detailData.organism || '-' }}</span>
+            <span>{{ (detailData as any).organism_name || detailData.organism || '-' }}</span>
             <span style="margin-left: 8px;">{{ getPreferredDatasetTypeCode(detailData.dataset_type) }}</span>
             <span style="margin-left: 8px;">{{ detailData.query_profile?.file_format || detailData.file_format || '-' }}</span>
           </div>
@@ -288,9 +288,171 @@ onMounted(() => loadAll());
       <div style="display: flex; gap: 24px; font-size: 13px; padding: 8px 12px; background: #fafafa; border-radius: 4px; margin-bottom: 16px; align-items: center;">
         <span>{{ $t('dataset.list.queryEntry') }}<strong>{{ detailData.query_entry_asset?.asset_code || $t('dataset.list.notConfigured') }}</strong></span>
         <span>{{ $t('dataset.list.currentVersion') }}：<strong>{{ versionListData?.current_version?.version || '-' }}</strong></span>
+        <span>{{ $t('dataset.list.defaultPublicVersion') }}：<strong>{{ versionListData?.default_public_version?.version || '-' }}</strong></span>
         <span style="display:flex;align-items:center;gap:4px;">{{ $t('dataset.detail.versionLabel') }}：<Input v-model:value="editableVersion" size="small" style="width:120px;" @blur="debouncedSaveVersion(editableVersion)" /></span>
       </div>
 
+      <div v-if="versionMismatch" style="background: #fffbe6; border: 1px solid #ffe58f; padding: 6px 12px; border-radius: 4px; margin-bottom: 12px; font-size: 12px;">
+        {{ $t('dataset.list.versionMismatch', { version: versionListData?.default_public_version?.version }) }}
+      </div>
+
+      <!-- Section: Description (Markdown) -->
+      <div style="margin-bottom: 20px;">
+        <h3>{{ $t('dataset.detail.descriptionMd') }}</h3>
+        <Input.TextArea
+          v-model:value="descriptionMd"
+          :placeholder="$t('dataset.detail.descriptionMdPlaceholder')"
+          :auto-size="{ minRows: 6, maxRows: 20 }"
+        />
+      </div>
+
+      <!-- Section: Structured Attributes (extra_json) -->
+      <div style="margin-bottom: 20px;">
+        <h3>{{ $t('dataset.detail.extraJson') }}</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:8px;">{{ $t('dataset.detail.extraJsonHint') }}</p>
+        <div v-if="extraJsonFields.length === 0" style="color:#bbb;font-size:13px;margin-bottom:8px;">
+          {{ $t('dataset.detail.extraJsonEmpty') }}
+        </div>
+        <div
+          v-for="(field, index) in extraJsonFields"
+          :key="index"
+          style="display:flex;gap:8px;align-items:center;margin-bottom:6px;"
+        >
+          <Input
+            v-model:value="field.key"
+            :placeholder="$t('dataset.detail.extraJsonKeyPlaceholder')"
+            style="width:180px;"
+            size="small"
+            @blur="onExtraFieldChange"
+          />
+          <Input
+            v-model:value="field.value"
+            :placeholder="$t('dataset.detail.extraJsonValuePlaceholder')"
+            style="flex:1;"
+            size="small"
+            @blur="onExtraFieldChange"
+          />
+          <Button size="small" danger type="text" @click="removeExtraField(index)">
+            ✕
+          </Button>
+        </div>
+        <Button size="small" type="dashed" @click="addExtraField" style="margin-top:4px;">
+          + {{ $t('dataset.detail.extraJsonAddField') }}
+        </Button>
+      </div>
+
+      <!-- Section 3: Version Table -->
+      <div style="margin-bottom: 20px;">
+        <h3>{{ $t('dataset.list.versionManage') }}</h3>
+        <VersionTable
+          :version-data="versionListData"
+          :active-version-id="activeVersionId"
+          :action-loading-key="actionLoadingKey"
+          @select="handleSelectVersion"
+          @activate="handleActivate"
+          @release="handleRelease"
+          @withdraw="handleWithdraw"
+          @set-default="handleSetDefault"
+          @create-version="() => {}"
+        />
+      </div>
+
+      <!-- Section 4 & 5: Assets & Lineage (side-by-side) -->
+      <div v-if="activeVersionId" style="display: flex; gap: 16px;">
+        <div style="flex: 1;">
+          <h3>{{ $t('dataset.list.asset') }}</h3>
+          <AssetPanel
+            :version-detail="versionDetailData"
+            :loading="versionDetailLoading"
+            @refresh="selectVersion(activeVersionId!)"
+          />
+        </div>
+        <div style="flex: 1;">
+          <h3>{{ $t('dataset.list.lineage') }}</h3>
+          <LineagePanel
+            :version-detail="versionDetailData"
+            :version-id="activeVersionId"
+            :loading="versionDetailLoading"
+            @refresh="selectVersion(activeVersionId!)"
+          />
+        </div>
+      </div>
+
+      <!-- Section 6: Publish History (collapsed) -->
+      <details style="margin-top: 20px; font-size: 12px; color: #888;">
+        <summary>{{ $t('dataset.list.publishHistory', { count: publishRecords.length }) }}</summary>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 8px;">
+          <thead>
+          <tr style="background: #f5f5f5;">
+            <th style="padding: 4px 8px; text-align: left; border: 1px solid #e0e0e0;">{{ $t('dataset.list.time') }}</th>
+            <th style="padding: 4px 8px; text-align: left; border: 1px solid #e0e0e0;">{{ $t('dataset.list.action2') }}</th>
+            <th style="padding: 4px 8px; text-align: left; border: 1px solid #e0e0e0;">{{ $t('dataset.list.visibility') }}</th>
+            <th style="padding: 4px 8px; text-align: left; border: 1px solid #e0e0e0;">{{ $t('dataset.list.lifecycleHeader') }}</th>
+            <th style="padding: 4px 8px; text-align: left; border: 1px solid #e0e0e0;">{{ $t('dataset.list.remark2') }}</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="r in publishRecords" :key="r.id">
+            <td style="padding: 3px 6px; border: 1px solid #e0e0e0;">{{ r.create_time ? new Date(r.create_time * 1000).toLocaleString('zh-CN') : '-' }}</td>
+            <td style="padding: 3px 6px; border: 1px solid #e0e0e0;">{{ r.action || '-' }}</td>
+            <td style="padding: 3px 6px; border: 1px solid #e0e0e0;">{{ r.visibility_before || '-' }} → {{ r.visibility_after || '-' }}</td>
+            <td style="padding: 3px 6px; border: 1px solid #e0e0e0;">{{ r.lifecycle_before || '-' }} → {{ r.lifecycle_after || '-' }}</td>
+            <td style="padding: 3px 6px; border: 1px solid #e0e0e0;">{{ r.note || '-' }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </details>
+
+      <!-- Section 7: System Info (collapsed) -->
+      <details style="margin-top: 12px; font-size: 12px; color: #888;">
+        <summary>{{ $t('dataset.list.systemInfo') }}</summary>
+        <div style="display: flex; gap: 24px; margin-top: 8px;">
+          <span>ID: {{ detailData.id }}</span>
+          <span>Code: {{ detailData.dataset_code }}</span>
+          <span>创建: {{ detailData.create_time ? new Date(detailData.create_time * 1000).toLocaleString('zh-CN') : '-' }}</span>
+          <span>更新: {{ detailData.update_time ? new Date(detailData.update_time * 1000).toLocaleString('zh-CN') : '-' }}</span>
+        </div>
+      </details>
+
+      <!-- Link to Program Modal -->
+      <Modal
+        v-model:open="linkModalVisible"
+        :title="$t('dataset.list.linkToProgramTitle')"
+        :confirm-loading="linkSubmitting"
+        @ok="handleDirectLink"
+        :ok-text="$t('dataset.list.directLink')"
+        :cancel-text="$t('common.cancelText')"
+      >
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <!-- Program selector -->
+          <div>
+            <label style="display: block; margin-bottom: 4px; font-weight: 500;">{{ $t('dataset.list.selectProgram') }}</label>
+            <Select
+              v-model:value="selectedProgramId"
+              :options="programStore.programOptions"
+              :placeholder="$t('dataset.list.selectProgramPlaceholder')"
+              style="width: 100%;"
+              :show-search="true"
+              :filter-option="(input: string, option: any) => (option?.label || '').toLowerCase().includes(input.toLowerCase())"
+            />
+          </div>
+          <!-- Instruction textarea -->
+          <div>
+            <label style="display: block; margin-bottom: 4px; font-weight: 500;">{{ $t('dataset.list.linkInstruction') }}</label>
+            <Input.TextArea
+              v-model:value="linkInstruction"
+              :placeholder="$t('dataset.list.linkInstructionPlaceholder')"
+              :rows="3"
+            />
+          </div>
+          <!-- LLM preview button (disabled placeholder) -->
+          <div>
+            <Button block disabled @click="handleLlmPreview">{{ $t('dataset.list.llmPreview') }}</Button>
+            <div style="font-size: 11px; color: #aaa; margin-top: 4px;">{{ $t('dataset.list.llmPreviewDisabled') }}</div>
+          </div>
+        </div>
+      </Modal>
     </template>
+    <div v-else style="text-align: center; padding: 80px; color: #888;">{{ $t('dataset.list.noDetail') }}</div>
   </Page>
 </template>
