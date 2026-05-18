@@ -5980,6 +5980,24 @@ class DatasetDomainService:
         finally:
             db.close()
 
+    def list_public_dataset_versions(self, dataset_id, keyword=None, is_current=None):
+        db = mydb.get_dbs()
+        try:
+            dataset_payload = self._build_public_dataset_payload(db=db, dataset_id=dataset_id)
+            items = list(dataset_payload.get("public_versions", []))
+            if keyword:
+                kw = str(keyword).strip().lower()
+                items = [i for i in items if kw in str(i.get("version") or "").lower() or kw in str(i.get("title") or "").lower()]
+            if is_current is not None:
+                items = [i for i in items if bool(i.get("is_current")) is bool(is_current)]
+            return {
+                "dataset_id": dataset_id,
+                "items": items,
+                "total": len(items),
+            }
+        finally:
+            db.close()
+
     def get_public_dataset_version(self, dataset_id, version_id):
         db = mydb.get_dbs()
         try:

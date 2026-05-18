@@ -41,9 +41,7 @@ async def public_dataset_version_list(request_data: PublicDatasetVersionListRequ
     data = dataset_domain_service.list_public_dataset_versions(
         dataset_id=request_data.id,
         keyword=request_data.keyword,
-        is_default_public=request_data.is_default_public,
         is_current=request_data.is_current,
-        release_state=request_data.release_state,
     )
     return response_200(data=jsonable_encoder(data))
 
