@@ -244,7 +244,10 @@ watch(detailData, (data) => {
   if (data) {
     extraJsonInit = true;
     try {
-      const parsed = data.meta_json ? JSON.parse(data.meta_json) : {};
+      const raw = data.meta_json;
+      const parsed = raw
+        ? (typeof raw === 'string' ? JSON.parse(raw) : raw)
+        : {};
       const fields: KvField[] = [];
       for (const [key, value] of Object.entries(parsed)) {
         fields.push({ key, value: String(value) });
