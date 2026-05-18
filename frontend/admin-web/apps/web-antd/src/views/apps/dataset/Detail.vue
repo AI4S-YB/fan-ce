@@ -156,6 +156,10 @@ async function handleWithdraw(version: DatasetVersionItem) {
   }
 }
 
+    actionLoadingKey.value = '';
+  }
+}
+
 function handleDelete() {
   Modal.confirm({
     title: $t('dataset.list.delete') + ' Dataset',
@@ -228,10 +232,7 @@ watch(detailData, (data) => {
   if (data) {
     extraJsonInit = true;
     try {
-      const raw = data.meta_json;
-      const parsed = raw
-        ? (typeof raw === 'string' ? JSON.parse(raw) : raw)
-        : {};
+      const parsed = data.meta_json ? (typeof data.meta_json === "string" ? JSON.parse(data.meta_json) : data.meta_json) : {};
       const fields: KvField[] = [];
       for (const [key, value] of Object.entries(parsed)) {
         fields.push({ key, value: String(value) });
@@ -274,7 +275,7 @@ onMounted(() => loadAll());
             <Tag>{{ detailData.dataset_code || '-' }}</Tag>
           </div>
           <div style="color: #888; font-size: 13px;">
-            <span>{{ (detailData as any).organism_name || detailData.organism || '-' }}</span>
+            <span>{{ detailData.organism || '-' }}</span>
             <span style="margin-left: 8px;">{{ getPreferredDatasetTypeCode(detailData.dataset_type) }}</span>
             <span style="margin-left: 8px;">{{ detailData.query_profile?.file_format || detailData.file_format || '-' }}</span>
           </div>
@@ -295,6 +296,3 @@ onMounted(() => loadAll());
         <span style="display:flex;align-items:center;gap:4px;">{{ $t('dataset.detail.versionLabel') }}：<Input v-model:value="editableVersion" size="small" style="width:120px;" @blur="debouncedSaveVersion(editableVersion)" /></span>
       </div>
 
-    </template>
-  </Page>
-</template>
