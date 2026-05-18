@@ -39,8 +39,8 @@ const page = ref(1);
 const pageSize = ref(10);
 
 // Organism edit
-const organismModalVisible = ref(false);
-const organismEditingId = ref<number | null>(null);
+// Organism inline edit
+const editingOrganismId = ref<number | null>(null);
 const organismTaxId = ref<number | undefined>(undefined);
 const organismOptions = ref<Array<{ label: string; value: number }>>([]);
 const organismSaving = ref(false);
@@ -80,20 +80,22 @@ async function searchTaxonomy(keyword: string) {
   }));
 }
 
-function openOrganismModal(record: DatasetItem) {
-  organismEditingId.value = record.id;
+function startEditOrganism(record: DatasetItem) {
+  editingOrganismId.value = record.id;
   organismTaxId.value = (record as any).organism || undefined;
   organismOptions.value = [];
-  organismModalVisible.value = true;
+  if ((record as any).organism && (record as any).organism_name) {
+    organismOptions.value = [{ label: (record as any).organism_name, value: (record as any).organism }];
+  }
 }
 
 async function saveOrganism() {
-  if (organismEditingId.value == null || organismTaxId.value == null) return;
+  if (editingOrganismId.value == null || organismTaxId.value == null) return;
   organismSaving.value = true;
   try {
-    await updateDatasetApi({ id: organismEditingId.value, organism: organismTaxId.value });
+    await updateDatasetApi({ id: editingOrganismId.value, organism: organismTaxId.value });
     createMessage.success('Species updated');
-    organismModalVisible.value = false;
+    editingOrganismId.value = null;
     await loadDatasets();
   } catch (e: any) {
     createMessage.error(e?.message || 'Update failed');
@@ -327,9 +329,11 @@ onMounted(async () => {
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'title'">
           <div v-if="editingTitleId !== (record as DatasetItem).id">
-            <div>{{ (record as DatasetItem).title || (record as DatasetItem).name || `dataset-${(record as DatasetItem).id}` }}</div>
+            <Space size="small">
+              <span>{{ (record as DatasetItem).title || (record as DatasetItem).name || `dataset-${(record as DatasetItem).id}` }}</span>
+              <Button size="small" type="text" @click="startEditTitle(record as DatasetItem)" title="Edit title">✏️</Button>
+            </Space>
             <div style="font-size: 12px; color: #888;">{{ (record as DatasetItem).dataset_code || '-' }}</div>
-            <a style="font-size: 12px;" @click="startEditTitle(record as DatasetItem)">Edit</a>
           </div>
           <div v-else>
             <Input v-model:value="editingTitleText" style="width: 200px;" size="small" />
@@ -343,11 +347,29 @@ onMounted(async () => {
           <Tag>{{ (record as any).dataset_kind?.name || getPreferredDatasetTypeCode((record as DatasetItem).dataset_type) }}</Tag>
         </template>
         <template v-else-if="column.key === 'organism'">
-          <Space size="small">
-            <span>{{ (record as any).organism_name || '-' }}</span>
-            <Tag v-if="(record as any).organism" color="default" style="font-size: 10px;">tax_id:{{ (record as any).organism }}</Tag>
-            <Button size="small" type="link" @click="openOrganismModal(record as DatasetItem)">{{ $t('common.edit') }}</Button>
-          </Space>
+          <div v-if="editingOrganismId !== (record as DatasetItem).id">
+            <Space size="small">
+              <span>{{ (record as any).organism_name || '-' }}</span>
+              <Tag v-if="(record as any).organism" color="default" style="font-size: 10px;">tax_id:{{ (record as any).organism }}</Tag>
+              <Button size="small" type="text" @click="startEditOrganism(record as DatasetItem)" title="Edit species">✏️</Button>
+            </Space>
+          </div>
+          <div v-else>
+            <Select
+              v-model:value="organismTaxId"
+              show-search
+              :filter-option="false"
+              style="width: 260px;"
+              size="small"
+              placeholder="Search species name..."
+              :options="organismOptions"
+              @search="searchTaxonomy"
+            />
+            <Space size="small" style="margin-top: 4px;">
+              <Button size="small" type="primary" :loading="organismSaving" @click="saveOrganism">OK</Button>
+              <Button size="small" @click="editingOrganismId = null">Cancel</Button>
+            </Space>
+          </div>
         </template>
         <template v-else-if="column.key === 'version'">
           <Tag color="blue">{{ (record as DatasetItem).version || '-' }}</Tag>
@@ -437,25 +459,6 @@ onMounted(async () => {
           <div style="font-size: 11px; color: #aaa; margin-top: 4px;">{{ $t('dataset.list.llmPreviewDisabled') }}</div>
         </div>
       </div>
-    </Modal>
-
-    <!-- Organism Edit Modal -->
-    <Modal
-      v-model:open="organismModalVisible"
-      :title="'Edit Species'"
-      :confirm-loading="organismSaving"
-      @ok="saveOrganism"
-      destroy-on-close
-    >
-      <Select
-        v-model:value="organismTaxId"
-        show-search
-        :filter-option="false"
-        style="width: 100%"
-        :placeholder="'输入物种学名搜索 (e.g. Arabidopsis, Rosa)...'"
-        :options="organismOptions"
-        @search="searchTaxonomy"
-      />
     </Modal>
   </Page>
 </template>
