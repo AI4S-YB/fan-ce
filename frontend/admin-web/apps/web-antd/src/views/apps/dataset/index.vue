@@ -48,7 +48,7 @@ const organismSaving = ref(false);
 async function searchTaxonomy(keyword: string) {
   if (!keyword || keyword.length < 2) { organismOptions.value = []; return; }
   const res = await getGermplasmTaxonomyOptionsApi({ keyword, limit: 15, active_only: 1 });
-  const items = (res as any).data?.items || (res as any).items || [];
+  const items = (res as any)?.items || (res as any)?.data?.items || [];
   organismOptions.value = items.map((item: any) => ({
     label: item.scientific_name || `tax_id: ${item.tax_id}`,
     value: item.tax_id,
