@@ -27,7 +27,7 @@ class DatasetUpdateRequest(BaseModel):
     title: Optional[str] = None
     dataset_type: Optional[str] = None
     version: Optional[str] = None
-    organism: Optional[str] = None
+    organism: Optional[int] = None
     file_format: Optional[str] = None
     query_engine: Optional[str] = None
     validation_summary: Optional[str] = None

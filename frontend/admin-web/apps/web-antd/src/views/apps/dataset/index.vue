@@ -67,11 +67,11 @@ async function saveOrganism() {
   organismSaving.value = true;
   try {
     await updateDatasetApi({ id: organismEditingId.value, organism: organismTaxId.value });
-    createMessage.success($t('common.success'));
+    createMessage.success('Species updated');
     organismModalVisible.value = false;
     await loadDatasets();
   } catch (e: any) {
-    createMessage.error(e?.message || $t('common.error'));
+    createMessage.error(e?.message || 'Update failed');
   } finally {
     organismSaving.value = false;
   }
@@ -409,7 +409,7 @@ onMounted(async () => {
     <!-- Organism Edit Modal -->
     <Modal
       v-model:open="organismModalVisible"
-      :title="$t('dataset.list.editOrganism') || 'Edit Species'"
+      :title="'Edit Species'"
       :confirm-loading="organismSaving"
       @ok="saveOrganism"
       destroy-on-close
