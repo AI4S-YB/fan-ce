@@ -1574,10 +1574,10 @@ class DatasetDomainService:
         dataset_type = registry.dataset_type if registry else "generic"
         asset_rows = dataset_asset_db.get_data(db=db, filters={"dataset_version_id": version_obj.id})
         asset_rows = sorted(asset_rows, key=lambda item: (-int(bool(item.is_query_entry)), item.display_order or 0, item.id))
-        if not asset_rows and not version_obj.file_path:
+        if not asset_rows and not None:
             return []
 
-        if version_obj.file_path:
+        if None:
             # Legacy compatibility: bootstrap the asset/file rows from version.file_path
             # so query paths can continue reading from asset-first payloads.
             default_asset_type = self._default_asset_type(dataset_type, db=db)
@@ -1595,8 +1595,8 @@ class DatasetDomainService:
                         "asset_code": default_asset_code,
                         "asset_name": self._asset_name_from_version(version_obj, default_asset_type),
                         "asset_type": default_asset_type,
-                        "file_format": version_obj.file_format,
-                        "query_engine": version_obj.query_engine,
+                        "file_format": None,
+                        "query_engine": None,
                         "storage_backend": "local",
                         "workflow_state": version_obj.lifecycle_state or "draft",
                         "status": "active",
@@ -1614,8 +1614,8 @@ class DatasetDomainService:
                     default_asset,
                     asset_name=default_asset.asset_name or self._asset_name_from_version(version_obj, default_asset_type),
                     asset_type=default_asset.asset_type or default_asset_type,
-                    file_format=version_obj.file_format or default_asset.file_format,
-                    query_engine=version_obj.query_engine or default_asset.query_engine,
+                    file_format=None or default_asset.file_format,
+                    query_engine=None or default_asset.query_engine,
                     workflow_state=version_obj.lifecycle_state or default_asset.workflow_state,
                     status=default_asset.status or "active",
                     update_time=self._now(),
@@ -1627,11 +1627,11 @@ class DatasetDomainService:
                     db=db,
                     asset_obj=default_asset,
                     file_role="primary",
-                    local_path=version_obj.file_path,
-                    file_format=version_obj.file_format,
+                    local_path=None,
+                    file_format=None,
                     status="active",
                 )
-                for index_path in self._detect_index_file_paths(version_obj.file_path, dataset_type):
+                for index_path in self._detect_index_file_paths(None, dataset_type):
                     self._ensure_asset_file_record(
                         db=db,
                         asset_obj=default_asset,
@@ -2715,10 +2715,10 @@ class DatasetDomainService:
             "visibility": version_obj.visibility,
             "release_state": release_state,
             "file_path": file_path,
-            "file_format": version_obj.file_format,
-            "query_engine": version_obj.query_engine,
-            "validation_summary": version_obj.validation_summary,
-            "index_summary": version_obj.index_summary,
+            "file_format": None,
+            "query_engine": None,
+            "validation_summary": None,
+            "index_summary": None,
             "meta_json": version_obj.meta_json,
             "is_current": bool(version_obj.is_current),
             "is_default_public": is_default_public,
@@ -3047,19 +3047,19 @@ class DatasetDomainService:
         effective_file_path = self._resolve_version_primary_file_path(db=db, version_obj=version_obj)
         if effective_file_path:
             file_payload["path"] = effective_file_path
-            file_payload["type"] = self._to_file_type(version_obj.file_format) or file_payload.get("type")
+            file_payload["type"] = self._to_file_type(None) or file_payload.get("type")
             file_payload["data_type"] = file_payload.get("data_type")
             file_payload["name"] = file_payload.get("name") or version_obj.title or dataset_payload["title"]
             dataset_payload["file"] = file_payload
 
         dataset_payload["query_profile"] = {
-            "file_format": version_obj.file_format or dataset_payload["query_profile"]["file_format"],
-            "query_engine": version_obj.query_engine or dataset_payload["query_profile"]["query_engine"],
-            "validation_summary": version_obj.validation_summary
-            if version_obj.validation_summary is not None
+            "file_format": None or dataset_payload["query_profile"]["file_format"],
+            "query_engine": None or dataset_payload["query_profile"]["query_engine"],
+            "validation_summary": None
+            if None is not None
             else None,
-            "index_summary": version_obj.index_summary
-            if version_obj.index_summary is not None
+            "index_summary": None
+            if None is not None
             else None,
         }
         return dataset_payload
@@ -5654,10 +5654,10 @@ class DatasetDomainService:
         dataset_id = version_obj.dataset_id
         version_name = version_obj.version
         version_title = version_obj.title
-        version_file_format = version_obj.file_format
-        version_query_engine = version_obj.query_engine
-        version_validation_summary = version_obj.validation_summary
-        version_index_summary = version_obj.index_summary
+        version_file_format = None
+        version_query_engine = None
+        version_validation_summary = None
+        version_index_summary = None
         version_meta_json = version_obj.meta_json
         database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
