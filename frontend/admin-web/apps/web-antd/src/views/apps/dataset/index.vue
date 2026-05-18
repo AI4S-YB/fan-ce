@@ -13,6 +13,7 @@ import {
   publishDatasetApi,
   unpublishDatasetApi,
   transitionDatasetApi,
+  updateDatasetApi,
   type DatasetItem,
   type DatasetKindOption,
 } from '#/api/apps/dataset';
@@ -25,6 +26,7 @@ import {
   visibilityColor,
   getPreferredDatasetTypeCode,
 } from './composables/useDataset';
+import { getGermplasmTaxonomyOptionsApi } from '../germplasm/api';
 
 const { createConfirm, createMessage } = useMessage();
 const router = useRouter();
@@ -35,6 +37,45 @@ const rows = ref<DatasetItem[]>([]);
 const total = ref(0);
 const page = ref(1);
 const pageSize = ref(10);
+
+// Organism edit
+const organismModalVisible = ref(false);
+const organismEditingId = ref<number | null>(null);
+const organismTaxId = ref<number | undefined>(undefined);
+const organismOptions = ref<Array<{ label: string; value: number }>>([]);
+const organismSaving = ref(false);
+
+async function searchTaxonomy(keyword: string) {
+  if (!keyword || keyword.length < 2) { organismOptions.value = []; return; }
+  const res = await getGermplasmTaxonomyOptionsApi({ keyword, limit: 15, active_only: 1 });
+  const items = (res as any).data?.items || (res as any).items || [];
+  organismOptions.value = items.map((item: any) => ({
+    label: `${item.scientific_name || ''} (tax_id: ${item.tax_id})${item.common_name ? ' - ' + item.common_name : ''}`,
+    value: item.tax_id,
+  }));
+}
+
+function openOrganismModal(record: DatasetItem) {
+  organismEditingId.value = record.id;
+  organismTaxId.value = (record as any).organism || undefined;
+  organismOptions.value = [];
+  organismModalVisible.value = true;
+}
+
+async function saveOrganism() {
+  if (organismEditingId.value == null || organismTaxId.value == null) return;
+  organismSaving.value = true;
+  try {
+    await updateDatasetApi({ id: organismEditingId.value, organism: organismTaxId.value });
+    createMessage.success($t('common.success'));
+    organismModalVisible.value = false;
+    await loadDatasets();
+  } catch (e: any) {
+    createMessage.error(e?.message || $t('common.error'));
+  } finally {
+    organismSaving.value = false;
+  }
+}
 
 const kindOptions = ref<DatasetKindOption[]>([]);
 
@@ -269,7 +310,11 @@ onMounted(async () => {
           <Tag>{{ (record as any).dataset_kind?.name || getPreferredDatasetTypeCode((record as DatasetItem).dataset_type) }}</Tag>
         </template>
         <template v-else-if="column.key === 'organism'">
-          <div>{{ (record as any).organism_name || (record as DatasetItem).organism || '-' }}</div>
+          <Space size="small">
+            <span>{{ (record as any).organism_name || '-' }}</span>
+            <Tag v-if="(record as any).organism" color="default" style="font-size: 10px;">ID:{{ (record as any).organism }}</Tag>
+            <a @click="openOrganismModal(record as DatasetItem)" style="font-size: 12px; cursor: pointer;">{{ $t('common.edit') }}</a>
+          </Space>
         </template>
         <template v-else-if="column.key === 'version'">
           <Tag color="blue">{{ (record as DatasetItem).version || '-' }}</Tag>
@@ -359,6 +404,25 @@ onMounted(async () => {
           <div style="font-size: 11px; color: #aaa; margin-top: 4px;">{{ $t('dataset.list.llmPreviewDisabled') }}</div>
         </div>
       </div>
+    </Modal>
+
+    <!-- Organism Edit Modal -->
+    <Modal
+      v-model:open="organismModalVisible"
+      :title="$t('dataset.list.editOrganism') || 'Edit Species'"
+      :confirm-loading="organismSaving"
+      @ok="saveOrganism"
+      destroy-on-close
+    >
+      <Select
+        v-model:value="organismTaxId"
+        show-search
+        :filter-option="false"
+        style="width: 100%"
+        :placeholder="'输入物种名称搜索...'"
+        :options="organismOptions"
+        @search="searchTaxonomy"
+      />
     </Modal>
   </Page>
 </template>

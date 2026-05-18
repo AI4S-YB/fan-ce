@@ -458,7 +458,7 @@ export async function deleteDatasetApi(data: { id: number }) {
   return requestClient.post(`${pre}/delete`, data);
 }
 
-export async function updateDatasetApi(data: { id: number; title?: string; version?: string; description_md?: string; meta_json?: string }) {
+export async function updateDatasetApi(data: { id: number; title?: string; version?: string; description_md?: string; meta_json?: string; organism?: number }) {
   return requestClient.post<DatasetDetailItem>(`${pre}/update`, data);
 }
 
