@@ -30,7 +30,6 @@ from .functional_indexing import clear_functional_annotation_index, rebuild_func
 from .phenome_indexing import clear_phenome_index, rebuild_phenome_index
 from .constants import (
     DATASET_LIFECYCLE_STATES,
-    
     DEFAULT_DATASET_VERSION,
     FILE_TYPE_QUERY_ENGINES,
     LIFECYCLE_TRANSITIONS,
@@ -120,7 +119,6 @@ class _LegacyBridgeStub:
             file_format=getattr(r, 'file_format', ''),
             lifecycle_state=getattr(r, 'lifecycle_state', ''),
             visibility=getattr(r, 'visibility', ''),
-            
             create_time=getattr(r, 'create_time', None),
             update_time=getattr(r, 'update_time', None),
         ) for r in rows]
@@ -1142,7 +1140,6 @@ class DatasetDomainService:
                 asset_name=self._asset_name_from_type(asset_type),
                 asset_type=asset_type,
                 file_format=file_format,
-                query_engine=self._asset_query_engine(asset_type=asset_type, file_format=file_format),
                 storage_backend="local",
                 workflow_state="ready",
                 status="active",
@@ -1307,7 +1304,6 @@ class DatasetDomainService:
             "asset_name": asset_obj.asset_name,
             "asset_type": asset_obj.asset_type,
             "file_format": asset_obj.file_format,
-            "query_engine": asset_obj.query_engine,
             "storage_backend": asset_obj.storage_backend,
             "workflow_state": asset_obj.workflow_state,
             "status": asset_obj.status,
@@ -1601,7 +1597,6 @@ class DatasetDomainService:
                     asset_name=default_asset.asset_name or self._asset_name_from_version(version_obj, default_asset_type),
                     asset_type=default_asset.asset_type or default_asset_type,
                     file_format=None or default_asset.file_format,
-                    query_engine=None or default_asset.query_engine,
                     workflow_state=version_obj.lifecycle_state or default_asset.workflow_state,
                     status=default_asset.status or "active",
                     update_time=self._now(),
@@ -2152,7 +2147,6 @@ class DatasetDomainService:
                 "user_id": operator_id,
                 "type": dataset_type,
                 "status": 1,
-                
                 "is_active": True,
                 "is_delete": False,
                 "create_time": create_time,
@@ -2524,7 +2518,6 @@ class DatasetDomainService:
             "status": getattr(database_obj, 'lifecycle_state', '') or getattr(database_obj, 'status', 'draft'),
             "user_id": getattr(database_obj, 'user_id', None),
             "remark": getattr(database_obj, 'description_md', '') or getattr(database_obj, 'remark', ''),
-            
             "is_active": True,
             "create_time": getattr(database_obj, 'create_time', 0),
         }
@@ -2558,7 +2551,6 @@ class DatasetDomainService:
             "status": database_data["status"],
             "user_id": database_data["user_id"],
             "remark": database_data["remark"],
-            
             "is_active": database_data["is_active"],
             "file": file_payload,
             "query_profile": {
@@ -2658,7 +2650,7 @@ class DatasetDomainService:
 
         dataset_payload["query_profile"] = {
             "file_format": resolved_file_format,
-            "query_engine": query_entry_asset["query_engine"] or dataset_payload["query_profile"]["query_engine"],
+            "query_engine": query_entry_asset.get("query_engine", "") or dataset_payload["query_profile"].get("query_engine", ""),
             "validation_summary": dataset_payload["query_profile"]["validation_summary"],
             "index_summary": index_summary,
         }
@@ -3016,8 +3008,8 @@ class DatasetDomainService:
             dataset_payload["file"] = file_payload
 
         dataset_payload["query_profile"] = {
-            "file_format": None or dataset_payload["query_profile"]["file_format"],
-            "query_engine": None or dataset_payload["query_profile"]["query_engine"],
+            "file_format": None or dataset_payload["query_profile"].get("file_format", ""),
+            "query_engine": None or dataset_payload["query_profile"].get("query_engine", ""),
             "validation_summary": None
             if None is not None
             else None,
@@ -3040,7 +3032,7 @@ class DatasetDomainService:
             "visibility": dataset_payload["visibility"],
             "file_path": file_payload.get("path"),
             "file_format": query_profile["file_format"],
-            "query_engine": query_profile["query_engine"],
+            "query_engine": query_profile.get("query_engine", ""),
             "validation_summary": query_profile["validation_summary"],
             "index_summary": query_profile["index_summary"],
             "is_current": True,
@@ -3239,7 +3231,6 @@ class DatasetDomainService:
             "version",
             "organism",
                         "file_format",
-            "query_engine",
             "validation_summary",
             "index_summary",
             "meta_json",
@@ -3715,7 +3706,6 @@ class DatasetDomainService:
             "asset_name",
             "asset_type",
             "file_format",
-            "query_engine",
             "storage_backend",
             "workflow_state",
             "status",
@@ -3898,10 +3888,6 @@ class DatasetDomainService:
                 db,
                 asset_obj,
                 file_format=file_obj.file_format or asset_obj.file_format,
-                query_engine=FILE_TYPE_QUERY_ENGINES.get(
-                    (file_obj.file_format or "").lower(),
-                    asset_obj.query_engine or "file",
-                ),
                 update_time=self._now(),
             )
             self._maybe_rebuild_functional_annotation_index(db=db, asset_obj=asset_obj)
@@ -3989,7 +3975,6 @@ class DatasetDomainService:
                 "dst_dataset_version_id": request_data.dst_version_id,
                 "dst_asset_id": request_data.dst_asset_id,
                 "relation_type": request_data.relation_type,
-                
                 "detail_json": request_data.detail_json,
                 "create_user_id": user.id,
                 "create_time": self._now(),
@@ -4467,7 +4452,6 @@ class DatasetDomainService:
                 name=dataset_name,
                 dataset_type=dataset_type,
                 remark=getattr(request_data, "remark", None),
-                
                 dry_run=False,
                 team_id=getattr(request_data, "team_id", 0) or 0,
                 project_id=getattr(request_data, "project_id", 0) or 0,
@@ -4758,7 +4742,6 @@ class DatasetDomainService:
                     "name": request_data.name,
                     "dataset_type": request_data.dataset_type or staging_obj.dataset_type,
                     "remark": request_data.remark,
-                    
                     "dry_run": request_data.dry_run,
                     "team_id": getattr(request_data, "team_id", 0) or 0,
                     "project_id": getattr(request_data, "project_id", 0) or 0,
@@ -5592,7 +5575,7 @@ class DatasetDomainService:
                 "visibility": "private",
                 "file_path": file_path,
                 "file_format": file_format,
-                "query_engine": FILE_TYPE_QUERY_ENGINES.get(file_format or "", dataset_payload["query_profile"]["query_engine"]),
+                "query_engine": FILE_TYPE_QUERY_ENGINES.get(file_format or "", dataset_payload["query_profile"].get("query_engine", "")),
                 "validation_summary": None,
                 "index_summary": None,
                 "meta_json": request_data.meta_json,
