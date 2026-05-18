@@ -1585,7 +1585,6 @@ class DatasetDomainService:
                 default_asset = dataset_asset_db.create_one(
                     db=db,
                     obj_in={
-                        "dataset_id": version_obj.dataset_id,
                         "dataset_version_id": version_obj.id,
                         "asset_code": default_asset_code,
                         "asset_name": self._asset_name_from_version(version_obj, default_asset_type),
@@ -1595,8 +1594,8 @@ class DatasetDomainService:
                         "storage_backend": "local",
                         "workflow_state": version_obj.lifecycle_state or "draft",
                         "status": "active",
-                        "is_required": 1,
-                        "is_query_entry": 1,
+                        "is_required": True,
+                        "is_query_entry": True,
                         "display_order": 0,
                         "meta_json": None,
                         "create_time": self._now(),
