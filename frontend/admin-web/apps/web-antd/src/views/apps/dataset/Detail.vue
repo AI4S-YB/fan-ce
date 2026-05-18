@@ -156,10 +156,6 @@ async function handleWithdraw(version: DatasetVersionItem) {
   }
 }
 
-    actionLoadingKey.value = '';
-  }
-}
-
 function handleDelete() {
   Modal.confirm({
     title: $t('dataset.list.delete') + ' Dataset',
@@ -182,7 +178,6 @@ watch(detailData, (data) => {
   if (data) {
     descriptionMdInit = true;
     descriptionMd.value = data.description_md || '';
-    editableTitle.value = data.title || data.name || '';
     editableVersion.value = data.version || '';
   }
 });
@@ -296,3 +291,6 @@ onMounted(() => loadAll());
         <span style="display:flex;align-items:center;gap:4px;">{{ $t('dataset.detail.versionLabel') }}：<Input v-model:value="editableVersion" size="small" style="width:120px;" @blur="debouncedSaveVersion(editableVersion)" /></span>
       </div>
 
+    </template>
+  </Page>
+</template>
