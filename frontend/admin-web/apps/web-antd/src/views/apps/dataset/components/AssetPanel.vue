@@ -230,33 +230,32 @@ async function handleToggleDownload(file: AssetFileItem, val: boolean) {
     <Empty v-else-if="!filteredAssets.length" :description="$t('dataset.list.noAsset')" />
 
     <div v-for="asset in filteredAssets" :key="asset.id" style="border: 1px solid #e0e0e0; border-radius: 4px; padding: 12px; margin-bottom: 8px; background: #fff;">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-        <div>
-          <Space size="small" align="center">
+      <!-- Card Header -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+        <div style="flex:1;">
+          <!-- Row 1: asset_type tag + edit icon -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
             <Tag color="blue" style="font-weight:500;">{{ asset.asset_type || '-' }}</Tag>
-            <div v-if="editingAssetNameId !== asset.id" style="display:flex;align-items:center;gap:4px;">
-              <strong>{{ asset.asset_name || asset.asset_code || `asset-${asset.id}` }}</strong>
-              <Button size="small" type="text" @click="startEditAssetName(asset)" title="Edit name"><EditOutlined style="font-size: 12px; color: #1677ff;" /></Button>
+            <div v-if="editingAssetTypeId !== asset.id">
+              <Button size="small" type="text" @click="startEditAssetType(asset)" title="Edit type"><EditOutlined style="font-size: 12px; color: #1677ff;" /></Button>
             </div>
             <div v-else style="display:flex;align-items:center;gap:8px;">
-              <Input v-model:value="editingAssetNameText" size="small" style="width:180px;" />
-              <Button size="small" type="primary" :loading="editingAssetNameSaving" @click="saveAssetName">OK</Button>
-              <Button size="small" @click="editingAssetNameId = null">Cancel</Button>
-            </div>
-            <div v-if="editingAssetTypeId !== asset.id" style="display:flex;align-items:center;gap:4px;">
-              <Button size="small" type="text" @click="startEditAssetType(asset)" title="Edit type" style="padding:0;"><EditOutlined style="font-size: 10px; color: #1677ff;" /></Button>
-            </div>
-            <div v-else style="display:flex;align-items:center;gap:8px;">
-              <Select v-model:value="editingAssetTypeValue" size="small" style="width:200px;" :options="assetTypeOptions" show-search :filter-option="false" @search="loadAssetTypeOptions" />
+              <Select v-model:value="editingAssetTypeValue" size="small" style="width:180px;" :options="assetTypeOptions" show-search :filter-option="false" @search="loadAssetTypeOptions" />
               <Button size="small" type="primary" :loading="editingAssetTypeSaving" @click="saveAssetType">OK</Button>
               <Button size="small" @click="editingAssetTypeId = null">Cancel</Button>
             </div>
-          </Space>
+          </div>
+          <!-- Row 2: asset_name + edit icon -->
+          <div v-if="editingAssetNameId !== asset.id" style="display:flex;align-items:center;gap:4px;">
+            <strong>{{ asset.asset_name || asset.asset_code || `asset-${asset.id}` }}</strong>
+            <Button size="small" type="text" @click="startEditAssetName(asset)" title="Edit name"><EditOutlined style="font-size: 12px; color: #1677ff;" /></Button>
+          </div>
+          <div v-else style="display:flex;align-items:center;gap:8px;">
+            <Input v-model:value="editingAssetNameText" size="small" style="width:220px;" />
+            <Button size="small" type="primary" :loading="editingAssetNameSaving" @click="saveAssetName">OK</Button>
+            <Button size="small" @click="editingAssetNameId = null">Cancel</Button>
+          </div>
         </div>
-        <Space size="small">
-          <Tag v-if="asset.is_query_entry" color="blue">{{ $t('dataset.list.queryEntryAsset') }}</Tag>
-          <Button size="small" danger @click="handleDeleteAsset(asset as DatasetAssetItem)">删除资产</Button>
-        </Space>
       </div>
 
       <div style="font-size: 12px; color: #888; margin-bottom: 8px;">
