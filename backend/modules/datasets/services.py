@@ -2677,6 +2677,8 @@ class DatasetDomainService:
         return selected_payload
 
     def _build_dataset_version_payload(self, version_obj, db=None):
+        if not version_obj:
+            return None
         file_path = self._normalize_local_path(getattr(version_obj, "file_path", None))
         if db:
             file_path = self._resolve_version_primary_file_path(db=db, version_obj=version_obj) or file_path
@@ -2953,7 +2955,7 @@ class DatasetDomainService:
         database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=database_id)
         dataset_payload = self.build_dataset_payload(db=db, database_obj=database_obj)
         current_version = self.ensure_current_version(db=db, dataset_payload=dataset_payload)
-        dataset_payload["current_version"] = self._build_dataset_version_payload(current_version, db=db)
+        dataset_payload["current_version"] = self._build_dataset_version_payload(current_version, db=db) if current_version else None
         dataset_payload["version_count"] = len(dataset_version_db.get_data(db=db, filters={"dataset_id": database_id}))
 
         public_version = version_obj or self._get_public_version_obj(db=db, dataset_id=database_id, dataset_payload=dataset_payload)
@@ -2980,7 +2982,7 @@ class DatasetDomainService:
         database_obj = dataset_legacy_bridge.get_database(db=db, dataset_id=version_obj.dataset_id)
         dataset_payload = self.build_dataset_payload(db=db, database_obj=database_obj)
         current_version = self.ensure_current_version(db=db, dataset_payload=dataset_payload)
-        dataset_payload["current_version"] = self._build_dataset_version_payload(current_version, db=db) if current_version else None
+        dataset_payload["current_version"] = self._build_dataset_version_payload(current_version, db=db) if current_version else None if current_version else None
         dataset_payload["version_count"] = len(dataset_version_db.get_data(db=db, filters={"dataset_id": version_obj.dataset_id}))
         dataset_payload = self._apply_version_to_dataset_payload(db=db, dataset_payload=dataset_payload, version_obj=version_obj)
         dataset_payload = self._apply_assets_to_dataset_payload(db=db, dataset_payload=dataset_payload, version_obj=version_obj)
