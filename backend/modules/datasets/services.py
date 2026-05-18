@@ -675,12 +675,16 @@ class DatasetDomainService:
 
     def _ensure_asset_file_read_access(self, db, asset_file_id, user):
         file_obj = asset_file_db.get(db=db, id=asset_file_id)
-        self._ensure_dataset_read_access(db=db, dataset_id=file_obj.dataset_id, user=user)
+        asset_obj = dataset_asset_db.get(db=db, id=file_obj.dataset_asset_id) if file_obj and file_obj.dataset_asset_id else None
+        version_obj = dataset_version_db.get(db=db, id=asset_obj.dataset_version_id) if asset_obj and asset_obj.dataset_version_id else None
+        self._ensure_dataset_read_access(db=db, dataset_id=version_obj.dataset_id if version_obj else None, user=user)
         return file_obj
 
     def _ensure_asset_file_write_access(self, db, asset_file_id, user):
         file_obj = asset_file_db.get(db=db, id=asset_file_id)
-        self._ensure_dataset_write_access(db=db, dataset_id=file_obj.dataset_id, user=user)
+        asset_obj = dataset_asset_db.get(db=db, id=file_obj.dataset_asset_id) if file_obj and file_obj.dataset_asset_id else None
+        version_obj = dataset_version_db.get(db=db, id=asset_obj.dataset_version_id) if asset_obj and asset_obj.dataset_version_id else None
+        self._ensure_dataset_write_access(db=db, dataset_id=version_obj.dataset_id if version_obj else None, user=user)
         return file_obj
 
     def _get_lineage_dataset_ids(self, db, lineage_obj):
