@@ -188,10 +188,8 @@ class DatasetVersion(Base):
     title = Column(String(320), comment="版本标题")
     lifecycle_state = Column(String(64), default="draft", comment="生命周期状态")
     visibility = Column(String(32), default="private", comment="可见性")
-    release_state = Column(String(32), default="unreleased", comment="发布状态")
     meta_json = Column(JSONB, comment="扩展元数据")
-    is_current = Column(Boolean, default=False, comment="是否当前版本")
-    is_default_public = Column(Boolean, default=False, comment="是否默认公开版本")
+    is_current = Column(Boolean, default=False, comment="是否当前活跃版本")
     create_time = Column(DateTime(timezone=True), comment="创建时间")
     update_time = Column(DateTime(timezone=True), comment="更新时间")
 

@@ -344,9 +344,7 @@ class PublicDatasetInfoRequest(BaseModel):
 class PublicDatasetVersionListRequest(BaseModel):
     id: int
     keyword: Optional[str] = None
-    is_default_public: Optional[bool] = None
     is_current: Optional[bool] = None
-    release_state: Optional[str] = None
 
     model_config = ConfigDict(extra="forbid")
 

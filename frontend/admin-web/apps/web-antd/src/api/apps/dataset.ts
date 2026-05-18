@@ -155,7 +155,6 @@ export interface DatasetVersionItem {
   dataset_type?: string;
   lifecycle_state?: string;
   visibility?: string;
-  release_state?: string;
   file_path?: string | null;
   file_format?: string;
   query_engine?: string;
@@ -164,7 +163,6 @@ export interface DatasetVersionItem {
   meta_json?: string | null;
   is_current?: boolean;
   is_published?: boolean;
-  is_default_public?: boolean;
   create_time?: number;
   update_time?: number;
 }

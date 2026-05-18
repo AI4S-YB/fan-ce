@@ -30,7 +30,7 @@ from .functional_indexing import clear_functional_annotation_index, rebuild_func
 from .phenome_indexing import clear_phenome_index, rebuild_phenome_index
 from .constants import (
     DATASET_LIFECYCLE_STATES,
-    DATASET_VERSION_RELEASE_STATES,
+    
     DEFAULT_DATASET_VERSION,
     FILE_TYPE_QUERY_ENGINES,
     LIFECYCLE_TRANSITIONS,
@@ -1369,8 +1369,8 @@ class DatasetDomainService:
 
     def _list_public_lineage(self, db, version_id=None, dataset_id=None, limit=50):
         if dataset_id is not None:
-            released_versions = self._list_public_version_objs(db=db, dataset_id=dataset_id)
-            released_version_ids = {v.id for v in released_versions}
+            public_versions = self._list_public_version_objs(db=db, dataset_id=dataset_id)
+            released_version_ids = {v.id for v in public_versions}
             if not released_version_ids:
                 return []
 
@@ -1384,7 +1384,7 @@ class DatasetDomainService:
                 dv = dataset_version_db.get_one(db=db, id=item.dst_dataset_version_id) if item.dst_dataset_version_id else None
                 if not sv or not dv:
                     continue
-                if not self._is_version_publicly_released(sv) or not self._is_version_publicly_released(dv):
+                if not sv.visibility == "public" or not dv.visibility == "public":
                     continue
                 matched.append((item, sv, dv))
                 all_dataset_ids.add(sv.dataset_id)
@@ -1424,7 +1424,7 @@ class DatasetDomainService:
 
         # version_id branch
         version_obj = dataset_version_db.get(db=db, id=version_id)
-        if not version_obj or not self._is_version_publicly_released(version_obj):
+        if not version_obj or not version_obj.visibility == "public":
             return []
         lineage_rows = dataset_lineage_edge_db.get_data(db=db, filters={})
         matched = []
@@ -1436,7 +1436,7 @@ class DatasetDomainService:
             dv = dataset_version_db.get_one(db=db, id=item.dst_dataset_version_id) if item.dst_dataset_version_id else None
             if not sv or not dv:
                 continue
-            if not self._is_version_publicly_released(sv) or not self._is_version_publicly_released(dv):
+            if not sv.visibility == "public" or not dv.visibility == "public":
                 continue
             matched.append((item, sv, dv))
             all_dataset_ids.add(sv.dataset_id)
@@ -2576,10 +2576,10 @@ class DatasetDomainService:
             "is_active": database_data["is_active"],
             "file": file_payload,
             "query_profile": {
-                "file_format": current_version.file_format if current_version else "",
-                "query_engine": current_version.query_engine if current_version else "",
-                "validation_summary": current_version.validation_summary if current_version else "",
-                "index_summary": current_version.index_summary if current_version else "",
+                "file_format": "",
+                "query_engine": "",
+                "validation_summary": "",
+                "index_summary": "",
             },
             "query_adapter": None,
             "assets": [],
@@ -2696,8 +2696,6 @@ class DatasetDomainService:
         return selected_payload
 
     def _build_dataset_version_payload(self, version_obj, db=None):
-        release_state = self._get_version_release_state(version_obj)
-        is_default_public = self._is_version_default_public(version_obj)
         file_path = self._normalize_local_path(getattr(version_obj, "file_path", None))
         if db:
             file_path = self._resolve_version_primary_file_path(db=db, version_obj=version_obj) or file_path
@@ -2713,7 +2711,6 @@ class DatasetDomainService:
             "dataset_type": registry_dataset_type,
             "lifecycle_state": version_obj.lifecycle_state,
             "visibility": version_obj.visibility,
-            "release_state": release_state,
             "file_path": file_path,
             "file_format": None,
             "query_engine": None,
@@ -2721,8 +2718,6 @@ class DatasetDomainService:
             "index_summary": None,
             "meta_json": version_obj.meta_json,
             "is_current": bool(version_obj.is_current),
-            "is_default_public": is_default_public,
-            "is_published": self._is_version_publicly_released(version_obj),
             "create_time": version_obj.create_time,
             "update_time": version_obj.update_time,
         }
@@ -2743,19 +2738,8 @@ class DatasetDomainService:
             "create_time": record_obj.create_time,
         }
 
-    def _get_version_release_state(self, version_obj):
-        release_state = getattr(version_obj, "release_state", None)
-        if release_state in DATASET_VERSION_RELEASE_STATES:
-            return release_state
-        if str(getattr(version_obj, "visibility", "")).lower() == "public":
-            return "released"
-        return "unreleased"
-
-    def _is_version_default_public(self, version_obj):
-        return bool(getattr(version_obj, "is_default_public", 0))
-
     def _is_version_publicly_released(self, version_obj):
-        return self._get_version_release_state(version_obj) in {"released", "deprecated"}
+        return getattr(version_obj, "visibility", "") == "public"
 
     def _create_version_publish_record(
         self,
@@ -2795,14 +2779,14 @@ class DatasetDomainService:
                 version_obj = dataset_version_db.get(db=db, id=default_public_version_id)
             except Exception:
                 version_obj = None
-            if version_obj and version_obj.dataset_id == dataset_id and self._is_version_publicly_released(version_obj):
+            if version_obj and version_obj.dataset_id == dataset_id and version_obj.visibility == "public":
                 return version_obj
 
         version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})
         default_public_versions = [
             row
             for row in version_rows
-            if self._is_version_default_public(row) and self._is_version_publicly_released(row)
+            if row.is_current and row.visibility == "public" and row.visibility == "public"
         ]
         if default_public_versions:
             default_public_versions = sorted(default_public_versions, key=lambda item: item.id, reverse=True)
@@ -2812,10 +2796,10 @@ class DatasetDomainService:
 
     def _list_public_version_objs(self, db, dataset_id):
         version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})
-        public_versions = [row for row in version_rows if self._is_version_publicly_released(row)]
+        public_versions = [row for row in version_rows if row.visibility == "public"]
         return sorted(
             public_versions,
-            key=lambda item: (self._is_version_default_public(item), bool(item.is_current), item.id),
+            key=lambda item: (item.is_current and item.visibility == "public", bool(item.is_current), item.id),
             reverse=True,
         )
 
@@ -2825,21 +2809,16 @@ class DatasetDomainService:
             raise HTTPException(status_code=404, detail=f"Public dataset not found: {dataset_id}")
         database_id = registry.id
         version_obj = dataset_version_db.get(db=db, id=version_id)
-        if version_obj.dataset_id != database_id or not self._is_version_publicly_released(version_obj):
+        if version_obj.dataset_id != database_id or not version_obj.visibility == "public":
             raise HTTPException(status_code=404, detail=f"public dataset version not found: dataset={dataset_id}, version={version_id}")
         return version_obj
 
     def _normalize_version_public_flags(self, db, dataset_id, default_version_id=None):
         version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})
         for row in version_rows:
-            release_state = self._get_version_release_state(row)
-            should_default = bool(default_version_id and row.id == default_version_id and release_state in {"released", "deprecated"})
-            next_visibility = "public" if release_state in {"released", "deprecated"} else "private"
             update_data = {}
             if row.visibility != next_visibility:
                 update_data["visibility"] = next_visibility
-            if getattr(row, "is_default_public", False) != (1 if should_default else 0):
-                update_data["is_default_public"] = 1 if should_default else 0
             if update_data:
                 update_data["update_time"] = self._now()
                 row_obj = dataset_version_db.get(db=db, id=row.id)
@@ -2999,7 +2978,7 @@ class DatasetDomainService:
         public_version = version_obj or self._get_public_version_obj(db=db, dataset_id=database_id, dataset_payload=dataset_payload)
         if not public_version:
             raise HTTPException(status_code=404, detail=f"public dataset version not found: {dataset_id}")
-        if version_obj and not self._is_version_publicly_released(public_version):
+        if version_obj and not public_version.visibility == "public":
             raise HTTPException(status_code=404, detail=f"public dataset version not found: dataset={dataset_id}, version={public_version.id}")
 
         dataset_payload = self._apply_version_to_dataset_payload(db=db, dataset_payload=dataset_payload, version_obj=public_version)
@@ -3009,7 +2988,7 @@ class DatasetDomainService:
         dataset_payload["default_public_version"] = self._build_dataset_version_payload(default_public_version, db=db) if default_public_version else None
         dataset_payload["selected_version"] = self._build_dataset_version_payload(public_version, db=db)
         dataset_payload["published_version"] = self._build_dataset_version_payload(public_version, db=db)
-        dataset_payload["released_versions"] = [
+        dataset_payload["public_versions"] = [
             self._build_dataset_version_payload(item, db=db) for item in self._list_public_version_objs(db=db, dataset_id=database_id)
         ]
         dataset_payload["lineage"] = self._list_public_lineage(db=db, version_id=public_version.id, limit=50)
@@ -3075,14 +3054,12 @@ class DatasetDomainService:
             "dataset_type": dataset_payload["dataset_type"],
             "lifecycle_state": dataset_payload["lifecycle_state"],
             "visibility": dataset_payload["visibility"],
-            "release_state": published_version.get("id") == dataset_payload.get("current_version", {}).get("id") and "released" or "unreleased",
             "file_path": file_payload.get("path"),
             "file_format": query_profile["file_format"],
             "query_engine": query_profile["query_engine"],
             "validation_summary": query_profile["validation_summary"],
             "index_summary": query_profile["index_summary"],
             "is_current": True,
-            "is_default_public": 0,
             "update_time": self._now(),
         }
 
@@ -3401,14 +3378,14 @@ class DatasetDomainService:
         candidate_public_version_ids = {getattr(registry_obj, "default_public_version_id", None)} - {None}
         for version_obj in version_rows:
             is_candidate = (
-                self._is_version_publicly_released(version_obj)
-                or self._is_version_default_public(version_obj)
+                version_obj.visibility == "public"
+                or version_obj.is_current and version_obj.visibility == "public"
                 or version_obj.id in candidate_public_version_ids
                 or version_obj.visibility == "public"
             )
             if not is_candidate:
                 continue
-            if self._is_version_publicly_released(version_obj):
+            if version_obj.visibility == "public":
                 self.withdraw_dataset_version(db=db, version_id=version_obj.id, request_data=request_data, user=user)
                 continue
 
@@ -3416,9 +3393,7 @@ class DatasetDomainService:
                 db=db,
                 db_obj=version_obj,
                 obj_in={
-                    "release_state": "unreleased",
                     "visibility": "private",
-                    "is_default_public": 0,
                     "update_time": self._now(),
                 },
             )
@@ -5632,7 +5607,6 @@ class DatasetDomainService:
                 "dataset_type": dataset_type,
                 "lifecycle_state": "draft",
                 "visibility": "private",
-                "release_state": "unreleased",
                 "file_path": file_path,
                 "file_format": file_format,
                 "query_engine": FILE_TYPE_QUERY_ENGINES.get(file_format or "", dataset_payload["query_profile"]["query_engine"]),
@@ -5640,7 +5614,6 @@ class DatasetDomainService:
                 "index_summary": None,
                 "meta_json": request_data.meta_json,
                 "is_current": 0,
-                "is_default_public": 0,
                 "create_time": self._now(),
                 "update_time": self._now(),
             },
@@ -5721,7 +5694,6 @@ class DatasetDomainService:
         before_visibility = version_obj.visibility
         before_lifecycle_state = version_obj.lifecycle_state
         update_data = {
-            "release_state": "released",
             "visibility": "public",
             "update_time": self._now(),
         }
@@ -5826,20 +5798,18 @@ class DatasetDomainService:
     def withdraw_dataset_version(self, db, version_id, request_data, user):
         operator_id = user.id
         version_obj = self._ensure_version_write_access(db=db, version_id=version_id, user=user)
-        if not self._is_version_publicly_released(version_obj):
+        if not version_obj.visibility == "public":
             raise HTTPException(status_code=400, detail="dataset version is not released")
         current_default_public = self._get_public_version_obj(db=db, dataset_id=version_obj.dataset_id)
 
         before_visibility = version_obj.visibility
         before_lifecycle_state = version_obj.lifecycle_state
-        was_default_public = self._is_version_default_public(version_obj)
+        was_default_public = version_obj.is_current and version_obj.visibility == "public"
         version_obj = dataset_version_db.update_one(
             db=db,
             db_obj=version_obj,
             obj_in={
-                "release_state": "unreleased",
                 "visibility": "private",
-                "is_default_public": 0,
                 "update_time": self._now(),
             },
         )
@@ -5877,7 +5847,7 @@ class DatasetDomainService:
     def set_default_public_dataset_version(self, db, version_id, request_data, user):
         operator_id = user.id
         version_obj = self._ensure_version_write_access(db=db, version_id=version_id, user=user)
-        if not self._is_version_publicly_released(version_obj):
+        if not version_obj.visibility == "public":
             raise HTTPException(status_code=400, detail="dataset version must be released before setting default public")
 
         version_obj = self._set_default_public_version(
@@ -5982,11 +5952,10 @@ class DatasetDomainService:
         finally:
             db.close()
 
-    def list_public_dataset_versions(self, dataset_id, keyword=None, is_default_public=None, is_current=None, release_state=None):
         db = mydb.get_dbs()
         try:
             dataset_payload = self._build_public_dataset_payload(db=db, dataset_id=dataset_id)
-            items = list(dataset_payload.get("released_versions", []))
+            items = list(dataset_payload.get("public_versions", []))
             normalized_keyword = str(keyword or "").strip().lower()
             if normalized_keyword:
                 items = [
@@ -5995,12 +5964,8 @@ class DatasetDomainService:
                     if normalized_keyword in str(item.get("version") or "").lower()
                     or normalized_keyword in str(item.get("title") or "").lower()
                 ]
-            if is_default_public is not None:
-                items = [item for item in items if bool(item.get("is_default_public")) is bool(is_default_public)]
             if is_current is not None:
                 items = [item for item in items if bool(item.get("is_current")) is bool(is_current)]
-            if release_state:
-                items = [item for item in items if item.get("release_state") == release_state]
             return {
                 "dataset_id": dataset_id,
                 "dataset_code": dataset_payload["dataset_code"],
@@ -6008,9 +5973,7 @@ class DatasetDomainService:
                 "total": len(items),
                 "filters": {
                     "keyword": keyword or "",
-                    "is_default_public": is_default_public,
                     "is_current": is_current,
-                    "release_state": release_state,
                 },
                 "items": items,
             }

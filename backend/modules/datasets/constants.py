@@ -6,7 +6,6 @@ DATASET_LIFECYCLE_STATES = [
 
 DATASET_VISIBILITIES = ["private", "public"]
 
-DATASET_VERSION_RELEASE_STATES = ["unreleased", "released", "deprecated"]
 
 DEFAULT_DATASET_VERSION = "v1"
 

@@ -19,7 +19,6 @@ const emit = defineEmits<{
   activate: [version: DatasetVersionItem];
   release: [version: DatasetVersionItem];
   withdraw: [version: DatasetVersionItem];
-  setDefault: [version: DatasetVersionItem];
   createVersion: [];
 }>();
 
@@ -29,7 +28,6 @@ const columns = [
   { title: $t('dataset.list.version'), dataIndex: 'version', key: 'version', width: 120 },
   { title: $t('system.menu.title'), dataIndex: 'title', key: 'title', width: 180 },
   { title: $t('dataset.list.lifecycleHeader'), dataIndex: 'lifecycle_state', key: 'lifecycle_state', width: 120 },
-  { title: $t('platform.news.publish') + $t('dataset.list.status'), dataIndex: 'release_state', key: 'release_state', width: 120 },
   { title: $t('dataset.list.visibility'), dataIndex: 'visibility', key: 'visibility', width: 110 },
   { title: $t('dataset.staging.format'), dataIndex: 'file_format', key: 'file_format', width: 120 },
   { title: $t('dataset.list.action'), dataIndex: 'actions', key: 'actions' },
@@ -76,9 +74,6 @@ function isActionLoading(prefix: string, id: number) {
             {{ (record as DatasetVersionItem).lifecycle_state || '-' }}
           </Tag>
         </template>
-        <template v-else-if="column.key === 'release_state'">
-          <Tag :color="releaseStateColor((record as DatasetVersionItem).release_state)">
-            {{ (record as DatasetVersionItem).release_state || '-' }}
           </Tag>
         </template>
         <template v-else-if="column.key === 'visibility'">
@@ -88,7 +83,7 @@ function isActionLoading(prefix: string, id: number) {
         </template>
         <template v-else-if="column.key === 'actions'">
           <Space size="small">
-            <template v-if="(record as DatasetVersionItem).lifecycle_state !== 'ready' && (record as DatasetVersionItem).lifecycle_state !== 'public'">
+            <template v-if="!(record as DatasetVersionItem).is_current">
               <Button
                 type="link"
                 size="small"
@@ -98,7 +93,7 @@ function isActionLoading(prefix: string, id: number) {
                 {{ $t('dataset.list.activateVersion') }}
               </Button>
             </template>
-            <template v-if="(record as DatasetVersionItem).release_state !== 'released'">
+            <template v-if="(record as DatasetVersionItem).visibility !== 'public'">
               <Button
                 type="link"
                 size="small"
@@ -108,17 +103,7 @@ function isActionLoading(prefix: string, id: number) {
                 {{ $t('dataset.list.releaseVersion') }}
               </Button>
             </template>
-            <template v-if="(record as DatasetVersionItem).release_state === 'released' && !(record as DatasetVersionItem).is_default_public">
-              <Button
-                type="link"
-                size="small"
-                :loading="isActionLoading('set-default-version', (record as DatasetVersionItem).id)"
-                @click="emit('setDefault', record as DatasetVersionItem)"
-              >
-                {{ $t('dataset.list.setDefaultPublic') }}
-              </Button>
-            </template>
-            <template v-if="(record as DatasetVersionItem).release_state === 'released'">
+            <template v-if="(record as DatasetVersionItem).visibility === 'public'">
               <Button
                 type="link"
                 danger
