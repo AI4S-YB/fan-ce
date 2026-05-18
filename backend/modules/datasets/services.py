@@ -2797,8 +2797,9 @@ class DatasetDomainService:
         version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})
         for row in version_rows:
             update_data = {}
-            if row.visibility != next_visibility:
-                update_data["visibility"] = next_visibility
+            should_be_current = bool(default_version_id and row.id == default_version_id)
+            if bool(row.is_current) != should_be_current:
+                update_data["is_current"] = should_be_current
             if update_data:
                 update_data["update_time"] = self._now()
                 row_obj = dataset_version_db.get(db=db, id=row.id)

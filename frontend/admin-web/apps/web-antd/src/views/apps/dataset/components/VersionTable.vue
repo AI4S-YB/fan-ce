@@ -96,7 +96,7 @@ function isActionLoading(prefix: string, id: number) {
                 :loading="isActionLoading('release-version', (record as DatasetVersionItem).id)"
                 @click="emit('release', record as DatasetVersionItem)"
               >
-                {{ $t('dataset.list.releaseVersion') }}
+                {{ $t('dataset.list.releaseVersion') }} (公开)
               </Button>
             </template>
             <template v-if="(record as DatasetVersionItem).visibility === 'public'">
@@ -107,7 +107,7 @@ function isActionLoading(prefix: string, id: number) {
                 :loading="isActionLoading('withdraw-version', (record as DatasetVersionItem).id)"
                 @click="emit('withdraw', record as DatasetVersionItem)"
               >
-                {{ $t('dataset.list.withdrawVersion') }}
+                {{ $t('dataset.list.withdrawVersion') }} (私有)
               </Button>
             </template>
           </Space>
