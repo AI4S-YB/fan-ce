@@ -4,7 +4,6 @@ import type { DatasetVersionItem, DatasetVersionListResult } from '#/api/apps/da
 import { $t } from '@vben/locales';
 import {
   lifecycleColor,
-  releaseStateColor,
   visibilityColor,
 } from '../composables/useDataset';
 
@@ -29,7 +28,6 @@ const columns = [
   { title: $t('system.menu.title'), dataIndex: 'title', key: 'title', width: 180 },
   { title: $t('dataset.list.lifecycleHeader'), dataIndex: 'lifecycle_state', key: 'lifecycle_state', width: 120 },
   { title: $t('dataset.list.visibility'), dataIndex: 'visibility', key: 'visibility', width: 110 },
-  { title: $t('dataset.staging.format'), dataIndex: 'file_format', key: 'file_format', width: 120 },
   { title: $t('dataset.list.action'), dataIndex: 'actions', key: 'actions' },
 ];
 
@@ -72,8 +70,6 @@ function isActionLoading(prefix: string, id: number) {
         <template v-else-if="column.key === 'lifecycle_state'">
           <Tag :color="lifecycleColor((record as DatasetVersionItem).lifecycle_state)">
             {{ (record as DatasetVersionItem).lifecycle_state || '-' }}
-          </Tag>
-        </template>
           </Tag>
         </template>
         <template v-else-if="column.key === 'visibility'">

@@ -156,16 +156,12 @@ export function getSelectedVersionRoleLabels(version?: DatasetVersionItem | null
   if (!version) return [];
   const labels: string[] = [];
   if (version.is_current) labels.push($t('dataset.composables.currentVersionPrefix'));
-  if (version.is_default_public) labels.push($t('dataset.composables.defaultPublicVersionLabel'));
-  if (version.release_state === 'released') labels.push($t('dataset.composables.publishedVersionLabel'));
   if (!labels.length) labels.push($t('dataset.composables.unpublishedVersion'));
   return labels;
 }
 
 export function getSelectedVersionExposure(version?: DatasetVersionItem | null) {
   if (!version) return '-';
-  if (version.is_default_public) return $t('dataset.composables.publicDefaultVisit');
-  if (version.release_state === 'released') return $t('dataset.composables.releasedNotDefault');
   return $t('dataset.composables.notOpenToPublic');
 }
 
@@ -265,9 +261,6 @@ export function useDataset() {
     return withdrawDatasetVersionApi({ id, note });
   }
 
-  async function setDefaultPublicVersion(id: number, note?: string) {
-    return setDefaultPublicDatasetVersionApi({ id, note });
-  }
 
   // Asset CRUD
   async function createAsset(data: Record<string, any>) {
@@ -345,16 +338,4 @@ export function useDataset() {
     // Versions
     versionListLoading, versionListData, loadVersionList,
     versionDetailLoading, versionDetailData, loadVersionDetail,
-    createVersion, activateVersion, releaseVersion, withdrawVersion, setDefaultPublicVersion,
-    // Publish
-    publishRecordsLoading, publishRecords, loadPublishRecords,
-    // Assets
-    createAsset, updateAsset, deleteAsset, registerFile, updateFile, deleteFile,
-    // Lineage
-    createLineage, deleteLineage,
-    // Query
-    queryCapabilitiesLoading, queryCapabilities, loadQueryCapabilities, executeQuery,
-    // Navigation
-    navigateToDetail, navigateToQuery,
-  };
 }
