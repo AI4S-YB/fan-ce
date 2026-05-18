@@ -2202,7 +2202,7 @@ class DatasetDomainService:
                 "task_type": "upload",
                 "status": "success",
                 "from_lifecycle_state": "draft",
-                "to_lifecycle_state": registry_obj.lifecycle_state,
+                "to_lifecycle_state": to_lifecycle_state,
                 "operator_id": operator_id,
                 "detail": "dataset registered from existing server file",
                 "create_time": create_time,
@@ -2514,7 +2514,6 @@ class DatasetDomainService:
             update_data = {
                 "title": registry_obj.title or database_name,
                 "dataset_type": registry_obj.dataset_type or self._infer_dataset_type(database_obj, file_obj),
-                "visibility": registry_obj.visibility or ("public" if database_is_public else "private"),
                 "update_time": self._now(),
             }
             registry_obj = dataset_registry_db.update_one(db=db, db_obj=registry_obj, obj_in=update_data)
@@ -2527,8 +2526,6 @@ class DatasetDomainService:
                 "dataset_code": f"ds-{database_id}",
                 "dataset_type": self._infer_dataset_type(database_obj, file_obj),
                 "title": database_name,
-                "lifecycle_state": "ready" if database_is_public or database_is_active else "draft",
-                "visibility": "public" if database_is_public else "private",
                 "create_time": self._now(),
                 "update_time": self._now(),
             },
@@ -2565,8 +2562,8 @@ class DatasetDomainService:
             "dataset_type": registry_obj.dataset_type,
             "dataset_kind": self._build_dataset_kind_registry_payload(dataset_kind_obj) if dataset_kind_obj else None,
             "version": current_version.version if current_version else "",
-            "lifecycle_state": registry_obj.lifecycle_state,
-            "visibility": registry_obj.visibility,
+            "lifecycle_state": "",
+            "visibility": "",
             "organism": registry_obj.organism,
             "organism_name": self._get_organism_name(db, registry_obj.organism),
             "description_md": registry_obj.description_md,
@@ -2851,10 +2848,7 @@ class DatasetDomainService:
     def _sync_registry_public_state(self, db, dataset_id, default_public_version_id=None):
         database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
-        current_version = dataset_version_db.get_filter(db=db, filters={"dataset_id": dataset_id, "is_current": True})
-        next_visibility = "public" if default_public_version_id else "private"
         update_data = {
-            "visibility": next_visibility,
             "default_public_version_id": default_public_version_id,
             "update_time": self._now(),
         }
@@ -2904,7 +2898,6 @@ class DatasetDomainService:
         # 1. Registry row
         registry = db.query(DatasetRegistry).filter(
             DatasetRegistry.id == dataset_id,
-            DatasetRegistry.visibility == "public",
         ).first()
         if not registry:
             raise HTTPException(status_code=404, detail=f"Public dataset not found: {dataset_id}")
@@ -2983,7 +2976,7 @@ class DatasetDomainService:
             "organism": organism,
             "organism_name": self._get_organism_name(db, organism),
             "version": version_str,
-            "lifecycle_state": registry.lifecycle_state or "",
+            "lifecycle_state": "",
             "visibility": "public",
             "description_md": registry.description_md or "",
             "meta_json": registry.meta_json,
@@ -3310,9 +3303,10 @@ class DatasetDomainService:
             raise HTTPException(status_code=4000, detail="invalid workflow task status")
 
         database_obj = self._ensure_dataset_write_access(db=db, dataset_id=dataset_id, user=user)
+        current_ver = dataset_version_db.get_filter(db=db, filters={"dataset_id": dataset_id, "is_current": True})
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
-        before_state = registry_obj.lifecycle_state
-        before_visibility = registry_obj.visibility
+        before_state = current_ver.lifecycle_state if current_ver else "draft"
+        before_visibility = current_ver.visibility if current_ver else "private"
         allowed_states = LIFECYCLE_TRANSITIONS.get(before_state, set())
         if request_data.target_state not in allowed_states:
             raise HTTPException(
@@ -3356,13 +3350,11 @@ class DatasetDomainService:
         self._ensure_dataset_write_access(db=db, dataset_id=dataset_id, user=user)
         dataset_payload = self.get_dataset(db=db, dataset_id=dataset_id, user=user)
         current_version = dataset_payload["current_version"]
-        database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
-        registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
-        if registry_obj.lifecycle_state != "ready":
-            raise HTTPException(status_code=4000, detail="dataset must be ready before publish")
+        if current_version.get("lifecycle_state") != "ready":
+            raise HTTPException(status_code=4000, detail="dataset version must be ready before publish")
 
-        before_visibility = registry_obj.visibility
-        before_state = registry_obj.lifecycle_state
+        before_visibility = current_version.get("visibility")
+        before_state = current_version.get("lifecycle_state")
         self.release_dataset_version(db=db, version_id=current_version["id"], request_data=request_data, user=user)
         self.set_default_public_dataset_version(db=db, version_id=current_version["id"], request_data=request_data, user=user)
         dataset_publish_record_db.create_one(
@@ -3403,7 +3395,8 @@ class DatasetDomainService:
         if not getattr(registry_obj, "default_public_version_id", None):
             raise HTTPException(status_code=4000, detail="dataset is not public")
 
-        before_state = registry_obj.lifecycle_state
+        version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})
+        before_state = version_rows[0].lifecycle_state if version_rows else None
         version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})
         candidate_public_version_ids = {getattr(registry_obj, "default_public_version_id", None)} - {None}
         for version_obj in version_rows:
@@ -3435,7 +3428,7 @@ class DatasetDomainService:
             self._normalize_version_public_flags(db=db, dataset_id=dataset_id, default_version_id=None)
             self._sync_registry_public_state(db=db, dataset_id=dataset_id, default_public_version_id=None)
             registry_obj = dataset_registry_db.get_filter(db=db, filters={"id": dataset_id})
-        next_state = registry_obj.lifecycle_state
+        next_state = version_rows[0].lifecycle_state if version_rows else None
         dataset_publish_record_db.create_one(
             db=db,
             obj_in={
@@ -5666,7 +5659,7 @@ class DatasetDomainService:
         version_meta_json = version_obj.meta_json
         database_obj = db.query(DatasetRegistry).filter(DatasetRegistry.id == dataset_id).first()
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
-        lifecycle_state = registry_obj.lifecycle_state
+        lifecycle_state = version_obj.lifecycle_state
 
         self._ensure_version_current_flag(db=db, database_id=dataset_id, version_name=version_name)
         version_obj = dataset_version_db.get(db=db, id=version_id)
@@ -5934,7 +5927,6 @@ class DatasetDomainService:
             # Lightweight query — avoid _build_public_dataset_payload per dataset
             query = db.query(DatasetRegistry).filter(
                 DatasetRegistry.default_public_version_id.isnot(None),
-                DatasetRegistry.visibility == "public",
             )
             if dataset_type_filter:
                 query = query.filter(DatasetRegistry.dataset_type.in_([dataset_type_filter]))
