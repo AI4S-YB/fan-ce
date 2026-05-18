@@ -5935,12 +5935,14 @@ class DatasetDomainService:
                     continue
                 if request_data.name and request_data.name not in (item.title or "") and request_data.name not in (item.dataset_code or ""):
                     continue
+                kind_obj = self._get_dataset_kind_registry_by_code(db=db, code=item.dataset_type)
                 data_list.append({
                     "id": item.id,
                     "dataset_id": item.id,
                     "dataset_code": item.dataset_code,
                     "title": item.title,
                     "dataset_type": item.dataset_type,
+                    "dataset_kind": self._build_dataset_kind_registry_payload(kind_obj) if kind_obj else None,
                     "organism": item.organism,
                     "version": "",
                     "lifecycle_state": item.lifecycle_state,

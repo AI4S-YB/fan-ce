@@ -135,7 +135,7 @@ class DatasetRegistry(Base):
 
     id = Column(Integer, primary_key=True)
     dataset_code = Column(String(128), index=True, comment="稳定数据集编码")
-    dataset_type = Column(String(128), comment="数据集类型")
+    dataset_type = Column(String(128), ForeignKey("dataset_kind_registry.code", ondelete="RESTRICT"), comment="数据集类型")
     title = Column(String(320), comment="显示标题")
     lifecycle_state = Column(String(64), default="draft", comment="生命周期状态")
     visibility = Column(String(32), default="private", comment="可见性")
