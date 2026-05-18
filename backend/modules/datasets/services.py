@@ -3333,7 +3333,6 @@ class DatasetDomainService:
         before_visibility = current_version.get("visibility")
         before_state = current_version.get("lifecycle_state")
         self.release_dataset_version(db=db, version_id=current_version["id"], request_data=request_data, user=user)
-        self.set_default_public_dataset_version(db=db, version_id=current_version["id"], request_data=request_data, user=user)
         dataset_publish_record_db.create_one(
             db=db,
             obj_in={

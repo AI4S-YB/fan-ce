@@ -189,10 +189,6 @@ class DatasetVersionWithdrawRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class DatasetVersionSetDefaultPublicRequest(BaseModel):
-    id: int
-    note: Optional[str] = None
-
     model_config = ConfigDict(extra="forbid")
 
 
