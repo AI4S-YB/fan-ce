@@ -120,7 +120,7 @@ class _LegacyBridgeStub:
             file_format=getattr(r, 'file_format', ''),
             lifecycle_state=getattr(r, 'lifecycle_state', ''),
             visibility=getattr(r, 'visibility', ''),
-            is_public=getattr(r, 'is_public', False),
+            
             create_time=getattr(r, 'create_time', None),
             update_time=getattr(r, 'update_time', None),
         ) for r in rows]
@@ -631,7 +631,7 @@ class DatasetDomainService:
         if user_id and database_obj.user_id == user_id:
             return True
         # 4. public 数据 -> 任何认证用户可访问
-        if getattr(database_obj, 'is_public', False):
+        if getattr(database_obj, "default_public_version_id", None):
             return True
         # 5. 否则拒绝
         return False
@@ -839,14 +839,14 @@ class DatasetDomainService:
         return FILE_TYPE_QUERY_ENGINES.get(file_format, "file")
 
     def _infer_state(self, database_obj):
-        if getattr(database_obj, "is_public", False):
+        if getattr(database_obj, "default_public_version_id", None):
             return "public"
         if getattr(database_obj, "is_active", False):
             return "uploaded"
         return "draft"
 
     def _infer_visibility(self, database_obj):
-        return "public" if getattr(database_obj, "is_public", False) else "private"
+        return "public" if getattr(database_obj, "default_public_version_id", None) else "private"
 
     def _collect_meta(self, db, database_id):
         meta_items = dataset_legacy_bridge.list_meta(db=db, dataset_id=database_id)
@@ -2153,7 +2153,7 @@ class DatasetDomainService:
                 "size": os.path.getsize(file_path),
             },
             "lifecycle_state": "uploaded",
-            "visibility": "public" if request_data.is_public else "private",
+            "visibility": "public" if request_data.is_public else "private"  # is_public removed,
         }
         if request_data.dry_run:
             return preview
@@ -2166,7 +2166,7 @@ class DatasetDomainService:
                 "user_id": operator_id,
                 "type": dataset_type,
                 "status": 1,
-                "is_public": bool(request_data.is_public),
+                
                 "is_active": True,
                 "is_delete": False,
                 "create_time": create_time,
@@ -2506,7 +2506,7 @@ class DatasetDomainService:
         database_id = database_obj.id
         database_name = getattr(database_obj, "name", None) or getattr(database_obj, "title", "")
         database_type = getattr(database_obj, "type", None) or getattr(database_obj, "dataset_type", "generic")
-        database_is_public = getattr(database_obj, "is_public", False)
+        database_is_public = getattr(database_obj, "default_public_version_id", None)
         database_is_active = getattr(database_obj, "is_active", False)
         registry_obj = dataset_registry_db.get_filter(db=db, filters={"id": database_id})
         file_obj = dataset_legacy_bridge.get_primary_file(db=db, dataset_id=database_id)
@@ -2538,7 +2538,7 @@ class DatasetDomainService:
             "status": getattr(database_obj, 'lifecycle_state', '') or getattr(database_obj, 'status', 'draft'),
             "user_id": getattr(database_obj, 'user_id', None),
             "remark": getattr(database_obj, 'description_md', '') or getattr(database_obj, 'remark', ''),
-            "is_public": bool(getattr(database_obj, 'is_public', False)),
+            
             "is_active": True,
             "create_time": getattr(database_obj, 'create_time', 0),
         }
@@ -2572,7 +2572,7 @@ class DatasetDomainService:
             "status": database_data["status"],
             "user_id": database_data["user_id"],
             "remark": database_data["remark"],
-            "is_public": database_data["is_public"],
+            
             "is_active": database_data["is_active"],
             "file": file_payload,
             "query_profile": {
@@ -2857,7 +2857,7 @@ class DatasetDomainService:
         dataset_legacy_bridge.update_database(
             db=db,
             db_obj=database_obj,
-            obj_in={"is_public": bool(default_public_version_id)},
+            obj_in={},
         )
 
         # Cascade: if dataset becomes private, remove all site bindings
@@ -4509,7 +4509,7 @@ class DatasetDomainService:
                 name=dataset_name,
                 dataset_type=dataset_type,
                 remark=getattr(request_data, "remark", None),
-                is_public=bool(getattr(request_data, "is_public", False)),
+                
                 dry_run=False,
                 team_id=getattr(request_data, "team_id", 0) or 0,
                 project_id=getattr(request_data, "project_id", 0) or 0,
@@ -4800,7 +4800,7 @@ class DatasetDomainService:
                     "name": request_data.name,
                     "dataset_type": request_data.dataset_type or staging_obj.dataset_type,
                     "remark": request_data.remark,
-                    "is_public": request_data.is_public,
+                    
                     "dry_run": request_data.dry_run,
                     "team_id": getattr(request_data, "team_id", 0) or 0,
                     "project_id": getattr(request_data, "project_id", 0) or 0,

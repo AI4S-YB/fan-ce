@@ -944,7 +944,7 @@ def provision_sequence_bundle(
                 name=plan.dataset_title,
                 dataset_type="genome",
                 remark="provisioned from sequence bundle",
-                is_public=False,
+                
                 dry_run=False,
                 project_id=project_id,
                 team_id=team_id,
@@ -1037,7 +1037,7 @@ def provision_expression_bundle(
                 name=plan.dataset_title,
                 dataset_type="transcriptome",
                 remark="provisioned from expression bundle",
-                is_public=False,
+                
                 dry_run=False,
                 project_id=project_id,
                 team_id=team_id,
@@ -1158,7 +1158,7 @@ def provision_variome_bundle(
                 name=plan.dataset_title,
                 dataset_type="variome",
                 remark="provisioned from variome bundle",
-                is_public=False,
+                
                 dry_run=False,
                 project_id=project_id,
                 team_id=team_id,

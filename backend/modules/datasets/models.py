@@ -137,7 +137,6 @@ class DatasetRegistry(Base):
     dataset_code = Column(String(128), index=True, comment="稳定数据集编码")
     dataset_type = Column(String(128), ForeignKey("dataset_kind_registry.code", ondelete="RESTRICT"), comment="数据集类型")
     title = Column(String(320), comment="显示标题")
-    is_public = Column(Boolean, default=False, comment="是否公开")
     organism = Column(BigInteger, ForeignKey("brd_taxonomy_node.tax_id", ondelete="RESTRICT"), nullable=True, comment="物种 tax_id")
     description_md = Column(Text, comment="Markdown 格式的数据描述文档")
     meta_json = Column(JSONB, comment="扩展元数据")

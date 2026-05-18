@@ -97,7 +97,6 @@ class DatasetRegisterRequest(DatasetContext):
     name: Optional[str] = None
     dataset_type: Optional[str] = None
     remark: Optional[str] = None
-    is_public: Optional[bool] = False
     dry_run: Optional[bool] = False
 
     model_config = ConfigDict(extra="forbid")
@@ -583,7 +582,6 @@ class DatasetStagingRegisterRequest(DatasetContext):
     name: Optional[str] = None
     dataset_type: Optional[str] = None
     remark: Optional[str] = None
-    is_public: Optional[bool] = False
     dry_run: Optional[bool] = False
     keep_staging_file: Optional[bool] = True
 
@@ -671,7 +669,6 @@ class RegisterStagingFilesRequest(BaseModel):
     name: str
     dataset_type: Optional[str] = "generic"
     organism: Optional[str] = None
-    is_public: Optional[bool] = False
     team_id: Optional[int] = 0
     project_id: Optional[int] = 0
     remark: Optional[str] = None
