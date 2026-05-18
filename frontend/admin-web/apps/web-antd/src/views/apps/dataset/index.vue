@@ -269,7 +269,7 @@ onMounted(async () => {
           <Tag>{{ (record as any).dataset_kind?.name || getPreferredDatasetTypeCode((record as DatasetItem).dataset_type) }}</Tag>
         </template>
         <template v-else-if="column.key === 'organism'">
-          <div>{{ (record as DatasetItem).organism || '-' }}</div>
+          <div>{{ (record as any).organism_name || (record as DatasetItem).organism || '-' }}</div>
         </template>
         <template v-else-if="column.key === 'version'">
           <Tag color="blue">{{ (record as DatasetItem).version || '-' }}</Tag>

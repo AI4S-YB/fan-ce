@@ -218,7 +218,8 @@ export interface DatasetItem {
   lifecycle_state?: string;
   visibility?: string;
   version?: string;
-  organism?: string;
+  organism?: number | null;
+  organism_name?: string | null;
   // assembly removed
   file_format?: string;
   query_engine?: string;

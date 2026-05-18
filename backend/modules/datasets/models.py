@@ -140,7 +140,7 @@ class DatasetRegistry(Base):
     lifecycle_state = Column(String(64), default="draft", comment="生命周期状态")
     visibility = Column(String(32), default="private", comment="可见性")
     is_public = Column(Boolean, default=False, comment="是否公开")
-    organism = Column(String(128), comment="物种")
+    organism = Column(BigInteger, ForeignKey("brd_taxonomy_node.tax_id", ondelete="RESTRICT"), nullable=True, comment="物种 tax_id")
     description_md = Column(Text, comment="Markdown 格式的数据描述文档")
     meta_json = Column(JSONB, comment="扩展元数据")
     default_public_version_id = Column(Integer, ForeignKey("dataset_version.id", ondelete="SET NULL"), index=True, nullable=True, comment="默认公开版本 ID")

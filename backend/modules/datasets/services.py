@@ -380,6 +380,14 @@ class DatasetDomainService:
             "update_time": registry_obj.update_time,
         }
 
+    def _get_organism_name(self, db, tax_id):
+        """Look up scientific_name for a taxonomy tax_id."""
+        if not tax_id:
+            return None
+        from modules.breeding.models import BreedingTaxonomyNode
+        node = db.query(BreedingTaxonomyNode).filter(BreedingTaxonomyNode.tax_id == tax_id).first()
+        return node.scientific_name if node else None
+
     def _get_dataset_kind_registry_by_code(self, db, code):
         return dataset_kind_registry_db.get_filter(db=db, filters={"code": code})
 
@@ -2560,6 +2568,7 @@ class DatasetDomainService:
             "lifecycle_state": registry_obj.lifecycle_state,
             "visibility": registry_obj.visibility,
             "organism": registry_obj.organism,
+            "organism_name": self._get_organism_name(db, registry_obj.organism),
             "description_md": registry_obj.description_md,
             "meta_json": registry_obj.meta_json,
             "default_public_version_id": getattr(registry_obj, "default_public_version_id", None),
@@ -5929,6 +5938,14 @@ class DatasetDomainService:
 
             registry_rows = query.order_by(DatasetRegistry.id.desc()).all()
 
+            # Build organism name cache from taxonomy
+            from modules.breeding.models import BreedingTaxonomyNode
+            tax_ids = {r.organism for r in registry_rows if r.organism}
+            taxon_map = {}
+            if tax_ids:
+                nodes = db.query(BreedingTaxonomyNode).filter(BreedingTaxonomyNode.tax_id.in_(tax_ids)).all()
+                taxon_map = {n.tax_id: n.scientific_name for n in nodes}
+
             data_list = []
             for item in registry_rows:
                 if request_data.dataset_id and item.id != request_data.dataset_id:
@@ -5944,6 +5961,7 @@ class DatasetDomainService:
                     "dataset_type": item.dataset_type,
                     "dataset_kind": self._build_dataset_kind_registry_payload(kind_obj) if kind_obj else None,
                     "organism": item.organism,
+                    "organism_name": taxon_map.get(item.organism) if item.organism else None,
                     "version": "",
                     "lifecycle_state": item.lifecycle_state,
                     "description_md": (item.description_md or "")[:500],
