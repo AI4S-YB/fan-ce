@@ -338,4 +338,5 @@ export function useDataset() {
     // Versions
     versionListLoading, versionListData, loadVersionList,
     versionDetailLoading, versionDetailData, loadVersionDetail,
+  };
 }
