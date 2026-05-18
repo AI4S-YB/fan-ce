@@ -26,7 +26,7 @@ import {
   visibilityColor,
   getPreferredDatasetTypeCode,
 } from './composables/useDataset';
-import { getGermplasmTaxonomyOptionsApi } from '../germplasm/api';
+import { EditOutlined } from '@ant-design/icons-vue';
 
 const { createConfirm, createMessage } = useMessage();
 const router = useRouter();
@@ -331,7 +331,7 @@ onMounted(async () => {
           <div v-if="editingTitleId !== (record as DatasetItem).id">
             <Space size="small">
               <span>{{ (record as DatasetItem).title || (record as DatasetItem).name || `dataset-${(record as DatasetItem).id}` }}</span>
-              <Button size="small" type="text" @click="startEditTitle(record as DatasetItem)" title="Edit title">✏️</Button>
+              <Button size="small" type="text" @click="startEditTitle(record as DatasetItem)" title="Edit title"><EditOutlined style="font-size: 13px; color: #1677ff;" /></Button>
             </Space>
             <div style="font-size: 12px; color: #888;">{{ (record as DatasetItem).dataset_code || '-' }}</div>
           </div>
@@ -351,7 +351,7 @@ onMounted(async () => {
             <Space size="small">
               <span>{{ (record as any).organism_name || '-' }}</span>
               <Tag v-if="(record as any).organism" color="default" style="font-size: 10px;">tax_id:{{ (record as any).organism }}</Tag>
-              <Button size="small" type="text" @click="startEditOrganism(record as DatasetItem)" title="Edit species">✏️</Button>
+              <Button size="small" type="text" @click="startEditOrganism(record as DatasetItem)" title="Edit species"><EditOutlined style="font-size: 13px; color: #1677ff;" /></Button>
             </Space>
           </div>
           <div v-else>
