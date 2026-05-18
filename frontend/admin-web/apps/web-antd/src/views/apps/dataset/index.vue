@@ -45,6 +45,31 @@ const organismTaxId = ref<number | undefined>(undefined);
 const organismOptions = ref<Array<{ label: string; value: number }>>([]);
 const organismSaving = ref(false);
 
+// Inline title editing
+const editingTitleId = ref<number | null>(null);
+const editingTitleText = ref('');
+const editingTitleSaving = ref(false);
+
+function startEditTitle(record: DatasetItem) {
+  editingTitleId.value = record.id;
+  editingTitleText.value = record.title || record.name || '';
+}
+
+async function saveEditTitle() {
+  if (editingTitleId.value == null || !editingTitleText.value.trim()) return;
+  editingTitleSaving.value = true;
+  try {
+    await updateDatasetApi({ id: editingTitleId.value, title: editingTitleText.value.trim() });
+    createMessage.success('Title updated');
+    editingTitleId.value = null;
+    await loadDatasets();
+  } catch (e: any) {
+    createMessage.error(e?.message || 'Update failed');
+  } finally {
+    editingTitleSaving.value = false;
+  }
+}
+
 async function searchTaxonomy(keyword: string) {
   if (!keyword || keyword.length < 2) { organismOptions.value = []; return; }
   const res = await getGermplasmTaxonomyOptionsApi({ keyword, limit: 15, active_only: 1 });
@@ -301,9 +326,17 @@ onMounted(async () => {
       </template>
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'title'">
-          <div>
+          <div v-if="editingTitleId !== (record as DatasetItem).id">
             <div>{{ (record as DatasetItem).title || (record as DatasetItem).name || `dataset-${(record as DatasetItem).id}` }}</div>
             <div style="font-size: 12px; color: #888;">{{ (record as DatasetItem).dataset_code || '-' }}</div>
+            <a style="font-size: 12px;" @click="startEditTitle(record as DatasetItem)">Edit</a>
+          </div>
+          <div v-else>
+            <Input v-model:value="editingTitleText" style="width: 200px;" size="small" />
+            <Space size="small" style="margin-top: 4px;">
+              <Button size="small" type="primary" :loading="editingTitleSaving" @click="saveEditTitle">OK</Button>
+              <Button size="small" @click="editingTitleId = null">Cancel</Button>
+            </Space>
           </div>
         </template>
         <template v-else-if="column.key === 'dataset_type'">

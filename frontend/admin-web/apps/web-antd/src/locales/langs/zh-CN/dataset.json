@@ -41,7 +41,7 @@
     "visibility_public": "公开",
     "currentVersion": "当前版本",
     "defaultPublicVersion": "默认公开版本",
-    "organism": "物种 / 组装",
+    "organism": "物种",
     "lifecycle": "生命周期",
     "typePlaceholder": "类型",
     "lifecyclePlaceholder": "生命周期",

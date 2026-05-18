@@ -41,7 +41,7 @@
     "visibility_public": "Public",
     "currentVersion": "Current Version",
     "defaultPublicVersion": "Default Public Version",
-    "organism": "Species / Assembly",
+    "organism": "Species",
     "lifecycle": "Lifecycle",
     "typePlaceholder": "Type",
     "lifecyclePlaceholder": "Lifecycle",
