@@ -3046,7 +3046,7 @@ class DatasetDomainService:
             "update_time": self._now(),
         }
 
-    def _ensure_version_current_flag(self, db, database_id, version_name):
+    def _ensure_version_current_flag(self, db, database_id, version_name, version_id=None):
         version_rows = dataset_version_db.get_data(db=db, filters={"dataset_id": database_id})
         version_snapshots = [
             {
@@ -3058,7 +3058,7 @@ class DatasetDomainService:
         ]
         target_exists = False
         for row in version_snapshots:
-            should_be_current = row["version"] == version_name
+            should_be_current = row["id"] == version_id if version_id else row["version"] == version_name
             if should_be_current:
                 target_exists = True
             if row["is_current"] != should_be_current:
@@ -3066,7 +3066,7 @@ class DatasetDomainService:
                 dataset_version_db.update_one(
                     db=db,
                     db_obj=row_obj,
-                    obj_in={"is_current": True if should_be_current else 0, "update_time": self._now()},
+                    obj_in={"is_current": True if should_be_current else False, "update_time": self._now()},
                 )
         if target_exists:
             return dataset_version_db.get_filter(
@@ -5610,7 +5610,7 @@ class DatasetDomainService:
         registry_obj = self.ensure_registry(db=db, database_obj=database_obj)
         lifecycle_state = version_obj.lifecycle_state
 
-        self._ensure_version_current_flag(db=db, database_id=dataset_id, version_name=version_name)
+        self._ensure_version_current_flag(db=db, database_id=dataset_id, version_name=version_name, version_id=version_id)
         version_obj = dataset_version_db.get(db=db, id=version_id)
         dataset_version_db.update_one(
             db=db,
