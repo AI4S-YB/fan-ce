@@ -286,13 +286,7 @@ onMounted(() => loadAll());
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
         <div style="flex:1">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
-            <Input
-              v-model:value="editableTitle"
-              :placeholder="$t('dataset.detail.titlePlaceholder')"
-              style="font-size:18px;font-weight:600;width:360px;"
-              bordered
-              @blur="debouncedSaveTitle(editableTitle)"
-            />
+            <span style="font-size:18px;font-weight:600;">{{ detailData.title || detailData.name || '-' }}</span>
             <Tag>{{ detailData.dataset_code || '-' }}</Tag>
           </div>
           <div style="color: #888; font-size: 13px;">
