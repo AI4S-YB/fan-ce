@@ -126,11 +126,11 @@ def public_dataset_lineage(
     ds = db.query(DatasetRegistry).filter_by(dataset_code=dataset_code).first()
     if not ds:
         raise HTTPException(status_code=404, detail="Dataset not found")
-    if ds.visibility != "public":
+    if not ds.default_public_version_id:
         raise HTTPException(status_code=404, detail="Dataset not found")
 
     svc = dataset_domain_service
-    edges = svc._list_public_lineage(db=db, dataset_id=ds.dataset_id)
+    edges = svc._list_public_lineage(db=db, dataset_id=ds.id)
     return response_200(data=jsonable_encoder(
         {"dataset_id": ds.dataset_id, "dataset_code": ds.dataset_code, "lineage_edges": edges}
     ))
@@ -143,7 +143,7 @@ def public_dataset_downloads(
 ):
     """List downloadable files for a public dataset."""
     ds = db.query(DatasetRegistry).filter_by(dataset_code=dataset_code).first()
-    if not ds or ds.visibility != "public":
+    if not ds or not ds.default_public_version_id:
         raise HTTPException(status_code=404, detail="Dataset not found or not public")
 
     version = db.query(DatasetVersion).filter_by(
@@ -186,7 +186,7 @@ def public_dataset_download(
 ):
     """Download a file from a public dataset."""
     ds = db.query(DatasetRegistry).filter_by(dataset_code=dataset_code).first()
-    if not ds or ds.visibility != "public":
+    if not ds or not ds.default_public_version_id:
         raise HTTPException(status_code=404, detail="Dataset not found or not public")
 
     file_obj = db.query(AssetFile).filter_by(id=file_id, is_downloadable=True).first()

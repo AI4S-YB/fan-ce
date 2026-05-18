@@ -51,8 +51,8 @@ def admin_rollback_lifecycle_state(
     db: Session = Depends(get_db),
 ):
     """Superadmin only: rollback a dataset's lifecycle_state."""
-    from modules.datasets.models import DatasetRegistry as Dataset  # was dataset_model.Dataset
-
+    from modules.datasets.models import DatasetRegistry as Dataset
+    from modules.datasets.models import DatasetVersion
     valid_states = {"draft", "active", "archived", "deprecated"}
     if target_state not in valid_states:
         raise HTTPException(status_code=400, detail=f"Invalid target state. Must be one of: {sorted(valid_states)}")
@@ -61,8 +61,12 @@ def admin_rollback_lifecycle_state(
     if not ds:
         raise HTTPException(status_code=404, detail="Dataset not found")
 
-    old_state = ds.lifecycle_state
-    ds.lifecycle_state = target_state
+    current_ver = db.query(DatasetVersion).filter_by(dataset_id=dataset_id, is_current=True).first()
+    if not current_ver:
+        raise HTTPException(status_code=404, detail="No current version found")
+
+    old_state = current_ver.lifecycle_state
+    current_ver.lifecycle_state = target_state
     db.commit()
 
     return response_200(data={
