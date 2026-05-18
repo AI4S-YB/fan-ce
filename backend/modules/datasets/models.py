@@ -208,7 +208,7 @@ class DatasetAsset(Base):
     dataset_version_id = Column(Integer, ForeignKey("dataset_version.id", ondelete="RESTRICT"), index=True, comment="dataset version ID")
     asset_code = Column(String(128), index=True, comment="资产编码")
     asset_name = Column(String(320), comment="资产名称")
-    asset_type = Column(String(128), comment="资产类型")
+    asset_type = Column(String(128), ForeignKey("asset_type_registry.code", ondelete="RESTRICT"), comment="资产类型")
     file_format = Column(String(128), comment="主文件格式")
     query_engine = Column(String(128), comment="查询引擎")
     storage_backend = Column(String(64), comment="存储后端")

@@ -80,6 +80,42 @@ async function saveAssetName() {
   }
 }
 
+// Inline asset_type editing
+const editingAssetTypeId = ref<number | null>(null);
+const editingAssetTypeValue = ref('');
+const assetTypeOptions = ref<Array<{ label: string; value: string }>>([]);
+const editingAssetTypeSaving = ref(false);
+
+async function loadAssetTypeOptions(keyword?: string) {
+  const res = await getAssetTypeOptionsApi({ active_only: 1, keyword } as any);
+  const items = (res as any)?.items || (res as any)?.data?.items || [];
+  assetTypeOptions.value = items.map((item: any) => ({
+    label: `${item.name || item.code} (${item.code})`,
+    value: item.code,
+  }));
+}
+
+function startEditAssetType(asset: DatasetAssetItem) {
+  editingAssetTypeId.value = asset.id;
+  editingAssetTypeValue.value = asset.asset_type || '';
+  loadAssetTypeOptions();
+}
+
+async function saveAssetType() {
+  if (editingAssetTypeId.value == null || !editingAssetTypeValue.value) return;
+  editingAssetTypeSaving.value = true;
+  try {
+    await updateDatasetAssetApi({ id: editingAssetTypeId.value, asset_type: editingAssetTypeValue.value });
+    message.success('Asset type updated');
+    editingAssetTypeId.value = null;
+    emit('refresh');
+  } catch (e: any) {
+    message.error(e?.message || 'Update failed');
+  } finally {
+    editingAssetTypeSaving.value = false;
+  }
+}
+
 function openAssetCreate() {
   editingAsset.value = null;
   assetForm.value = { asset_name: '', asset_type: undefined, file_format: '', query_engine: '', is_query_entry: false };
@@ -211,7 +247,17 @@ async function handleToggleDownload(file: AssetFileItem, val: boolean) {
           <Button size="small" type="primary" :loading="editingAssetNameSaving" @click="saveAssetName">OK</Button>
           <Button size="small" @click="editingAssetNameId = null">Cancel</Button>
         </div>
-          <span style="color: #888; font-size: 12px;"> / {{ asset.asset_type || '-' }}</span>
+          <div v-if="editingAssetTypeId !== asset.id" style="display:inline-flex;align-items:center;gap:4px;">
+            <span style="color: #888; font-size: 12px;"> / {{ asset.asset_type || '-' }}</span>
+            <Button size="small" type="text" @click="startEditAssetType(asset)" title="Edit type" style="padding:0;">
+              <EditOutlined style="font-size: 10px; color: #1677ff;" />
+            </Button>
+          </div>
+          <div v-else style="display:flex;align-items:center;gap:8px;">
+            <Select v-model:value="editingAssetTypeValue" size="small" style="width:200px;" :options="assetTypeOptions" show-search :filter-option="false" @search="loadAssetTypeOptions" />
+            <Button size="small" type="primary" :loading="editingAssetTypeSaving" @click="saveAssetType">OK</Button>
+            <Button size="small" @click="editingAssetTypeId = null">Cancel</Button>
+          </div>
         </div>
         <Space size="small">
           <Tag v-if="asset.is_query_entry" color="blue">{{ $t('dataset.list.queryEntryAsset') }}</Tag>
