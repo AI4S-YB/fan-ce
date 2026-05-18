@@ -5958,7 +5958,7 @@ class DatasetDomainService:
                     "organism": item.organism,
                     "organism_name": taxon_map.get(item.organism) if item.organism else None,
                     "version": "",
-                    "lifecycle_state": item.lifecycle_state,
+                    "lifecycle_state": "",
                     "description_md": (item.description_md or "")[:500],
                     "meta_json": item.meta_json,
                 })
