@@ -232,32 +232,30 @@ async function handleToggleDownload(file: AssetFileItem, val: boolean) {
     <div v-for="asset in filteredAssets" :key="asset.id" style="border: 1px solid #e0e0e0; border-radius: 4px; padding: 12px; margin-bottom: 8px; background: #fff;">
       <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
         <div>
-        <div v-if="editingAssetNameId !== asset.id">
-          <strong>{{ asset.asset_name || asset.asset_code || `asset-${asset.id}` }}</strong>
-          <Button size="small" type="text" @click="startEditAssetName(asset)" title="Edit name">
-            <EditOutlined style="font-size: 12px; color: #1677ff;" />
-          </Button>
-        </div>
-        <div v-else style="display:flex;align-items:center;gap:8px;">
-          <Input v-model:value="editingAssetNameText" size="small" style="width:180px;" />
-          <Button size="small" type="primary" :loading="editingAssetNameSaving" @click="saveAssetName">OK</Button>
-          <Button size="small" @click="editingAssetNameId = null">Cancel</Button>
-        </div>
-          <div v-if="editingAssetTypeId !== asset.id" style="display:inline-flex;align-items:center;gap:4px;">
-            <span style="color: #888; font-size: 12px;"> / {{ asset.asset_type || '-' }}</span>
-            <Button size="small" type="text" @click="startEditAssetType(asset)" title="Edit type" style="padding:0;">
-              <EditOutlined style="font-size: 10px; color: #1677ff;" />
-            </Button>
-          </div>
-          <div v-else style="display:flex;align-items:center;gap:8px;">
-            <Select v-model:value="editingAssetTypeValue" size="small" style="width:200px;" :options="assetTypeOptions" show-search :filter-option="false" @search="loadAssetTypeOptions" />
-            <Button size="small" type="primary" :loading="editingAssetTypeSaving" @click="saveAssetType">OK</Button>
-            <Button size="small" @click="editingAssetTypeId = null">Cancel</Button>
-          </div>
+          <Space size="small" align="center">
+            <Tag color="blue" style="font-weight:500;">{{ asset.asset_type || '-' }}</Tag>
+            <div v-if="editingAssetNameId !== asset.id" style="display:flex;align-items:center;gap:4px;">
+              <strong>{{ asset.asset_name || asset.asset_code || `asset-${asset.id}` }}</strong>
+              <Button size="small" type="text" @click="startEditAssetName(asset)" title="Edit name"><EditOutlined style="font-size: 12px; color: #1677ff;" /></Button>
+            </div>
+            <div v-else style="display:flex;align-items:center;gap:8px;">
+              <Input v-model:value="editingAssetNameText" size="small" style="width:180px;" />
+              <Button size="small" type="primary" :loading="editingAssetNameSaving" @click="saveAssetName">OK</Button>
+              <Button size="small" @click="editingAssetNameId = null">Cancel</Button>
+            </div>
+            <div v-if="editingAssetTypeId !== asset.id" style="display:flex;align-items:center;gap:4px;">
+              <Button size="small" type="text" @click="startEditAssetType(asset)" title="Edit type" style="padding:0;"><EditOutlined style="font-size: 10px; color: #1677ff;" /></Button>
+            </div>
+            <div v-else style="display:flex;align-items:center;gap:8px;">
+              <Select v-model:value="editingAssetTypeValue" size="small" style="width:200px;" :options="assetTypeOptions" show-search :filter-option="false" @search="loadAssetTypeOptions" />
+              <Button size="small" type="primary" :loading="editingAssetTypeSaving" @click="saveAssetType">OK</Button>
+              <Button size="small" @click="editingAssetTypeId = null">Cancel</Button>
+            </div>
+          </Space>
         </div>
         <Space size="small">
           <Tag v-if="asset.is_query_entry" color="blue">{{ $t('dataset.list.queryEntryAsset') }}</Tag>
-          <Tag>{{ asset.asset_type || '-' }}</Tag>
+          <Button size="small" danger @click="handleDeleteAsset(asset as DatasetAssetItem)">删除资产</Button>
         </Space>
       </div>
 
@@ -287,7 +285,6 @@ async function handleToggleDownload(file: AssetFileItem, val: boolean) {
       </div>
 
       <div style="display: flex; gap: 4px;">
-        <Button size="small" @click="openAssetEdit(asset as DatasetAssetItem)">{{ $t('dataset.list.editAsset') }}</Button>
         <Button size="small" @click="openFileRegister(asset as DatasetAssetItem)">{{ $t('dataset.list.registerFile') }}</Button>
         <Button size="small" danger @click="handleDeleteAsset(asset as DatasetAssetItem)">{{ $t('dataset.list.delete') }}{{ $t('dataset.list.asset') }}</Button>
       </div>

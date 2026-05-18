@@ -338,9 +338,7 @@ onMounted(() => loadAll());
           :action-loading-key="actionLoadingKey"
           @select="handleSelectVersion"
           @activate="handleActivate"
-          @release="handleRelease"
-          @withdraw="handleWithdraw"
-          @create-version="() => {}"
+          @refresh="loadAll"
         />
       </div>
 
