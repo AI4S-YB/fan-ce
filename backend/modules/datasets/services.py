@@ -1308,7 +1308,7 @@ class DatasetDomainService:
     def _build_dataset_asset_payload(self, asset_obj, files=None):
         return {
             "id": asset_obj.id,
-            "dataset_id": self._get_asset_dataset_id(db, asset_obj),
+            "dataset_id": null,
             "version_id": asset_obj.dataset_version_id,
             "asset_code": asset_obj.asset_code,
             "asset_name": asset_obj.asset_name,
@@ -1542,7 +1542,7 @@ class DatasetDomainService:
             break
         file_name = Path(local_path).name
         payload = {
-            "dataset_id": self._get_asset_dataset_id(db, asset_obj),
+            "dataset_id": null,
             "dataset_asset_id": asset_obj.id,
             "asset_file_type_code": resolved_asset_file_type_code,
             "file_role": normalized_file_role,
@@ -3822,7 +3822,7 @@ class DatasetDomainService:
         return {
             "asset_id": asset_id,
             "version_id": asset_obj.dataset_version_id,
-            "dataset_id": self._get_asset_dataset_id(db, asset_obj),
+            "dataset_id": null,
             "items": [self._build_asset_file_payload(item) for item in file_rows],
         }
 
