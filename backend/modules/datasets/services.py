@@ -2725,7 +2725,7 @@ class DatasetDomainService:
     def _build_version_publish_record_payload(self, record_obj):
         return {
             "id": record_obj.id,
-            "dataset_id": record_obj.dataset_id,
+            "dataset_id": None,
             "version_id": record_obj.dataset_version_id,
             "version": record_obj.version,
             "action": record_obj.action,
