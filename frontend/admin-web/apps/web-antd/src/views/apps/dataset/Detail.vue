@@ -284,13 +284,6 @@ onMounted(() => loadAll());
         </Space>
       </div>
 
-      <!-- Section 2: Status Bar -->
-      <div style="display: flex; gap: 24px; font-size: 13px; padding: 8px 12px; background: #fafafa; border-radius: 4px; margin-bottom: 16px; align-items: center;">
-        <span>{{ $t('dataset.list.queryEntry') }}<strong>{{ detailData.query_entry_asset?.asset_code || $t('dataset.list.notConfigured') }}</strong></span>
-        <span>{{ $t('dataset.list.currentVersion') }}：<strong>{{ versionListData?.current_version?.version || '-' }}</strong></span>
-        <span style="display:flex;align-items:center;gap:4px;">{{ $t('dataset.detail.versionLabel') }}：<Input v-model:value="editableVersion" size="small" style="width:120px;" @blur="debouncedSaveVersion(editableVersion)" /></span>
-      </div>
-
       <!-- Section: Description (Markdown) -->
       <div style="margin-bottom: 20px;">
         <h3>{{ $t('dataset.detail.descriptionMd') }}</h3>
