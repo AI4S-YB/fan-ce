@@ -25,7 +25,8 @@ const emit = defineEmits<{
 
 const columns = [
   { title: '', dataIndex: 'radio', key: 'radio', width: 40 },
-  { title: $t('dataset.list.version'), dataIndex: 'version', key: 'version', width: 140 },
+  { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
+  { title: $t('dataset.list.version'), dataIndex: 'version', key: 'version', width: 120 },
   { title: $t('system.menu.title'), dataIndex: 'title', key: 'title', width: 180 },
   { title: $t('dataset.list.lifecycleHeader'), dataIndex: 'lifecycle_state', key: 'lifecycle_state', width: 120 },
   { title: $t('platform.news.publish') + $t('dataset.list.status'), dataIndex: 'release_state', key: 'release_state', width: 120 },
