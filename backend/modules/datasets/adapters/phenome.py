@@ -21,8 +21,7 @@ class PhenomeAdapter(DatasetQueryAdapter):
         asset = self.get_query_entry_asset(dataset_payload) or {}
         asset_type = str(asset.get("asset_type") or "").lower()
         file_format = str(dataset_payload.get("query_profile", {}).get("file_format") or "").lower()
-        query_engine = str(asset.get("query_engine") or dataset_payload.get("query_profile", {}).get("query_engine") or "").lower()
-        return asset_type == "phenotype_index" or query_engine == "phenome" or file_format in self.supported_file_formats
+        return asset_type == "phenotype_index"  or file_format in self.supported_file_formats
 
     def _quote_identifier(self, value: str) -> str:
         return '"' + str(value or "").replace('"', '""') + '"'

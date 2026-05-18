@@ -832,12 +832,6 @@ class DatasetDomainService:
             return file_obj.type.lstrip(".")
         return database_obj.type or "generic"
 
-    def _infer_query_engine(self, file_obj):
-        file_format = self._normalize_file_format(file_obj)
-        if not file_format:
-            return "file"
-        return FILE_TYPE_QUERY_ENGINES.get(file_format, "file")
-
     def _infer_state(self, database_obj):
         if getattr(database_obj, "default_public_version_id", None):
             return "public"
@@ -1119,13 +1113,6 @@ class DatasetDomainService:
                 return "phenotype_table", "phenotype_observation_table"
 
         return self._default_asset_type(dataset_type, db=db), None
-
-    def _asset_query_engine(self, asset_type, file_format):
-        if asset_type == "functional_annotation":
-            return "functional_annotation"
-        if asset_type == "phenotype_index":
-            return "phenome"
-        return FILE_TYPE_QUERY_ENGINES.get((file_format or "").lower(), "file")
 
     def _asset_name_from_type(self, asset_type):
         return asset_type.replace("_", " ").title()
@@ -1596,7 +1583,6 @@ class DatasetDomainService:
                         "asset_name": self._asset_name_from_version(version_obj, default_asset_type),
                         "asset_type": default_asset_type,
                         "file_format": None,
-                        "query_engine": None,
                         "storage_backend": "local",
                         "workflow_state": version_obj.lifecycle_state or "draft",
                         "status": "active",
@@ -2577,7 +2563,6 @@ class DatasetDomainService:
             "file": file_payload,
             "query_profile": {
                 "file_format": "",
-                "query_engine": "",
                 "validation_summary": "",
                 "index_summary": "",
             },
@@ -2713,7 +2698,6 @@ class DatasetDomainService:
             "visibility": version_obj.visibility,
             "file_path": file_path,
             "file_format": None,
-            "query_engine": None,
             "validation_summary": None,
             "index_summary": None,
             "meta_json": version_obj.meta_json,
@@ -5627,7 +5611,6 @@ class DatasetDomainService:
         version_name = version_obj.version
         version_title = version_obj.title
         version_file_format = None
-        version_query_engine = None
         version_validation_summary = None
         version_index_summary = None
         version_meta_json = version_obj.meta_json
@@ -5651,7 +5634,6 @@ class DatasetDomainService:
                 "title": version_title or registry_obj.title,
                 "dataset_type": registry_obj.dataset_type,
                 "file_format": version_file_format or "",
-                "query_engine": version_query_engine or "",
                 "validation_summary": version_validation_summary
                 if version_validation_summary is not None
                 else None,

@@ -134,7 +134,6 @@ export interface DatasetAssetItem {
   asset_name?: string;
   asset_type?: string;
   file_format?: string;
-  query_engine?: string;
   storage_backend?: string;
   workflow_state?: string;
   status?: string;
@@ -157,7 +156,6 @@ export interface DatasetVersionItem {
   visibility?: string;
   file_path?: string | null;
   file_format?: string;
-  query_engine?: string;
   validation_summary?: string | null;
   index_summary?: string | null;
   meta_json?: string | null;
@@ -220,7 +218,6 @@ export interface DatasetItem {
   organism_name?: string | null;
   // assembly removed
   file_format?: string;
-  query_engine?: string;
   version_count?: number;
   query_adapter?: DatasetQueryAdapter | null;
   description_md?: string;
@@ -233,7 +230,6 @@ export interface DatasetDetailItem extends DatasetItem {
   file?: DatasetFileInfo | null;
   query_profile?: {
     file_format?: string;
-    query_engine?: string;
     validation_summary?: string | null;
     index_summary?: string | null;
   } | null;
@@ -287,7 +283,6 @@ export interface DatasetVersionQueryCapabilitiesResult {
   assets?: DatasetAssetItem[];
   query_profile?: {
     file_format?: string;
-    query_engine?: string;
     validation_summary?: string | null;
     index_summary?: string | null;
   } | null;

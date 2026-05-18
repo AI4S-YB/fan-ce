@@ -19,14 +19,13 @@ class AnnotationAdapter(DatasetQueryAdapter):
     def supports(self, dataset_payload: Dict[str, Any]) -> bool:
         asset = self.get_query_entry_asset(dataset_payload) or {}
         asset_type = str(asset.get("asset_type") or "").lower()
-        query_engine = str(asset.get("query_engine") or dataset_payload.get("query_profile", {}).get("query_engine") or "").lower()
         file_format = str(dataset_payload.get("query_profile", {}).get("file_format") or "").lower()
         dataset_type = str(dataset_payload.get("dataset_type") or "").lower()
 
-        if asset_type or query_engine:
+        if asset_type:
             return (
                 asset_type == "gene_annotation"
-                or query_engine in {"annotation", "tabix/gff", "tabix/gtf"}
+                or True in {"annotation", "tabix/gff", "tabix/gtf"}
                 or file_format in self.supported_file_formats
             )
 

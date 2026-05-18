@@ -37,7 +37,7 @@ const filteredAssets = computed(() => {
   const kw = keyword.value.trim().toLowerCase();
   if (!kw) return assets;
   return assets.filter(a =>
-    [a.asset_code, a.asset_name, a.asset_type, a.file_format, a.query_engine]
+    [a.asset_code, a.asset_name, a.asset_type, a.file_format]
       .filter(Boolean)
       .some(v => String(v).toLowerCase().includes(kw)),
   );
@@ -51,7 +51,6 @@ const assetForm = ref({
   asset_name: '',
   asset_type: undefined as string | undefined,
   file_format: '',
-  query_engine: '',
   is_query_entry: false,
 });
 
@@ -117,7 +116,6 @@ async function saveAssetType() {
 
 function openAssetCreate() {
   editingAsset.value = null;
-  assetForm.value = { asset_name: '', asset_type: undefined, file_format: '', query_engine: '', is_query_entry: false };
   assetModalVisible.value = true;
 }
 
@@ -127,7 +125,6 @@ function openAssetEdit(asset: DatasetAssetItem) {
     asset_name: asset.asset_name || '',
     asset_type: asset.asset_type,
     file_format: asset.file_format || '',
-    query_engine: asset.query_engine || '',
     is_query_entry: asset.is_query_entry || false,
   };
   assetModalVisible.value = true;
@@ -265,7 +262,6 @@ async function handleToggleDownload(file: AssetFileItem, val: boolean) {
       </div>
 
       <div style="font-size: 12px; color: #888; margin-bottom: 8px;">
-        {{ $t('dataset.list.fileCount', { count: asset.files?.length || 0 }) }} · {{ $t('dataset.list.mainFormat') }} {{ asset.file_format || '-' }} · {{ $t('dataset.list.queryEngineLabel') }} {{ asset.query_engine || '-' }}
       </div>
 
       <!-- Files -->
@@ -308,7 +304,6 @@ async function handleToggleDownload(file: AssetFileItem, val: boolean) {
         <Input v-model:value="assetForm.asset_name" :placeholder="$t('dataset.list.assetName')" />
         <Select v-model:value="assetForm.asset_type" :options="assetTypeOptions" :placeholder="$t('dataset.list.assetType')" />
         <Input v-model:value="assetForm.file_format" :placeholder="$t('dataset.list.fileFormat')" />
-        <Input v-model:value="assetForm.query_engine" :placeholder="$t('dataset.list.queryEngine')" />
         <label>
           <input type="checkbox" v-model="assetForm.is_query_entry" /> {{ $t('dataset.list.setAsQueryEntry') }}
         </label>

@@ -59,7 +59,7 @@ class DatasetAdapterRegistry:
             asset_payload["query_profile"] = {
                 **(dataset_payload.get("query_profile") or {}),
                 "file_format": asset.get("file_format") or (primary_file or {}).get("file_format") or "",
-                "query_engine": asset.get("query_engine") or "",
+                
             }
             yield asset_payload
 
