@@ -3056,9 +3056,15 @@ class DatasetDomainService:
             }
             for row in version_rows
         ]
+        # Determine target: use version_id if provided, otherwise match by name (pick highest id if multiple)
+        target_id = version_id
+        if target_id is None:
+            matching = [r for r in version_snapshots if r["version"] == version_name]
+            target_id = max(r["id"] for r in matching) if matching else None
+
         target_exists = False
         for row in version_snapshots:
-            should_be_current = row["id"] == version_id if version_id else row["version"] == version_name
+            should_be_current = row["id"] == target_id
             if should_be_current:
                 target_exists = True
             if row["is_current"] != should_be_current:
