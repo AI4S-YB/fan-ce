@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import { Table, Tag, Space, Button, Empty, Input, Select, message } from 'ant-design-vue';
 import { EditOutlined } from '@ant-design/icons-vue';
 import type { DatasetVersionItem, DatasetVersionListResult } from '#/api/apps/dataset';
-import { updateDatasetApi, releaseDatasetVersionApi, withdrawDatasetVersionApi } from '#/api/apps/dataset';
+import { updateDatasetVersionApi, releaseDatasetVersionApi, withdrawDatasetVersionApi } from '#/api/apps/dataset';
 import { $t } from '@vben/locales';
 import {
   lifecycleColor,
@@ -40,7 +40,7 @@ function startEditTitle(v: DatasetVersionItem) { editingTitleId.value = v.id; ed
 async function saveTitle() {
   if (editingTitleId.value == null) return;
   editingTitleSaving.value = true;
-  try { await updateDatasetApi({ id: editingTitleId.value, title: editingTitleText.value.trim() || undefined }); message.success('Updated'); editingTitleId.value = null; emit('refresh'); }
+  try { await updateDatasetVersionApi({ id: editingTitleId.value, title: editingTitleText.value.trim() || undefined }); message.success('Updated'); editingTitleId.value = null; emit('refresh'); }
   catch (e: any) { message.error(e?.message || 'Failed'); }
   finally { editingTitleSaving.value = false; }
 }
@@ -54,7 +54,7 @@ function startEditVer(v: DatasetVersionItem) { editingVerId.value = v.id; editin
 async function saveVer() {
   if (editingVerId.value == null) return;
   editingVerSaving.value = true;
-  try { await updateDatasetApi({ id: editingVerId.value, version: editingVerText.value.trim() || undefined }); message.success('Updated'); editingVerId.value = null; emit('refresh'); }
+  try { await updateDatasetVersionApi({ id: editingVerId.value, version: editingVerText.value.trim() || undefined }); message.success('Updated'); editingVerId.value = null; emit('refresh'); }
   catch (e: any) { message.error(e?.message || 'Failed'); }
   finally { editingVerSaving.value = false; }
 }

@@ -6,6 +6,7 @@ from shared.database import get_db
 from shared.responses import response_200
 
 from ..schemas import (
+    DatasetVersionUpdateRequest,
     DatasetVersionActivateRequest,
     DatasetVersionCreateRequest,
     DatasetVersionInfoRequest,
@@ -17,6 +18,7 @@ from ..schemas import (
     DatasetVersionWithdrawRequest,
 )
 from ..services import dataset_domain_service
+from ..crud import dataset_version_db
 
 dataset_version_router = APIRouter(tags=["app:dataset:版本"])
 @dataset_version_router.post("/list", dependencies=[Depends(check_permission(["app:database:info"]))], summary="数据集版本列表")
@@ -110,3 +112,19 @@ async def dataset_version_publish_records(
         user=_user,
     )
     return response_200(data=jsonable_encoder(data))
+
+@dataset_version_router.post("/update", dependencies=[Depends(check_permission(["app:database:update"]))], summary="更新数据集版本信息")
+async def dataset_version_update(
+    request_data: DatasetVersionUpdateRequest,
+    db=Depends(get_db),
+    _user=Depends(get_active_user),
+):
+    version_obj = dataset_domain_service._ensure_version_write_access(db=db, version_id=request_data.id, user=_user)
+    update_data = {"update_time": dataset_domain_service._now()}
+    if request_data.title is not None:
+        update_data["title"] = request_data.title
+    if request_data.version is not None:
+        update_data["version"] = request_data.version
+    dataset_version_db.update_one(db=db, db_obj=version_obj, obj_in=update_data)
+    return response_200(data=jsonable_encoder(update_data))
+

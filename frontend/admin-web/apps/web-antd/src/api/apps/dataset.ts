@@ -707,3 +707,7 @@ export async function getStagingDirectoryViewApi(data: {
     view_mode: 'directory',
   });
 }
+
+export async function updateDatasetVersionApi(data: { id: number; title?: string; version?: string }) {
+  return requestClient.post(`${pre}/version/update`, data);
+}

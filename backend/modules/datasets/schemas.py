@@ -668,3 +668,16 @@ class RegisterStagingFilesRequest(BaseModel):
     remark: Optional[str] = None
 
     model_config = ConfigDict(extra="forbid")
+
+class DatasetVersionUpdateRequest(BaseModel):
+    id: int
+    version: Optional[str] = None
+    title: Optional[str] = None
+    model_config = ConfigDict(extra="forbid")
+
+
+class DatasetVersionUpdateRequest(BaseModel):
+    id: int
+    version: Optional[str] = None
+    title: Optional[str] = None
+    model_config = ConfigDict(extra="forbid")
