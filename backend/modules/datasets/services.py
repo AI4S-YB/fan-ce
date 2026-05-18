@@ -3106,7 +3106,9 @@ class DatasetDomainService:
 
     def ensure_current_version(self, db, dataset_payload):
         database_id = dataset_payload["id"]
-        version_name = dataset_payload["version"]
+        version_name = dataset_payload.get("version", "").strip()
+        if not version_name:
+            return None
         version_obj = self._ensure_version_current_flag(db=db, database_id=database_id, version_name=version_name)
         if version_obj:
             return version_obj
