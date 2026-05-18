@@ -3624,21 +3624,24 @@ class DatasetDomainService:
             self._ensure_dataset_read_access(db=db, dataset_id=dataset_id, user=user)
         if version_id is not None:
             version_obj = self._ensure_version_read_access(db=db, version_id=version_id, user=user)
-            if dataset_id is None:
-                dataset_id = version_obj.dataset_id
         filters = {}
-        if dataset_id is not None:
-            filters["dataset_id"] = dataset_id
         if version_id is not None:
             filters["dataset_version_id"] = version_id
-        records = dataset_version_publish_record_db.get_data(db=db, filters=filters)
-        if user and not self._is_platform_admin(user) and dataset_id is None and version_id is None:
+        elif dataset_id is not None:
+            version_ids = [v.id for v in dataset_version_db.get_data(db=db, filters={"dataset_id": dataset_id})]
+            if version_ids:
+                filters["dataset_version_id"] = version_ids[0] if len(version_ids) == 1 else version_ids
+        records = dataset_version_publish_record_db.get_data(db=db, filters=filters) if filters else []
+        if user and not self._is_platform_admin(user) and not filters:
             records = [
                 item
                 for item in records
                 if self._can_access_dataset(
                     db=db,
-                    database_obj=dataset_legacy_bridge.get_database(db=db, dataset_id=item.dataset_id),
+                    database_obj=dataset_legacy_bridge.get_database(
+                        db=db,
+                        dataset_id=dataset_version_db.get(db=db, id=item.dataset_version_id).dataset_id if item.dataset_version_id else None,
+                    ),
                     user=user,
                 )
             ]
