@@ -86,7 +86,7 @@ function isActionLoading(prefix: string, id: number) {
                 :loading="isActionLoading('activate-version', (record as DatasetVersionItem).id)"
                 @click="emit('activate', record as DatasetVersionItem)"
               >
-                {{ $t('dataset.list.activateVersion') }}
+                {{ $t('dataset.list.setAsMainVersion') || '设为主版本' }}
               </Button>
             </template>
             <template v-if="(record as DatasetVersionItem).visibility !== 'public'">
