@@ -679,8 +679,6 @@ class DatasetDomainService:
 
     def _get_lineage_dataset_ids(self, db, lineage_obj):
         dataset_ids = set()
-        if getattr(lineage_obj, "dataset_id", None):
-            dataset_ids.add(lineage_obj.dataset_id)
         if getattr(lineage_obj, "src_dataset_version_id", None):
             src_version = dataset_version_db.get_one(db=db, id=lineage_obj.src_dataset_version_id)
             if src_version and src_version.dataset_id:
@@ -1338,7 +1336,7 @@ class DatasetDomainService:
         dst_registry = dataset_registry_db.get_filter(db=db, filters={"id": dst_version.dataset_id}) if dst_version else None
         return {
             "id": lineage_obj.id,
-            "dataset_id": lineage_obj.dataset_id,
+            "dataset_id": src_version.dataset_id if src_version else None,
             "src_dataset_id": src_version.dataset_id if src_version else None,
             "src_dataset_code": src_registry.dataset_code if src_registry else None,
             "src_dataset_title": src_database.name if src_database else None,
