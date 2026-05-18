@@ -338,5 +338,16 @@ export function useDataset() {
     // Versions
     versionListLoading, versionListData, loadVersionList,
     versionDetailLoading, versionDetailData, loadVersionDetail,
+    createVersion, activateVersion, releaseVersion, withdrawVersion,
+    // Publish
+    publishRecordsLoading, publishRecords, loadPublishRecords,
+    // Assets
+    createAsset, updateAsset, deleteAsset, registerFile, updateFile, deleteFile,
+    // Lineage
+    createLineage, deleteLineage,
+    // Query
+    queryCapabilitiesLoading, queryCapabilities, loadQueryCapabilities, executeQuery,
+    // Navigation
+    navigateToDetail, navigateToQuery,
   };
 }
