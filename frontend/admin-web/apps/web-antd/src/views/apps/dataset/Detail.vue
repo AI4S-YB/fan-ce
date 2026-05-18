@@ -295,3 +295,6 @@ onMounted(() => loadAll());
         <span style="display:flex;align-items:center;gap:4px;">{{ $t('dataset.detail.versionLabel') }}：<Input v-model:value="editableVersion" size="small" style="width:120px;" @blur="debouncedSaveVersion(editableVersion)" /></span>
       </div>
 
+    </template>
+  </Page>
+</template>
