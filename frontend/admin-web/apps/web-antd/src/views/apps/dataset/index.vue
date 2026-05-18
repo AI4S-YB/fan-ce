@@ -50,7 +50,7 @@ async function searchTaxonomy(keyword: string) {
   const res = await getGermplasmTaxonomyOptionsApi({ keyword, limit: 15, active_only: 1 });
   const items = (res as any).data?.items || (res as any).items || [];
   organismOptions.value = items.map((item: any) => ({
-    label: `${item.scientific_name || ''} (tax_id: ${item.tax_id})${item.common_name ? ' - ' + item.common_name : ''}`,
+    label: item.scientific_name || `tax_id: ${item.tax_id}`,
     value: item.tax_id,
   }));
 }
@@ -312,8 +312,8 @@ onMounted(async () => {
         <template v-else-if="column.key === 'organism'">
           <Space size="small">
             <span>{{ (record as any).organism_name || '-' }}</span>
-            <Tag v-if="(record as any).organism" color="default" style="font-size: 10px;">ID:{{ (record as any).organism }}</Tag>
-            <a @click="openOrganismModal(record as DatasetItem)" style="font-size: 12px; cursor: pointer;">{{ $t('common.edit') }}</a>
+            <Tag v-if="(record as any).organism" color="default" style="font-size: 10px;">tax_id:{{ (record as any).organism }}</Tag>
+            <Button size="small" type="link" @click="openOrganismModal(record as DatasetItem)">{{ $t('common.edit') }}</Button>
           </Space>
         </template>
         <template v-else-if="column.key === 'version'">
@@ -419,7 +419,7 @@ onMounted(async () => {
         show-search
         :filter-option="false"
         style="width: 100%"
-        :placeholder="'输入物种名称搜索...'"
+        :placeholder="'输入物种学名搜索 (e.g. Arabidopsis, Rosa)...'"
         :options="organismOptions"
         @search="searchTaxonomy"
       />

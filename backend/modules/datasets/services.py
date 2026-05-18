@@ -147,7 +147,7 @@ class _LegacyBridgeStub:
         if not registry:
             return []
         return [{"key": "dataset_code", "value": registry.dataset_code or ""},
-                {"key": "organism", "value": registry.organism or ""}]
+                {"key": "organism", "value": str(registry.organism) if registry.organism else ""}]
 
     def list_project_links_by_project(self, db, project_id):
         return []
@@ -2917,7 +2917,7 @@ class DatasetDomainService:
 
         version_str = current_version.version if current_version else ""
         dataset_type = registry.dataset_type if registry else ""
-        organism = registry.organism or ""
+        organism = registry.organism
 
         # 3. Query entry asset (needed by GeneSearch, GeneInfo, Genotype, Phenotype, Expression)
         query_entry_asset = None
@@ -2981,6 +2981,7 @@ class DatasetDomainService:
             "title": registry.title or "",
             "dataset_type": dataset_type,
             "organism": organism,
+            "organism_name": self._get_organism_name(db, organism),
             "version": version_str,
             "lifecycle_state": registry.lifecycle_state or "",
             "visibility": "public",
