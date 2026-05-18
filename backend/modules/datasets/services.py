@@ -3562,8 +3562,7 @@ class DatasetDomainService:
 
         if version_ids:
             db.query(dataset_version_publish_record_db.model).filter(
-                (dataset_version_publish_record_db.model.dataset_id == dataset_id)
-                | (dataset_version_publish_record_db.model.dataset_version_id.in_(version_ids))
+                dataset_version_publish_record_db.model.dataset_version_id.in_(version_ids)
             ).delete(synchronize_session=False)
 
         if asset_ids:
