@@ -670,26 +670,20 @@ def _ensure_version(db, dataset_id: int, plan: SequenceBundlePlan, user):
         dataset_type=plan.dataset_type,
         version=plan.version,
         organism=plan.organism,
-        
-        file_format=_guess_file_format(Path(plan.primary_file_path)),
-        query_engine=primary_asset.query_engine if primary_asset else "file",
-        validation_summary=None,
-        index_summary=None,
-        meta_json=json.dumps(
-            {
-                "bundle": plan.bundle_meta,
-                "provisioning": {
-                    "mode": f"{plan.dataset_type}_bundle",
-                    "primary_file_path": plan.primary_file_path,
-                },
-            },
-            ensure_ascii=False,
-        ),
     )
     dataset_domain_service.update_dataset(db=db, dataset_id=dataset_id, request_data=update_payload, user=user)
     version_obj = dataset_domain_service.sync_current_version_from_dataset_id(db=db, dataset_id=dataset_id)
     if not version_obj:
         raise HTTPException(status_code=500, detail=f"failed to create or sync dataset version for dataset={dataset_id}")
+    # Write provisioning metadata to version, not registry
+    dataset_domain_service._update_db_obj(
+        db, version_obj,
+        meta_json=json.dumps(
+            {"bundle": plan.bundle_meta, "provisioning": {"mode": f"{plan.dataset_type}_bundle", "primary_file_path": plan.primary_file_path}},
+            ensure_ascii=False,
+        ),
+        update_time=dataset_domain_service._now(),
+    )
     return version_obj
 
 
