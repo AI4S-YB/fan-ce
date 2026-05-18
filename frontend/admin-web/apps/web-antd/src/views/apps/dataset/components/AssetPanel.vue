@@ -83,14 +83,13 @@ async function saveAssetName() {
 // Inline asset_type editing
 const editingAssetTypeId = ref<number | null>(null);
 const editingAssetTypeValue = ref('');
-const assetTypeOptions = ref<Array<{ label: string; value: string }>>([]);
 const editingAssetTypeSaving = ref(false);
 
 async function loadAssetTypeOptions(keyword?: string) {
   const res = await getAssetTypeOptionsApi({ active_only: 1, keyword } as any);
-  const items = (res as any)?.items || (res as any)?.data?.items || [];
+  const items = (res as any)?.items || (res as any)?.data?.items || (Array.isArray(res) ? res : []);
   assetTypeOptions.value = items.map((item: any) => ({
-    label: `${item.name || item.code} (${item.code})`,
+    label: `${item.name || item.code}`,
     value: item.code,
   }));
 }
